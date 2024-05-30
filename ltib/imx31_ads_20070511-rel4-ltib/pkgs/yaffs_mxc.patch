@@ -1,0 +1,127 @@
+diff -Naur yaffs_utils-20060418/yaffs/utils/Makefile yaffs_utils_MOd-20060418/yaffs/utils/Makefile
+--- yaffs_utils-20060418/yaffs/utils/Makefile	2006-04-24 17:11:43.000000000 +0530
++++ yaffs_utils_MOd-20060418/yaffs/utils/Makefile	2006-05-10 19:39:45.706322552 +0530
+@@ -16,11 +16,12 @@
+ 
+ 
+ CFLAGS =   -I/usr/include -I.. -O2 -Wall -DCONFIG_YAFFS_UTIL
++CFLAGS =   -I/$(KERNELDIR)/include -I.. -O2 -Wall -DCONFIG_YAFFS_UTIL
+ CFLAGS+=   -Wshadow -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wmissing-declarations
+ CFLAGS+=   -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Winline
+ 
+ ## Change if you are using a cross-compiler
+-MAKETOOLS = 
++#MAKETOOLS = 
+ 
+ CC=$(MAKETOOLS)gcc
+ 
+@@ -28,8 +29,9 @@
+ 
+ MKYAFFSIMAGEOBJS = mkyaffsimage.o yaffs_ecc.o
+ 
++TARGETS =  mkyaffs mkyaffsimage
+ 
+-all: mkyaffs mkyaffsimage
++all:  $(TARGETS)
+ 
+ $(MKYAFFSIMAGEOBJS): %.o: %.c
+ 	$(CC) -c $(CFLAGS) $< -o $@
+@@ -46,6 +48,12 @@
+ yaffs_ecc.c:
+ 	ln -s ../yaffs_ecc.c yaffs_ecc.c
+ 
++install:        
++	install  $(TARGETS)  ${DESTDIR}/${SBINDIR}/ 
+ 
+ clean:
+-	rm -f $(MKYAFFSOBJS) $(MKYAFFSIMAGEOBJS) core
++	rm -f $(MKYAFFSOBJS) $(MKYAFFSIMAGEOBJS) core \
++        rm mkyaffs mkyaffsimage \
++        rm yaffs_ecc.c
++
++               
+diff -Naur yaffs_utils-20060418/yaffs/utils/mkyaffsimage.c yaffs_utils_MOd-20060418/yaffs/utils/mkyaffsimage.c
+--- yaffs_utils-20060418/yaffs/utils/mkyaffsimage.c	2006-04-24 17:09:36.000000000 +0530
++++ yaffs_utils_MOd-20060418/yaffs/utils/mkyaffsimage.c	2006-04-24 17:10:16.000000000 +0530
+@@ -136,7 +136,10 @@
+ static void yaffs_CalcECC(const __u8 *data, yaffs_Spare *spare)
+ {
+ 	yaffs_ECCCalculate(data , spare->ecc1);
+-	yaffs_ECCCalculate(&data[256] , spare->ecc2);
++#ifndef CONFIG_YAFFS_MXC_MODE
++        yaffs_ECCCalculate(&data[256] , spare->ecc2);
++#endif
++
+ }
+ 
+ static void yaffs_CalcTagsECC(yaffs_Tags *tags)
+diff -Naur yaffs_utils-20060418/yaffs/yaffs_guts.h yaffs_utils_MOd-20060418/yaffs/yaffs_guts.h
+--- yaffs_utils-20060418/yaffs/yaffs_guts.h	2006-04-24 17:09:23.000000000 +0530
++++ yaffs_utils_MOd-20060418/yaffs/yaffs_guts.h	2006-04-24 17:10:13.000000000 +0530
+@@ -72,7 +72,7 @@
+ #define YAFFS_OBJECTID_UNLINKED		3
+ 
+ #define YAFFS_MAX_SHORT_OP_CACHES	20
+-
++#define CONFIG_YAFFS_MXC_MODE   1
+ 
+ // ChunkCache is used for short read/write operations.
+ typedef struct
+@@ -107,27 +107,39 @@
+ 
+ 
+ // Spare structure
+-typedef struct
+-{
+-    __u8  tagByte0;
+-    __u8  tagByte1;
+-    __u8  tagByte2;
+-    __u8  tagByte3;
+-    __u8  pageStatus; 	// set to 0 to delete the chunk
+-    __u8  blockStatus;
+-    __u8  tagByte4;
+-    __u8  tagByte5;
+-    __u8  ecc1[3];
+-    __u8  tagByte6;
+-    __u8  tagByte7;
+-    __u8  ecc2[3];
++/* Spare structure for YAFFS1 */
++typedef struct {
++        __u8 tagByte0;
++        __u8 tagByte1;
++        __u8 tagByte2;
++        __u8 tagByte3;
++        __u8 pageStatus;        /* set to 0 to delete the chunk */
++        __u8 blockStatus;
++#ifdef CONFIG_YAFFS_MXC_MODE
++        __u8 ecc1[3];
++        __u8 spareecc[2];
++#endif
++        __u8 tagByte4;
++        __u8 tagByte5;
++#ifndef CONFIG_YAFFS_MXC_MODE
++        __u8 ecc1[3];
++#endif
++        __u8 tagByte6;
++        __u8 tagByte7;
++#ifdef CONFIG_YAFFS_MXC_MODE
++        __u8 unused[1];
++#else
++        __u8 ecc2[3];
++#endif
+ } yaffs_Spare;
+ 
+-//Special structure for passing through to mtd
++/*Special structure for passing through to mtd */
+ struct yaffs_NANDSpare {
+-	yaffs_Spare	spare;
+-	int		eccres1;
+-	int		eccres2;
++        yaffs_Spare spare;
++        int eccres1;
++#ifndef CONFIG_YAFFS_MXC_MODE
++        int eccres2;
++#endif
+ };
+ 
+ // Block data in RAM

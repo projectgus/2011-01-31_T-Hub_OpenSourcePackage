@@ -1,0 +1,301 @@
+--- linux-2.6.19.2/drivers/w1/masters/Kconfig	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/w1/masters/Kconfig	2007-01-10 17:22:33.000000000 -0700
+@@ -35,5 +35,11 @@ config W1_MASTER_DS2482
+ 	  This driver can also be built as a module.  If so, the module
+ 	  will be called ds2482.
+ 
++config W1_MASTER_MXC
++	tristate "Freescale MXC driver for 1-wire"
++	depends on W1 && ARCH_MXC
++	help
++	  Say Y here to enable MXC 1-wire host
++
+ endmenu
+ 
+--- linux-2.6.19.2/drivers/w1/masters/Makefile	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/w1/masters/Makefile	2007-01-10 17:22:33.000000000 -0700
+@@ -5,4 +5,5 @@
+ obj-$(CONFIG_W1_MASTER_MATROX)		+= matrox_w1.o
+ obj-$(CONFIG_W1_MASTER_DS2490)		+= ds2490.o
+ obj-$(CONFIG_W1_MASTER_DS2482)		+= ds2482.o
++obj-$(CONFIG_W1_MASTER_MXC)			+= mxc_w1.o
+ 
+--- linux-2.6.19.2/drivers/w1/masters/mxc_w1.c	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/w1/masters/mxc_w1.c	2007-01-10 17:09:59.000000000 -0700
+@@ -0,0 +1,276 @@
++/*
++ * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ */
++
++/*
++ * The code contained herein is licensed under the GNU General Public
++ * License. You may obtain a copy of the GNU General Public License
++ * Version 2 or later at the following locations:
++ *
++ * http://www.opensource.org/licenses/gpl-license.html
++ * http://www.gnu.org/copyleft/gpl.html
++ */
++
++/*!
++ * @defgroup MXC_OWIRE MXC Driver for owire interface
++ */
++
++/*!
++ * @file mxc_w1.c
++ *
++ * @brief Driver for the Freescale Semiconductor MXC owire interface.
++ *
++ *
++ * @ingroup MXC_OWIRE
++ */
++
++/*!
++ * Include Files
++ */
++
++#include <asm/atomic.h>
++#include <asm/types.h>
++#include <asm/io.h>
++#include <linux/delay.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/list.h>
++#include <linux/interrupt.h>
++#include <linux/spinlock.h>
++#include <linux/slab.h>
++#include <linux/pci_ids.h>
++#include <linux/pci.h>
++#include <linux/timer.h>
++#include <linux/init.h>
++#include <linux/platform_device.h>
++#include <asm/hardware.h>
++#include <asm/setup.h>
++#include <asm/arch/clock.h>
++
++#include "../w1.h"
++#include "../w1_int.h"
++#include "../w1_log.h"
++
++/*
++ * mxc function declarations
++ */
++
++static int __devinit mxc_w1_probe(struct platform_device *pdev);
++static int __devexit mxc_w1_remove(struct platform_device *pdev);
++
++extern void gpio_owire_active(void);
++extern void gpio_owire_inactive(void);
++
++/*
++ * MXC W1 Register offsets
++ */
++#define MXC_W1_CONTROL          0x00
++#define MXC_W1_TIME_DIVIDER     0x02
++#define MXC_W1_RESET            0x04
++
++DEFINE_SPINLOCK(w1_lock);
++
++/*!
++ * This structure contains pointers to  callback functions.
++ */
++static struct platform_driver mxc_w1_driver = {
++	.driver = {
++		   .name = "mxc_w1",
++		   },
++	.probe = mxc_w1_probe,
++	.remove = mxc_w1_remove,
++};
++
++/*!
++ * This structure is used to store
++ * information specific to w1 module.
++ */
++
++struct mxc_w1_device {
++	char *base_address;
++	unsigned long found;
++	unsigned int clkdiv;
++	struct w1_bus_master *bus_master;
++};
++
++/*
++ * this is the low level routine to
++ * reset the device on the One Wire interface
++ * on the hardware
++ * @param data  the data field of the w1 device structure
++ * @return the function returns 0 when the reset pulse has
++ *  been generated
++ */
++static u8 mxc_w1_ds2_reset_bus(void *data)
++{
++	volatile u8 reg_val;
++	u8 ret;
++	struct mxc_w1_device *dev = (struct mxc_w1_device *)data;
++
++	__raw_writeb(0x80, (dev->base_address + MXC_W1_CONTROL));
++
++	do {
++		reg_val = __raw_readb(dev->base_address + MXC_W1_CONTROL);
++	} while (((reg_val >> 7) & 0x1) != 0);
++	ret = ((reg_val >> 7) & 0x1);
++	return ret;
++}
++
++/*!
++ * this is the low level routine to read/write a bit on the One Wire
++ * interface on the hardware
++ * @param data  the data field of the w1 device structure
++ * @param bit  0 = write-0 cycle, 1 = write-1/read cycle
++ * @return the function returns the bit read (0 or 1)
++ */
++static u8 mxc_w1_ds2_touch_bit(void *data, u8 bit)
++{
++
++	volatile u8 reg_val;
++	struct mxc_w1_device *dev = (struct mxc_w1_device *)data;
++	u8 ret = 0;
++
++	if (0 == bit) {
++		__raw_writeb((1 << 5), (dev->base_address + MXC_W1_CONTROL));
++
++		do {
++			reg_val =
++			    __raw_readb(dev->base_address + MXC_W1_CONTROL);
++		} while (0 != ((reg_val >> 5) & 0x1));
++	}
++
++	else {
++		__raw_writeb((1 << 4), dev->base_address + MXC_W1_CONTROL);
++		do {
++			reg_val =
++			    __raw_readb(dev->base_address + MXC_W1_CONTROL);
++		} while (0 != ((reg_val >> 4) & 0x1));
++
++		reg_val =
++		    (((__raw_readb(dev->base_address + MXC_W1_CONTROL)) >> 3) &
++		     0x1);
++		ret = (u8) (reg_val);
++	}
++
++	return ret;
++}
++
++/*!
++ * this routine sets the One Wire clock
++ * to a value of 1 Mhz, as required by
++ * hardware.
++ * @param   dev   the device structure for w1
++ * @return  The function returns void
++ */
++static void mxc_w1_hw_init(struct mxc_w1_device *dev)
++{
++	mxc_clks_enable(OWIRE_CLK);
++
++	/* set the timer divider clock to divide by 65 */
++	/* as the clock to the One Wire is at 66.5MHz */
++	__raw_writeb(dev->clkdiv, dev->base_address + MXC_W1_TIME_DIVIDER);
++
++	return;
++}
++
++static int mxc_w1_getdiv(void)
++{
++	return ((mxc_get_clocks(OWIRE_CLK) / 1000000) - 1);
++}
++
++/*!
++ * this is the probe routine for the One Wire driver.
++ * It is called during the driver initilaization.
++ * @param   pdev   the platform device structure for w1
++ * @return The function returns 0 on success
++ * and a non-zero value on failure
++ *
++ */
++static int __devinit mxc_w1_probe(struct platform_device *pdev)
++{
++	struct mxc_w1_device *dev;
++	int err = 0;
++
++	dev = kmalloc(sizeof(struct mxc_w1_device) +
++		      sizeof(struct w1_bus_master), GFP_KERNEL);
++	if (!dev) {
++		return -ENOMEM;
++	}
++
++	memset(dev, 0,
++	       sizeof(struct mxc_w1_device) + sizeof(struct w1_bus_master));
++	dev->bus_master = (struct w1_bus_master *)(dev + 1);
++	dev->found = 1;
++	dev->clkdiv = mxc_w1_getdiv();
++	dev->base_address = (void *)IO_ADDRESS(OWIRE_BASE_ADDR);
++
++	mxc_w1_hw_init(dev);
++	dev->bus_master->data = dev;
++	dev->bus_master->touch_bit = &mxc_w1_ds2_touch_bit;
++	dev->bus_master->reset_bus = &mxc_w1_ds2_reset_bus;
++
++	err = w1_add_master_device(dev->bus_master);
++
++	if (err)
++		goto err_out_free_device;
++
++	platform_set_drvdata(pdev, dev);
++	return 0;
++
++      err_out_free_device:
++
++	kfree(dev);
++	return err;
++}
++
++/*
++ * disassociate the w1 device from the driver
++ * @param   dev   the device structure for w1
++ * @return  The function returns void
++ */
++static int mxc_w1_remove(struct platform_device *pdev)
++{
++	struct mxc_w1_device *dev = platform_get_drvdata(pdev);
++
++	if (dev->found) {
++		w1_remove_master_device(dev->bus_master);
++	}
++	platform_set_drvdata(pdev, NULL);
++
++	return 0;
++}
++
++/*
++ * initialize the driver
++ * @return The function returns 0 on success
++ * and a non-zero value on failure
++ */
++
++static int __init mxc_w1_init(void)
++{
++	int ret;
++
++	printk(KERN_INFO "Serial: MXC OWire driver\n");
++
++	gpio_owire_active();
++
++	ret = platform_driver_register(&mxc_w1_driver);
++
++	return ret;
++}
++
++/*
++ * cleanup before the driver exits
++ */
++static void mxc_w1_exit(void)
++{
++	gpio_owire_inactive();
++	platform_driver_unregister(&mxc_w1_driver);
++}
++
++module_init(mxc_w1_init);
++module_exit(mxc_w1_exit);
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Freescale Semiconductor, Inc");
++MODULE_DESCRIPTION("Driver for One-Wire on MXC");

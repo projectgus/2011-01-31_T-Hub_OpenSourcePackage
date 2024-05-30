@@ -1,0 +1,61 @@
+diff -uNr rpm-4.0.4.orig/Makefile.in rpm-4.0.4/Makefile.in
+--- rpm-4.0.4.orig/Makefile.in	Thu Apr 18 22:11:31 2002
++++ rpm-4.0.4/Makefile.in	Tue Jan 27 10:35:18 2004
+@@ -225,7 +225,9 @@
+ 	@INTLLIBS@ @LIBMISC@
+ 
+ 
+-rpmbindir = `echo $(bindir) | sed -e s,usr/bin,bin,`
++# seh: we will not worry about this in single user mode
++#rpmbindir = `echo $(bindir) | sed -e s,usr/bin,bin,`
++rpmbindir = $(bindir)
+ rpmbin_PROGRAMS = rpm
+ 
+ bin_PROGRAMS = rpm2cpio
+diff -uNr rpm-4.0.4.orig/configure rpm-4.0.4/configure
+--- rpm-4.0.4.orig/configure	Wed Mar 27 19:46:00 2002
++++ rpm-4.0.4/configure	Tue Jan 27 10:34:47 2004
+@@ -13459,6 +13459,8 @@
+ 	;;
+ esac
+ RPMCANONOS="$build_os_noversion"
++# seh: force it to be neutral
++RPMCANONVENDOR=rpm
+ 
+ 
+ 
+diff -uNr rpm-4.0.4.orig/lib/rpmrc.c rpm-4.0.4/lib/rpmrc.c
+--- rpm-4.0.4.orig/lib/rpmrc.c	Sat Jan 26 15:45:45 2002
++++ rpm-4.0.4/lib/rpmrc.c	Tue Jan 27 10:36:37 2004
+@@ -522,7 +522,7 @@
+     addMacro(NULL, "_preScriptEnvironment",NULL, prescriptenviron,RMIL_DEFAULT);
+ 
+     setVarDefault(-1,			"_topdir",
+-		"/usr/src/redhat",	"%{_usr}/src/redhat");
++		"/usr/src/rpm",	"%{_usr}/src/rpm");
+     setVarDefault(-1,			"_tmppath",
+ 		"/var/tmp",		"%{_var}/tmp");
+     setVarDefault(-1,			"_dbpath",
+diff -uNr rpm-4.0.4.orig/macros.in rpm-4.0.4/macros.in
+--- rpm-4.0.4.orig/macros.in	Wed Feb 13 23:22:51 2002
++++ rpm-4.0.4/macros.in	Tue Jan 27 10:36:37 2004
+@@ -163,7 +163,7 @@
+ %_tmppath		%{_var}/tmp
+ 
+ #	Path to top of build area.
+-%_topdir		%{_usrsrc}/redhat
++%_topdir		%{_usrsrc}/rpm
+ 
+ #	The path to the unzip executable (legacy, use %{__unzip} instead).
+ %_unzipbin		%{__unzip}
+diff -uNr rpm-4.0.4.orig/scripts/brp-redhat.in rpm-4.0.4/scripts/brp-redhat.in
+--- rpm-4.0.4.orig/scripts/brp-redhat.in	Tue Feb 22 03:09:55 2000
++++ rpm-4.0.4/scripts/brp-redhat.in	Tue Jan 27 10:36:37 2004
+@@ -1,6 +1,6 @@
+ #!/bin/sh
+ 
+-# These are the build root policies that Red Hat invokes at the end
++# These are the build root policies that rpm invokes at the end
+ # of the %install scriptlet.
+ 
+ # Compress man pages (Red Hat uses GNU gzip)

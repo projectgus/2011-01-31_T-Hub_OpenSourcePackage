@@ -1,0 +1,129 @@
+diff -uNpr misc.orig/lib/vpu/vpu_lib.h misc/lib/vpu/vpu_lib.h
+--- misc.orig/lib/vpu/vpu_lib.h	2007-01-12 15:14:46.000000000 -0700
++++ misc/lib/vpu/vpu_lib.h	2007-04-17 15:18:45.000000000 -0600
+@@ -24,6 +24,23 @@
+ #ifndef __VPU__LIB__H
+ #define __VPU__LIB__H
+ 
++typedef struct vpu_versioninfo {
++	int fw_major;		/* firmware major version */
++	int fw_minor;		/* firmware minor version */
++	int fw_release;		/* firmware release version */
++	int lib_major;		/* library major version */
++	int lib_minor;		/* library minor version */
++	int lib_release;	/* library release version */
++} vpu_versioninfo;
++
++#define VPU_FW_VERSION(major, minor, release)	 (((major) << 12) + ((minor) << 8) + (release)) 
++#define VPU_LIB_VERSION(major, minor, release)	 (((major) << 12) + ((minor) << 8) + (release)) 
++#ifdef	MX27_TO2
++#define VPU_LIB_VERSION_CODE	VPU_LIB_VERSION(2, 0, 0)
++#else
++#define VPU_LIB_VERSION_CODE	VPU_LIB_VERSION(1, 0, 1)
++#endif
++
+ /*------------------------------------------------------------------------------*/
+ /* HARDWARE REGISTER    							*/
+ /*------------------------------------------------------------------------------*/
+@@ -44,7 +61,6 @@
+ #define BIT_BIT_STREAM_CTRL		0x10C
+ #define BIT_FRAME_MEM_CTRL		0x110
+ #define CMD_DEC_DISPLAY_REORDER		0x114
+-#define	BIT_VPU_PIC_COUNT		0x118
+ 
+ #define BIT_RD_PTR_0			0x120
+ #define BIT_WR_PTR_0			0x124
+@@ -94,7 +110,7 @@
+ /*------------------------------------------------------------------------------*/
+ #define CMD_ENC_SEQ_BB_START		0x180
+ #define CMD_ENC_SEQ_BB_SIZE		0x184
+-#define CMD_ENC_SEQ_OPTION		0x188	/* AUD, SLICE, MB BIT */
++#define CMD_ENC_SEQ_OPTION		0x188	/* FMO, QPREP, AUD, SLICE, MB BIT */
+ 
+ #define CMD_ENC_SEQ_COD_STD		0x18C
+ #define CMD_ENC_SEQ_SRC_SIZE		0x190
+@@ -123,7 +139,7 @@
+ #define CMD_DEC_PIC_OPTION		0x194
+ #define CMD_DEC_PIC_SKIP_NUM		0x198
+ 
+-#define CMD_DEC_CHUNK_SIZE		0x1A8
++#define CMD_DEC_PIC_CHUNK_SIZE		0x19C
+ 
+ #define RET_DEC_PIC_FRAME_NUM		0x1C0
+ #define RET_DEC_PIC_FRAME_IDX		0x1C4
+@@ -180,10 +196,17 @@
+ 
+ #define BSFORMAT_AVC			0x3
+ 
+-#define PRJ_TRISTAN			0xF000
+-#define PRJ_PRISM_CX			0xF001
+-#define PRJ_SHIVA			0xF002
+-#define PRJ_PRISM_EX			0xF003
++#define PRJ_TRISTAN     		0xF000
++#define PRJ_CODA_DX_6			0xF001
++#define PRJ_PRISM_CX			0xF002
++#define PRJ_SHIVA       		0xF003
++#define PRJ_PRISM_EX			0xF004
++#define PRJ_BODA_DX_4			0xF005
++#define PRJ_CODA_DX_6M			0xF100
++#define PRJ_CODA_DX_8			0xF306
++                              
++#define PRJ_BODADX_4V			0xF405
++
+ 
+ typedef unsigned char Uint8;
+ typedef unsigned long Uint32;
+@@ -211,13 +234,16 @@ typedef enum {
+ 	SET_ROTATION_ANGLE,
+ 	SET_ROTATOR_OUTPUT,
+ 	SET_ROTATOR_STRIDE,
+-	GET_SPS_RBSP,
+-	GET_PPS_RBSP,
+-	SET_SPS_RBSP,
+-	SET_PPS_RBSP,
+-	ENCODE_MP4_HEADER,
+-	ENCODE_AVC_HEADER,
+-	SET_ENC_SEARCHRAM_PARAM
++	ENC_GET_SPS_RBSP,
++	ENC_GET_PPS_RBSP,                        
++	DEC_SET_SPS_RBSP,                        
++	DEC_SET_PPS_RBSP,                        
++	ENC_PUT_MP4_HEADER,                      
++	ENC_PUT_AVC_HEADER,                      
++	ENC_SET_SEARCHRAM_PARAM,                 
++	ENC_GET_VOS_HEADER,                      
++	ENC_GET_VO_HEADER,                       
++	ENC_GET_VOL_HEADER                       
+ } CodecCommand;
+ 
+ typedef enum {
+@@ -347,9 +373,9 @@ typedef struct {
+ } EncHeaderParam;
+ 
+ typedef enum {
+-	VOL_HEADER,
+-	VOS_HEADER,
+-	VIS_HEADER
++	VOL_HEADER,	/* video object layer header */
++	VOS_HEADER,	/* visual object sequence header */
++	VIS_HEADER	/* video object header */
+ } Mp4HeaderType;
+ 
+ typedef enum {
+diff -uNpr misc.orig/module_test/mxc_pm_test.c misc/module_test/mxc_pm_test.c
+--- misc.orig/module_test/mxc_pm_test.c	2007-04-17 15:09:39.000000000 -0600
++++ misc/module_test/mxc_pm_test.c	2007-04-17 15:15:17.000000000 -0600
+@@ -89,8 +89,13 @@ static int mxc_call_dvfs(mxc_pm_test * a
+ 	int result;
+ 
+ 	printk("============== INT/PLL Scale IOCTL ==============\n");
++/*
++ * remove call to mxc_pm_dvfs() since it's currently not implemented.
++ */
++#if 0
+ 	result = mxc_pm_dvfs(arg->armfreq, arg->ahbfreq, arg->ipfreq);
+ 	printk("The result is %d \n", result);
++#endif
+ 	return 0;
+ }
+ 

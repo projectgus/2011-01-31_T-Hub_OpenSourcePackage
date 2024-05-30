@@ -1,0 +1,46 @@
+--- strace-4.5.14/syscall.c	2006-01-12 03:18:53.000000000 -0700
++++ strace-cvs/syscall.c	2006-04-25 01:34:41.000000000 -0600
+@@ -30,7 +30,7 @@
+  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  *
+- *	$Id: syscall.c,v 1.83 2006/01/12 10:18:53 roland Exp $
++ *	$Id: syscall.c,v 1.84 2006/04/25 07:34:41 roland Exp $
+  */
+ 
+ #include "defs.h"
+@@ -1108,16 +1108,25 @@
+ 				return 0;
+ 			}
+ 
+-			if ((scno & 0x0ff00000) != 0x0f900000) {
+-				fprintf(stderr, "syscall: unknown syscall trap 0x%08lx\n",
+-					scno);
+-				return -1;
+-			}
++			/* Handle the EABI syscall convention.  We do not
++			   bother converting structures between the two
++			   ABIs, but basic functionality should work even
++			   if strace and the traced program have different
++			   ABIs.  */
++			if (scno == 0xef000000) {
++				scno = regs.ARM_r7;
++			} else {
++				if ((scno & 0x0ff00000) != 0x0f900000) {
++					fprintf(stderr, "syscall: unknown syscall trap 0x%08lx\n",
++						scno);
++					return -1;
++				}
+ 
+-			/*
+-			 * Fixup the syscall number
+-			 */
+-			scno &= 0x000fffff;
++				/*
++				 * Fixup the syscall number
++				 */
++				scno &= 0x000fffff;
++			}
+ 		}
+ 
+ 		if (tcp->flags & TCB_INSYSCALL) {

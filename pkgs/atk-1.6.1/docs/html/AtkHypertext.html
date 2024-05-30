@@ -1,0 +1,89 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkHypertext</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkHyperlink.html" title="AtkHyperlink"><link rel="next" href="AtkImage.html" title="AtkImage"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkHyperlink.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkImage.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkHypertext"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkHypertext</h2><p>AtkHypertext &#8212; The ATK interface which provides standard mechanism for manipulating hyperlinks.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id259631"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkHypertext.html#AtkHypertext-struct">AtkHypertext</a>;
+<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a>* <a href="AtkHypertext.html#atk-hypertext-get-link">atk_hypertext_get_link</a>        (<a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a> *hypertext,
+                                             gint link_index);
+gint        <a href="AtkHypertext.html#atk-hypertext-get-n-links">atk_hypertext_get_n_links</a>       (<a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a> *hypertext);
+gint        <a href="AtkHypertext.html#atk-hypertext-get-link-index">atk_hypertext_get_link_index</a>    (<a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a> *hypertext,
+                                             gint char_index);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GInterface
+   +----AtkHypertext
+</pre></div><div class="refsect1"><h2>Known Implementations</h2><p>
+AtkHypertext is implemented by
+ <a href="AtkNoOpObject.html" title="AtkNoOpObject">AtkNoOpObject</a>.</p></div><div class="refsect1"><h2>Signal Prototypes</h2><pre class="synopsis">
+
+"<a href="AtkHypertext.html#AtkHypertext-link-selected">link-selected</a>"
+            void        user_function      (<a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a> *atkhypertext,
+                                            gint arg1,
+                                            gpointer user_data);
+</pre></div><div class="refsect1"><h2>Description</h2><p>
+
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkHypertext-struct"></a>struct AtkHypertext</h3><a class="indexterm" name="id261248"></a><pre class="programlisting">struct AtkHypertext;</pre><p>
+The AtkHypertext structure does not contain any fields.
+</p></div><hr><div class="refsect2"><h3><a name="atk-hypertext-get-link"></a>atk_hypertext_get_link ()</h3><a class="indexterm" name="id261272"></a><pre class="programlisting"><a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a>* atk_hypertext_get_link        (<a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a> *hypertext,
+                                             gint link_index);</pre><p>
+Gets the link in this hypertext document at index 
+<i><tt>link_index</tt></i></p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>hypertext</tt></i> :</span></td><td> an <a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a>
+</td></tr><tr><td><span class="term"><i><tt>link_index</tt></i> :</span></td><td> an integer specifying the desired link
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> the link in this hypertext document at
+index <i><tt>link_index</tt></i>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-hypertext-get-n-links"></a>atk_hypertext_get_n_links ()</h3><a class="indexterm" name="id261403"></a><pre class="programlisting">gint        atk_hypertext_get_n_links       (<a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a> *hypertext);</pre><p>
+Gets the number of links within this hypertext document.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>hypertext</tt></i> :</span></td><td> an <a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> the number of links within this hypertext document
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-hypertext-get-link-index"></a>atk_hypertext_get_link_index ()</h3><a class="indexterm" name="id261478"></a><pre class="programlisting">gint        atk_hypertext_get_link_index    (<a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a> *hypertext,
+                                             gint char_index);</pre><p>
+Gets the index into the array of hyperlinks that is associated with
+the character specified by <i><tt>char_index</tt></i>, or -1 if there is no hyperlink
+associated with this character.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>hypertext</tt></i> :</span></td><td> an <a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a>
+</td></tr><tr><td><span class="term"><i><tt>char_index</tt></i> :</span></td><td> a character index
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> an index into the array of hyperlinks in <i><tt>hypertext</tt></i>
+</td></tr></tbody></table></div></div></div><div class="refsect1"><h2>Signals</h2><div class="refsect2"><h3><a name="AtkHypertext-link-selected"></a>The "link-selected" signal</h3><pre class="programlisting">void        user_function                  (<a href="AtkHypertext.html" title="AtkHypertext">AtkHypertext</a> *atkhypertext,
+                                            gint arg1,
+                                            gpointer user_data);</pre><p>
+The "link-selected" signal is emitted by an AtkHyperText object when one of
+the hyperlinks associated with the object is selected.
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>atkhypertext</tt></i> :</span></td><td>the object which received the signal.
+</td></tr><tr><td><span class="term"><i><tt>arg1</tt></i> :</span></td><td>the index of the hyperlink which is selected
+
+</td></tr><tr><td><span class="term"><i><tt>user_data</tt></i> :</span></td><td>user data set when the signal handler was connected.</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkHyperlink.html"><b>&lt;&lt; AtkHyperlink</b></a></td><td align="right"><a accesskey="n" href="AtkImage.html"><b>AtkImage &gt;&gt;</b></a></td></tr></table></body></html>

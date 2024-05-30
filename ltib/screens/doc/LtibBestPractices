@@ -1,0 +1,121 @@
+%TOPICTITLE%
+---
+
+<verbatim>
+Copyright © Freescale Semiconductor, Inc. 2004-2005. All rights reserved.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+Texts.  A copy of the license is included in the file doc/COPYING
+</verbatim>
+
+
+%TOC%
+
+---+ Introduction
+
+Here is a quick note on various techniques and best practices for maintaining
+LTIB BSP.
+
+
+---+ How to upgrade a BSP (non-maintenance).
+
+---++ Scenario
+
+A BSP exists for a target and some time has gone by.  Now you want to
+re-release that BSP, possibly adding new kernels, toolchains bootloaders etc.
+What should you do?
+
+---++ Which CVS should I use
+
+After the last release of this BSP, the release team should have merged
+back from their branch into the trunk of CVS.  If this has not happened,
+you must do this first.  
+
+Now that some time has gone by and you are adding something new not
+so much  fixing a bug (even though that may be an indirect consequence)
+you should be working to start with on the trunk of CVS.
+
+Once you have added the new stuff and have it basically working, you should
+re-branch and follow the release process documented in LtibReleaseProcess
+
+
+---++ Principles
+
+   1. If we've released something before the selections
+   of kernel/bootloader/toolchain should still be available to users
+   2. Don't knowingly break older stuff.  
+   3. Newer is not always better (to everyone).  Some people really need
+   to have the old stuff available to them (even if it's not the default).
+
+
+---++ What should I do to add a new toolchain and kernel?
+
+Lets say you have new toolchain and a new kernel that you want to
+upgrade people to.  Here's what to do:
+
+   * __ADD__ the new toolchain as the next one in the selection list.  
+   * __LEAVE__ the old toolchain tokens in place
+
+For example here's a diff that shows I've added a gcc-4.1.0 as a
+selection:
+<verbatim>
+     config TOOLCHAIN1
+         bool "gcc 3.4.0" if UCLIBC
++    config TOOLCHAIN2
++        bool "gcc 4.1.0" if UCLIBC
+     config TOOLCHAIN_CUSTOM
+</verbatim>
+
+Now let's say we want to add our new kernel:  Again add it as the next
+available kernel, here's an example:
+
+<verbatim>
+     config KERNEL1
+        bool "Linux 2.6.11"
++    config KERNEL2
++        bool "Linux 2.6.17"
+</verbatim>
+
+---++ Pre-selecting the new stuff
+
+Here's the key to it all.  Having added our new stuff (leaving the old
+stuff in place), we simply update the 'defconfig' to reference the new
+defaults.  
+
+---++ Why is this important
+
+Imagine you're a poor user using CVS.  Your config is setup and you're
+working on (and happy with) a certain toolchain and kernel.  If someone
+changes the meaning of TOOLCHAIN1 or KERNEL1, when you do a cvs update,
+you'll be subjected to a situation whereby your current configuration is
+invalid.  Worse still the old selections you _WANTED_ have disappeared.
+How rude....
+
+This situation would likely lead to frustration by users and lots of
+extra support traffic.
+
+---++ Conclusion
+
+---+++ Dos
+
+   * Add new stuff
+   * Update the defconfig
+
+---+++ Donts
+
+   * Remove old stuff 
+
+---+++ Exceptions
+
+There are always exceptions, but please discuss first on the LTIB list
+if you are thinking that your case is an exception.
+
+----
+
+-- Main.StuartHughes - %SERVERTIME%
+
+
+

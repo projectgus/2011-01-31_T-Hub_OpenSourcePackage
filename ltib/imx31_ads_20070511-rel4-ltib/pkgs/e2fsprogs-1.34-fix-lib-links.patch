@@ -1,0 +1,12 @@
+diff --exclude CVS -uNr e2fsprogs-1.34/lib/Makefile.elf-lib e2fsprogs-1.34.modified/lib/Makefile.elf-lib
+--- e2fsprogs-1.34/lib/Makefile.elf-lib	2002-02-03 00:03:43.000000000 -0600
++++ e2fsprogs-1.34.modified/lib/Makefile.elf-lib	2005-12-01 15:26:29.000000000 -0600
+@@ -43,7 +43,7 @@
+ 	$(STRIP) --strip-debug \
+ 		$(DESTDIR)$(ELF_INSTALL_DIR)/$(ELF_LIB)
+ 	$(LN_S) -f $(ELF_LIB) $(DESTDIR)$(ELF_INSTALL_DIR)/$(ELF_SONAME)
+-	$(LN_S) -f $(ELF_INSTALL_DIR)/$(ELF_SONAME) \
++	$(LN_S) -f $(ELF_SONAME) \
+ 		$(DESTDIR)$(libdir)/$(ELF_IMAGE).so
+ 	-$(LDCONFIG)
+ 

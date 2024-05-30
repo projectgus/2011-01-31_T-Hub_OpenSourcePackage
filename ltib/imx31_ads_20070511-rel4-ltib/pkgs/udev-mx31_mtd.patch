@@ -1,0 +1,11 @@
+--- udev-091/extra/10-mx31.rules.bak	2007-01-15 19:17:28.000000000 -0700
++++ udev-091/extra/10-mx31.rules	2007-01-15 19:19:17.000000000 -0700
+@@ -20,7 +20,7 @@
+ KERNEL=="mxc_ssi[0-9]*",	NAME="mxc_ssi/%n",	SYMLINK+="mxc_ssi%n"
+ KERNEL=="spi[0-9]*",	NAME="spi/%n",		SYMLINK+="spi%n"
+ 
+-KERNEL=="mtdblock*",	NAME="mtdblock/%n"
++KERNEL=="mtdblock*",	NAME="mtdblock/%n"	SYMLINK+="mtdblock%n"
+ KERNEL=="mtd[0-9]",	NAME="mtd/%n"
+ 
+ # A more elegant way of doing this must exist...

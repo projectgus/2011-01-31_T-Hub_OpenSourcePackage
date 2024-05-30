@@ -1,0 +1,19 @@
+# These rules generate rules for the /dev/{cdrom,dvd,...} symlinks and
+# write them in /etc/udev/rules.d/z20_persistent-cd.rules.
+#
+# If you want to configure them manually then just delete the symlink
+# pointing to this file.
+#
+# The default symlink for this file is z75_cd-aliases-generator.rules.
+
+ACTION!="add",				GOTO="cd_aliases_generator_end"
+SUBSYSTEM!="block",			GOTO="cd_aliases_generator_end"
+ENV{GENERATED}=="?*",			GOTO="cd_aliases_generator_end"
+
+# The variables for IDE devices are imported in permissions.rules.
+KERNEL=="sr[0-9]*", IMPORT{program}="cdrom_id --export $tempnode"
+
+ENV{ID_CDROM}=="?*", PROGRAM="write_cd_rules", SYMLINK+="%c"
+
+LABEL="cd_aliases_generator_end"
+

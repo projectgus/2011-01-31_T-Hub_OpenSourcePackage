@@ -1,0 +1,119 @@
+diff -uNr groff-1.18.1.orig/contrib/mom/Makefile.sub groff-1.18.1/contrib/mom/Makefile.sub
+--- groff-1.18.1.orig/contrib/mom/Makefile.sub	2002-07-29 06:22:05.000000000 +0100
++++ groff-1.18.1/contrib/mom/Makefile.sub	2004-11-18 16:04:41.000000000 +0000
+@@ -84,14 +84,14 @@
+ all: make_examples
+ 
+ .PHONY: make_examples
+-make_examples: prepare_make_examples $(PROCESSEDEXAMPLEFILES)
++make_examples: prepare_make_examples
+ 
+ prepare_make_examples: examples/penguin.ps
+ 	test -d examples || $(mkinstalldirs) examples
+ 	test -f penguin.ps || cp $(srcdir)/examples/penguin.ps .
+ 
+ install_data: $(NORMALFILES) $(HTMLDOCFILES) \
+-              $(EXAMPLEFILES) $(PROCESSEDEXAMPLEFILES)
++              $(EXAMPLEFILES)
+ 	-test -d $(tmacdir) || $(mkinstalldirs) $(tmacdir)
+ 	for f in $(NORMALFILES); do \
+ 	  rm -f $(tmacdir)/$$f; \
+@@ -107,10 +107,6 @@
+ 	  rm -f $(exampledir)/$$f; \
+ 	  $(INSTALL_DATA) $(srcdir)/$$f $(docdir)/$$f; \
+ 	done
+-	for f in $(PROCESSEDEXAMPLEFILES); do \
+-	  rm -f $(exampledir)/$$f; \
+-	  $(INSTALL_DATA) $$f $(docdir)/$$f; \
+-	done
+ 
+ uninstall_sub:
+ 	-for f in $(NORMALFILES); do \
+diff -uNr groff-1.18.1.orig/doc/Makefile.sub groff-1.18.1/doc/Makefile.sub
+--- groff-1.18.1.orig/doc/Makefile.sub	2002-07-26 14:48:54.000000000 +0100
++++ groff-1.18.1/doc/Makefile.sub	2004-11-18 16:08:31.000000000 +0000
+@@ -44,38 +44,26 @@
+   GROFF_BIN_PATH=$(groff_bin_path); \
+   export GROFF_BIN_PATH; \
+   sed -e "s;@VERSION@;$(version)$(revision);" $< \
+-  | $(top_builddir)/src/roff/groff/groff $(TFLAG) $(FFLAG) -Upet -ww
++  | /usr/bin/groff $(TFLAG) $(FFLAG) -Upet -ww
+ 
+ DOCFILES=\
+   meref.me \
+   meintro.me \
+   pic.ms
+ 
+-PROCESSEDDOCFILES=\
+-  meref.ps \
+-  meintro.ps \
+-  pic.ps
++PROCESSEDDOCFILES=
+ 
+-HTMLDOCFILES=\
+-  pic.html
++HTMLDOCFILES=
+ 
+-HTMLDOCIMAGEFILES=\
+-  pic*
++HTMLDOCIMAGEFILES=
+ 
+-EXAMPLEFILES=\
+-  webpage.ms \
+-  grnexmpl.g \
+-  grnexmpl.me
++EXAMPLEFILES=
+ 
+-PROCESSEDEXAMPLEFILES=\
+-  webpage.ps \
+-  grnexmpl.ps
++PROCESSEDEXAMPLEFILES=
+ 
+-HTMLEXAMPLEFILES=\
+-  webpage.html
++HTMLEXAMPLEFILES=
+ 
+-HTMLEXAMPLEIMAGEFILES=\
+-  webpage*
++HTMLEXAMPLEIMAGEFILES=
+ 
+ imagedir=img
+ htmldocimagedir=$(htmldocdir)/$(imagedir)
+@@ -101,17 +89,17 @@
+ 
+ # For simplicity, we always call grn and eqn.
+ .me.ps:
+-	$(GROFF) -Tps -ge -me >$@
++	$(GROFF) -Tps -ge -me $< >$@
+ 
+ .ms.html:
+ 	$(GROFF) -P-p -P-b -P-I`basename $< | sed -e 's|.ms$$||'` \
+ 		 -P-D$(imagedir) -Thtml -ms >$@
+ .ms.ps:
+-	$(GROFF) -Tps -ms -mwww >$@
++	$(GROFF) -Tps -ms -mwww $< >$@
+ 
+ 
+-all: groff $(PROCESSEDDOCFILES) prepare_examples \
+-     $(PROCESSEDEXAMPLEFILES) $(make_html)
++all: $(PROCESSEDDOCFILES) prepare_examples \
++     $(PROCESSEDEXAMPLEFILES)
+ 
+ html: $(HTMLDOCFILES) $(HTMLEXAMPLEFILES)
+ 
+@@ -126,14 +114,11 @@
+ gnu.png: gnu.xpm
+ 	xpmtoppm $(srcdir)/gnu.xpm | pnmdepth 15 | pnmtopng >$@
+ 
+-webpage.html: webpage.ms gnu.png
+-webpage.ps: gnu.eps
+-
+ grnexmpl.ps: grnexmpl.me grnexmpl.g
+ 
+ distfiles: groff gnu.eps gnu.png
+ 
+-install_data: groff $(DOCFILES) $(PROCESSEDDOCFILES) $(make_install_html) \
++install_data: $(DOCFILES) $(PROCESSEDDOCFILES) \
+               $(EXAMPLEFILES) $(PROCESSEDEXAMPLEFILES)
+ 	-test -d $(infodir) || $(mkinstalldirs) $(infodir)
+ # Prefer info files in builddir over srcdir; we test for

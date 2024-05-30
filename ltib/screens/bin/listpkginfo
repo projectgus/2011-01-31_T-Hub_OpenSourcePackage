@@ -1,0 +1,186 @@
+eval 'LANG=C exec perl -w -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+$running_under_some_shell = 0;
+
+######################################################################
+#
+# Copyright © Freescale Semiconductor, Inc. 2004-2005. All rights reserved.
+#
+# Stuart Hughes, stuarth@freescale.com,  6th May 2005
+#   
+# This file is part of LTIB.
+#
+# LTIB is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# LTIB is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with LTIB; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#
+# List information about package sources and patches,
+# the stdout is normally redirected to LtibPppInfoSpecXref
+#
+######################################################################
+use File::Find;
+use Getopt::Std;
+use Cwd 'realpath';
+use FindBin;
+use lib("$FindBin::Bin");
+use Ltibutils;
+
+$top = "$FindBin::Bin/..";
+$toplen = length(realpath($top)) + 1;
+$lpp  = "/opt/freescale/pkgs";
+@dirs = grep { realpath($_) } ("$top/rpm/SPECS",
+                              "$top/dist/lfs-5.1",
+                              "$top/dist/FC-2",
+                              "$top/config/platform");
+
+$usage = <<TXT;
+Usage  listpkgs [ -v|-u|-h ]
+  Note the cross reference goes to stdout, so redirect this to a file
+  Where:
+    -v          : verbose
+    -h          : show usage
+TXT
+
+# option handling
+$opt_h = 0;
+$opt_v = 0;
+
+getopts('hvux') or die($usage);
+die($usage) if $opt_h;
+
+# build a list of spec files and the things that references them
+find( \&build_spec_refs, @dirs);
+
+# look in spec files for sources and patches
+find( \&spec_sources, @dirs);
+
+# look in config files for toolchain rpm files
+find( \&config_rpms, realpath("$top/config/platform"));
+
+# output the main results
+header();
+foreach $referer ( sort keys %$xref ) {
+    print "\n---++ $referer\n";
+    if( ($spec) = $referer =~ m,/([^/]+)\.spec(?:\.in)?$, ) {
+        foreach $parent ( @{$specref->{$spec}} ) {
+            print "   * referenced by: $parent\n";
+        }
+    }
+    foreach $fn ( @{$xref->{$referer}} ) {
+        $esc_fn = unpack("H*", $fn . '.html');
+        print "[[$esc_fn][$fn]]<br>\n";
+    }
+}
+trailer();
+
+# opt_v list unreferenced files to stderr
+exit(0) unless $opt_v;
+warn "\n\n---++ Unreferenced files in $lpp\n";
+foreach (glob("$lpp/*")) {
+    next if m,\.md5$,;
+    ($fn) = m-/?([^/]+)$-;
+    warn "$fn\n" unless exists $found->{$fn};
+}
+exit(0);
+
+
+sub build_spec_refs
+{
+    my $name = $_;
+    my $pre;
+    $pre = '^[\w]+\s*=\s*([\S]+)' if $name eq 'pkg_map';
+    $pre = '^\s*default\s+"?((?:u-boot|kernel|blob)-[^\s"]+)'
+                                    if $name =~ m,\.lkc$,;
+    return unless $pre;
+
+    my $rel = substr($File::Find::name, $toplen);
+    my $seen = {};
+    warn "\n$rel\n" if $opt_v;
+    local $/ = undef;
+    open(FN, $File::Find::name) or die "open $File::Find::name\n";
+    local $_ = <FN>;
+
+    while( m,$pre,mg ) {
+            next if defined $seen->{$1};
+            next if $1 =~ m,\.config$,;
+            push @{$specref->{$1}}, $rel;
+            $seen->{$1} = 1;
+            warn "\t$1\n" if $opt_v;
+    }
+    close FN;
+}
+
+sub spec_sources
+{
+    return unless m,\.spec(?:\.in)?$,;
+    s,.spec.*$,,;
+    return unless exists $specref->{$_};
+    my $rel = substr($File::Find::name, $toplen);
+    my $tok = { sources => "", patches => "" };
+    parse_spec($File::Find::name, $tok);
+    foreach my $url (  split(/\s*\n/, $tok->{sources}),
+                       split(/\s*\n/, $tok->{patches})   ) {
+        my ($fn)   = $url =~ m-/?([^/]+)$-;
+        push @{$xref->{$rel}}, $fn;
+        $found->{$fn} = -f "$lpp/$fn" ? 'cached  ' : 'missing ';
+        warn "$found->{$fn}: $fn\n" if $opt_v;
+    }
+}
+
+sub config_rpms
+{
+    return unless m,\.lkc$,;
+    my $rel = substr($File::Find::name, $toplen);
+    my $seen = {};
+    warn "\n$rel\n" if $opt_v;
+    local $/ = undef;
+    open(FN, $File::Find::name) or die "open $File::Find::name\n";
+    local $_ = <FN>;
+    while(m,([-\.\w]+\.i\d86\.rpm),mg ) {
+        my ($rpm, $srpm) = ($1);
+        next if defined $seen->{$rpm};
+        $seen->{$rpm} = 1;
+        push @{$xref->{$rel}}, $rpm;
+        ($srpm = $rpm) =~ s,\.i\d86\.rpm,.src.rpm,;
+        push @{$xref->{$rel}}, $srpm;
+        $found->{$rpm}  = -f "$lpp/$rpm"  ? 'cached  ' : 'missing ';
+        $found->{$srpm} = -f "$lpp/$srpm" ? 'cached  ' : 'missing ';
+        warn "$found->{$rpm}: $rpm\n"   if $opt_v;
+        warn "$found->{$srpm}: $srpm\n" if $opt_v;
+    }
+    close FN;
+}
+
+sub header
+{
+    print <<TXT;
+%TOPICTITLE%
+---
+
+%TOC%
+
+---+ LTIB source/patch cross reference
+
+
+TXT
+}
+
+sub trailer
+{
+    print <<TXT;
+
+---
+Autogenerated by listpkginfo on: ${\  ( scalar gmtime() )}  GMT
+TXT
+}

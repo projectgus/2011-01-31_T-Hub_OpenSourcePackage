@@ -1,0 +1,56 @@
+Taken from TLSbo86683_MX3x_Kernel_First.patch
+
+fec_dcache_flush_range() and fec_dcache_inv_range() are being passed
+start and end addresses, but the arm calls expect address and length.
+The patch TLSbo86683 that this fix is based on called fec_dcache_inv_range
+with a start address and an end address -4, but a similar change was not
+made for fec_dcache_flush_range.  It is not clear to me whether the
+end address should be inclusive or exclusive of the last word of data.
+For now, the end address points just past the end of the data.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/net/fec.c linux-2.6.19.2/drivers/net/fec.c
+--- linux-2.6.19.2.orig/drivers/net/fec.c	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/drivers/net/fec.c	2007-04-25 17:37:32.000000000 -0600
+@@ -676,7 +676,7 @@ while (!((status = bdp->cbd_sc) & BD_ENE
+ 	pkt_len = bdp->cbd_datlen;
+ 	fep->stats.rx_bytes += pkt_len;
+ 	data = (__u8*)__va(bdp->cbd_bufaddr);
+-	fec_dcache_inv_range(data, data+pkt_len);
++	fec_dcache_inv_range(data, data + pkt_len - 4);
+ 	
+ 	/* This does 16 byte alignment, exactly what we need.
+ 	 * The packet length includes FCS, but we don't want to
+@@ -1614,7 +1614,7 @@ static void __inline__ fec_localhw_setup
+  */
+ static void __inline__ fec_dcache_inv_range(void * start, void * end)
+ {
+-	        return ;
++	return ;
+ }
+ 
+ /*
+@@ -2126,18 +2126,20 @@ static void __inline__ fec_localhw_setup
+ /*
+  * invalidate dcache related with the virtual memory range(start, end)
+  */
+-static void __inline__ fec_dcache_inv_range(void * start, void * end)
++static void __inline__ fec_dcache_inv_range(void *start, void *end)
+ {
+-	dma_sync_single(NULL, (unsigned long)start, (unsigned long) end, DMA_FROM_DEVICE);
++	dma_sync_single(NULL, (unsigned long)__pa(start),
++	                (unsigned long)(end - start), DMA_FROM_DEVICE);
+ 	return ;
+ }
+ 
+ /*
+  * flush dcache related with the virtual memory range(start, end)
+  */
+-static void __inline__ fec_dcache_flush_range(void * start, void * end)
++static void __inline__ fec_dcache_flush_range(void *start, void *end)
+ {
+-	dma_sync_single(NULL, (unsigned long)start, (unsigned long)end, DMA_BIDIRECTIONAL);
++	dma_sync_single(NULL, (unsigned long)__pa(start),
++	                (unsigned long)(end - start), DMA_BIDIRECTIONAL);
+ 	return ;
+ }
+ 

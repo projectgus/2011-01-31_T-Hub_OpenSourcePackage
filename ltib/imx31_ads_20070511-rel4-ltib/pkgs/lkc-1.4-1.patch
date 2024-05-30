@@ -1,0 +1,41 @@
+diff --exclude CVS -uNr lkc-1.4/Makefile lkc-1.4.modified/Makefile
+--- lkc-1.4/Makefile	Wed Feb 23 13:37:57 2005
++++ lkc-1.4.modified/Makefile	Wed Feb 23 13:37:50 2005
+@@ -128,7 +128,7 @@
+ lkc_defs.h: lkc_proto.h
+ 	sed < $< > $@ 's/P(\([^,]*\),.*/#define \1 (\*\1_p)/'
+ 
+-clean:
++distclean clean:
+ 	rm -f $(OBJ) conf qconf mconf *.moc lex.* *.tab.? *.output libkconfig.so
+ 	rm -rf .ruby .python
+ 	cd lxdialog && $(MAKE) clean
+diff --exclude CVS -uNr lkc-1.4/confdata.c lkc-1.4.modified/confdata.c
+--- lkc-1.4/confdata.c	Wed Feb 23 13:37:57 2005
++++ lkc-1.4.modified/confdata.c	Wed Feb 23 13:37:35 2005
+@@ -17,22 +17,16 @@
+ 
+ /* this is the config settings file that the config system will try to read if
+  * non is specified on the command line.  For now, let's not have it try any */
+-const char conf_defname[] = "";
+-//const char conf_defname[] = "arch/$ARCH/defconfig";
++const char conf_defname[] = "defconfig";
+ 
+ /* this is a list of .config names to try to load.  For our system,
+  * we'd rather not have it try to be smart about loading these, so we'll
+  * set it to empty */
+-const char *conf_confnames[] = {};
+-
+-/*const char *conf_confnames[] = {
++const char *conf_confnames[] = {
+ 	".config",
+-	"/lib/modules/$UNAME_RELEASE/.config",
+-	"/etc/kernel-config",
+-	"/boot/config-$UNAME_RELEASE",
+ 	conf_defname,
+ 	NULL,
+-};*/
++};
+ 
+ static char *conf_expand_value(const char *in)
+ {

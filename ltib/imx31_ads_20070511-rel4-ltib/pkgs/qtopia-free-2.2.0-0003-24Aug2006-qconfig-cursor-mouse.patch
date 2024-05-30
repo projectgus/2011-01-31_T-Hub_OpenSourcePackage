@@ -1,0 +1,62 @@
+From: John Rigby <jrigby@freescale.com>
+Date: Thu, 24 Aug 2006 12:23:01 -0600
+Subject: [PATCH] qconfig cursor mouse
+
+Original qconfig-qpe.h turns off cursor and mouse support
+which is appropriate for touchscreen only operation.
+
+This patch turns visible cursor and mouse support back on
+and allows turning of visible cursor at run time by
+setting the environment variable QWS_HIDE_CURSOR to yes.
+
+This allows the same binary build to work with both mouse
+and touchscreen without recompiling.
+
+Signed-off-by: John Rigby <jrigby@freescale.com>
+
+---
+
+ qt2/src/kernel/qwindowsystem_qws.cpp |    4 ++++
+ qtopia/src/qt/qconfig-qpe.h          |    6 +++---
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+395e12442236acf2e15e25899b7487652e5b71e0
+diff --git a/qt2/src/kernel/qwindowsystem_qws.cpp b/qt2/src/kernel/qwindowsystem_qws.cpp
+index 2732fea..ce40ced 100644
+--- a/qt2/src/kernel/qwindowsystem_qws.cpp
++++ b/qt2/src/kernel/qwindowsystem_qws.cpp
+@@ -2863,6 +2863,10 @@ #endif
+ 	}
+     }
+ #ifndef QT_NO_QWS_CURSOR
++    QString hidecursor = getenv("QWS_HIDE_CURSOR");
++    if ( hidecursor == "Yes")
++	needviscurs = FALSE;
++
+     setCursorVisible( needviscurs );
+ #endif
+ }
+diff --git a/qtopia/src/qt/qconfig-qpe.h b/qtopia/src/qt/qconfig-qpe.h
+index 6c7525d..9abeefb 100644
+--- a/qtopia/src/qt/qconfig-qpe.h
++++ b/qtopia/src/qt/qconfig-qpe.h
+@@ -46,13 +46,13 @@ #endif
+ // (enabling these, eg. so that USB mouse works can be done,
+ // but cursor should be turned on/off when device connected)
+ #ifndef QT_NO_QWS_CURSOR
+-#define QT_NO_QWS_CURSOR
++//#define QT_NO_QWS_CURSOR
+ #endif
+ #ifndef QT_NO_QWS_MOUSE_AUTO
+-#define QT_NO_QWS_MOUSE_AUTO
++//#define QT_NO_QWS_MOUSE_AUTO
+ #endif
+ #ifndef QT_NO_QWS_MOUSE_PC
+-#define QT_NO_QWS_MOUSE_PC
++//#define QT_NO_QWS_MOUSE_PC
+ #endif
+ 
+ // Qtopia Phone
+-- 
+1.3.3
+

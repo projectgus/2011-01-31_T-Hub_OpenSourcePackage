@@ -1,0 +1,50 @@
+Steve Papacharlambous <stevep@freescale.com> 25 October 2006
+
+This patch fixes build errors for ppc64 platforms using the toolchain:
+mtwk-lnx-powerpc64-gcc-3.4.3-glibc-2.3.3-0.34-1.i686.rpm
+Errors are:
+[snip]
+powerpc64-linux-g++ -c -pipe -I. -I /home/stevep/work/ltib/rootfs/usr/include
+-DQT_QWS_ -DQWS -fno-exceptions -fno-rtti -Wall -W -Os -fPIC  -DQT_NO_QWS_VFB
+-DQTOPIA_DATA_LINKING -DQCONFIG=\"qconfig-qpe.h\" -DQTOPIA_APP_INTERFACE
+-DQTOPIA_TARGET=\"camera\" -DQTOPIA_TRTARGET=\"camera\" -DQT_NO_DEBUG
+-DQT_PLUGIN
+-I/home/stevep/work/ltib/rpm/BUILD/qtopia-free-2.2.0/qtopia/mkspecs/qws/linux--g++
+-I. -I../../../include
+-I/home/stevep/work/ltib/rpm/BUILD/qtopia-free-2.2.0/qt2/include
+-I.ui/release-shared/ -I.moc/release-shared/ -o
+.obj/release-shared/videocaptureview.o videocaptureview.cpp
+In file included from
+/home/stevep/work/ltib/rootfs/usr/include/linux/videodev.h:8,
+                 from videocaptureview.cpp:54:
+/home/stevep/work/ltib/rootfs/usr/include/linux/videodev2.h:436: error:
+expected `;' before '*' token
+/home/stevep/work/ltib/rootfs/usr/include/linux/videodev2.h:438: error:
+variable or field `__user' declared void
+/home/stevep/work/ltib/rootfs/usr/include/linux/videodev2.h:438: error:
+expected `;' before '*' token
+In file included from videocaptureview.cpp:54:
+/home/stevep/work/ltib/rootfs/usr/include/linux/videodev.h:225: error:
+expected `;' before '*' token
+make[6]: *** [.obj/release-shared/videocaptureview.o] Error 1
+make[6]: Leaving directory
+`/home/stevep/work/ltib/rpm/BUILD/qtopia-free-2.2.0/qtopia/src/applications/camera'
+make[5]: *** [all] Error 2
+make[5]: Leaving directory
+`/home/stevep/work/ltib/rpm/BUILD/qtopia-free-2.2.0/qtopia/src/applications/camera'
+make[4]: *** [sub-applications-camera] Error 2
+make[4]: Leaving directory
+`/home/stevep/work/ltib/rpm/BUILD/qtopia-free-2.2.0/qtopia/src'
+[/snip]
+
+diff --exclude CVS -uNr qtopia-free-2.2.0/qtopia/src/applications/camera/videocaptureview.cpp qtopia-free-2.2.0.modified/qtopia/src/applications/camera/videocaptureview.cpp
+--- qtopia-free-2.2.0/qtopia/src/applications/camera/videocaptureview.cpp	Fri Nov 11 02:43:30 2005
++++ qtopia-free-2.2.0.modified/qtopia/src/applications/camera/videocaptureview.cpp	Wed Oct 25 14:29:39 2006
+@@ -51,6 +51,7 @@
+ #include <sys/ioctl.h>
+ #include <unistd.h>
+ #include <fcntl.h>
++#include <linux/compiler.h>
+ #include <linux/videodev.h>
+ #include <errno.h>
+ #include <string.h>

@@ -1,0 +1,588 @@
+CR: ENGR00019184
+Patch name: ENGR00019184_Fix_invalid_printk.patch
+Date: Tue Mar 20 18:26:59 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: Fix invalid debugging printk's in the USB drivers
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/usb.c linux-2.6.19.2/arch/arm/mach-mx27/usb.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/usb.c	2007-04-25 17:39:11.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/usb.c	2007-04-25 17:39:49.000000000 -0600
+@@ -58,18 +58,6 @@
+ #undef DEBUG
+ #undef VERBOSE
+ 
+-#ifdef DEBUG
+-#define dbg(fmt, args...)	printk("%s: " fmt "\n", __FUNCTION__, ## args)
+-#else
+-#define dbg(fmt, args...)	do {} while (0)
+-#endif
+-
+-#ifdef VERBOSE
+-#define vdbg	dbg
+-#else
+-#define vdbg(fmt, args...)	do {} while (0)
+-#endif
+-
+ extern void gpio_usbh1_active(void);
+ extern void gpio_usbh1_inactive(void);
+ extern void gpio_usbh2_active(void);
+@@ -152,7 +140,7 @@ void isp1504_set(u8 bits, int reg, volat
+ 
+ 	/* make sure interface is running */
+ 	if (!(__raw_readl(view) && ULPIVW_SS)) {
+-		printk("\nSS=0\n");
++		printk(KERN_INFO "\nSS=0\n");
+ 		__raw_writel(ULPIVW_WU, view);
+ 		do {		/* wait for wakeup */
+ 			data = __raw_readl(view);
+@@ -199,15 +187,16 @@ EXPORT_SYMBOL(isp1504_clear);
+ static void __attribute((unused)) ulpi_set_vbus_power(int on,
+ 						      volatile u32 * view)
+ {
+-	dbg("on=%d  view=0x%p", on, view);
++	pr_debug("%s: on=%d  view=0x%p\n", __FUNCTION__, on, view);
+ 
+-	vdbg("ULPI Vendor ID 0x%x    Product ID 0x%x",
+-	     (isp1504_read(ISP1504_VID_HIGH, view) << 8) |
+-	     isp1504_read(ISP1504_VID_LOW, view),
+-	     (isp1504_read(ISP1504_PID_HIGH, view) << 8) |
+-	     isp1504_read(ISP1504_PID_LOW, view));
++	pr_debug("%s: ULPI Vendor ID 0x%x    Product ID 0x%x\n", __FUNCTION__,
++		 (isp1504_read(ISP1504_VID_HIGH, view) << 8) |
++		 isp1504_read(ISP1504_VID_LOW, view),
++		 (isp1504_read(ISP1504_PID_HIGH, view) << 8) |
++		 isp1504_read(ISP1504_PID_LOW, view));
+ 
+-	vdbg("OTG Control before = 0x%x", isp1504_read(ISP1504_OTGCTL, view));
++	pr_debug("%s: OTG Control before = 0x%x\n", __FUNCTION__,
++		 isp1504_read(ISP1504_OTGCTL, view));
+ 
+ 	if (on) {
+ 		isp1504_set(DRV_VBUS_EXT |	/* enable external Vbus */
+@@ -226,7 +215,8 @@ static void __attribute((unused)) ulpi_s
+ 			    ISP1504_OTGCTL, view);
+ 	}
+ 
+-	vdbg("OTG Control after = 0x%x\n", isp1504_read(ISP1504_OTGCTL, view));
++	pr_debug("%s: OTG Control after = 0x%x\n\n", __FUNCTION__,
++		 isp1504_read(ISP1504_OTGCTL, view));
+ }
+ #endif
+ 
+@@ -254,17 +244,19 @@ static void otg_hs_set_xcvr(void)
+ 
+ 	/* Turn off the usbpll for ulpi tranceivers */
+ 	clk_disable(usb_clk);
+-	dbg("usb_pll usecount %d\n", clk_get_usecount(usb_clk));
++	pr_debug("%s: usb_pll usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_clk));
+ }
+ 
+ static int otg_hs_init(void)
+ {
+ 	if (!otg_used) {
+-		dbg("grab OTG-HS pins");
++		pr_debug("%s: grab OTG-HS pins\n", __FUNCTION__);
+ 
+ 		/* enable OTG/HS */
+ 		clk_enable(usb_clk);
+-		dbg("usb_clk usecount %d\n", clk_get_usecount(usb_clk));
++		pr_debug("%s: usb_clk usecount %d\n\n", __FUNCTION__,
++			 clk_get_usecount(usb_clk));
+ 		__raw_writew(PBC_BCTRL3_OTG_HS_EN, PBC3_CLEAR);
+ 
+ 		gpio_usbotg_hs_active();	/* grab our pins */
+@@ -291,21 +283,21 @@ static int otg_hs_init(void)
+ 
+ static void otg_hs_uninit(void)
+ {
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ 	otg_used--;
+ 	if (!otg_used) {
+ 		/* disable  OTG/HS */
+ 		__raw_writew(PBC_BCTRL3_OTG_HS_EN, PBC3_SET);
+ 
+-		dbg("free OTG-HS pins");
++		pr_debug("%s: free OTG-HS pins\n", __FUNCTION__);
+ 		gpio_usbotg_hs_inactive();	/* release our pins */
+ 	}
+ }
+ 
+ static void otg_hs_set_vbus_power(int on)
+ {
+-	dbg("on=%d", on);
++	pr_debug("%s: on=%d\n", __FUNCTION__, on);
+ 	ulpi_set_vbus_power(on, &UOG_ULPIVIEW);
+ }
+ 
+@@ -358,9 +350,10 @@ static void otg_fs_set_xcvr(void)
+ #ifdef CONFIG_USB_EHCI_ARC_OTGFS
+ static int otg_fs_host_init(void)
+ {
+-	dbg("grab OTG-FS pins");
++	pr_debug("%s: grab OTG-FS pins\n", __FUNCTION__);
+ 	clk_enable(usb_clk);
+-	dbg("usb_clk usecount %d\n", clk_get_usecount(usb_clk));
++	pr_debug("%s: usb_clk usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_clk));
+ 
+ 	isp1301_init();
+ 
+@@ -387,7 +380,7 @@ static int otg_fs_host_init(void)
+ 
+ static void otg_fs_host_uninit(void)
+ {
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ 	__raw_writew(PBC_BCTRL3_OTG_VBUS_EN, PBC3_SET);	/* disable OTG VBUS */
+ 
+@@ -395,7 +388,8 @@ static void otg_fs_host_uninit(void)
+ 
+ 	gpio_usbotg_fs_inactive();	/* release our pins */
+ 	clk_disable(usb_clk);
+-	dbg("usb_clk usecount %d\n", clk_get_usecount(usb_clk));
++	pr_debug("%s: usb_clk usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_clk));
+ }
+ 
+ /*!
+@@ -427,10 +421,11 @@ static void usbh1_set_xcvr(void)
+ 
+ static int usbh1_init(void)
+ {
+-	dbg("grab H1 pins");
++	pr_debug("%s: grab H1 pins\n", __FUNCTION__);
+ 
+ 	clk_enable(usb_clk);
+-	dbg("usb_clk usecount %d\n", clk_get_usecount(usb_clk));
++	pr_debug("%s: usb_clk usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_clk));
+ 
+ 	gpio_usbh1_active();
+ 	mdelay(1);
+@@ -449,13 +444,14 @@ static int usbh1_init(void)
+ 
+ static void usbh1_uninit(void)
+ {
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ 	__raw_writew(PBC_BCTRL3_FSH_VBUS_EN, PBC3_SET);	/* disable FSH VBUS */
+ 
+ 	gpio_usbh1_inactive();	/* release our pins */
+ 	clk_disable(usb_clk);
+-	dbg("usb_clk usecount %d\n", clk_get_usecount(usb_clk));
++	pr_debug("%s: usb_clk usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_clk));
+ }
+ 
+ /* *INDENT-OFF* */
+@@ -502,16 +498,18 @@ static void usbh2_set_xcvr(void)
+ 
+ 	/* Turn off the usbpll for ulpi tranceivers */
+ 	clk_disable(usb_clk);
+-	dbg("usb_clk usecount %d\n", clk_get_usecount(usb_clk));
++	pr_debug("%s: usb_clk usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_clk));
+ }
+ 
+ static int usbh2_init(void)
+ {
+-	dbg("grab H2 pins");
++	pr_debug("%s: grab H2 pins\n", __FUNCTION__);
+ 
+ 	__raw_writew(PBC_BCTRL3_HSH_EN, PBC3_CLEAR);	/* enable OTG_VBUS_EN */
+ 	clk_enable(usb_clk);
+-	dbg("usb_clk usecount %d\n", clk_get_usecount(usb_clk));
++	pr_debug("%s: usb_clk usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_clk));
+ 
+ 	gpio_usbh2_active();	/* grab our pins */
+ 	mdelay(1);
+@@ -522,14 +520,14 @@ static int usbh2_init(void)
+ 	    UCTRL_H2DT |	/* disable H2 TLL */
+ 	    UCTRL_H2PM;		/* power mask */
+ 
+-	dbg("success");
++	pr_debug("%s: success\n", __FUNCTION__);
+ 	usbh2_set_xcvr();	/* set transceiver type */
+ 	return 0;
+ }
+ 
+ static void usbh2_uninit(void)
+ {
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ 	__raw_writew(PBC_BCTRL3_HSH_EN, PBC3_SET);	/* disable HSH */
+ 
+@@ -538,7 +536,7 @@ static void usbh2_uninit(void)
+ 
+ static void usbh2_set_vbus_power(int on)
+ {
+-	dbg("on=%d", on);
++	pr_debug("%s: on=%d\n", __FUNCTION__, on);
+ 	ulpi_set_vbus_power(on, &UH2_ULPIVIEW);
+ }
+ 
+@@ -586,10 +584,11 @@ static struct arc_usb_config udc_hs_conf
+ #ifdef CONFIG_USB_GADGET_ARC_OTGFS
+ int otg_fs_dev_init(void)
+ {
+-	dbg("grab OTG-FS pins");
++	pr_debug("%s: grab OTG-FS pins\n", __FUNCTION__);
+ 
+ 	clk_enable(usb_clk);
+-	dbg("usb_clk usecount %d\n", clk_get_usecount(usb_clk));
++	pr_debug("%s: usb_clk usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_clk));
+ 
+ 	isp1301_init();
+ 
+@@ -613,7 +612,7 @@ int otg_fs_dev_init(void)
+ 
+ static void otg_fs_dev_uninit(void)
+ {
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ 	/* disable OTG VBUS */
+ 	__raw_writew(PBC_BCTRL3_OTG_VBUS_EN, PBC3_SET);
+@@ -621,7 +620,8 @@ static void otg_fs_dev_uninit(void)
+ 	isp1301_uninit();
+ 	gpio_usbotg_fs_inactive();	/* release our pins */
+ 	clk_disable(usb_clk);
+-	dbg("usb_clk usecount %d\n", clk_get_usecount(usb_clk));
++	pr_debug("%s: usb_clk usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_clk));
+ }
+ 
+ /* *INDENT-OFF* */
+@@ -680,7 +680,7 @@ static struct otg_transceiver *xceiv;
+  */
+ struct otg_transceiver *otg_get_transceiver(void)
+ {
+-	dbg("%s xceiv=0x%p\n", __FUNCTION__, xceiv);
++	pr_debug("%s xceiv=0x%p\n\n", __FUNCTION__, xceiv);
+ 	if (xceiv)
+ 		get_device(xceiv->dev);
+ 	return xceiv;
+@@ -690,7 +690,7 @@ EXPORT_SYMBOL(otg_get_transceiver);
+ 
+ int otg_set_transceiver(struct otg_transceiver *x)
+ {
+-	dbg("%s xceiv=0x%p  x=0x%p\n", __FUNCTION__, xceiv, x);
++	pr_debug("%s xceiv=0x%p  x=0x%p\n\n", __FUNCTION__, xceiv, x);
+ 	if (xceiv && x)
+ 		return -EBUSY;
+ 	xceiv = x;
+@@ -779,8 +779,9 @@ static struct platform_device *host_pdev
+ 	}
+ 
+ 	printk(KERN_INFO "usb: %s registered\n", config->name);
+-	dbg("pdev=0x%p  dev=0x%p  resources=0x%p  pdata=0x%p",
+-	    pdev, &pdev->dev, pdev->resource, pdev->dev.platform_data);
++	pr_debug("%s: pdev=0x%p  dev=0x%p  resources=0x%p  pdata=0x%p\n",
++		 __FUNCTION__, pdev, &pdev->dev, pdev->resource,
++		 pdev->dev.platform_data);
+ 	instance_id++;
+ 
+ 	return pdev;
+@@ -790,7 +791,7 @@ static int __init mx27_usb_init(void)
+ {
+ 	int rc __attribute((unused));
+ 
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ #if defined(CONFIG_USB_OTG)
+ 	rc = platform_device_register(&isp1504_device);
+@@ -798,9 +799,11 @@ static int __init mx27_usb_init(void)
+ 		pr_debug("can't register isp1504 dvc, %d\n", rc);
+ 	} else {
+ 		printk(KERN_INFO "usb: isp1504 registered\n");
+-		dbg("isp1504: platform_device_register succeeded.");
+-		dbg("isp1504_device=0x%p  resources=0x%p.",
+-		    &isp1504_device, isp1504_device.resource);
++		pr_debug("%s: isp1504: platform_device_register succeeded.\n",
++			 __FUNCTION__);
++		pr_debug("%s: isp1504_device=0x%p  resources=0x%p.\n",
++			 __FUNCTION__, &isp1504_device,
++			 isp1504_device.resource);
+ 	}
+ #endif
+ 
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/usb.c linux-2.6.19.2/arch/arm/mach-mx3/usb.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/usb.c	2007-04-25 17:39:11.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/usb.c	2007-04-25 17:39:49.000000000 -0600
+@@ -58,18 +58,6 @@
+ #undef DEBUG
+ #undef VERBOSE
+ 
+-#ifdef DEBUG
+-#define dbg(fmt, args...)	printk("%s: " fmt "\n", __FUNCTION__, ## args)
+-#else
+-#define dbg(fmt, args...)	do {} while (0)
+-#endif
+-
+-#ifdef VERBOSE
+-#define vdbg	dbg
+-#else
+-#define vdbg(fmt, args...)	do {} while (0)
+-#endif
+-
+ extern int gpio_usbh1_active(void);
+ extern void gpio_usbh1_inactive(void);
+ extern int gpio_usbh2_active(void);
+@@ -157,7 +145,7 @@ void isp1504_set(u8 bits, int reg, volat
+ 
+ 	/* make sure interface is running */
+ 	if (!(__raw_readl(view) && ULPIVW_SS)) {
+-		printk("\nSS=0\n");
++		printk(KERN_INFO "\nSS=0\n");
+ 		__raw_writel(ULPIVW_WU, view);
+ 		do {		/* wait for wakeup */
+ 			data = __raw_readl(view);
+@@ -203,15 +191,16 @@ EXPORT_SYMBOL(isp1504_clear);
+  */
+ static void ulpi_set_vbus_power(int on, volatile u32 * view)
+ {
+-	dbg("on=%d  view=0x%p", on, view);
++	pr_debug("%s: on=%d  view=0x%p\n", __FUNCTION__, on, view);
+ 
+-	vdbg("ULPI Vendor ID 0x%x    Product ID 0x%x",
+-	     (isp1504_read(ISP1504_VID_HIGH, view) << 8) |
+-	     isp1504_read(ISP1504_VID_LOW, view),
+-	     (isp1504_read(ISP1504_PID_HIGH, view) << 8) |
+-	     isp1504_read(ISP1504_PID_LOW, view));
++	pr_debug("%s: ULPI Vendor ID 0x%x    Product ID 0x%x\n", __FUNCTION__,
++		 (isp1504_read(ISP1504_VID_HIGH, view) << 8) |
++		 isp1504_read(ISP1504_VID_LOW, view),
++		 (isp1504_read(ISP1504_PID_HIGH, view) << 8) |
++		 isp1504_read(ISP1504_PID_LOW, view));
+ 
+-	vdbg("OTG Control before = 0x%x", isp1504_read(ISP1504_OTGCTL, view));
++	pr_debug("%s: OTG Control before = 0x%x\n", __FUNCTION__,
++		 isp1504_read(ISP1504_OTGCTL, view));
+ 
+ 	if (on) {
+ 		isp1504_set(DRV_VBUS_EXT |	/* enable external Vbus */
+@@ -230,7 +219,8 @@ static void ulpi_set_vbus_power(int on, 
+ 			    ISP1504_OTGCTL, view);
+ 	}
+ 
+-	vdbg("OTG Control after = 0x%x\n", isp1504_read(ISP1504_OTGCTL, view));
++	pr_debug("%s: OTG Control after = 0x%x\n\n", __FUNCTION__,
++		 isp1504_read(ISP1504_OTGCTL, view));
+ }
+ #endif
+ 
+@@ -258,16 +248,18 @@ static void otg_hs_set_xcvr(void)
+ 
+ 	/* Turn off the usbpll for ulpi tranceivers */
+ 	clk_disable(usb_clk);
+-	dbg("usb_pll usecount %d\n", clk_get_usecount(usb_pll));
++	pr_debug("%s: usb_pll usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_pll));
+ }
+ 
+ static int otg_hs_init(void)
+ {
+ 	if (!otg_used) {
+-		dbg("grab OTG-HS pins");
++		pr_debug("%s: grab OTG-HS pins\n", __FUNCTION__);
+ 
+ 		clk_enable(usb_clk);
+-		dbg("usb_pll usecount %d\n", clk_get_usecount(usb_pll));
++		pr_debug("%s: usb_pll usecount %d\n\n", __FUNCTION__,
++			 clk_get_usecount(usb_pll));
+ 
+ 		if (gpio_usbotg_hs_active())	/* grab our pins */
+ 			return -EINVAL;
+@@ -292,21 +284,21 @@ static int otg_hs_init(void)
+ 
+ static void otg_hs_uninit(void)
+ {
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ 	otg_used--;
+ 	if (!otg_used) {
+ 		/* disable  OTG/HS */
+ 		__raw_writew(PBC_BCTRL3_OTG_HS_EN, PBC3_SET);
+ 
+-		dbg("free OTG-HS pins");
++		pr_debug("%s: free OTG-HS pins\n", __FUNCTION__);
+ 		gpio_usbotg_hs_inactive();	/* release our pins */
+ 	}
+ }
+ 
+ static void otg_hs_set_vbus_power(int on)
+ {
+-	dbg("on=%d", on);
++	pr_debug("%s: on=%d\n", __FUNCTION__, on);
+ 	ulpi_set_vbus_power(on, &UOG_ULPIVIEW);
+ }
+ 
+@@ -359,7 +351,7 @@ static void otg_fs_set_xcvr(void)
+ #ifdef CONFIG_USB_EHCI_ARC_OTGFS
+ static int otg_fs_host_init(void)
+ {
+-	dbg("grab OTG-FS pins");
++	pr_debug("%s: grab OTG-FS pins\n", __FUNCTION__);
+ 
+ 	clk_enable(usb_clk);
+ 
+@@ -391,7 +383,7 @@ static int otg_fs_host_init(void)
+ 
+ static void otg_fs_host_uninit(void)
+ {
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ 	__raw_writew(PBC_BCTRL3_OTG_VBUS_EN, PBC3_SET);	/* disable OTG VBUS */
+ 
+@@ -430,10 +422,11 @@ static void usbh1_set_xcvr(void)
+ 
+ static int usbh1_init(void)
+ {
+-	dbg("grab H1 pins");
++	pr_debug("%s: grab H1 pins\n", __FUNCTION__);
+ 
+ 	clk_enable(usb_clk);
+-	dbg("usb_pll usecount %d\n", clk_get_usecount(usb_pll));
++	pr_debug("%s: usb_pll usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_pll));
+ 
+ 	if (gpio_usbh1_active())
+ 		return -EINVAL;
+@@ -454,7 +447,7 @@ static int usbh1_init(void)
+ 
+ static void usbh1_uninit(void)
+ {
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ 	__raw_writew(PBC_BCTRL3_FSH_EN, PBC3_SET);	/* disable FSH */
+ 	__raw_writew(PBC_BCTRL3_FSH_VBUS_EN, PBC3_SET);	/* disable FSH VBUS */
+@@ -497,15 +490,17 @@ static void usbh2_set_xcvr(void)
+ 
+ 	/* Turn off the usbpll for ulpi tranceivers */
+ 	clk_disable(usb_clk);
+-	dbg("usb_pll usecount %d\n", clk_get_usecount(usb_pll));
++	pr_debug("%s: usb_pll usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_pll));
+ }
+ 
+ static int usbh2_init(void)
+ {
+-	dbg("grab H2 pins");
++	pr_debug("%s: grab H2 pins\n", __FUNCTION__);
+ 
+ 	clk_enable(usb_clk);
+-	dbg("usb_pll usecount %d\n", clk_get_usecount(usb_pll));
++	pr_debug("%s: usb_pll usecount %d\n\n", __FUNCTION__,
++		 clk_get_usecount(usb_pll));
+ 
+ 	/* abort the init if NAND card is present */
+ 	if ((__raw_readw(PBC_BASE_ADDRESS + PBC_BSTAT1) &
+@@ -539,14 +534,14 @@ static int usbh2_init(void)
+ 	    UCTRL_H2DT |	/* disable H2 TLL */
+ 	    UCTRL_H2PM;		/* power mask */
+ 
+-	dbg("success");
++	pr_debug("%s: success\n", __FUNCTION__);
+ 	usbh2_set_xcvr();	/* set transceiver type */
+ 	return 0;
+ }
+ 
+ static void usbh2_uninit(void)
+ {
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ 	__raw_writew(PBC_BCTRL3_HSH_SEL, PBC3_CLEAR);	/* disable HSH select */
+ 	__raw_writew(PBC_BCTRL3_HSH_EN, PBC3_SET);	/* disable HSH */
+@@ -556,7 +551,7 @@ static void usbh2_uninit(void)
+ 
+ static void usbh2_set_vbus_power(int on)
+ {
+-	dbg("on=%d", on);
++	pr_debug("%s: on=%d\n", __FUNCTION__, on);
+ 	ulpi_set_vbus_power(on, &UH2_ULPIVIEW);
+ }
+ 
+@@ -604,7 +599,7 @@ static struct arc_usb_config udc_hs_conf
+ #ifdef CONFIG_USB_GADGET_ARC_OTGFS
+ int otg_fs_dev_init(void)
+ {
+-	dbg("grab OTG-FS pins");
++	pr_debug("%s: grab OTG-FS pins\n", __FUNCTION__);
+ 
+ 	isp1301_init();
+ 
+@@ -630,7 +625,7 @@ int otg_fs_dev_init(void)
+ 
+ static void otg_fs_dev_uninit(void)
+ {
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ 	/* disable OTG VBUS */
+ 	__raw_writew(PBC_BCTRL3_OTG_VBUS_EN, PBC3_SET);
+@@ -696,7 +691,7 @@ static struct otg_transceiver *xceiv;
+  */
+ struct otg_transceiver *otg_get_transceiver(void)
+ {
+-	dbg("%s xceiv=0x%p\n", __FUNCTION__, xceiv);
++	pr_debug("%s xceiv=0x%p\n\n", __FUNCTION__, xceiv);
+ 	if (xceiv)
+ 		get_device(xceiv->dev);
+ 	return xceiv;
+@@ -706,7 +701,7 @@ EXPORT_SYMBOL(otg_get_transceiver);
+ 
+ int otg_set_transceiver(struct otg_transceiver *x)
+ {
+-	dbg("%s xceiv=0x%p  x=0x%p\n", __FUNCTION__, xceiv, x);
++	pr_debug("%s xceiv=0x%p  x=0x%p\n\n", __FUNCTION__, xceiv, x);
+ 	if (xceiv && x)
+ 		return -EBUSY;
+ 	xceiv = x;
+@@ -795,8 +790,9 @@ static struct platform_device *host_pdev
+ 	}
+ 
+ 	printk(KERN_INFO "usb: %s registered\n", config->name);
+-	dbg("pdev=0x%p  dev=0x%p  resources=0x%p  pdata=0x%p",
+-	    pdev, &pdev->dev, pdev->resource, pdev->dev.platform_data);
++	pr_debug("%s: pdev=0x%p  dev=0x%p  resources=0x%p  pdata=0x%p\n",
++		 __FUNCTION__, pdev, &pdev->dev, pdev->resource,
++		 pdev->dev.platform_data);
+ 	instance_id++;
+ 
+ 	return pdev;
+@@ -806,7 +802,7 @@ static int __init mx3_usb_init(void)
+ {
+ 	int rc __attribute((unused));
+ 
+-	dbg();
++	pr_debug("%s: \n", __FUNCTION__);
+ 
+ #if defined(CONFIG_USB_OTG)
+ 	rc = platform_device_register(&isp1504_device);
+@@ -814,9 +810,10 @@ static int __init mx3_usb_init(void)
+ 		pr_debug("can't register isp1504 dvc, %d\n", rc);
+ 	} else {
+ 		printk(KERN_INFO "usb: isp1504 registered\n");
+-		dbg("isp1504: platform_device_register succeeded.");
+-		dbg("isp1504_device=0x%p  resources=0x%p.",
+-		    &isp1504_device, isp1504_device.resource);
++		pr_debug("%s: isp1504: platform_device_register succeeded.\n",
++			 __FUNCTION__);
++		pr_debug("isp1504_device=0x%p  resources=0x%p.",
++			 &isp1504_device, isp1504_device.resource);
+ 	}
+ #endif
+ 

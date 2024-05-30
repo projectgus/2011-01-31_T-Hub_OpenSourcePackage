@@ -1,0 +1,18 @@
+CR: TLSbo91804
+Patch name: TLSbo91804_VPU_fix_memory_free_issue_for_dma_free_coherent.patch
+Date: Tue Feb 27 15:27:03 2007 +0800
+Source: Freescale Semiconductor, Inc.
+Description: fixbug: call dma_free_coherent without PAGE_ALIGN for the size argument
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/vpu/mxc_vpu.c linux-2.6.19.2/drivers/mxc/vpu/mxc_vpu.c
+--- linux-2.6.19.2.orig/drivers/mxc/vpu/mxc_vpu.c	2007-04-25 17:38:00.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/vpu/mxc_vpu.c	2007-04-25 17:38:01.000000000 -0600
+@@ -80,7 +80,7 @@ static int vpu_free_buffers(void)
+ 	spin_lock_irqsave(&vpu_lock, flags);
+ 	list_for_each_entry_safe(rec, n, &head, list) {
+ 		mem = rec->mem;
+-		dma_free_coherent(0, mem.size,
++		dma_free_coherent(0, PAGE_ALIGN(mem.size),
+ 				  (void *)mem.cpu_addr, mem.phy_addr);
+ 		pr_debug("[FREE] freed paddr=0x%08X\n", mem.phy_addr);
+ 		list_del(&rec->list);

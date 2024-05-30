@@ -1,0 +1,105 @@
+Patch: misc-SDCaa01599_pm_unit_test_code_compiling_error.patch
+Fix compile errors and fix clocking issues
+========================================================================
+diff -uNpr misc.orig/module_test/Makefile misc/module_test/Makefile
+--- misc.orig/module_test/Makefile	2007-05-01 07:40:35.000000000 -0600
++++ misc/module_test/Makefile	2007-05-01 07:41:50.000000000 -0600
+@@ -12,7 +12,7 @@ temp_list = mxc_rtic_test.o
+ 
+ ifeq "$(CONFIG_MACH_MX27ADS)" "y"
+ CFLAGS += -DCONFIG_ARCH_MX27
+-module_list += mxc_udma_testdriver.o scc_test_driver.o mxc_pm_test.o mxc_i2c_testmod.o
++module_list += mxc_udma_testdriver.o mxc_pm_test.o scc_test_driver.o 
+ module_list += sahara_test_driver.o mxc_i2c_client.o
+ EXTRA_MODULES_BUILD= $(MAKE) -C $(CURDIR)/pmic_convity_test
+ sahara_test_driver-objs := km_test.o $(SAHARA_TEST_SOURCE)run_tests.o \
+diff -uNpr misc.orig/module_test/mxc_pm_test.c misc/module_test/mxc_pm_test.c
+--- misc.orig/module_test/mxc_pm_test.c	2007-05-01 07:40:35.000000000 -0600
++++ misc/module_test/mxc_pm_test.c	2007-05-01 07:46:17.000000000 -0600
+@@ -22,6 +22,7 @@
+ #include <linux/init.h>
+ #include <linux/delay.h>
+ #include <linux/interrupt.h>
++#include <linux/clk.h>
+ #include <asm/uaccess.h>
+ #include "../include/mxc_test.h"
+ /*
+@@ -29,12 +30,13 @@
+  */
+ #include <asm/arch/pmic_power.h>
+ #include <asm/arch/mxc_pm.h>
+-#include <asm/arch/clock.h>
+ #include <asm/arch/gpio.h>
+ 
+ ulong *gtempu32ptr;
+ static struct class *mxc_test_class;
+ 
++#define CLK_OUT "ckoh_clk"
++
+ static int mxc_test_open(struct inode *inode, struct file *filp)
+ {
+ 	return 0;
+@@ -88,21 +90,30 @@ static int mxc_call_dvfs(mxc_pm_test * a
+ 
+ static int mxc_call_ckohsel(mxc_pm_test * arg)
+ {
+-	int result = 0;
++	unsigned int rate;
++	struct clk *cko_clk;
++	struct clk *clk = NULL;
++
++	cko_clk = clk_get(NULL, CLK_OUT);
+ 
+ 	printk("============= CKOH SEL IOCTL ================\n");
+ 	switch (arg->ckoh) {
+ 	case CKOH_AP_SEL:
+-		mxc_set_clock_output(CKOH, CPU_CLK, 10);
++		clk = clk_get(NULL, "cpu_clk");
+ 		break;
+ 	case CKOH_AHB_SEL:
+-		mxc_set_clock_output(CKOH, AHB_CLK, 10);
++		clk = clk_get(NULL, "ahb_clk");
+ 		break;
+ 	case CKOH_IP_SEL:
+-		mxc_set_clock_output(CKOH, IPG_CLK, 1);
++		clk = clk_get(NULL, "ipg_clk");
+ 		break;
+ 	}
+-	printk("The result is %d \n", result);
++	clk_set_parent(cko_clk, clk);
++	rate = clk_round_rate(cko_clk, 70000000);
++	clk_set_rate(cko_clk, rate);
++	clk_enable(cko_clk);
++	printk("Clock output rate set to %u\n", rate);
++
+ 	return 0;
+ }
+ 
+diff -uNpr misc.orig/test/mxc_pm_test/mxc_pm_test.c misc/test/mxc_pm_test/mxc_pm_test.c
+--- misc.orig/test/mxc_pm_test/mxc_pm_test.c	2007-05-01 07:40:35.000000000 -0600
++++ misc/test/mxc_pm_test/mxc_pm_test.c	2007-05-01 08:07:11.000000000 -0600
+@@ -21,7 +21,7 @@
+ #include <limits.h>
+ #include "mxc_test.h"
+ 
+-#include <asm-arm/arch-mxc/mxc_pm.h>
++#include <asm/arch/mxc_pm.h>
+ 
+ #ifdef CONFIG_MACH_MX31ADS
+ int op_points[] = { 532, 532, 266, 133, 0 };
+@@ -35,7 +35,6 @@ int main(int argc, char **argv)
+ {
+         mxc_pm_test pm_test;
+         int fp, option;
+-
+        	int op_pt_ctr, random_op_pt, seed;
+         int point3, point2, point1, point0, new_op_point;
+         int pctr0, pctr1, pctr2, pctr3, i;
+@@ -159,7 +158,6 @@ int main(int argc, char **argv)
+                 ioctl(fp, MXCTEST_PM_INT_OR_PLL, &pm_test);
+                 break;
+ 
+-
+ #if defined(CONFIG_MACH_MX31ADS) || defined(CONFIG_MACH_MX27ADS)
+         case 4:
+                 printf("1. WAIT mode \n");

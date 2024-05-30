@@ -1,0 +1,11 @@
+#
+# Makefile for USB_DECT
+#
+
+CFLAGS_dectusb_audio.o  = -I$(TOPDIR)/drivers/usb/dect_sagem -I$(TOPDIR)/sound/arm/bridge/
+obj-$(CONFIG_USB_DECT)	+= dectusb_audio.o dectusb_command.o
+
+
+#ifeq ($(CONFIG_USB_DEBUG),y)
+#-EXTRA_CFLAGS += -DDEBUG
+#endif

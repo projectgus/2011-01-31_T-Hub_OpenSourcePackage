@@ -1,0 +1,376 @@
+CR: TLSbo86458
+Patch name: TLSbo86458_FIX_RNG_DOXYGEN_WARNINGS.patch
+Date: Thu Mar 8 20:40:18 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: Fixing doxygen warning for RNG module.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_driver.h linux-2.6.19.2/drivers/mxc/security/rng/include/rng_driver.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_driver.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/rng_driver.h	2007-04-25 17:38:54.000000000 -0600
+@@ -31,6 +31,7 @@
+  *
+  * @brief Header file to use the RNG driver.
+  *
++ *  @ingroup RNG
+  */
+ 
+ #if defined(FSL_HAVE_RNGA)
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_internals.h linux-2.6.19.2/drivers/mxc/security/rng/include/rng_internals.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_internals.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/rng_internals.h	2007-04-25 17:38:54.000000000 -0600
+@@ -24,6 +24,7 @@
+  *
+  *  @li Some sort of platform flag.  (FSL_HAVE_RNGA or FSL_HAVE_RNGC)
+  *
++ *  @ingroup RNG
+  */
+ 
+ #include "portable_os.h"
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_driver.h linux-2.6.19.2/drivers/mxc/security/rng/include/shw_driver.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_driver.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/shw_driver.h	2007-04-25 17:38:54.000000000 -0600
+@@ -28,7 +28,7 @@
+ #include "../../sahara2/include/fsl_platform.h"
+ 
+ /*! @file shw_driver.h
+- *
++
+  * @brief Header file to use the SHW driver.
+  *
+  * The SHW driver is used in two modes: By a user, from the FSL SHW API in user
+@@ -38,6 +38,7 @@
+  *
+  * Testing is performed by using the apitest and kernel api test routines
+  * developed for the Sahara2 driver.
++ *  @ingroup RNG
+  */
+ 
+ /*! Perform a security function.  */
+@@ -633,9 +634,9 @@ static fsl_shw_uco_t *user_list;
+  * Get FSL SHW API version
+  *
+  * @param      pcobject  The Platform Capababilities Object to query.
+- * @param[out] pcmajor   A pointer to where the major version
++ * @param pcmajor   A pointer to where the major version
+  *                       of the API is to be stored.
+- * @param[out] pcminor   A pointer to where the minor version
++ * @param pcminor   A pointer to where the minor version
+  *                       of the API is to be stored.
+  */
+ #define fsl_shw_pco_get_version(pcobject, pcmajor, pcminor)                   \
+@@ -648,9 +649,9 @@ do {                                    
+  * Get underlying driver version.
+  *
+  * @param      pcobject  The Platform Capababilities Object to query.
+- * @param[out] pcmajor   A pointer to where the major version
++ * @param      pcmajor   A pointer to where the major version
+  *                       of the driver is to be stored.
+- * @param[out] pcminor   A pointer to where the minor version
++ * @param      pcminor   A pointer to where the minor version
+  *                       of the driver is to be stored.
+  */
+ #define fsl_shw_pco_get_driver_version(pcobject, pcmajor, pcminor)            \
+@@ -663,9 +664,9 @@ do {                                    
+  * Get list of symmetric algorithms supported.
+  *
+  * @param pcobject           The Platform Capababilities Object to query.
+- * @param[out] pcalgorithms  A pointer to where to store the location of
++ * @param  pcalgorithms  A pointer to where to store the location of
+  *                           the list of algorithms.
+- * @param[out] pcacount      A pointer to where to store the number of
++ * @param  pcacount      A pointer to where to store the number of
+  *                           algorithms in the list at @a algorithms.
+  */
+ #define fsl_shw_pco_get_sym_algorithms(pcobject, pcalgorithms, pcacount)      \
+@@ -678,9 +679,9 @@ do {                                    
+  * Get list of symmetric modes supported.
+  *
+  * @param pcobject        The Platform Capababilities Object to query.
+- * @param[out] gsmodes    A pointer to where to store the location of
++ * @param gsmodes    A pointer to where to store the location of
+  *                        the list of modes.
+- * @param[out] gsacount   A pointer to where to store the number of
++ * @param gsacount   A pointer to where to store the number of
+  *                        algorithms in the list at @a modes.
+  */
+ #define fsl_shw_pco_get_sym_modes(pcobject, gsmodes, gsacount)                \
+@@ -692,10 +693,10 @@ do {                                    
+ /*!
+  * Get list of hash algorithms supported.
+  *
+- * @param pcobject           The Platform Capababilities Object to query.
+- * @param[out] gsalgorithms  A pointer which will be set to the list of
++ * @param    pcobject        The Platform Capababilities Object to query.
++ * @param    gsalgorithms    A pointer which will be set to the list of
+  *                           algorithms.
+- * @param[out] gsacount      The number of algorithms in the list at @a
++ * @param    gsacount        The number of algorithms in the list at @a
+  *                           algorithms.
+  */
+ #define fsl_shw_pco_get_hash_algorithms(pcobject, gsalgorithms, gsacount)     \
+@@ -943,7 +944,7 @@ do {                                    
+  * Extract the algorithm from a key object.
+  *
+  * @param      skobject     The Key Object to be queried.
+- * @param[out] skalgorithm  A pointer to the location to store the algorithm.
++ * @param skalgorithm  A pointer to the location to store the algorithm.
+  */
+ #define fsl_shw_sko_get_algorithm(skobject, skalgorithm)                      \
+        *(skalgorithm) = (skobject)->algorithm
+@@ -1047,11 +1048,11 @@ do {                                    
+  *
+  * The algorithm must have already been specified.  See #fsl_shw_hco_init().
+  *
+- * @param      hcobject   The hash context to query.
+- * @param[out] hccontext  Pointer to the location of @a length octets where to
++ * @param hcobject   The hash context to query.
++ * @param hccontext  Pointer to the location of @a length octets where to
+  *                        store a copy of the current value of the digest.
+- * @param      hcclength  Number of octets of hash value to copy.
+- * @param[out] hcmsglen   Pointer to the location to store the number of octets
++ * @param hcclength  Number of octets of hash value to copy.
++ * @param hcmsglen   Pointer to the location to store the number of octets
+  *                        already hashed.
+  */
+ #define fsl_shw_hco_get_digest(hcobject, hccontext, hcclength, hcmsglen)      \
+@@ -1070,7 +1071,7 @@ do {                                    
+  * Get the hash algorithm from the hash context object.
+  *
+  * @param      hcobject    The hash context to query.
+- * @param[out] hcalgorithm Pointer to where the algorithm is to be stored.
++ * @param hcalgorithm Pointer to where the algorithm is to be stored.
+  */
+ #define fsl_shw_hco_get_info(hcobject, hcalgorithm)                           \
+ do {                                                                          \
+@@ -1253,7 +1254,7 @@ do {                                    
+  * will be copied.
+  *
+  * @param      scobject  The context object to operate on.
+- * @param[out] sccontext Pointer to location where context will be stored.
++ * @param sccontext Pointer to location where context will be stored.
+  */
+ #define fsl_shw_scco_get_context(scobject, sccontext)                         \
+        memcpy(sccontext, (scobject)->context, (scobject)->block_size_bytes)
+@@ -1285,10 +1286,10 @@ do {                                    
+  * This will retrieve the Counter Value is for CTR mode.
+  *
+  * @param     scobject    The context object to query.
+- * @param[out] sccounter  Pointer to location to store the current counter
++ * @param sccounter  Pointer to location to store the current counter
+  *                        value.  The number of octets copied will be the
+  *                        block size for the algorithm.
+- * @param[out] scmodulus  Pointer to location to store the modulus.
++ * @param scmodulus  Pointer to location to store the modulus.
+  *
+  */
+ #define fsl_shw_scco_get_counter_info(scobject, sccounter, scmodulus)        \
+@@ -1488,7 +1489,7 @@ extern fsl_shw_pco_t *fsl_shw_get_capabi
+ extern fsl_shw_return_t fsl_shw_register_user(fsl_shw_uco_t * user_ctx);
+ 
+ /* REQ-FSL-SHW-PINTFC-COA-UCO */
+-/* REQ-FSLSHW-PINTFC-API-GEN-005 */
++/* REQ-FSLSHW-PINTFC-API-GEN-006 */
+ /*!
+  * Destroy the association between the the user and the provider of the API.
+  *
+@@ -1498,16 +1499,14 @@ extern fsl_shw_return_t fsl_shw_register
+  */
+ extern fsl_shw_return_t fsl_shw_deregister_user(fsl_shw_uco_t * user_ctx);
+ 
+-/* REQ-FSL-SHW-PINTFC-COA-UCO */
+-/* REQ-FSLSHW-PINTFC-API-GEN-006 */
+ /*!
+  * Retrieve results from earlier operations.
+  *
+  * @param         user_ctx     The user's context.
+  * @param         result_size  The number of array elements of @a results.
+- * @param[in,out] results      Pointer to first of the (array of) locations to
++ * @param results      Pointer to first of the (array of) locations to
+  *                             store results.
+- * @param[out]    result_count Pointer to store the number of results which
++ * @param    result_count Pointer to store the number of results which
+  *                             were returned.
+  *
+  * @return    A return code of type #fsl_shw_return_t.
+@@ -1539,12 +1538,12 @@ extern fsl_shw_return_t fsl_shw_get_resu
+  * modes.
+  *
+  * @param      user_ctx         A user context from #fsl_shw_register_user().
+- * @param[in,out] key_info      The information about the key to be which will
++ * @param      key_info         The information about the key to be which will
+  *                              be established.  In the create case, the key
+  *                              length must be set.
+  * @param      establish_type   How @a key will be interpreted to establish a
+  *                              key for use.
+- * @param key                   If @a establish_type is #FSL_KEY_WRAP_UNWRAP,
++ * @param      key              If @a establish_type is #FSL_KEY_WRAP_UNWRAP,
+  *                              this is the location of a wrapped key.  If
+  *                              @a establish_type is #FSL_KEY_WRAP_CREATE, this
+  *                              parameter can be @a NULL.  If @a establish_type
+@@ -1570,7 +1569,7 @@ extern fsl_shw_return_t fsl_shw_establis
+  *
+  * @param      user_ctx         A user context from #fsl_shw_register_user().
+  * @param      key_info         The information about the key to be deleted.
+- * @param[out] covered_key      The location to store the wrapped key.
++ * @param covered_key      The location to store the wrapped key.
+  *                              (This size is based upon the maximum key size
+  *                              of 32 octets).
+  *
+@@ -1634,10 +1633,10 @@ extern fsl_shw_return_t fsl_shw_release_
+  *
+  * @param         user_ctx  A user context from #fsl_shw_register_user().
+  * @param         key_info  Key and algorithm  being used for this operation.
+- * @param[in,out] sym_ctx   Info on cipher mode, state of the cipher.
++ * @param sym_ctx   Info on cipher mode, state of the cipher.
+  * @param         length   Length, in octets, of the pt (and ct).
+  * @param         pt       pointer to plaintext to be encrypted.
+- * @param[out]    ct       pointer to where to store the resulting ciphertext.
++ * @param    ct       pointer to where to store the resulting ciphertext.
+  *
+  * @return    A return code of type #fsl_shw_return_t.
+  *
+@@ -1688,10 +1687,10 @@ extern fsl_shw_return_t fsl_shw_symmetri
+  *
+  * @param      user_ctx  A user context from #fsl_shw_register_user().
+  * @param      key_info The key and algorithm being used in this operation.
+- * @param[in,out] sym_ctx Info on cipher mode, state of the cipher.
++ * @param sym_ctx Info on cipher mode, state of the cipher.
+  * @param      length   Length, in octets, of the ct (and pt).
+  * @param      ct       pointer to ciphertext to be decrypted.
+- * @param[out] pt       pointer to where to store the resulting plaintext.
++ * @param pt       pointer to where to store the resulting plaintext.
+  *
+  * @return    A return code of type #fsl_shw_return_t
+  *
+@@ -1739,10 +1738,10 @@ extern fsl_shw_return_t fsl_shw_symmetri
+  * 64 octets.
+  *
+  * @param      user_ctx  A user context from #fsl_shw_register_user().
+- * @param[in,out] hash_ctx Hashing algorithm and state of the cipher.
++ * @param hash_ctx Hashing algorithm and state of the cipher.
+  * @param      msg       Pointer to the data to be hashed.
+  * @param      length    Length, in octets, of the @a msg.
+- * @param[out] result    If not null, pointer to where to store the hash
++ * @param result    If not null, pointer to where to store the hash
+  *                       digest.
+  * @param      result_len Number of octets to store in @a result.
+  *
+@@ -1772,7 +1771,7 @@ extern fsl_shw_return_t fsl_shw_hash(fsl
+  * @param      user_ctx  A user context from #fsl_shw_register_user().
+  * @param      key_info  The key being used in this operation.  Key must be
+  *                       1 to 64 octets long.
+- * @param[in,out] hmac_ctx The context which controls, by its flags and
++ * @param hmac_ctx The context which controls, by its flags and
+  *                         algorithm, the operation of this function.
+  * @return    A return code of type #fsl_shw_return_t.
+  */
+@@ -1812,11 +1811,11 @@ extern fsl_shw_return_t fsl_shw_hmac_pre
+  *                       contexts.  If #FSL_HMAC_FLAGS_INIT is not set, this
+  *                       parameter is ignored.
+ 
+- * @param[in,out] hmac_ctx The context which controls, by its flags and
++ * @param hmac_ctx The context which controls, by its flags and
+  *                       algorithm, the operation of this function.
+  * @param      msg               Pointer to the message to be hashed.
+  * @param      length            Length, in octets, of the @a msg.
+- * @param[out] result            Pointer, of @a result_len octets, to where to
++ * @param result            Pointer, of @a result_len octets, to where to
+  *                               store the HMAC.
+  * @param      result_len        Length of @a result buffer.
+  *
+@@ -1836,7 +1835,7 @@ extern fsl_shw_return_t fsl_shw_hmac(fsl
+  *
+  * @param      user_ctx  A user context from #fsl_shw_register_user().
+  * @param      length    The number of octets of @a data being requested.
+- * @param[out] data      A pointer to a location of @a length octets to where
++ * @param data      A pointer to a location of @a length octets to where
+  *                       random data will be returned.
+  *
+  * @return    A return code of type #fsl_shw_return_t.
+@@ -1881,10 +1880,10 @@ extern fsl_shw_return_t fsl_shw_add_entr
+  * @param      auth_data        Data to be authenticated but not encrypted.
+  * @param      payload_length   Length, in octets, of @a payload.
+  * @param      payload          Pointer to the plaintext to be encrypted.
+- * @param[out] ct               Pointer to the where the encrypted @a payload
++ * @param ct               Pointer to the where the encrypted @a payload
+  *                              will be stored.  Must be @a payload_length
+  *                              octets long.
+- * @param[out] auth_value       Pointer to where the generated authentication
++ * @param auth_value       Pointer to where the generated authentication
+  *                              field will be stored. Must be as many octets as
+  *                              indicated by MAC length in the @a function_ctx.
+  * @return    A return code of type #fsl_shw_return_t.
+@@ -1926,7 +1925,7 @@ extern fsl_shw_return_t fsl_shw_gen_encr
+  *                              be authenticated.  This is the same data as the
+  *                              (output) @a auth_value argument to
+  *                              #fsl_shw_gen_encrypt().
+- * @param[out] payload          Pointer to where the plaintext resulting from
++ * @param payload          Pointer to where the plaintext resulting from
+  *                              the decryption will be stored.
+  *
+  * @return    A return code of type #fsl_shw_return_t.
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_internals.h linux-2.6.19.2/drivers/mxc/security/rng/include/shw_internals.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_internals.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/shw_internals.h	2007-04-25 17:38:54.000000000 -0600
+@@ -24,6 +24,7 @@
+  *
+  *  @li Some sort of platform flag.
+  *
++ *  @ingroup RNG
+  */
+ 
+ #include "portable_os.h"
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/rng_driver.c linux-2.6.19.2/drivers/mxc/security/rng/rng_driver.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/rng_driver.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/rng_driver.c	2007-04-25 17:38:54.000000000 -0600
+@@ -45,6 +45,7 @@
+  * In a debug configuration, it provides the following kernel functions:
+  * rng_return_t rng_read_register(uint32_t byte_offset, uint32_t* valuep);
+  * rng_return_t rng_write_register(uint32_t byte_offset, uint32_t value);
++ *  @ingroup RNG
+  */
+ 
+ #include "portable_os.h"
+@@ -408,10 +409,11 @@ static uint32_t finish_random(shw_queue_
+  *
+  * @param      user_ctx  A user context from #fsl_shw_register_user().
+  * @param      length    The number of octets of @a data being requested.
+- * @param[out] data      A pointer to a location of @a length octets to where
++ * @param data      A pointer to a location of @a length octets to where
+  *                       random data will be returned.
+  *
+- * @return    A return code of type #fsl_shw_return_t.
++ * @return     FSL_RETURN_NO_RESOURCE_S  A return code of type #fsl_shw_return_t.
++ *             FSL_RETURN_OK_S 
+  */
+ fsl_shw_return_t fsl_shw_get_random(fsl_shw_uco_t * user_ctx, uint32_t length,
+ 				    uint8_t * data)
+@@ -621,7 +623,7 @@ inline int rng_check_register_offset(uin
+  *
+  * This routine is only for checking accesses by other than this driver.
+  *
+- * @param[in]  offset   The (byte) offset within the RNG block
++ * @param  offset   The (byte) offset within the RNG block
+  *                      of the register to be accessed.  See
+  *                      @ref rngregs for meanings.
+  * @param access_write  0 for read, anything else for write
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/shw_driver.c linux-2.6.19.2/drivers/mxc/security/rng/shw_driver.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/shw_driver.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/shw_driver.c	2007-04-25 17:38:54.000000000 -0600
+@@ -55,6 +55,7 @@
+  * fsl_shw_deregister_user(), fsl_shw_get_capabilities(), and
+  * fsl_shw_get_results().  Other parts of the API are provided by other
+  * drivers, if available, to support the cryptographic functions.
++ *  @ingroup RNG
+  */
+ 
+ #include "portable_os.h"
+@@ -1130,7 +1131,7 @@ EXPORT_SYMBOL(fsl_shw_auth_decrypt);
+  * @param payload_length   Length in bytes of @a payload
+  * @param ct               The encrypted data
+  * @param auth_value       The authentication code to validate
+- * @param[out] payload     The location to store decrypted data
++ * @param payload     The location to store decrypted data
+  *
+  * @return    A return code of type #fsl_shw_return_t.
+  */

@@ -1,0 +1,79 @@
+Steve Papacharalambous <stevep@freescale.com> 13 October 2006
+Patch derived from:
+[snip]
+x-uunet-gateway: dfw7sosrv11.alter.net from bug-gnu-utils to gnu.utils.bug; Tue, 5 Feb 2002 19:10:26 GMT
+From: haible@ilog.fr (Bruno Haible)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15456.11499.81125.143014@honolulu.ilog.fr>
+Date: Tue, 5 Feb 2002 20:05:15 +0100
+Subject: Re: libtool 1.4.2 (gettext 0.11): Relinking fails when DESTDIR set
+References: <Pine.GSO.3.96.1020205182957.9674L-100000@delta.ds2.pg.gda.pl>
+X-Mailer: VM 6.72 under 21.1 (patch 8) "Bryce Canyon" XEmacs Lucid
+Approved: bug-gnu-utils-request@mail.gnu.org
+Newsgroups: gnu.utils.bug
+Sender: bug-gnu-utils-request@mail.gnu.org
+Lines: 92
+
+2002-02-02  Bruno Haible  <bruno@clisp.org>
+2004-01-38  Stuart Hughes <stuarth@freescale.com>
+
+ * ltmain.sh: Add DESTDIR support on ELF systems.
+[/snip]
+
+Ported to gettext-0.15 by Steve Papacharalambous <stevep@freescale.com>
+diff --exclude CVS -uNr gettext-0.15/build-aux/ltmain.sh gettext-0.15.modified/build-aux/ltmain.sh
+--- gettext-0.15/build-aux/ltmain.sh	Mon Dec 19 10:56:17 2005
++++ gettext-0.15.modified/build-aux/ltmain.sh	Fri Oct 13 14:09:21 2006
+@@ -2765,7 +2765,11 @@
+ 	      fi
+ 	    else
+ 	      # We cannot seem to hardcode it, guess we'll fake it.
+-	      add_dir="-L$libdir"
++             if test "X$installed" = Xyes; then
++               add_dir="-L$libdir"
++             else
++               add_dir="-L$DESTDIR$libdir"
++             fi
+ 	      # Try looking first in the location we're being installed to.
+ 	      if test -n "$inst_prefix_dir"; then
+ 		case $libdir in
+@@ -5896,12 +5900,21 @@
+ 	esac
+ 
+ 	# Add the libdir to current_libdirs if it is the destination.
++        DESTDIR=
+ 	if test "X$destdir" = "X$libdir"; then
+ 	  case "$current_libdirs " in
+ 	  *" $libdir "*) ;;
+ 	  *) current_libdirs="$current_libdirs $libdir" ;;
+ 	  esac
+ 	else
++         case "$destdir" in
++           *"$libdir")
++             DESTDIR=`$echo "$destdir" | sed -e 's!'"$libdir"'$!!'`
++             if test "X$destdir" != "X$DESTDIR$libdir"; then
++               DESTDIR=
++             fi
++             ;;
++         esac
+ 	  # Note the libdir as a future libdir.
+ 	  case "$future_libdirs " in
+ 	  *" $libdir "*) ;;
+@@ -5936,6 +5949,7 @@
+ 	  fi
+ 
+ 	  $echo "$modename: warning: relinking \`$file'" 1>&2
++	  export DESTDIR
+ 	  $show "$relink_command"
+ 	  if $run eval "$relink_command"; then :
+ 	  else
+@@ -5943,6 +5957,7 @@
+ 	    exit $EXIT_FAILURE
+ 	  fi
+ 	fi
++	unset DESTDIR
+ 
+ 	# See the names of the shared library.
+ 	set dummy $library_names

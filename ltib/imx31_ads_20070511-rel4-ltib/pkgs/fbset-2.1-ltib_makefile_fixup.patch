@@ -1,0 +1,46 @@
+diff --exclude CVS -uNr fbset-2.1/Makefile fbset-2.1.modified/Makefile
+--- fbset-2.1/Makefile	1999-01-17 13:15:46.000000000 -0600
++++ fbset-2.1.modified/Makefile	2006-09-08 13:56:51.000000000 -0500
+@@ -5,17 +5,17 @@
+ CC =		gcc -Wall -O2 -I.
+ BISON =		bison -d
+ FLEX =		flex
+-INSTALL =	install
++INSTALL =	install -D
+ RM =		rm -f
+ 
+ All:		fbset
+ 
+-
+ fbset:		fbset.o modes.tab.o lex.yy.o
+ 
+ fbset.o:	fbset.c fbset.h fb.h
+ modes.tab.o:	modes.tab.c fbset.h fb.h
+ lex.yy.o:	lex.yy.c fbset.h modes.tab.h
++modes.tab.h:	modes.tab.c
+ 
+ lex.yy.c:	modes.l
+ 		$(FLEX) modes.l
+@@ -24,18 +24,10 @@
+ 		$(BISON) modes.y
+ 
+ install:	fbset
+-		if [ -f /sbin/fbset ]; then rm /sbin/fbset; fi
+-		$(INSTALL) fbset /usr/sbin
+-		$(INSTALL) fbset.8 /usr/man/man8
+-		$(INSTALL) fb.modes.5 /usr/man/man5
+-		if [ ! -c /dev/fb0 ]; then mknod /dev/fb0 c 29 0; fi
+-		if [ ! -c /dev/fb1 ]; then mknod /dev/fb1 c 29 32; fi
+-		if [ ! -c /dev/fb2 ]; then mknod /dev/fb2 c 29 64; fi
+-		if [ ! -c /dev/fb3 ]; then mknod /dev/fb3 c 29 96; fi
+-		if [ ! -c /dev/fb4 ]; then mknod /dev/fb4 c 29 128; fi
+-		if [ ! -c /dev/fb5 ]; then mknod /dev/fb5 c 29 160; fi
+-		if [ ! -c /dev/fb6 ]; then mknod /dev/fb6 c 29 192; fi
+-		if [ ! -c /dev/fb7 ]; then mknod /dev/fb7 c 29 224; fi
++		if [ -f $(DESTDIR)/sbin/fbset ]; then rm $(DESTDIR)/sbin/fbset; fi
++		$(INSTALL) fbset $(DESTDIR)/usr/sbin/fbset
++
++distclean:	clean
+ 
+ clean:
+ 		$(RM) *.o fbset lex.yy.c modes.tab.c modes.tab.h

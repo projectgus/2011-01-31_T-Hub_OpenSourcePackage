@@ -1,0 +1,111 @@
+diff -ruNp udev-070.orig/udevsynthesize.c udev-070/udevsynthesize.c
+--- udev-070.orig/udevsynthesize.c	2005-09-27 21:24:10.000000000 +0200
++++ udev-070/udevsynthesize.c	2005-09-27 21:24:04.000000000 +0200
+@@ -372,6 +372,16 @@ static int udev_scan_class(void)
+ 			dirname2[sizeof(dirname2)-1] = '\0';
+ 			devt = read_devt(dirname2);
+ 			device = device_create(dirname2, dent->d_name, devt);
++
++			if (strcmp(dent->d_name, "net") == 0 ||
++			    strcmp(dent->d_name, "bluetooth") == 0) {
++				add_env_key(device, "INTERFACE", dent2->d_name);
++			} else if (strcmp(dent->d_name, "pcmcia_socket") == 0 &&
++				   strlen(dent->d_name) > 14) {
++				add_env_key(device, "SOCKET_NO",
++					dent2->d_name + 14);
++			}
++
+ 			device_list_insert(&device_list, device);
+ 		}
+ 		closedir(dir2);
+@@ -462,9 +472,8 @@ static int pci_handler(struct device *de
+ 	snprintf(path, sizeof(path), "%s%s", sysfs_path, device->path);
+ 	path[sizeof(path)-1] = '\0';
+ 
+-	if (read_file(path, "modalias", value, sizeof(value)) < 5)
+-		return -1;
+-	add_env_key(device, "MODALIAS", value);
++	if (read_file(path, "modalias", value, sizeof(value)) > 0)
++		add_env_key(device, "MODALIAS", value);
+ 
+ 	name = strrchr(device->path, '/');
+ 	if (name)
+@@ -505,9 +514,13 @@ static int usb_handler(struct device *de
+ 	snprintf(path, sizeof(path), "%s%s", sysfs_path, device->path);
+ 	path[sizeof(path)-1] = '\0';
+ 
+-	if (read_file(path, "modalias", value, sizeof(value)) < 5)
+-		return -1;
+-	add_env_key(device, "MODALIAS", value);
++	/* device events have : in their directory name */
++	pos = strrchr(path, '/');
++	if (!strchr(pos, ':'))
++		return 0;	/* and do not have other variables */
++
++	if (read_file(path, "modalias", value, sizeof(value)) > 0)
++		add_env_key(device, "MODALIAS", value);
+ 
+ 	if (read_file(path, "bInterfaceClass", str1, sizeof(str1)) > 0 &&
+ 	    read_file(path, "bInterfaceSubClass", str2, sizeof(str2)) > 0 &&
+@@ -520,7 +533,7 @@ static int usb_handler(struct device *de
+ 		add_env_key(device, "INTERFACE", value);
+ 	}
+ 
+-	pos = strrchr(path, '/');
++	/* move to the parent directory */
+ 	pos[0] = '\0';
+ 
+ 	if (read_file(path, "idVendor", str1, sizeof(str1)) > 0 &&
+@@ -545,6 +558,16 @@ static int usb_handler(struct device *de
+ 		add_env_key(device, "TYPE", value);
+ 	}
+ 
++	if (read_file(path, "devnum", str2, sizeof(str2)) > 0) {
++		pos = strrchr(path, 'b');
++		int1 = (int) strtol(pos + 1, NULL, 16);
++		int2 = (int) strtol(str2, NULL, 16);
++		snprintf(value, sizeof(value),
++			"/proc/bus/usb/%03d/%03d", int1, int2);
++		path[sizeof(value)-1] = '\0';
++		add_env_key(device, "DEVICE", value);
++	}
++
+ 	return 0;
+ }
+ 
+@@ -556,9 +579,8 @@ static int serio_handler(struct device *
+ 	snprintf(path, sizeof(path), "%s%s", sysfs_path, device->path);
+ 	path[sizeof(path)-1] = '\0';
+ 
+-	if (read_file(path, "modalias", value, sizeof(value)) < 5)
+-		return -1;
+-	add_env_key(device, "MODALIAS", value);
++	if (read_file(path, "modalias", value, sizeof(value)) > 0)
++		add_env_key(device, "MODALIAS", value);
+ 
+ 	if (read_file(path, "id/type", value, sizeof(value)) > 0)
+ 		add_env_key(device, "SERIO_TYPE", value);
+@@ -583,9 +605,8 @@ static int modalias_handler(struct devic
+ 	snprintf(path, sizeof(path), "%s%s", sysfs_path, device->path);
+ 	path[sizeof(path)-1] = '\0';
+ 
+-	if (read_file(path, "modalias", value, sizeof(value)) < 5)
+-		return -1;
+-	add_env_key(device, "MODALIAS", value);
++	if (read_file(path, "modalias", value, sizeof(value)) > 0)
++		add_env_key(device, "MODALIAS", value);
+ 
+ 	return 0;
+ }
+@@ -656,10 +677,8 @@ static int udev_scan_devices(void)
+ 			udev_scan_bus("usb", usb_handler);
+ 		else if (strcmp(dent->d_name, "serio") == 0)
+ 			udev_scan_bus("serio", serio_handler);
+-		else if (strcmp(dent->d_name, "pcmcia") == 0)
+-			udev_scan_bus("pcmcia", modalias_handler);
+ 		else
+-			udev_scan_bus(dent->d_name, NULL);
++			udev_scan_bus(dent->d_name, modalias_handler);
+ 	}
+ 	closedir(dir);
+ 

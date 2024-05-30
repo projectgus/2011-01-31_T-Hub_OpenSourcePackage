@@ -1,0 +1,18 @@
+TLSbo89863_V4L2_FB_right.patch
+
+Display video into right framebuffer in i.MX27 V4L2 output driver
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/output/mx27_pp.c linux-2.6.19.2/drivers/media/video/mxc/output/mx27_pp.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/output/mx27_pp.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/output/mx27_pp.c	2007-04-25 17:37:18.000000000 -0600
+@@ -284,8 +284,9 @@ static int set_output_addr(emma_pp_cfg *
+ 		cfg->out_stride = vout->crop_current.width;
+ 		return 0;
+ 	} else {
+-		struct fb_info *fb = registered_fb[0];
++		struct fb_info *fb;
+ 
++		fb = registered_fb[vout->output_fb_num[vout->cur_disp_output]];
+ 		if (!fb)
+ 			return -1;
+ 

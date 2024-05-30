@@ -1,0 +1,167 @@
+comment 'Target System Configuration'
+
+menu "Options"
+
+config SYSCFG_HOSTNAME
+    default "freescale"
+    string "target hostname"
+    help
+       Set this to the value of the hostname for your target
+
+config SYSCFG_WANT_LOGIN_TTY
+    bool "boot up with a tty and login"
+    help
+        By default, the system boots to a shell prompt with no
+        login.  This session will be on the console without 
+        job control (see /etc/inittab entry: ::respawn:-/bin/sh)
+        If you want a boot up with a login prompt, you'll need to 
+        know your tty device as well as your baud rate
+
+config SYSCFG_LOGING_TTY
+    depends SYSCFG_WANT_LOGIN_TTY
+    string "Enter your inittab startup line"
+    default INITTAB_LINE
+    help
+       This will start the system with a login session.  The default
+       value is: "::respawn:/sbin/getty -L ttyS0 115200 vt100"
+       This may need changing if you use a different tty or baud
+       rate for your login terminal.
+       NOTE: if you get this wrong your system won't boot.  If this
+       happens, either correct this entry or turn off:
+       "boot up with a tty and login"
+
+config SYSCFG_MODLIST
+    default ""
+    string "load these modules at boot"
+    help
+       Enter a space separated list of module to load at boot time
+
+config SYSCFG_START_DEVFSD
+    bool "start devfsd"
+    default n if ! PKG_DEVFSD
+    default y if PKG_DEVFSD
+
+config SYSCFG_START_NETWORK
+    bool "start networking"
+    default y
+
+source ../../userspace/network.lkc
+
+config SYSCFG_SETTIME
+    bool "set the system time at startup"
+    default y
+
+config SYSCFG_NTP_SERVER
+    depends PKG_NTPCLIENT && SYSCFG_SETTIME && SYSCFG_START_NETWORK
+    default "ntp.cs.strath.ac.uk"
+    string "NTP server name/ipaddress"
+    help
+        Set this to the name of an accesible NTP server (for example
+        ntp.cs.strath.ac.uk).  This will be used to set the system time.
+        If you don't have an accesible NTP server available (e.g. firewall
+        issues etc), clear this entry
+
+config SYSCFG_START_SYSLOG
+    bool "start syslogd/klogd"
+    default y
+
+config SYSCFG_START_INETD
+    bool "start inetd"
+    default y
+
+config SYSCFG_INETD_ARGS
+    depends SYSCFG_START_INETD
+    default ""
+    string "Enter command line arguments for inetd startup"
+    help
+       These will be passed to inetd as command line arguments
+       when it is started.
+
+config SYSCFG_START_PORTMAP
+    depends PKG_PORTMAP
+    bool "start portmap"
+    default y
+
+config SYSCFG_START_DROPBEAR_SSH
+    depends PKG_DROPBEAR
+    bool "start dropbear ssh server"
+    default y
+
+config SYSCFG_START_BOA
+    depends PKG_BOA
+    bool "start boa (webserver)"
+    default y
+
+config SYSCFG_BOA_ARGS
+    depends SYSCFG_START_BOA
+    default "-c /etc"
+    string "command line arguments for boa"
+    help
+       These will be passed to boa as command line arguments.
+       The default is '-c /etc' and '-c /etc -e' for MMUless.
+
+config SYSCFG_START_SAMBA
+    depends PKG_SAMBA
+    bool "start samba file sharing (smbd and nmbd)"
+    default n
+
+config SYSCFG_SMBD_ARGS
+    depends SYSCFG_START_SAMBA
+    default "-s /etc/samba/smb.conf"
+    string "smbd command line arguments"
+    help
+       These will be passed to smbd as command line arguments.
+       The default is '-s /etc/smb/smb.conf'
+
+config SYSCFG_NMBD_ARGS
+    depends SYSCFG_START_SAMBA
+    default "-s /etc/samba/smb.conf"
+    string "nmbd command line arguments"
+    help
+       These will be passed to nmbd as command line arguments.
+       The default is '-s /etc/smb/smb.conf'
+
+config SYSCFG_START_DHCPD
+    depends PKG_DHCP && PKG_DHCP_WANT_SERVER
+    bool "start DHCP server"
+    default n
+    help
+        Before enabling the DHCP server, please check /etc/dhcpd.conf
+
+config SYSCFG_DHCP_ARG
+    depends SYSCFG_START_DHCPD
+    default "eth1"
+    string "DHCP deamon command line argument"
+    help
+       The command line argument string will be passed to dhcp start command.
+       The argument must be a single parameter specifying the interface to use
+       for DHCP.  The default is 'eth1'.
+
+if PKG_HARDWARETEST_IMX
+    config SYSCFG_START_HARDWARETEST_DPM
+        bool "Enable dynamic power management policies"
+endif
+
+if PKG_QTOPIA
+    config SYSCFG_START_QTOPIA
+        bool "start Qtopia"
+    help
+        Enable to start Qtopia.  The first time Qtopia runs it will
+        display welcome and calibration screens, then ask for timezone, etc.
+endif
+
+if PKG_PCMCIA_CS || PKG_PCMCIAUTILS
+    config SYSCFG_START_PCMCIA
+        bool "start PCMCIA"
+        default n
+    help
+        Load kernel modules and configure PCMCIA subsystem at boot time.
+endif
+
+if PKG_BLUEZ_UTILS
+    config SYSCFG_START_BLUETOOTH
+        bool "start Bluetooth daemons"
+        default n
+endif
+
+endmenu

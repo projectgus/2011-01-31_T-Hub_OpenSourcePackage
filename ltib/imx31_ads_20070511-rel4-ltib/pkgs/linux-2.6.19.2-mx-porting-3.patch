@@ -1,0 +1,1340 @@
+--- linux-2.6.19.2-mx.orig/arch/arm/mach-mx27/mx27ads.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mach-mx27/mx27ads.c	2007-01-19 17:19:23.000000000 -0700
+@@ -352,8 +352,7 @@ static u32 mxc_card_state_changed(u32 ma
+  * Interrupt handler for the expio (CPLD) to deal with interrupts from
+  * FEC, external UART, CS8900 Ethernet and SD cards, etc.
+  */
+-static void mxc_expio_irq_handler(u32 irq, struct irqdesc *desc,
+-				  struct pt_regs *regs)
++static void mxc_expio_irq_handler(u32 irq, struct irqdesc *desc)
+ {
+ 	u32 imr, card_int, i;
+ 	u32 int_valid;
+@@ -398,7 +397,7 @@ static void mxc_expio_irq_handler(u32 ir
+ 			       expio_irq);
+ 			BUG();	/* oops */
+ 		}
+-		d->handle_irq(expio_irq, d, regs);
++		d->handle_irq(expio_irq, d);
+ 	}
+ 
+       out:
+@@ -408,8 +407,7 @@ static void mxc_expio_irq_handler(u32 ir
+ 
+ #ifdef MXC_CARD_DEBUG
+ 
+-static irqreturn_t mxc_sd_test_handler(int irq, void *desc,
+-				       struct pt_regs *regs)
++static irqreturn_t mxc_sd_test_handler(int irq, void *desc)
+ {
+ 	int s = -1;
+ 
+--- linux-2.6.19.2-mx.orig/arch/arm/mach-mx27/time.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mach-mx27/time.c	2007-01-19 17:19:23.000000000 -0700
+@@ -62,20 +62,17 @@
+  *
+  * @param  irq          GPT interrupt source number (not used)
+  * @param  dev_id       this parameter is not used
+- * @param  regs         pointer to a structure containing the processor
+- *                      registers and state prior to servicing the interrupt
+  * @return always returns \b IRQ_HANDLED as defined in
+  *         include/linux/interrupt.h.
+  */
+-static irqreturn_t mxc_timer_interrupt(int irq, void *dev_id,
+-				       struct pt_regs *regs)
++static irqreturn_t mxc_timer_interrupt(int irq, void *dev_id)
+ {
+ 	unsigned int next_match;
+ 
+ 	write_seqlock(&xtime_lock);
+ 
+ 	do {
+-		timer_tick(regs);
++		timer_tick();
+ 		next_match = __raw_readl(MXC_GPT_TCMP_TICK) + LATCH;
+ 		__raw_writel(GPT_TSTAT_COMP, MXC_GPT_TSTAT_TICK);
+ 		__raw_writel(next_match, MXC_GPT_TCMP_TICK);
+--- linux-2.6.19.2-mx.orig/arch/arm/mach-mx27/usb.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mach-mx27/usb.c	2007-01-19 17:19:23.000000000 -0700
+@@ -29,7 +29,6 @@
+  * Include files
+  */
+ 
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/types.h>
+@@ -37,7 +36,7 @@
+ #include <linux/init.h>
+ #include <linux/err.h>
+ #include <linux/platform_device.h>
+-#include <linux/usb_otg.h>
++#include <linux/usb/otg.h>
+ #include <linux/delay.h>
+ 
+ #include <asm/io.h>
+@@ -751,7 +750,7 @@ static struct platform_device *host_pdev
+ 	pdev = platform_device_register_simple("fsl-ehci",
+ 					       instance_id, res, n_res);
+ 	if (IS_ERR(pdev)) {
+-		pr_debug("can't register %s Host, %d\n",
++		pr_debug("can't register %s Host, %ld\n",
+ 			 config->name, PTR_ERR(pdev));
+ 		return NULL;
+ 	}
+--- linux-2.6.19.2-mx.orig/arch/arm/mach-mx3/mx31ads.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mach-mx3/mx31ads.c	2007-01-19 17:19:23.000000000 -0700
+@@ -346,8 +346,7 @@ static inline void mxc_init_fb(void)
+ }
+ #endif
+ 
+-static void mxc_expio_irq_handler(u32 irq, struct irqdesc *desc,
+-				  struct pt_regs *regs)
++static void mxc_expio_irq_handler(u32 irq, struct irqdesc *desc)
+ {
+ 	u32 imr_val;
+ 	u32 int_valid;
+@@ -375,7 +374,7 @@ static void mxc_expio_irq_handler(u32 ir
+ 			       expio_irq);
+ 			BUG();	/* oops */
+ 		}
+-		d->handle_irq(expio_irq, d, regs);
++		d->handle_irq(expio_irq, d);
+ 	}
+ 
+       out:
+--- linux-2.6.19.2-mx.orig/arch/arm/mach-mx3/mx31ads_gpio.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mach-mx3/mx31ads_gpio.c	2007-01-19 17:19:23.000000000 -0700
+@@ -1138,7 +1138,7 @@ EXPORT_SYMBOL(gpio_ata_inactive);
+  *          otherwise returns an error code.
+  */
+ int extuart_intr_setup(unsigned int port, unsigned int irq,
+-		       irqreturn_t(*handler) (int, void *, struct pt_regs *),
++		       irqreturn_t(*handler) (int, void *),
+ 		       unsigned long irq_flags, const char *devname,
+ 		       void *dev_id)
+ {
+--- linux-2.6.19.2-mx.orig/arch/arm/mach-mx3/time.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mach-mx3/time.c	2007-01-19 17:19:23.000000000 -0700
+@@ -142,13 +142,10 @@ static int g_wdog_count = 0;
+  *
+  * @param  irq          GPT interrupt source number (not used)
+  * @param  dev_id       this parameter is not used
+- * @param  regs         pointer to a structure containing the processor
+- *                      registers and state prior to servicing the interrupt
+  * @return always returns \b IRQ_HANDLED as defined in
+  *         include/linux/interrupt.h.
+  */
+-static irqreturn_t mxc_timer_interrupt(int irq, void *dev_id,
+-				       struct pt_regs *regs)
++static irqreturn_t mxc_timer_interrupt(int irq, void *dev_id)
+ {
+ 	unsigned int next_match;
+ 
+@@ -166,7 +163,7 @@ static irqreturn_t mxc_timer_interrupt(i
+ #else
+ 			kick_wd();
+ #endif				/* WDOG_SERVICE_PERIOD */
+-			timer_tick(regs);
++			timer_tick();
+ 			next_match = __raw_readl(MXC_GPT_GPTOCR1) + LATCH;
+ 			__raw_writel(GPTSR_OF1, MXC_GPT_GPTSR);
+ 			__raw_writel(next_match, MXC_GPT_GPTOCR1);
+--- linux-2.6.19.2-mx.orig/arch/arm/mach-mx3/usb.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mach-mx3/usb.c	2007-01-19 17:19:23.000000000 -0700
+@@ -29,7 +29,6 @@
+  *Include files
+  */
+ 
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/types.h>
+@@ -37,7 +36,7 @@
+ #include <linux/init.h>
+ #include <linux/err.h>
+ #include <linux/platform_device.h>
+-#include <linux/usb_otg.h>
++#include <linux/usb/otg.h>
+ #include <linux/delay.h>
+ 
+ #include <asm/io.h>
+--- linux-2.6.19.2-mx.orig/arch/arm/plat-mxc/dma_mx2.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/plat-mxc/dma_mx2.c	2007-01-19 17:19:23.000000000 -0700
+@@ -388,7 +388,7 @@ static void setup_dmac(mxc_dma_channel_t
+ /*!
+  * @brief interrupt handler of dma channel
+  */
+-static irqreturn_t dma_irq_handler(int irq, void *dev_id, struct pt_regs *reg)
++static irqreturn_t dma_irq_handler(int irq, void *dev_id)
+ {
+ 	mxc_dma_channel_t *dma = (mxc_dma_channel_t *) dev_id;
+ 	mx2_dma_priv_t *priv = (mx2_dma_priv_t *) (dma ? dma->private : NULL);
+--- linux-2.6.19.2-mx.orig/arch/arm/plat-mxc/gpio.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/plat-mxc/gpio.c	2007-01-19 17:19:23.000000000 -0700
+@@ -313,8 +313,7 @@ void mxc_free_gpio(iomux_pin_name_t pin)
+  * line's interrupt handler has been run, we may miss some nested
+  * interrupts.
+  */
+-static void mxc_gpio_irq_handler(u32 irq, struct irq_desc *desc,
+-				 struct pt_regs *regs)
++static void mxc_gpio_irq_handler(u32 irq, struct irq_desc *desc)
+ {
+ 	u32 isr_reg = 0, imr_reg = 0, imr_val;
+ 	u32 int_valid;
+@@ -346,13 +345,12 @@ static void mxc_gpio_irq_handler(u32 irq
+ 			       port->num, gpio_irq);
+ 			BUG();	/* oops */
+ 		}
+-		d->handle_irq(gpio_irq, d, regs);
++		d->handle_irq(gpio_irq, d);
+ 	}
+ }
+ 
+ #ifdef MXC_MUX_GPIO_INTERRUPTS
+-static void mxc_gpio_mux_irq_handler(u32 irq, struct irq_desc *desc,
+-				     struct pt_regs *regs)
++static void mxc_gpio_mux_irq_handler(u32 irq, struct irq_desc *desc)
+ {
+ 	int i;
+ 	u32 isr_reg = 0, imr_reg = 0, imr_val;
+@@ -369,7 +367,7 @@ static void mxc_gpio_mux_irq_handler(u32
+ 
+ 		if (int_valid) {
+ 			set_irq_data(irq, (void *)port);
+-			mxc_gpio_irq_handler(irq, desc, regs);
++			mxc_gpio_irq_handler(irq, desc);
+ 		}
+ 	}
+ }
+--- linux-2.6.19.2-mx.orig/arch/arm/plat-mxc/sdma/sdma.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/plat-mxc/sdma/sdma.c	2007-01-19 17:19:23.000000000 -0700
+@@ -155,11 +155,9 @@ static void sdma_wakeup_channel(int chan
+  *
+  * @param   irq    the interrupt number
+  * @param   dev_id driver private data
+- * @param   regs   holds a snapshot of the processor's context before the
+- *                 processor entered the interrupt code
+  * @return the function returns \b IRQ_RETVAL(1) -  interrupt was handled
+  */
+-static irqreturn_t sdma_int_handler(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t sdma_int_handler(int irq, void *dev_id)
+ {
+ 	IRQ_Handler();
+ 	return IRQ_RETVAL(1);
+--- linux-2.6.19.2-mx.orig/drivers/char/mxc_rtc.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/char/mxc_rtc.c	2007-01-19 17:19:23.000000000 -0700
+@@ -206,14 +206,10 @@ static int rtc_update_alarm(struct rtc_t
+  *
+  * @param  irq          RTC IRQ number
+  * @param  dev_id       device ID which is not used
+- * @param  regs         pointer to a structure containing the processor
+- *                      registers and state prior to servicing the interrupt.
+- *                      It is not used in this function.
+  *
+  * @return IRQ_HANDLED as defined in the include/linux/interrupt.h file.
+  */
+-static irqreturn_t mxc_rtc_interrupt(int irq, void *dev_id,
+-				     struct pt_regs *regs)
++static irqreturn_t mxc_rtc_interrupt(int irq, void *dev_id)
+ {
+ 	u32 status;
+ 	u32 events = 0;
+--- linux-2.6.19.2-mx.orig/drivers/i2c/busses/mxc_i2c.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/i2c/busses/mxc_i2c.c	2007-01-19 17:19:23.000000000 -0700
+@@ -546,12 +546,10 @@ static struct i2c_algorithm mxc_i2c_algo
+  * completion. Also sets a flag if bus arbitration is lost.
+  * @param   irq    the interrupt number
+  * @param   dev_id driver private data
+- * @param   regs   holds a snapshot of the processor's context before the
+- *                 processor entered the interrupt code
+  *
+  * @return  The function returns \b IRQ_HANDLED.
+  */
+-static irqreturn_t mxc_i2c_handler(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxc_i2c_handler(int irq, void *dev_id)
+ {
+ 	mxc_i2c_device *dev = dev_id;
+ 	volatile unsigned int sr, cr;
+--- linux-2.6.19.2-mx.orig/drivers/input/keyboard/mxc_keyb.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/input/keyboard/mxc_keyb.c	2007-01-19 17:19:23.000000000 -0700
+@@ -599,15 +599,12 @@ static void mxc_kpp_handle_timer(unsigne
+  *
+  * @param   irq      The Interrupt number
+  * @param   dev_id   Driver private data
+- * @param   regs     Holds a snapshot of the processors context before the
+- *                   processor entered the interrupt code
+  *
+  * @result    The function returns \b IRQ_RETVAL(1) if interrupt was handled,
+  *            returns \b IRQ_RETVAL(0) if the interrupt was not handled.
+  *            \b IRQ_RETVAL is defined in include/linux/interrupt.h.
+  */
+-static irqreturn_t mxc_kpp_interrupt(int irq, void *dev_id,
+-				     struct pt_regs *regs)
++static irqreturn_t mxc_kpp_interrupt(int irq, void *dev_id)
+ {
+ 	unsigned short reg_val;
+ 
+--- linux-2.6.19.2-mx.orig/drivers/input/touchscreen/mxc_ts.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/input/touchscreen/mxc_ts.c	2007-01-19 17:19:23.000000000 -0700
+@@ -70,7 +70,6 @@ static int __init mxc_ts_init(void)
+ 		return -ENOMEM;
+ 	}
+ 
+-	init_input_dev(mxc_inputdev);
+ 	mxc_inputdev->name = MXC_TS_NAME;
+ 	mxc_inputdev->evbit[0] = BIT(EV_KEY) | BIT(EV_ABS);
+ 	mxc_inputdev->keybit[LONG(BTN_TOUCH)] |= BIT(BTN_TOUCH);
+--- linux-2.6.19.2-mx.orig/drivers/media/video/mxc/capture/ipu_prp_enc.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/media/video/mxc/capture/ipu_prp_enc.c	2007-01-19 17:19:23.000000000 -0700
+@@ -35,11 +35,10 @@ static ipu_rotate_mode_t grotation = IPU
+  *
+  * @param irq       int irq line
+  * @param dev_id    void * device id
+- * @param regs      struct pt_regs *
+  *
+  * @return status   IRQ_HANDLED for handled
+  */
+-static irqreturn_t prp_enc_callback(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t prp_enc_callback(int irq, void *dev_id)
+ {
+ 	cam_data *cam = (cam_data *) dev_id;
+ 
+--- linux-2.6.19.2-mx.orig/drivers/media/video/mxc/capture/ipu_prp_vf_sdc_bg.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/media/video/mxc/capture/ipu_prp_vf_sdc_bg.c	2007-01-19 17:19:23.000000000 -0700
+@@ -36,12 +36,11 @@ static int buffer_ready = 0;
+  *
+  * @param irq       int irq line
+  * @param dev_id    void * device id
+- * @param regs      struct pt_regs *
+  *
+  * @return status   IRQ_HANDLED for handled
+  */
+ static irqreturn_t
+-prpvf_sdc_vsync_callback(int irq, void *dev_id, struct pt_regs *regs)
++prpvf_sdc_vsync_callback(int irq, void *dev_id)
+ {
+ 	pr_debug("buffer_ready %d buffer_num %d\n", buffer_ready, buffer_num);
+ 	if (buffer_ready > 0) {
+@@ -57,12 +56,11 @@ prpvf_sdc_vsync_callback(int irq, void *
+  *
+  * @param irq       int irq line
+  * @param dev_id    void * device id
+- * @param regs      struct pt_regs *
+  *
+  * @return status   IRQ_HANDLED for handled
+  */
+ static irqreturn_t
+-prpvf_vf_eof_callback(int irq, void *dev_id, struct pt_regs *regs)
++prpvf_vf_eof_callback(int irq, void *dev_id)
+ {
+ 	pr_debug("buffer_ready %d buffer_num %d\n", buffer_ready, buffer_num);
+ 
+--- linux-2.6.19.2-mx.orig/drivers/media/video/mxc/capture/ipu_still.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/media/video/mxc/capture/ipu_still.c	2007-01-19 17:19:23.000000000 -0700
+@@ -34,12 +34,11 @@ static int callback_flag;
+  *
+  * @param irq       int irq line
+  * @param dev_id    void * device id
+- * @param regs      struct pt_regs *
+  *
+  * @return status   IRQ_HANDLED for handled
+  */
+ static irqreturn_t
+-prp_csi_eof_callback(int irq, void *dev_id, struct pt_regs *regs)
++prp_csi_eof_callback(int irq, void *dev_id)
+ {
+ 	if (callback_flag == 2) {
+ 		ipu_select_buffer(CSI_MEM, IPU_OUTPUT_BUFFER, 0);
+@@ -55,12 +54,11 @@ prp_csi_eof_callback(int irq, void *dev_
+  *
+  * @param irq       int irq line
+  * @param dev_id    void * device id
+- * @param regs      struct pt_regs *
+  *
+  * @return status   IRQ_HANDLED for handled
+  */
+ static irqreturn_t
+-prp_still_callback(int irq, void *dev_id, struct pt_regs *regs)
++prp_still_callback(int irq, void *dev_id)
+ {
+ 	cam_data *cam = (cam_data *) dev_id;
+ 
+--- linux-2.6.19.2-mx.orig/drivers/media/video/mxc/capture/mx27_csi.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/media/video/mxc/capture/mx27_csi.c	2007-01-19 17:19:23.000000000 -0700
+@@ -55,7 +55,7 @@ static void csihw_read_status(csi_status
+ 	cs->drdy = (__raw_readl(CSI_CSISR) & BIT_DRDY) ? 1 : 0;
+ }
+ 
+-static irqreturn_t csi_irq_handler(int irq, void *data, struct pt_regs *pt)
++static irqreturn_t csi_irq_handler(int irq, void *data)
+ {
+ 	csihw_read_status(&g_csi_status);
+ 
+--- linux-2.6.19.2-mx.orig/drivers/media/video/mxc/capture/mx27_prpsw.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/media/video/mxc/capture/mx27_prpsw.c	2007-01-19 17:19:23.000000000 -0700
+@@ -64,7 +64,7 @@ static int prp_vf_start(void *private);
+ static int prp_vf_stop(void *private);
+ static int prp_still_start(void *private);
+ static int prp_still_stop(void *private);
+-static irqreturn_t prp_isr(int irq, void *dev_id, struct pt_regs *regs);
++static irqreturn_t prp_isr(int irq, void *dev_id);
+ static void rotation(unsigned long private);
+ static int prp_resize_check_ch1(emma_prp_cfg * cfg);
+ static int prp_resize_check_ch2(emma_prp_cfg * cfg);
+@@ -271,7 +271,7 @@ static int prp_v4l2_cfg(emma_prp_cfg * c
+ /*!
+  * @brief PrP interrupt handler
+  */
+-static irqreturn_t prp_isr(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t prp_isr(int irq, void *dev_id)
+ {
+ 	int status;
+ 	cam_data *cam = (cam_data *) dev_id;
+--- linux-2.6.19.2-mx.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-01-19 17:19:23.000000000 -0700
+@@ -1332,7 +1332,7 @@ static int mxc_mmap(struct file *file, s
+ 	int res = 0;
+ 	cam_data *cam = dev->priv;
+ 
+-	pr_debug("pgoff=0x%x, start=0x%x, end=0x%x\n",
++	pr_debug("pgoff=0x%lx, start=0x%lx, end=0x%lx\n",
+ 		 vma->vm_pgoff, vma->vm_start, vma->vm_end);
+ 
+ 	/* make this _really_ smp-safe */
+--- linux-2.6.19.2-mx.orig/drivers/media/video/mxc/output/mx27_pp.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/media/video/mxc/output/mx27_pp.c	2007-01-19 17:19:23.000000000 -0700
+@@ -52,7 +52,7 @@ static int scale_1d(int inv, int outv, i
+ static int scale_1d_smart(int *inv, int *outv, int index);
+ static int scale_2d(emma_pp_scale * sz);
+ 
+-static irqreturn_t pp_isr(int irq, void *dev_id, struct pt_regs *regs);
++static irqreturn_t pp_isr(int irq, void *dev_id);
+ static int set_output_addr(emma_pp_cfg * cfg, vout_data * vout);
+ static int pphw_reset(void);
+ static int pphw_enable(int flag);
+@@ -245,13 +245,12 @@ int pp_cfg(vout_data * vout)
+ 	return pphw_cfg(&g_pp_cfg);
+ }
+ 
+-irqreturn_t mxc_v4l2out_pp_in_irq_handler(int irq, void *dev_id,
+-					  struct pt_regs * regs);
++irqreturn_t mxc_v4l2out_pp_in_irq_handler(int irq, void *dev_id);
+ 
+ /*!
+  * @brief PP IRQ handler.
+  */
+-static irqreturn_t pp_isr(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t pp_isr(int irq, void *dev_id)
+ {
+ 	int status;
+ 	vout_data *vout = dev_id;
+@@ -268,7 +267,7 @@ static irqreturn_t pp_isr(int irq, void 
+ 		pphw_outptr(&g_pp_cfg);
+ 	}
+ 
+-	return mxc_v4l2out_pp_in_irq_handler(irq, dev_id, regs);
++	return mxc_v4l2out_pp_in_irq_handler(irq, dev_id);
+ }
+ 
+ /*!
+--- linux-2.6.19.2-mx.orig/drivers/media/video/mxc/output/mx27_v4l2_output.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/media/video/mxc/output/mx27_v4l2_output.c	2007-01-19 17:19:23.000000000 -0700
+@@ -263,8 +263,7 @@ static void mxc_v4l2out_timer_handler(un
+ 	spin_unlock_irqrestore(&g_lock, lock_flags);
+ }
+ 
+-irqreturn_t mxc_v4l2out_pp_in_irq_handler(int irq, void *dev_id,
+-					  struct pt_regs *regs)
++irqreturn_t mxc_v4l2out_pp_in_irq_handler(int irq, void *dev_id)
+ {
+ 	int last_buf;
+ 	int index;
+--- linux-2.6.19.2-mx.orig/drivers/media/video/mxc/output/mxc_v4l2_output.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/media/video/mxc/output/mxc_v4l2_output.c	2007-01-19 17:19:23.000000000 -0700
+@@ -266,8 +266,7 @@ static void mxc_v4l2out_timer_handler(un
+ 	spin_unlock_irqrestore(&g_lock, lock_flags);
+ }
+ 
+-static irqreturn_t mxc_v4l2out_pp_in_irq_handler(int irq, void *dev_id,
+-						 struct pt_regs *regs)
++static irqreturn_t mxc_v4l2out_pp_in_irq_handler(int irq, void *dev_id)
+ {
+ 	int last_buf;
+ 	int index;
+--- linux-2.6.19.2-mx.orig/drivers/mmc/mxc_mmc.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mmc/mxc_mmc.c	2007-01-19 17:19:23.000000000 -0700
+@@ -760,12 +760,10 @@ static int mxcmci_data_done(struct mxcmc
+  *
+  * @param   irq    the interrupt number
+  * @param   devid  driver private data
+- * @param   regs   holds a snapshot of the processor's context before the
+- *                 processor entered the interrupt code
+  *
+  * @return  The function returns \b IRQ_RETVAL(1)
+  */
+-static irqreturn_t mxcmci_gpio_irq(int irq, void *devid, struct pt_regs *regs)
++static irqreturn_t mxcmci_gpio_irq(int irq, void *devid)
+ {
+ 	struct mxcmci_host *host = devid;
+ 	int card_gpio_status = host->plat_data->status(host->mmc->dev);
+@@ -803,13 +801,11 @@ static irqreturn_t mxcmci_gpio_irq(int i
+  *
+  * @param   irq    the interrupt number
+  * @param   devid  driver private data
+- * @param   regs   holds a snapshot of the processor's context before the
+- *                 processor entered the interrupt code
+  *
+  * @return  The function returns \b IRQ_RETVAL(1) if interrupt was handled,
+  *          returns \b IRQ_RETVAL(0) if the interrupt was not handled.
+  */
+-static irqreturn_t mxcmci_irq(int irq, void *devid, struct pt_regs *regs)
++static irqreturn_t mxcmci_irq(int irq, void *devid)
+ {
+ 	struct mxcmci_host *host = devid;
+ 	unsigned int status = 0;
+@@ -842,7 +838,7 @@ static irqreturn_t mxcmci_irq(int irq, v
+ 				printk(KERN_ERR "\nSDIO int unhandled\n");
+ 				BUG();	/* oops */
+ 			}
+-			d->handle_irq(host->mmc->sdio_irq, d, regs);
++			d->handle_irq(host->mmc->sdio_irq, d);
+ 		}
+ 	}
+ 
+@@ -907,7 +903,7 @@ static void mxcmci_set_ios(struct mmc_ho
+ #if defined(CONFIG_MXC_MC13783_POWER)
+ 	t_regulator_voltage voltage;
+ #endif
+-	pr_debug("%s: clock %u, bus %u, power %u, vdd %u\n", DRIVER_NAME,
++	pr_debug("%s: clock %u, bus %lu, power %u, vdd %u\n", DRIVER_NAME,
+ 		 ios->clock, 1UL << ios->bus_width, ios->power_mode, ios->vdd);
+ 
+ 	host->dma_dir = DMA_NONE;
+--- linux-2.6.19.2-mx.orig/drivers/mtd/nand/mxc_nd.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mtd/nand/mxc_nd.c	2007-01-19 17:19:23.000000000 -0700
+@@ -111,7 +111,7 @@ static const char *part_probes[] = { /* 
+ 
+ static wait_queue_head_t irq_waitq;
+ 
+-static irqreturn_t mxc_nfc_irq(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxc_nfc_irq(int irq, void *dev_id)
+ {
+ 	NFC_CONFIG1 |= NFC_INT_MSK;	/* Disable interrupt */
+ 	wake_up(&irq_waitq);
+--- linux-2.6.19.2-mx.orig/drivers/mxc/dam/dam.h	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/dam/dam.h	2007-01-19 17:19:23.000000000 -0700
+@@ -144,7 +144,7 @@ void dam_select_RxClk_direction(dam_port
+  *                                 the source port
+  * @param        p_source          the source port
+  */
+-void dam_select_RxClk_source(dam_port p_config, int from_RxClk,
++void dam_select_RxClk_source(dam_port p_config, bool from_RxClk,
+ 			     dam_port p_source);
+ 
+ /*!
+@@ -171,7 +171,7 @@ void dam_select_RxFS_direction(dam_port 
+  *                                 the source port
+  * @param        p_source          the source port
+  */
+-void dam_select_RxFS_source(dam_port p_config, int from_RxFS,
++void dam_select_RxFS_source(dam_port p_config, bool from_RxFS,
+ 			    dam_port p_source);
+ 
+ /*!
+@@ -190,7 +190,7 @@ void dam_select_TxClk_direction(dam_port
+  *                                 the source port
+  * @param        p_source          the source port
+  */
+-void dam_select_TxClk_source(dam_port p_config, int from_RxClk,
++void dam_select_TxClk_source(dam_port p_config, bool from_RxClk,
+ 			     dam_port p_source);
+ 
+ /*!
+@@ -209,7 +209,7 @@ void dam_select_TxFS_direction(dam_port 
+  *                                 the source port
+  * @param        p_source          the source port
+  */
+-void dam_select_TxFS_source(dam_port p_config, int from_RxFS,
++void dam_select_TxFS_source(dam_port p_config, bool from_RxFS,
+ 			    dam_port p_source);
+ 
+ /*!
+@@ -236,7 +236,7 @@ int dam_set_internal_network_mode_mask(d
+  * @param        port              the DAM port to configure
+  * @param        synchronous       the state to assign
+  */
+-void dam_set_synchronous(dam_port port, int synchronous);
++void dam_set_synchronous(dam_port port, bool synchronous);
+ 
+ /*!
+  * This function swaps the transmit and receive signals from (Da-TxD, Db-RxD) to
+@@ -246,7 +246,7 @@ void dam_set_synchronous(dam_port port, 
+  * @param        port              the DAM port to configure
+  * @param        value             the switch state
+  */
+-void dam_switch_Tx_Rx(dam_port port, int value);
++void dam_switch_Tx_Rx(dam_port port, bool value);
+ 
+ /*!
+  * This function resets the two registers of the selected port.
+--- linux-2.6.19.2-mx.orig/drivers/mxc/hmp4e/mxc_hmp4e.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/hmp4e/mxc_hmp4e.c	2007-01-19 17:19:23.000000000 -0700
+@@ -122,7 +122,7 @@ static void hmp4ehw_clock_disable(void);
+ /*readable by other modules through ipc */
+ /*static int g_hmp4e_busy = 0;*/
+ 
+-static irqreturn_t hmp4e_isr(int irq, void *dev_id, struct pt_regs *regs);
++static irqreturn_t hmp4e_isr(int irq, void *dev_id);
+ 
+ /* VM operations */
+ static struct page *hmp4e_vm_nopage(struct vm_area_struct *vma,
+@@ -630,7 +630,7 @@ static int MapHwRegs(struct file *filp, 
+ 	return 0;
+ }
+ 
+-static irqreturn_t hmp4e_isr(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t hmp4e_isr(int irq, void *dev_id)
+ {
+ 	hmp4e_t *dev = (hmp4e_t *) dev_id;
+ 	u32 irq_status = __raw_readl(dev->hwregs + 5);
+--- linux-2.6.19.2-mx.orig/drivers/mxc/ipu/ipu_common.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/ipu/ipu_common.c	2007-01-19 17:19:23.000000000 -0700
+@@ -39,7 +39,7 @@
+  * associated with the ISR and the actual ISR function pointer.
+  */
+ struct ipu_irq_node {
+-	irqreturn_t(*handler) (int, void *, struct pt_regs *);	/*!< the ISR */
++	irqreturn_t(*handler) (int, void *);	/*!< the ISR */
+ 	const char *name;	/*!< device associated with the interrupt */
+ 	void *dev_id;		/*!< some unique information for the ISR */
+ 	__u32 flags;		/*!< not used */
+@@ -59,7 +59,7 @@ static struct ipu_irq_node ipu_irq_list[
+ static const char driver_name[] = "mxc_ipu";
+ 
+ /* Static functions */
+-static irqreturn_t ipu_irq_handler(int irq, void *desc, struct pt_regs *regs);
++static irqreturn_t ipu_irq_handler(int irq, void *desc);
+ static void _ipu_pf_init(ipu_channel_params_t * params);
+ static void _ipu_pf_uninit(void);
+ 
+@@ -1204,7 +1204,7 @@ int32_t ipu_disable_channel(ipu_channel_
+ }
+ 
+ static
+-irqreturn_t ipu_irq_handler(int irq, void *desc, struct pt_regs *regs)
++irqreturn_t ipu_irq_handler(int irq, void *desc)
+ {
+ 	uint32_t line_base = 0;
+ 	uint32_t line;
+@@ -1223,8 +1223,7 @@ irqreturn_t ipu_irq_handler(int irq, voi
+ 		int_stat &= ~(1UL << (line - 1));
+ 		line += line_base - 1;
+ 		result |=
+-		    ipu_irq_list[line].handler(line, ipu_irq_list[line].dev_id,
+-					       regs);
++		    ipu_irq_list[line].handler(line, ipu_irq_list[line].dev_id);
+ 	}
+ 
+ 	line_base = 32;
+@@ -1235,8 +1234,7 @@ irqreturn_t ipu_irq_handler(int irq, voi
+ 		int_stat &= ~(1UL << (line - 1));
+ 		line += line_base - 1;
+ 		result |=
+-		    ipu_irq_list[line].handler(line, ipu_irq_list[line].dev_id,
+-					       regs);
++		    ipu_irq_list[line].handler(line, ipu_irq_list[line].dev_id);
+ 	}
+ 
+ 	line_base = 64;
+@@ -1247,8 +1245,7 @@ irqreturn_t ipu_irq_handler(int irq, voi
+ 		int_stat &= ~(1UL << (line - 1));
+ 		line += line_base - 1;
+ 		result |=
+-		    ipu_irq_list[line].handler(line, ipu_irq_list[line].dev_id,
+-					       regs);
++		    ipu_irq_list[line].handler(line, ipu_irq_list[line].dev_id);
+ 	}
+ 
+ 	line_base = 96;
+@@ -1259,8 +1256,7 @@ irqreturn_t ipu_irq_handler(int irq, voi
+ 		int_stat &= ~(1UL << (line - 1));
+ 		line += line_base - 1;
+ 		result |=
+-		    ipu_irq_list[line].handler(line, ipu_irq_list[line].dev_id,
+-					       regs);
++		    ipu_irq_list[line].handler(line, ipu_irq_list[line].dev_id);
+ 	}
+ 
+ 	line_base = 128;
+@@ -1271,8 +1267,7 @@ irqreturn_t ipu_irq_handler(int irq, voi
+ 		int_stat &= ~(1UL << (line - 1));
+ 		line += line_base - 1;
+ 		result |=
+-		    ipu_irq_list[line].handler(line, ipu_irq_list[line].dev_id,
+-					       regs);
++		    ipu_irq_list[line].handler(line, ipu_irq_list[line].dev_id);
+ 	}
+ 
+ 	if (g_ipu_irq[1]) {
+@@ -1376,7 +1371,7 @@ bool ipu_get_irq_status(uint32_t irq)
+  *              fail.
+  */
+ int ipu_request_irq(uint32_t irq,
+-		    irqreturn_t(*handler) (int, void *, struct pt_regs *),
++		    irqreturn_t(*handler) (int, void *),
+ 		    uint32_t irq_flags, const char *devname, void *dev_id)
+ {
+ 	uint32_t lock_flags;
+--- linux-2.6.19.2-mx.orig/drivers/mxc/ipu/pf/mxc_pf.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/ipu/pf/mxc_pf.c	2007-01-19 17:19:23.000000000 -0700
+@@ -58,8 +58,7 @@ static struct class *mxc_pf_class;
+  * Function definitions
+  */
+ 
+-static irqreturn_t mxc_pf_irq_handler(int irq, void *dev_id,
+-				      struct pt_regs *regs)
++static irqreturn_t mxc_pf_irq_handler(int irq, void *dev_id)
+ {
+ 	struct mxc_pf_data *pf = dev_id;
+ 	pf->done_flag++;
+--- linux-2.6.19.2-mx.orig/drivers/mxc/pm/dptc_mx27.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/pm/dptc_mx27.c	2007-01-19 17:19:23.000000000 -0700
+@@ -93,7 +93,7 @@ static int dptc_mx27_open(struct inode *
+ static int dptc_mx27_release(struct inode *inode, struct file *filp);
+ static int dptc_mx27_ioctl(struct inode *inode, struct file *filp,
+ 			   unsigned int cmd, unsigned long arg);
+-static irqreturn_t dptc_mx27_irq(int irq, void *dev_id, struct pt_regs *regs);
++static irqreturn_t dptc_mx27_irq(int irq, void *dev_id);
+ 
+ /*
+  * Global variables
+@@ -1240,14 +1240,12 @@ static int dptc_mx27_ioctl(struct inode 
+  *
+  * @param   irq      The Interrupt number
+  * @param   dev_id   Driver private data
+- * @param   regs     Holds a snapshot of the processors context before the
+- *                   processor entered the interrupt code
+  *
+  * @result    The function returns \b IRQ_RETVAL(1) if interrupt was handled,
+  *            returns \b IRQ_RETVAL(0) if the interrupt was not handled.
+  *            \b IRQ_RETVAL is defined in include/linux/interrupt.h.
+  */
+-static irqreturn_t dptc_mx27_irq(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t dptc_mx27_irq(int irq, void *dev_id)
+ {
+ 	if (dptc_params.dptc_is_active == TRUE) {
+ 		dptc_intr_status = __raw_readl(IO_ADDRESS(MX27_PMCR_BASE_ADDR));
+--- linux-2.6.19.2-mx.orig/drivers/mxc/pm/dvfs_dptc.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/pm/dvfs_dptc.c	2007-01-19 17:19:23.000000000 -0700
+@@ -74,7 +74,7 @@ static ssize_t dvfs_dptc_read(struct fil
+ #endif
+ 
+ #ifndef CONFIG_MXC_DVFS_SDMA
+-static irqreturn_t dvfs_dptc_irq(int irq, void *dev_id, struct pt_regs *regs);
++static irqreturn_t dvfs_dptc_irq(int irq, void *dev_id);
+ #else
+ static void dvfs_dptc_sdma_callback(dvfs_dptc_params_s * params);
+ #endif
+@@ -1157,14 +1157,12 @@ static int dvfs_dptc_ioctl(struct inode 
+  *
+  * @param   irq      The Interrupt number
+  * @param   dev_id   Driver private data
+- * @param   regs     Holds a snapshot of the processors context before the
+- *                   processor entered the interrupt code
+  *
+  * @result    The function returns \b IRQ_RETVAL(1) if interrupt was handled,
+  *            returns \b IRQ_RETVAL(0) if the interrupt was not handled.
+  *            \b IRQ_RETVAL is defined in include/linux/interrupt.h.
+  */
+-static irqreturn_t dvfs_dptc_irq(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t dvfs_dptc_irq(int irq, void *dev_id)
+ {
+ #ifdef EVB_DEBUG
+ 	printk("CCM interrupt (0x%x)!!!\n",
+--- linux-2.6.19.2-mx.orig/drivers/mxc/pmic/core/pmic_core_spi.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/pmic/core/pmic_core_spi.c	2007-01-19 17:19:23.000000000 -0700
+@@ -120,11 +120,10 @@ static void pmic_pdev_unregister(void)
+  *
+  * @param        irq        the irq number
+  * @param        dev_id     the pointer on the device
+- * @param        regs       the interrupt parameters
+  *
+  * @return       The function returns IRQ_HANDLED when handled.
+  */
+-static irqreturn_t pmic_irq_handler(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t pmic_irq_handler(int irq, void *dev_id)
+ {
+ 	/* prepare a task */
+ 	schedule_work(&pmic_ws);
+--- linux-2.6.19.2-mx.orig/drivers/mxc/pmic/mc13783/pmic_convity.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/pmic/mc13783/pmic_convity.c	2007-01-19 17:19:23.000000000 -0700
+@@ -34,12 +34,13 @@
+  * @ingroup PMIC_CONNECTIVITY
+  */
+ 
+-#include <asm/arch/pmic_convity.h>	/* For PMIC Connectivity driver interface. */
+-#include <asm/arch/pmic_adc.h>	/* For PMIC ADC driver interface.          */
+-
+ #include <linux/interrupt.h>	/* For tasklet interface.                  */
+ #include <linux/platform_device.h>	/* For kernel module interface.            */
+ #include <linux/spinlock.h>	/* For spinlock interface.                 */
++
++#include <asm/arch/pmic_convity.h>	/* For PMIC Connectivity driver interface. */
++#include <asm/arch/pmic_adc.h>	/* For PMIC ADC driver interface.          */
++
+ #include "../core/pmic_config.h"
+ 
+ /*
+--- linux-2.6.19.2-mx.orig/drivers/mxc/security/mxc_scc.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/security/mxc_scc.c	2007-01-19 17:19:23.000000000 -0700
+@@ -871,10 +871,8 @@ scc_return_t scc_write_register(int regi
+  *
+  * @param irq Channel number for the IRQ. (@c SCC_INT_SMN or @c SCC_INT_SCM).
+  * @param dev_id Pointer to the identification of the device.  Ignored.
+- * @param regs Holds the snapshot of the processor's context before the
+- *        processor entered the interrupt.  Ignored.
+  */
+-static irqreturn_t scc_irq(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t scc_irq(int irq, void *dev_id)
+ {
+ 	uint32_t smn_status;
+ 	uint32_t scm_status;
+--- linux-2.6.19.2-mx.orig/drivers/mxc/security/mxc_scc_internals.h	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/security/mxc_scc_internals.h	2007-01-19 17:19:23.000000000 -0700
+@@ -271,7 +271,7 @@ static int scc_init(void);
+ static void scc_cleanup(void);
+ 
+ /* Forward defines of internal functions */
+-static irqreturn_t scc_irq(int irq, void *dev_id, struct pt_regs *regs);
++static irqreturn_t scc_irq(int irq, void *dev_id);
+ static void scc_perform_callbacks(void);
+ static uint32_t copy_to_scc(const uint8_t * from, uint32_t to,
+ 			    unsigned long count_bytes, uint16_t * crc);
+--- linux-2.6.19.2-mx.orig/drivers/mxc/security/sahara2/include/linux_port.h	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/security/sahara2/include/linux_port.h	2007-01-19 17:19:23.000000000 -0700
+@@ -193,7 +193,7 @@ typedef struct {
+  *
+  * @return  Zero if not handled, non-zero if handled.
+  */
+-typedef int (*os_interrupt_handler_t) (int, void *, struct pt_regs *);
++typedef int (*os_interrupt_handler_t) (int, void *);
+ 
+ /*!
+  * @name Driver-to-Kernel Operations
+@@ -1207,7 +1207,7 @@ function_name
+  * @return   A call to #os_dev_isr_return()
+  */
+ #define OS_DEV_ISR(function_name)                                             \
+-static irqreturn_t function_name(int N1_, void* N2_, struct pt_regs* N3_)
++static irqreturn_t function_name(int N1_, void* N2_)
+ 
+ /*!
+  * Declare prototype for an ISR function.
+@@ -1295,7 +1295,6 @@ do {                                    
+     /* Unused warnings */                                                    \
+     (void)N1_;                                                               \
+     (void)N2_;                                                               \
+-    (void)N3_;                                                               \
+                                                                              \
+     return IRQ_RETVAL(code);                                                 \
+ } while (0)
+--- linux-2.6.19.2-mx.orig/drivers/mxc/security/sahara2/sah_driver_interface.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/security/sahara2/sah_driver_interface.c	2007-01-19 17:19:23.000000000 -0700
+@@ -130,8 +130,8 @@ static struct file_operations Fops = {
+ 	.fsync = NULL,
+ 	.fasync = NULL,
+ 	.lock = NULL,
+-	.readv = NULL,
+-	.writev = NULL,
++	.aio_read = NULL,
++	.aio_write = NULL,
+ 	.sendpage = NULL,
+ 	.get_unmapped_area = NULL
+ };
+--- linux-2.6.19.2-mx.orig/drivers/mxc/security/sahara2/sah_interrupt_handler.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/security/sahara2/sah_interrupt_handler.c	2007-01-19 17:19:23.000000000 -0700
+@@ -58,11 +58,10 @@ uint32_t interrupt_count;
+ #endif
+ 
+ /* Internal Prototypes */
+-static irqreturn_t sah_Intr_Top_Half(int irq,
+-				     void *dev_id, struct pt_regs *regs);
++static irqreturn_t sah_Intr_Top_Half(int irq, void *dev_id);
+ 
+ #ifdef KERNEL_TEST
+-extern void (*SAHARA_INT_PTR) (int, void *, struct pt_regs *);
++extern void (*SAHARA_INT_PTR) (int, void *);
+ #endif
+ 
+ unsigned long reset_flag;
+@@ -165,12 +164,10 @@ void sah_Intr_Release(void)
+ *
+ * @param    irq     Part of the kernel prototype.
+ * @param    dev_id  Part of the kernel prototype.
+-* @param    regs    Part of the kernel prototype.
+ *
+ * @return   An IRQ_RETVAL() -- non-zero to that function means 'handled'
+ */
+-static irqreturn_t sah_Intr_Top_Half(int irq,
+-				     void *dev_id, struct pt_regs *regs)
++static irqreturn_t sah_Intr_Top_Half(int irq, void *dev_id)
+ {
+ #if defined(DIAG_DRV_INTERRUPT) && defined(DIAG_DURING_INTERRUPT)
+ 	LOG_KDIAG("Top half of Sahara's interrupt handler called.");
+@@ -185,7 +182,6 @@ static irqreturn_t sah_Intr_Top_Half(int
+ 	/* To get rid of the unused parameter warnings. */
+ 	irq = 0;
+ 	dev_id = NULL;
+-	regs = NULL;
+ 	return IRQ_RETVAL(1);
+ }
+ 
+--- linux-2.6.19.2-mx.orig/drivers/mxc/vpu/mxc_vpu.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/vpu/mxc_vpu.c	2007-01-19 17:19:23.000000000 -0700
+@@ -93,7 +93,7 @@ static int vpu_free_buffers(vpu_mem_desc
+ /*!
+  * @brief vpu interrupt handler
+  */
+-static irqreturn_t vpu_irq_handler(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t vpu_irq_handler(int irq, void *dev_id)
+ {
+ 	struct vpu_t *dev;
+ 	dev = (struct vpu_t *)dev_id;
+--- linux-2.6.19.2-mx.orig/drivers/net/irda/mxc_ir.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/net/irda/mxc_ir.c	2007-01-19 17:19:23.000000000 -0700
+@@ -725,7 +725,7 @@ static int mxc_irda_sir_rxirq(struct mxc
+ 
+ }
+ 
+-static irqreturn_t mxc_irda_irq(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxc_irda_irq(int irq, void *dev_id)
+ {
+ 	struct net_device *dev = dev_id;
+ 	struct mxc_irda *si = dev->priv;
+@@ -746,7 +746,7 @@ static irqreturn_t mxc_irda_irq(int irq,
+ 	return IRQ_HANDLED;
+ }
+ 
+-static irqreturn_t mxc_irda_tx_irq(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxc_irda_tx_irq(int irq, void *dev_id)
+ {
+ 
+ 	struct net_device *dev = dev_id;
+@@ -757,7 +757,7 @@ static irqreturn_t mxc_irda_tx_irq(int i
+ 	return IRQ_HANDLED;
+ }
+ 
+-static irqreturn_t mxc_irda_rx_irq(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxc_irda_rx_irq(int irq, void *dev_id)
+ {
+ 
+ 	struct net_device *dev = dev_id;
+--- linux-2.6.19.2-mx.orig/drivers/net/irda/mxc_sir.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/net/irda/mxc_sir.c	2007-01-19 17:19:23.000000000 -0700
+@@ -363,7 +363,7 @@ static int mxc_irda_sir_rxirq(struct mxc
+ /*
+  * IrDA interrupt service routine
+  */
+-static irqreturn_t mxc_irda_irq(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxc_irda_irq(int irq, void *dev_id)
+ {
+ 	struct net_device *dev = dev_id;
+ 	struct mxc_irda *si = netdev_priv(dev);
+--- linux-2.6.19.2-mx.orig/drivers/pcmcia/mx31ads-pcmcia.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/pcmcia/mx31ads-pcmcia.c	2007-01-19 17:19:23.000000000 -0700
+@@ -1003,8 +1003,7 @@ static void mx31ads_common_check_status(
+  * handling code performs scheduling operations which cannot be
+  * executed from within an interrupt context.
+  */
+-static irqreturn_t mx31ads_common_pcmcia_interrupt(int irq, void *dev,
+-						   struct pt_regs *regs)
++static irqreturn_t mx31ads_common_pcmcia_interrupt(int irq, void *dev)
+ {
+ 	struct mx31ads_pcmcia_socket *skt = dev;
+ 	volatile u32 pscr, pgsr;
+--- linux-2.6.19.2-mx.orig/drivers/serial/mxc_uart.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/serial/mxc_uart.c	2007-01-19 17:19:23.000000000 -0700
+@@ -333,15 +333,9 @@ static void mxcuart_enable_ms(struct uar
+  *
+  * @param   umxc   the MXC UART port structure, this includes the \b uart_port
+  *                 structure and other members that are specific to MXC UARTs
+- * @param   regs   holds a snapshot of the processor's context before the
+- *                 processor entered the interrupt code
+  */
+ static void
+-#ifdef SUPPORT_SYSRQ
+-mxcuart_rx_chars(uart_mxc_port * umxc, struct pt_regs *regs)
+-#else
+ mxcuart_rx_chars(uart_mxc_port * umxc)
+-#endif
+ {
+ 	struct tty_struct *tty = umxc->port.info->tty;
+ 	volatile unsigned int ch, sr2;
+@@ -394,7 +388,7 @@ mxcuart_rx_chars(uart_mxc_port * umxc)
+ 			}
+ 		}
+ 
+-		if (uart_handle_sysrq_char(&umxc->port, ch, regs)) {
++		if (uart_handle_sysrq_char(&umxc->port, ch)) {
+ 			goto ignore_char;
+ 		}
+ 
+@@ -503,14 +497,12 @@ static void mxcuart_modem_status(uart_mx
+  *
+  * @param   irq    the interrupt number
+  * @param   dev_id driver private data
+- * @param   regs   holds a snapshot of the processor's context before the
+- *                 processor entered the interrupt code
+  *
+  * @return  The function returns \b IRQ_RETVAL(1) if interrupt was handled,
+  *          returns \b IRQ_RETVAL(0) if the interrupt was not handled.
+  *          \b IRQ_RETVAL is defined in \b include/linux/interrupt.h.
+  */
+-static irqreturn_t mxcuart_int(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxcuart_int(int irq, void *dev_id)
+ {
+ 	uart_mxc_port *umxc = dev_id;
+ 	volatile unsigned int sr1, sr2, cr1, cr;
+@@ -530,11 +522,7 @@ static irqreturn_t mxcuart_int(int irq, 
+ 		 * Read if there is data available
+ 		 */
+ 		if (sr2 & MXC_UARTUSR2_RDR) {
+-#ifdef SUPPORT_SYSRQ
+-			mxcuart_rx_chars(umxc, regs);
+-#else
+ 			mxcuart_rx_chars(umxc);
+-#endif
+ 		}
+ 
+ 		if ((sr1 & (MXC_UARTUSR1_RTSD | MXC_UARTUSR1_DTRD)) ||
+@@ -600,14 +588,12 @@ static irqreturn_t mxcuart_int(int irq, 
+  *
+  * @param   irq    the interrupt number
+  * @param   dev_id driver private data
+- * @param   regs   holds a snapshot of the processor's context before the
+- *                 processor entered the interrupt code
+  *
+  * @return  The function returns \b IRQ_RETVAL(1) if interrupt was handled,
+  *          returns \b IRQ_RETVAL(0) if the interrupt was not handled.
+  *          \b IRQ_RETVAL is defined in include/linux/interrupt.h.
+  */
+-static irqreturn_t mxcuart_tx_int(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxcuart_tx_int(int irq, void *dev_id)
+ {
+ 	uart_mxc_port *umxc = dev_id;
+ 	int handled = 0;
+@@ -653,25 +639,19 @@ static irqreturn_t mxcuart_tx_int(int ir
+  *
+  * @param   irq    the interrupt number
+  * @param   dev_id driver private data
+- * @param   regs   holds a snapshot of the processor's context before the
+- *                 processor entered the interrupt code
+  *
+  * @return  The function returns \b IRQ_RETVAL(1) if interrupt was handled,
+  *          returns \b IRQ_RETVAL(0) if the interrupt was not handled.
+  *          \b IRQ_RETVAL is defined in include/linux/interrupt.h.
+  */
+-static irqreturn_t mxcuart_rx_int(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxcuart_rx_int(int irq, void *dev_id)
+ {
+ 	uart_mxc_port *umxc = dev_id;
+ 	int handled = 0;
+ 
+ 	/* Clear the aging timer bit */
+ 	writel(MXC_UARTUSR1_AGTIM, umxc->port.membase + MXC_UARTUSR1);
+-#ifdef SUPPORT_SYSRQ
+-	mxcuart_rx_chars(umxc, regs);
+-#else
+ 	mxcuart_rx_chars(umxc);
+-#endif
+ 	handled = 1;
+ 
+ 	return IRQ_RETVAL(handled);
+@@ -684,14 +664,12 @@ static irqreturn_t mxcuart_rx_int(int ir
+  *
+  * @param   irq    the interrupt number
+  * @param   dev_id driver private data
+- * @param   regs   holds a snapshot of the processor's context before the
+- *                 processor entered the interrupt code
+  *
+  * @return  The function returns \b IRQ_RETVAL(1) if interrupt was handled,
+  *          returns \b IRQ_RETVAL(0) if the interrupt was not handled.
+  *          \b IRQ_RETVAL is defined in include/linux/interrupt.h.
+  */
+-static irqreturn_t mxcuart_mint_int(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxcuart_mint_int(int irq, void *dev_id)
+ {
+ 	uart_mxc_port *umxc = dev_id;
+ 	int handled = 0;
+--- linux-2.6.19.2-mx.orig/drivers/spi/mxc_spi.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/spi/mxc_spi.c	2007-01-19 17:19:23.000000000 -0700
+@@ -411,11 +411,10 @@ void mxc_spi_chipselect(struct spi_devic
+  *
+  * @param        irq        the irq number
+  * @param        dev_id     the pointer on the device
+- * @param        regs       the interrupt parameters
+  *
+  * @return       The function returns IRQ_HANDLED when handled.
+  */
+-static irqreturn_t mxc_spi_isr(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mxc_spi_isr(int irq, void *dev_id)
+ {
+ 	struct mxc_spi *master_drv_data = dev_id;
+ 	irqreturn_t ret = IRQ_NONE;
+--- linux-2.6.19.2-mx.orig/drivers/usb/gadget/arcotg_udc.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/usb/gadget/arcotg_udc.c	2007-01-19 17:19:23.000000000 -0700
+@@ -27,7 +27,6 @@
+ #define DUMP_QUEUES
+ #endif
+ 
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/ioport.h>
+@@ -46,7 +45,7 @@
+ #include <linux/platform_device.h>
+ #include <linux/usb_ch9.h>
+ #include <linux/usb_gadget.h>
+-#include <linux/usb_otg.h>
++#include <linux/usb/otg.h>
+ #include <linux/dma-mapping.h>
+ 
+ #include <asm/byteorder.h>
+@@ -2218,7 +2217,7 @@ static void reset_irq(struct arcotg_udc 
+ 	}
+ }
+ 
+-static irqreturn_t arcotg_udc_irq(int irq, void *_udc, struct pt_regs *r)
++static irqreturn_t arcotg_udc_irq(int irq, void *_udc)
+ {
+ 	struct arcotg_udc *udc = _udc;
+ 	u32 irq_src;
+--- linux-2.6.19.2-mx.orig/drivers/usb/host/ehci-arc.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/usb/host/ehci-arc.c	2007-01-19 17:19:23.000000000 -0700
+@@ -26,7 +26,7 @@
+ /* Note: this file is #included by ehci-hcd.c */
+ 
+ #include <linux/platform_device.h>
+-#include <linux/usb_otg.h>
++#include <linux/usb/otg.h>
+ #include <asm/arch/arc_otg.h>
+ #include <asm/arch/isp1504.h>
+ 
+--- linux-2.6.19.2-mx.orig/drivers/usb/otg/fsl_otg.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/usb/otg/fsl_otg.c	2007-01-19 17:19:23.000000000 -0700
+@@ -11,7 +11,6 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ 
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/moduleparam.h>
+ #include <linux/kernel.h>
+--- linux-2.6.19.2-mx.orig/drivers/usb/otg/fsl_otg.h	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/usb/otg/fsl_otg.h	2007-01-19 17:19:23.000000000 -0700
+@@ -12,7 +12,7 @@
+  */
+ 
+ #include "otg_fsm.h"
+-#include <linux/usb_otg.h>
++#include <linux/usb/otg.h>
+ 
+  /* USB Command  Register Bit Masks */
+ #define USB_CMD_RUN_STOP		(0x1<<0  )
+--- linux-2.6.19.2-mx.orig/drivers/usb/otg/otg_fsm.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/usb/otg/otg_fsm.c	2007-01-19 17:19:23.000000000 -0700
+@@ -13,7 +13,7 @@
+ 
+ #include <asm/types.h>
+ #include <linux/kernel.h>
+-#include <linux/usb_otg.h>
++#include <linux/usb/otg.h>
+ #include <linux/spinlock.h>
+ #include <linux/delay.h>
+ #include <linux/usb.h>
+--- linux-2.6.19.2-mx.orig/drivers/video/mxc/mx2fb_epson.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/video/mxc/mx2fb_epson.c	2007-01-19 17:19:23.000000000 -0700
+@@ -40,7 +40,6 @@
+ #  define __KERNEL__
+ #endif
+ 
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/version.h>
+@@ -765,7 +764,7 @@ void slcdc_send_data(u32 length)
+  *             
+  *@return		0 on success, any other value otherwise
+  **/
+-static irqreturn_t slcdc_isr(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t slcdc_isr(int irq, void *dev_id)
+ {
+ 	volatile u32 reg;
+ 	reg = __raw_readl(IO_ADDRESS(SLCDC_BASE_ADDR + 0x20));
+--- linux-2.6.19.2-mx.orig/drivers/video/mxc/mxcfb.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/video/mxc/mxcfb.c	2007-01-19 17:19:23.000000000 -0700
+@@ -115,8 +115,7 @@ extern void gpio_lcd_inactive(void);
+ 
+ extern int fs453_ioctl(unsigned int cmd, void *arg);
+ #endif
+-static irqreturn_t mxcfb_irq_handler(int irq, void *dev_id,
+-				     struct pt_regs *regs);
++static irqreturn_t mxcfb_irq_handler(int irq, void *dev_id);
+ static int mxcfb_blank(int blank, struct fb_info *info);
+ static int mxcfb_map_video_memory(struct fb_info *fbi, bool use_internal_ram);
+ static int mxcfb_unmap_video_memory(struct fb_info *fbi);
+@@ -753,8 +752,7 @@ static struct fb_ops mxcfb_ovl_ops = {
+ };
+ #endif
+ 
+-static irqreturn_t mxcfb_vsync_irq_handler(int irq, void *dev_id,
+-					   struct pt_regs *regs)
++static irqreturn_t mxcfb_vsync_irq_handler(int irq, void *dev_id)
+ {
+ 	struct mxcfb_data *fb_data = dev_id;
+ 
+@@ -765,8 +763,7 @@ static irqreturn_t mxcfb_vsync_irq_handl
+ 	return IRQ_HANDLED;
+ }
+ 
+-static irqreturn_t mxcfb_irq_handler(int irq, void *dev_id,
+-				     struct pt_regs *regs)
++static irqreturn_t mxcfb_irq_handler(int irq, void *dev_id)
+ {
+ 	struct fb_info *fbi = dev_id;
+ 	struct mxcfb_info *mxc_fbi = fbi->par;
+--- linux-2.6.19.2-mx.orig/drivers/video/mxc/mxcfb_epson.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/video/mxc/mxcfb_epson.c	2007-01-19 17:19:23.000000000 -0700
+@@ -248,8 +248,7 @@ static void _init_panel(int disp)
+ }
+ 
+ #ifdef PARTIAL_REFRESH
+-static irqreturn_t mxcfb_sys2_eof_irq_handler(int irq, void *dev_id,
+-					      struct pt_regs *regs)
++static irqreturn_t mxcfb_sys2_eof_irq_handler(int irq, void *dev_id)
+ {
+ 	ipu_channel_params_t params;
+ 	struct fb_info *fbi = dev_id;
+@@ -323,8 +322,7 @@ static irqreturn_t mxcfb_sys2_eof_irq_ha
+ 	return IRQ_HANDLED;
+ }
+ 
+-static irqreturn_t mxcfb_sys1_eof_irq_handler(int irq, void *dev_id,
+-					      struct pt_regs *regs)
++static irqreturn_t mxcfb_sys1_eof_irq_handler(int irq, void *dev_id)
+ {
+ 	ipu_disable_irq(IPU_IRQ_ADC_SYS1_EOF);
+ 	ipu_disable_channel(ADC_SYS1, false);
+--- linux-2.6.19.2-mx.orig/drivers/video/mxc/mxcfb_epson_qvga.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/video/mxc/mxcfb_epson_qvga.c	2007-01-19 17:19:23.000000000 -0700
+@@ -247,8 +247,7 @@ static void _init_panel(int disp)
+ }
+ 
+ #ifdef PARTIAL_REFRESH
+-static irqreturn_t mxcfb_sys2_eof_irq_handler(int irq, void *dev_id,
+-					      struct pt_regs *regs)
++static irqreturn_t mxcfb_sys2_eof_irq_handler(int irq, void *dev_id)
+ {
+ 	ipu_channel_params_t params;
+ 	struct fb_info *fbi = dev_id;
+@@ -322,8 +321,7 @@ static irqreturn_t mxcfb_sys2_eof_irq_ha
+ 	return IRQ_HANDLED;
+ }
+ 
+-static irqreturn_t mxcfb_sys1_eof_irq_handler(int irq, void *dev_id,
+-					      struct pt_regs *regs)
++static irqreturn_t mxcfb_sys1_eof_irq_handler(int irq, void *dev_id)
+ {
+ 	ipu_disable_irq(IPU_IRQ_ADC_SYS1_EOF);
+ 	ipu_disable_channel(ADC_SYS1, false);
+--- linux-2.6.19.2-mx.orig/drivers/video/mxc/mxcfb_sharp_128x128.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/video/mxc/mxcfb_sharp_128x128.c	2007-01-19 17:19:23.000000000 -0700
+@@ -281,8 +281,7 @@ static void _init_panel(int disp)
+ }
+ 
+ #ifdef PARTIAL_REFRESH
+-static irqreturn_t mxcfb_sys2_eof_irq_handler(int irq, void *dev_id,
+-					      struct pt_regs *regs)
++static irqreturn_t mxcfb_sys2_eof_irq_handler(int irq, void *dev_id)
+ {
+ 	ipu_channel_params_t params;
+ 	struct fb_info *fbi = dev_id;
+@@ -356,8 +355,7 @@ static irqreturn_t mxcfb_sys2_eof_irq_ha
+ 	return IRQ_HANDLED;
+ }
+ 
+-static irqreturn_t mxcfb_sys1_eof_irq_handler(int irq, void *dev_id,
+-					      struct pt_regs *regs)
++static irqreturn_t mxcfb_sys1_eof_irq_handler(int irq, void *dev_id)
+ {
+ 	ipu_disable_irq(IPU_IRQ_ADC_SYS1_EOF);
+ 	ipu_disable_channel(ADC_SYS1, false);
+--- linux-2.6.19.2-mx.orig/drivers/video/mxc/mxcfb_toshiba_qvga.c	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/video/mxc/mxcfb_toshiba_qvga.c	2007-01-19 17:19:23.000000000 -0700
+@@ -303,8 +303,7 @@ static void _init_panel(int disp)
+ }
+ 
+ #ifdef PARTIAL_REFRESH
+-static irqreturn_t mxcfb_sys2_eof_irq_handler(int irq, void *dev_id,
+-					      struct pt_regs *regs)
++static irqreturn_t mxcfb_sys2_eof_irq_handler(int irq, void *dev_id)
+ {
+ 	ipu_channel_params_t params;
+ 	struct fb_info *fbi = dev_id;
+@@ -378,8 +377,7 @@ static irqreturn_t mxcfb_sys2_eof_irq_ha
+ 	return IRQ_HANDLED;
+ }
+ 
+-static irqreturn_t mxcfb_sys1_eof_irq_handler(int irq, void *dev_id,
+-					      struct pt_regs *regs)
++static irqreturn_t mxcfb_sys1_eof_irq_handler(int irq, void *dev_id)
+ {
+ 	ipu_disable_irq(IPU_IRQ_ADC_SYS1_EOF);
+ 	ipu_disable_channel(ADC_SYS1, false);
+--- linux-2.6.19.2-mx.orig/include/asm-arm/arch-mxc/gpio.h	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/include/asm-arm/arch-mxc/gpio.h	2007-01-19 17:19:23.000000000 -0700
+@@ -63,7 +63,7 @@ typedef enum gpio_int_cfg {
+ #endif
+ } gpio_edge_t;
+ 
+-typedef irqreturn_t(*gpio_irq_handler) (int, void *, struct pt_regs *);
++typedef irqreturn_t(*gpio_irq_handler) (int, void *);
+ 
+ /*!
+  * This function configures the GPIO signal to be either input or output. For
+--- linux-2.6.19.2-mx.orig/include/asm-arm/arch-mxc/hardware.h	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/include/asm-arm/arch-mxc/hardware.h	2007-01-19 17:19:23.000000000 -0700
+@@ -23,21 +23,6 @@
+ #include <asm/sizes.h>
+ 
+ /*!
+- * makes bool as int type
+- */
+-#define bool int
+-
+-/*!
+- * defines false as 0
+- */
+-#define false 		0
+-
+-/*!
+- * defines true as 1
+- */
+-#define true		1
+-
+-/*!
+  * defines PCIO_BASE (not used but needed for compilation)
+  */
+ #define PCIO_BASE		0
+--- linux-2.6.19.2-mx.orig/include/asm-arm/arch-mxc/ipu.h	2007-01-19 17:17:24.000000000 -0700
++++ linux-2.6.19.2-mx/include/asm-arm/arch-mxc/ipu.h	2007-01-19 17:19:23.000000000 -0700
+@@ -688,7 +688,7 @@ void ipu_enable_irq(uint32_t irq);
+ void ipu_disable_irq(uint32_t irq);
+ void ipu_clear_irq(uint32_t irq);
+ int ipu_request_irq(uint32_t irq,
+-		    irqreturn_t(*handler) (int, void *, struct pt_regs *),
++		    irqreturn_t(*handler) (int, void *),
+ 		    uint32_t irq_flags, const char *devname, void *dev_id);
+ void ipu_free_irq(uint32_t irq, void *dev_id);
+ bool ipu_get_irq_status(uint32_t irq);

@@ -1,0 +1,92 @@
+%TOPICTITLE%
+---
+
+%TOC%
+
+---+ LTIB Package Pools
+
+---++ Introduction
+
+LTIB is used to build Linux target images.  A target image is composed of a set of packages. Each package will normally consist of a main tarball (from the maintainer) and often some additional patches.
+
+Rather than shipping all the package payloads that may be selected with the LTIB tool, these components are downloaded as required.  The idea is that you only download what you need.  The locations that packages are downloaded from are the Package Pools described below.
+
+---++ Definitions
+
+---+++ PPP (Private Package Pool)
+
+The PPP is an area that is inside the Freescale network.  The contents of the PPP is private, this means that no one should copy the contents to the outside world without permission.
+
+All Freescalers can upload to the PPP using the web upload page  [[http://auslxpb02.mtwk.freescale.net/ltib-cgi/ppp_upload.cgi here]]
+
+---+++ GPP (Global Package Pool)
+
+The GPP is an area that maybe internal and/or external to Freescale.  The contents of the GPP are public, this means that files in the GPP should not have any retrictions on their copying.  Files stored here should have a suitable license for copying, or have no legal copy restrictions (public domain).
+
+
+---+++ LPP (Local Package Pool)
+
+The LPP is the local directory where LTIB will cache packages/patches that it downloads from the PPP/GPP.  In addition, users on that machine can put their own local packages/patches there during development.  The purpose of the LPP is to limit the number of downloads for a given host machine.  All users on a given host machine can shared the same open source packages stored in the LPP.
+
+
+---++ Data flow
+
+%ATTACHURL%/ppp_gpp.gif
+
+---++ Policies
+
+---+++ Uploads to the PPP
+
+   * Anyone within Freescale can post files to the PPP (information below).  Files in the PPP are private to Freescale and so can be unstable and have information we don't want to share with the outside world.
+
+
+---+++ Once uploaded files may not be changed
+
+   * <b><u><font color=red> Files are immutable (cannot be updated)</font></u></b> .  If you need to update a file, you must provide a new one wit a different name.  For instance if you summitted *lkc-1.4-defaults.patch* and you find out this is incorrect and needs updating, you should use a new name, for instance *lkc-1.4-defaults-1.patch*
+
+
+---+++ Moving files from the PPP to the GPP
+
+If you want a file to be publicly accessible, it will need to be published on the the GPP.  All files from Freescale must initially be uploaded to the PPP and reviewed before they can be copied to the GPP.
+
+*NOTE:* Once published on Freescale's GPP, these files will be mirrored to the GPP on the internet!
+
+To start this process, you need to initially send an email to *stuarth@freescale.com*.  I will then start the review process.  It is expected that this will become a semi-automated process via a webform once the review process has been established.
+
+
+---++++ Guidelines
+
+ 1. Any object that was uploaded to the PPP, that came from the Internet and is covered by a licensed that allows Freescale to freely distribute the object will be routinely approved for copying to the GPP.  An example of this type of file is linux-2.6.10.tar.bz2, this was downloaded from kernel.org and is licensed under the terms of the GPL.
+
+2. Any patch to package that was uploaded to the PPP, that came from the Internet and patches a package that is covered by a licensed that allows Freescale to freely distribute the package will generally routinely be approved for copying to the GPP.  
+
+*NOTE* the exact legal disposition of patches varies.  If the change is a
+single line that make a simple correction, then legally it would be covered
+under the 'fair usage' copyright law.  If however the patch is longer and
+embodies any degree of artistic expression, then the are copyright the author.
+If though the patch has been published on a public mailing list and is clearly
+intended to patch a package which is covered by a license that allows Freescale
+to freely distribute the package, then it is obviously intended  to be used in
+conjunction with that package and be covered by it's license.  Furthermore,
+once a patch is integrated into a package goverened by the GPL/LGPL, the work
+is as a whole governed by that license, due to it's viral nature (and also
+in many cases the patch may be considered a derivative work).
+
+ 3. Any object that was uploaded to the PPP, that came from the Internet and is *not* covered by a licensed that allows Freescale to freely distribute the object will *not* be approved for copying to the GPP.  An example of this type of file is java from java.sun.com.  Although you can got to their site and download it for use, you cannot take a copy an re-distribute it without permission.
+
+ 4. Any object that was uploaded to the PPP, from whatever source that appears to be in violation of the owners license, or otherwise inappropriate will be removed from the PPP.
+
+ 5. Any object that was uploaded to the PPP, who's copyright is owned by Freescale will only be approved for copying to the GPP when:
+      * It has an appropriate license
+      * It has been authorised for release by the review team
+
+
+---++ Resources: listings, upload, download 
+
+   * [[http://auslxpb02.mtwk.freescale.net/ltib gpp/ppp resources]]
+
+
+----
+
+-- Main.StuartHughes - %SERVERTIME%
+

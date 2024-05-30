@@ -1,0 +1,607 @@
+diff -BruN lkc-1.4/expr.c lkc-1.4.help/expr.c
+--- lkc-1.4/expr.c	2003-05-12 11:49:50.000000000 -0700
++++ lkc-1.4.help/expr.c	2005-05-31 11:23:55.000000000 -0700
+@@ -444,6 +444,11 @@
+ 		// (a) && (a!='n') -> (a)
+ 		return expr_alloc_symbol(sym1);
+ 
++       if ((e1->type == E_SYMBOL && e2->type == E_UNEQUAL && e2->right.sym == &symbol_mod) ||
++           (e2->type == E_SYMBOL && e1->type == E_UNEQUAL && e1->right.sym == &symbol_mod))
++               // (a) && (a!='m') -> (a='y')
++               return expr_alloc_comp(E_EQUAL, sym1, &symbol_yes);
++	
+ 	if (sym1->type == S_TRISTATE) {
+ 		if (e1->type == E_EQUAL && e2->type == E_UNEQUAL) {
+ 			// (a='b') && (a!='c') -> 'b'='c' ? 'n' : a='b'
+@@ -1081,3 +1086,13 @@
+ 	expr_fprint(e, stdout);
+ }
+ 
++static void expr_print_gstr_helper(void *data, const char *str)
++{
++       str_append((struct gstr*)data, str);
++}
++
++void expr_gstr_print(struct expr *e, struct gstr *gs)
++{
++       expr_print(e, expr_print_gstr_helper, gs, E_NONE);
++}
++
+diff -BruN lkc-1.4/expr.h lkc-1.4.help/expr.h
+--- lkc-1.4/expr.h	2003-05-16 11:05:57.000000000 -0700
++++ lkc-1.4.help/expr.h	2005-05-31 11:19:48.000000000 -0700
+@@ -175,6 +175,8 @@
+ 
+ void expr_fprint(struct expr *e, FILE *out);
+ void print_expr(int mask, struct expr *e, int prevtoken);
++struct gstr; /* forward */
++void expr_gstr_print(struct expr *e, struct gstr *gs);
+ 
+ static inline int expr_is_yes(struct expr *e)
+ {
+diff -BruN lkc-1.4/lkc_defs.h lkc-1.4.help/lkc_defs.h
+--- lkc-1.4/lkc_defs.h	1969-12-31 16:00:00.000000000 -0800
++++ lkc-1.4.help/lkc_defs.h	2005-05-31 11:03:41.000000000 -0700
+@@ -0,0 +1,40 @@
++
++/* confdata.c */
++#define conf_parse (*conf_parse_p)
++#define conf_read (*conf_read_p)
++#define conf_write (*conf_write_p)
++
++/* menu.c */
++#define rootmenu (*rootmenu_p)
++
++#define menu_is_visible (*menu_is_visible_p)
++#define menu_get_prompt (*menu_get_prompt_p)
++#define menu_get_root_menu (*menu_get_root_menu_p)
++#define menu_get_parent_menu (*menu_get_parent_menu_p)
++
++/* symbol.c */
++#define symbol_hash (*symbol_hash_p)
++#define sym_change_count (*sym_change_count_p)
++
++#define sym_lookup (*sym_lookup_p)
++#define sym_find (*sym_find_p)
++#define sym_re_search (*sym_re_search_p)
++#define sym_type_name (*sym_type_name_p)
++#define sym_calc_value (*sym_calc_value_p)
++#define sym_get_type (*sym_get_type_p)
++#define sym_tristate_within_range (*sym_tristate_within_range_p)
++#define sym_set_tristate_value (*sym_set_tristate_value_p)
++#define sym_toggle_tristate_value (*sym_toggle_tristate_value_p)
++#define sym_string_valid (*sym_string_valid_p)
++#define sym_string_within_range (*sym_string_within_range_p)
++#define sym_set_string_value (*sym_set_string_value_p)
++#define sym_is_changable (*sym_is_changable_p)
++#define sym_get_choice_prop (*sym_get_choice_prop_p)
++#define sym_get_default_prop (*sym_get_default_prop_p)
++#define sym_get_string_value (*sym_get_string_value_p)
++
++#define prop_get_type_name (*prop_get_type_name_p)
++
++/* expr.c */
++#define expr_compare_type (*expr_compare_type_p)
++#define expr_print (*expr_print_p)
+diff -BruN lkc-1.4/lkc.h lkc-1.4.help/lkc.h
+--- lkc-1.4/lkc.h	2003-05-24 19:18:24.000000000 -0700
++++ lkc-1.4.help/lkc.h	2005-05-31 11:12:18.000000000 -0700
+@@ -56,11 +56,27 @@
+ void menu_add_symbol(enum prop_type type, struct symbol *sym, struct expr *dep);
+ void menu_finalize(struct menu *parent);
+ void menu_set_type(int type);
++extern struct menu *current_entry;
++extern struct menu *current_menu;
++
++
++/* util.c */
+ struct file *file_lookup(const char *name);
+ int file_write_dep(const char *name);
+ 
+-extern struct menu *current_entry;
+-extern struct menu *current_menu;
++struct gstr {
++       size_t len;
++       char  *s;
++};
++struct gstr str_new(void);
++struct gstr str_assign(const char *s);
++void str_free(struct gstr *gs);
++void str_append(struct gstr *gs, const char *s);
++void str_printf(struct gstr *gs, const char *fmt, ...);
++const char *str_get(struct gstr *gs);
++
++struct file *file_lookup(const char *name);
++int file_write_dep(const char *name);
+ 
+ /* symbol.c */
+ void sym_init(void);
+diff -BruN lkc-1.4/lkc_proto.h lkc-1.4.help/lkc_proto.h
+--- lkc-1.4/lkc_proto.h	2003-05-25 16:23:50.000000000 -0700
++++ lkc-1.4.help/lkc_proto.h	2005-05-31 11:03:39.000000000 -0700
+@@ -18,6 +18,7 @@
+ 
+ P(sym_lookup,struct symbol *,(const char *name, int isconst));
+ P(sym_find,struct symbol *,(const char *name));
++P(sym_re_search,struct symbol **,(const char *pattern));
+ P(sym_type_name,const char *,(enum symbol_type type));
+ P(sym_calc_value,void,(struct symbol *sym));
+ P(sym_get_type,enum symbol_type,(struct symbol *sym));
+diff -BruN lkc-1.4/lxdialog/menubox.c lkc-1.4.help/lxdialog/menubox.c
+--- lkc-1.4/lxdialog/menubox.c	2005-06-21 11:58:49.000000000 -0700
++++ lkc-1.4.help/lxdialog/menubox.c	2005-05-31 10:37:59.000000000 -0700
+@@ -71,7 +71,7 @@
+ 
+     strncpy(menu_item, item, menu_width);
+     menu_item[menu_width] = 0;
+-    j = first_alpha(menu_item, "YyNnMm");
++    j = first_alpha(menu_item, "YyNnMmHh");
+ 
+     /* Clear 'residue' of last item */
+     wattrset (win, menubox_attr);
+@@ -278,17 +278,17 @@
+ 
+ 	if (key < 256 && isalpha(key)) key = tolower(key);
+ 
+-	if (strchr("ynm", key))
++	if (strchr("ynmh", key))
+ 		i = max_choice;
+ 	else {
+         for (i = choice+1; i < max_choice; i++) {
+-		j = first_alpha(items[scroll + i]->name, "YyNnMm>");
++		j = first_alpha(items[scroll + i]->name, "YyNnMmHh>");
+ 		if (key == tolower(items[scroll + i]->name[j]))
+                 	break;
+ 	}
+ 	if (i == max_choice)
+        		for (i = 0; i < max_choice; i++) {
+-			j = first_alpha(items[scroll + i]->name, "YyNnMm>");
++			j = first_alpha(items[scroll + i]->name, "YyNnMmHh>");
+ 			if (key == tolower(items[scroll + i]->name[j]))
+                 		break;
+ 		}
+@@ -398,6 +398,7 @@
+ 	case 'y':
+ 	case 'n':
+ 	case 'm':
++	case '/':
+ 	    /* save scroll info */
+ 	    if ( (f=fopen("lxdialog.scrltmp","w")) != NULL ) {
+ 		fprintf(f,"%d\n",scroll);
+@@ -411,6 +412,7 @@
+             case 'n': return 4;
+             case 'm': return 5;
+             case ' ': return 6;
++	    case '/': return 7;
+             }
+ 	    return 0;
+ 	case 'h':
+diff -BruN lkc-1.4/mconf.c lkc-1.4.help/mconf.c
+--- lkc-1.4/mconf.c	2005-06-21 11:58:49.000000000 -0700
++++ lkc-1.4.help/mconf.c	2005-06-21 11:57:16.000000000 -0700
+@@ -94,8 +94,46 @@
+ 	"Shortcut: Press the option's highlighted letter (hotkey).\n"
+ 	"\n"
+ 	"You may also use the <PAGE UP> and <PAGE DOWN> keys to scroll\n"
+-	"unseen options into view.\n"
+-;
++	"unseen options into view.\n",
++search_help[] =
++	"\n"
++	"Search for CONFIG_ symbols and display their relations.\n"
++	"Example: search for \"^FOO\"\n"
++	"Result:\n"
++	"-----------------------------------------------------------------\n"
++	"Symbol: FOO [=m]\n"
++	"Prompt: Foo bus is used to drive the bar HW\n"
++	"Defined at drivers/pci/Kconfig:47\n"
++	"Depends on: X86_LOCAL_APIC && X86_IO_APIC || IA64\n"
++	"Location:\n"
++	"  -> Bus options (PCI, PCMCIA, EISA, MCA, ISA)\n"
++	"    -> PCI support (PCI [=y])\n"
++	"      -> PCI access mode (<choice> [=y])\n"
++	"Selects: LIBCRC32\n"
++	"Selected by: BAR\n"
++	"-----------------------------------------------------------------\n"
++	"o The line 'Prompt:' shows the text used in the menu structure for\n"
++	"  this CONFIG_ symbol\n"
++	"o The 'Defined at' line tell at what file / line number the symbol\n"
++	"  is defined\n"
++	"o The 'Depends on:' line tell what symbols needs to be defined for\n"
++	"  this symbol to be visible in the menu (selectable)\n"
++	"o The 'Location:' lines tell where in the menu structure this symbol\n"
++	"  is located\n"
++	"    A location followed by a [=y] indicate that this is a selectable\n"
++	"    menu item - and current value is displayed inside brackets.\n"
++	"o The 'Selects:' line tell what symbol will be automatically\n"
++	"  selected if this symbol is selected (y or m)\n"
++	"o The 'Selected by' line tell what symbol has selected this symbol\n"
++	"\n"
++	"Only relevant lines are shown.\n"
++	"\n\n"
++	"Search examples:\n"
++	"Examples: USB	=> find all CONFIG_ symbols containing USB\n"
++	"          ^USB => find all CONFIG_ symbols starting with USB\n"
++	"          USB$ => find all CONFIG_ symbols ending with USB\n"
++	"\n";
++
+ 
+ static char filename[PATH_MAX+1] = ".config";
+ static int indent = 0;
+@@ -214,6 +252,105 @@
+ 	item_no = 0;
+ }
+ 
++static void get_prompt_str(struct gstr *r, struct property *prop)
++{
++	int i, j;
++	struct menu *submenu[8], *menu;
++
++	str_printf(r, "Prompt: %s\n", prop->text);
++	str_printf(r, "  Defined at %s:%d\n", prop->menu->file->name,
++		prop->menu->lineno);
++	if (!expr_is_yes(prop->visible.expr)) {
++		str_append(r, "  Depends on: ");
++		expr_gstr_print(prop->visible.expr, r);
++		str_append(r, "\n");
++	}
++	menu = prop->menu->parent;
++	for (i = 0; menu != &rootmenu && i < 8; menu = menu->parent)
++		submenu[i++] = menu;
++	if (i > 0) {
++		str_printf(r, "  Location:\n");
++		for (j = 4; --i >= 0; j += 2) {
++			menu = submenu[i];
++			str_printf(r, "%*c-> %s", j, ' ', menu_get_prompt(menu));
++			if (menu->sym) {
++				str_printf(r, " (%s [=%s])", menu->sym->name ?
++					menu->sym->name : "<choice>",
++					sym_get_string_value(menu->sym));
++			}
++			str_append(r, "\n");
++		}
++	}
++}
++
++static void get_symbol_str(struct gstr *r, struct symbol *sym)
++{
++	bool hit;
++	struct property *prop;
++
++	str_printf(r, "Symbol: %s [=%s]\n", sym->name,
++	                               sym_get_string_value(sym));
++	for_all_prompts(sym, prop)
++		get_prompt_str(r, prop);
++	hit = false;
++	for_all_properties(sym, prop, P_SELECT) {
++		if (!hit) {
++			str_append(r, "  Selects: ");
++			hit = true;
++		} else
++			str_printf(r, " && ");
++		expr_gstr_print(prop->expr, r);
++	}
++	if (hit)
++		str_append(r, "\n");
++	if (sym->rev_dep.expr) {
++		str_append(r, "  Selected by: ");
++		expr_gstr_print(sym->rev_dep.expr, r);
++		str_append(r, "\n");
++	}
++	str_append(r, "\n\n");
++}
++
++static struct gstr get_relations_str(struct symbol **sym_arr)
++{
++	struct symbol *sym;
++	struct gstr res = str_new();
++	int i;
++
++	for (i = 0; sym_arr && (sym = sym_arr[i]); i++)
++		get_symbol_str(&res, sym);
++	if (!i)
++		str_append(&res, "No matches found.\n");
++	return res;
++}
++
++static void search_conf(void)
++{
++	struct symbol **sym_arr;
++	int stat;
++	struct gstr res;
++
++again:
++	stat = dialog_inputbox("Search Configuration Parameter", "Enter Keyword", 10, 75, "");
++	if (stat < 0)
++		goto again;
++	switch (stat) {
++	case 0:
++		break;
++	case 1:
++		show_helptext("Search Configuration", search_help);
++		goto again;
++	default:
++		return;
++	}
++
++	sym_arr = sym_re_search(dialog_input_result);
++	res = get_relations_str(sym_arr);
++	free(sym_arr);
++	show_textbox("Search Results", str_get(&res), rows, cols);
++	str_free(&res);
++}
++
+ static void build_conf(struct menu *menu)
+ {
+ 	struct symbol *sym;
+@@ -465,6 +602,9 @@
+ 			else if (type == 'm')
+ 				conf(submenu);
+ 			break;
++		case 7:
++			search_conf();
++			break;
+ 		}
+ 	}
+ }
+@@ -488,20 +628,23 @@
+ 
+ static void show_help(struct menu *menu)
+ {
+-	const char *help;
+-	char *helptext;
+-	struct symbol *sym = menu->sym;
+-
+-	help = sym->help;
+-	if (!help)
+-		help = nohelp_text;
+-	if (sym->name) {
+-		helptext = malloc(strlen(sym->name) + strlen(help) + 16);
+-		sprintf(helptext, "%s:\n\n%s", sym->name, help);
+-		show_helptext(menu_get_prompt(menu), helptext);
+-		free(helptext);
+-	} else
+-		show_helptext(menu_get_prompt(menu), help);
++
++        struct gstr help = str_new();
++        struct symbol *sym = menu->sym;
++
++        if (sym->help)
++        {
++                if (sym->name) {
++                        str_printf(&help, "CONFIG_%s:\n\n", sym->name);
++                        str_append(&help, sym->help);
++                        str_append(&help, "\n");
++                }
++        } else {
++                str_append(&help, nohelp_text);
++        }
++        get_symbol_str(&help, sym);
++        show_helptext(menu_get_prompt(menu), str_get(&help));
++        str_free(&help);
+ }
+ 
+ static void show_readme(void)
+diff -BruN lkc-1.4/menu.c lkc-1.4.help/menu.c
+--- lkc-1.4/menu.c	2003-06-04 14:47:52.000000000 -0700
++++ lkc-1.4.help/menu.c	2005-05-31 11:11:51.000000000 -0700
+@@ -355,43 +355,3 @@
+ 	return menu;
+ }
+ 
+-struct file *file_lookup(const char *name)
+-{
+-	struct file *file;
+-
+-	for (file = file_list; file; file = file->next) {
+-		if (!strcmp(name, file->name))
+-			return file;
+-	}
+-
+-	file = malloc(sizeof(*file));
+-	memset(file, 0, sizeof(*file));
+-	file->name = strdup(name);
+-	file->next = file_list;
+-	file_list = file;
+-	return file;
+-}
+-
+-int file_write_dep(const char *name)
+-{
+-	struct file *file;
+-	FILE *out;
+-
+-	if (!name)
+-		name = ".config.cmd";
+-	out = fopen("..config.tmp", "w");
+-	if (!out)
+-		return 1;
+-	fprintf(out, "deps_config := \\\n");
+-	for (file = file_list; file; file = file->next) {
+-		if (file->next)
+-			fprintf(out, "\t%s \\\n", file->name);
+-		else
+-			fprintf(out, "\t%s\n", file->name);
+-	}
+-	fprintf(out, "\n.config include/linux/autoconf.h: $(deps_config)\n\n$(deps_config):\n");
+-	fclose(out);
+-	rename("..config.tmp", name);
+-	return 0;
+-}
+-
+diff -BruN lkc-1.4/symbol.c lkc-1.4.help/symbol.c
+--- lkc-1.4/symbol.c	2003-06-06 15:00:50.000000000 -0700
++++ lkc-1.4.help/symbol.c	2005-05-31 11:02:12.000000000 -0700
+@@ -7,6 +7,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/utsname.h>
++#include <regex.h>
+ 
+ #define LKC_DIRECT_LINK
+ #include "lkc.h"
+@@ -656,6 +657,43 @@
+ 	return symbol;
+ }
+ 
++struct symbol **sym_re_search(const char *pattern)
++{
++       struct symbol *sym, **sym_arr = NULL;
++       int i, cnt, size;
++       regex_t re;
++
++       cnt = size = 0;
++       /* Skip if empty */
++       if (strlen(pattern) == 0)
++               return NULL;
++       if (regcomp(&re, pattern, REG_EXTENDED|REG_NOSUB|REG_ICASE))
++               return NULL;
++
++       for_all_symbols(i, sym) {
++               if (sym->flags & SYMBOL_CONST || !sym->name)
++                       continue;
++               if (regexec(&re, sym->name, 0, NULL, 0))
++                       continue;
++               if (cnt + 1 >= size) {
++                       void *tmp = sym_arr;
++                       size += 16;
++                       sym_arr = realloc(sym_arr, size * sizeof(struct symbol *));
++                       if (!sym_arr) {
++                               free(tmp);
++                               return NULL;
++                       }
++               }
++               sym_arr[cnt++] = sym;
++       }
++       if (sym_arr)
++               sym_arr[cnt] = NULL;
++       regfree(&re);
++
++       return sym_arr;
++}
++
++
+ struct symbol *sym_check_deps(struct symbol *sym);
+ 
+ static struct symbol *sym_check_expr_deps(struct expr *e)
+diff -BruN lkc-1.4/util.c lkc-1.4.help/util.c
+--- lkc-1.4/util.c	1969-12-31 16:00:00.000000000 -0800
++++ lkc-1.4.help/util.c	2005-05-31 11:07:36.000000000 -0700
+@@ -0,0 +1,109 @@
++/*
++ * Copyright (C) 2002-2005 Roman Zippel <zippel@linux-m68k.org>
++ * Copyright (C) 2002-2005 Sam Ravnborg <sam@ravnborg.org>
++ *
++ * Released under the terms of the GNU GPL v2.0.
++ */
++
++#include <string.h>
++#include "lkc.h"
++
++/* file already present in list? If not add it */
++struct file *file_lookup(const char *name)
++{
++	struct file *file;
++
++	for (file = file_list; file; file = file->next) {
++		if (!strcmp(name, file->name))
++			return file;
++	}
++
++	file = malloc(sizeof(*file));
++	memset(file, 0, sizeof(*file));
++	file->name = strdup(name);
++	file->next = file_list;
++	file_list = file;
++	return file;
++}
++
++/* write a dependency file as used by kbuild to track dependencies */
++int file_write_dep(const char *name)
++{
++	struct file *file;
++	FILE *out;
++
++	if (!name)
++		name = ".config.cmd";
++	out = fopen("..config.tmp", "w");
++	if (!out)
++		return 1;
++	fprintf(out, "deps_config := \\\n");
++	for (file = file_list; file; file = file->next) {
++		if (file->next)
++			fprintf(out, "\t%s \\\n", file->name);
++		else
++			fprintf(out, "\t%s\n", file->name);
++	}
++	fprintf(out, "\n.config include/linux/autoconf.h: $(deps_config)\n\n$(deps_config):\n");
++	fclose(out);
++	rename("..config.tmp", name);
++	return 0;
++}
++
++
++/* Allocate initial growable sting */
++struct gstr str_new(void)
++{
++	struct gstr gs;
++	gs.s = malloc(sizeof(char) * 64);
++	gs.len = 16;
++	strcpy(gs.s, "\0");
++	return gs;
++}
++
++/* Allocate and assign growable string */
++struct gstr str_assign(const char *s)
++{
++	struct gstr gs;
++	gs.s = strdup(s);
++	gs.len = strlen(s) + 1;
++	return gs;
++}
++
++/* Free storage for growable string */
++void str_free(struct gstr *gs)
++{
++	if (gs->s)
++		free(gs->s);
++	gs->s = NULL;
++	gs->len = 0;
++}
++
++/* Append to growable string */
++void str_append(struct gstr *gs, const char *s)
++{
++	size_t l = strlen(gs->s) + strlen(s) + 1;
++	if (l > gs->len) {
++		gs->s   = realloc(gs->s, l);
++		gs->len = l;
++	}
++	strcat(gs->s, s);
++}
++
++/* Append printf formatted string to growable string */
++void str_printf(struct gstr *gs, const char *fmt, ...)
++{
++	va_list ap;
++	char s[10000]; /* big enough... */
++	va_start(ap, fmt);
++	vsnprintf(s, sizeof(s), fmt, ap);
++	str_append(gs, s);
++	va_end(ap);
++}
++
++/* Retreive value of growable string */
++const char *str_get(struct gstr *gs)
++{
++	return gs->s;
++}
++
+diff -BruN lkc-1.4/zconf.y lkc-1.4.help/zconf.y
+--- lkc-1.4/zconf.y	2005-06-21 11:58:49.000000000 -0700
++++ lkc-1.4.help/zconf.y	2005-05-31 11:13:32.000000000 -0700
+@@ -688,3 +688,4 @@
+ #include "expr.c"
+ #include "symbol.c"
+ #include "menu.c"
++#include "util.c"

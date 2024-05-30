@@ -1,0 +1,100 @@
+diff --exclude CVS -uNr lkc-1.4/confdata.c lkc-1.4.modified/confdata.c
+--- lkc-1.4/confdata.c	Fri Nov 25 09:25:09 2005
++++ lkc-1.4.modified/confdata.c	Fri Nov 25 09:15:57 2005
+@@ -8,6 +8,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <time.h>
+ #include <unistd.h>
+ 
+ #define LKC_DIRECT_LINK
+@@ -296,11 +297,20 @@
+ 	char dirname[128], tmpname[128], newname[128];
+ 	int type, l;
+ 	const char *str;
++	time_t now;
++	int use_timestamp = 1;
++	char *env;
+ 
+ 	dirname[0] = 0;
+ 	if (name && name[0]) {
+-		char *slash = strrchr(name, '/');
+-		if (slash) {
++		struct stat st;
++		char *slash;
++
++		if (!stat(name, &st) && S_ISDIR(st.st_mode)) {
++			strcpy(dirname, name);
++			strcat(dirname, "/");
++			basename = conf_def_filename;
++		} else if ((slash = strrchr(name, '/'))) {
+ 			int size = slash - name + 1;
+ 			memcpy(dirname, name, size);
+ 			dirname[size] = 0;
+@@ -313,7 +323,7 @@
+ 	} else
+ 		basename = conf_def_filename;
+ 
+-	sprintf(newname, "%s.tmpconfig.%d", dirname, getpid());
++	sprintf(newname, "%s.tmpconfig.%d", dirname, (int)getpid());
+ 	out = fopen(newname, "w");
+ 	if (!out)
+ 		return 1;
+@@ -323,14 +333,31 @@
+ 		if (!out_h)
+ 			return 1;
+ 	}
+-	fprintf(out, "#\n"
+-		     "# Automatically generated make config: don't edit\n"
+-		     "#\n");
++	sym = sym_lookup("LTIB_RELEASE", 0);
++	sym_calc_value(sym);
++	time(&now);
++	env = getenv("KCONFIG_NOTIMESTAMP");
++	if (env && *env)
++		use_timestamp = 0;
++
++	fprintf(out, _("#\n"
++		       "# Automatically generated make config: don't edit\n"
++		       "# LTIB version: %s\n"
++		       "%s%s"
++		       "#\n"),
++		     sym_get_string_value(sym),
++		     use_timestamp ? "# " : "",
++		     use_timestamp ? ctime(&now) : "");
+ 	if (out_h)
+ 		fprintf(out_h, "/*\n"
+ 			       " * Automatically generated C config: don't edit\n"
++			       " * LTIB version: %s\n"
++			       "%s%s"
+ 			       " */\n"
+-			       "#define AUTOCONF_INCLUDED\n");
++			       "#define AUTOCONF_INCLUDED\n",
++			       sym_get_string_value(sym),
++			       use_timestamp ? " * " : "",
++			       use_timestamp ? ctime(&now) : "");
+ 
+ 	if (!sym_change_count)
+ 		sym_clear_all_valid();
+@@ -443,6 +470,7 @@
+ 	if (out_h) {
+ 		fclose(out_h);
+ 		rename(".tmpconfig.h", "include/linux/autoconf.h");
++		file_write_dep(NULL);
+ 	}
+ 	if (!name || basename != conf_def_filename) {
+ 		if (!name)
+diff --exclude CVS -uNr lkc-1.4/lkc.h lkc-1.4.modified/lkc.h
+--- lkc-1.4/lkc.h	Fri Nov 25 09:25:09 2005
++++ lkc-1.4.modified/lkc.h	Fri Nov 25 09:20:34 2005
+@@ -23,6 +23,9 @@
+ 
+ #define SRCTREE "srctree"
+ 
++//#define _(text) gettext(text)
++#define _(text) text
++
+ int zconfparse(void);
+ void zconfdump(FILE *out);
+ 

@@ -1,0 +1,17 @@
+diff -ruN util-linux-2.12orig/sys-utils/cytune.c util-linux-2.12/sys-utils/cytune.c
+--- util-linux-2.12orig/sys-utils/cytune.c	2002-03-08 17:04:30.000000000 -0600
++++ util-linux-2.12/sys-utils/cytune.c	2006-02-13 12:24:31.000000000 -0600
+@@ -52,12 +52,9 @@
+ #include <signal.h>
+ #include <linux/tty.h>
+ #include <termios.h>
++#include <linux/compiler.h>
+ 
+ #include "../defines.h"		/* for NEED_tqueue_h */
+-#ifdef NEED_tqueue_h
+-#include <linux/tqueue.h>	/* required for old kernels (for struct tq_struct) */
+-				/* compilation errors on other kernels */
+-#endif
+ #include <linux/cyclades.h>
+ 
+ #if 0

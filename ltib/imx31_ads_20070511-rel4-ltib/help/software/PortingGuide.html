@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>Porting Guide</title></head><body><span style="font-weight: bold;">Linux BSP Kernel Porting Guide</span><br>
+<br>
+This document outlines many of the changes that are required when
+porting drivers between versions 2.6.16 and 2.6.19 of the Linux
+kernel.&nbsp; The changes are divided into two sections.&nbsp; The
+first section goes from 2.6.16 to 2.6.18.&nbsp; Additional changes
+needed for 2.6.19 are given in the second section.<br>
+<br>
+As you make porting changes, be sure to update any affected comments,
+such as function argument descriptions.&nbsp; And reformat source lines
+as needed for correct
+style after the change (see Documentation/CodingStyle in the kernel
+source).<br>
+<br>
+<span style="font-weight: bold;">Porting notes from 2.6.16 to 2.6.18</span><br>
+<br>
+In the outline below, a pseudo-/bin/sed syntax is used to specify
+substitutions.&nbsp; For example, s/old/new/ replaces all instances of
+"old" with "new". (Note: The only special character used below is &sect;,
+which is used as a wildcard to represent one or more arbitrary
+characters.)<br>
+<ul>
+  <li>devfs changes -- devfs has been removed from the kernel<br>
+  </li>
+  <ul>
+    <li>Remove #include &lt;linux/devfs_fs_kernel.h&gt;</li>
+    <li>Remove calls to devfs_mk_cdev()</li>
+    <li>Remove calls to devfs_remove()</li>
+    <li>Make sure udev knows how to make the devices (in /etc/udev/rules.d)<br>
+    </li>
+  </ul>
+</ul>
+<ul>
+  <li>DMA buffer changes</li>
+  <ul>
+    <li>s/buf.__address/addr/ -- For example, see __set_dma_addr() compared to the old set_dma_addr()<br>
+    </li>
+  </ul>
+</ul>
+<ul>
+  <li>Frame buffer drivers</li>
+  <ul>
+    <li>Change driver's ioctl(inode, file, cmd, arg, info) to ioctl(info, cmd, arg)</li>
+    <li>Remove .fb_cursor initializer<br>
+    </li>
+  </ul>
+</ul>
+<ul>
+  <li>Generic IRQ changes (genirq)</li>
+  <ul>
+    <li>Substitutions:</li>
+    <ul>
+      <li>s/SA_INTERRUPT/IRQF_DISABLED/</li>
+      <li>s/SA_SHIRQ/IRQF_SHARED/</li>
+      <li>s/SA_NODELAY//</li>
+      <li>s/struct irqdesc/struct irq_desc/</li>
+      <li>Only inside struct irqdesc: s/.type/.set_type/</li>
+      <li>s/struct irqchip/struct irq_chip/</li>
+      <li>s/&sect;desc-&gt;handle/desc_handle_irq/&nbsp; <span style="font-weight: bold;">or</span>&nbsp; s/&sect;desc-&gt;handle/&sect;<span style="text-decoration: underline;"></span>desc-&gt;handle_irq/</li>
+      <li>s/&sect;<span style="text-decoration: underline;"></span>desc-&gt;data/get_irq_data(irq)/&nbsp;&nbsp; <span style="font-weight: bold;">or&nbsp;</span> s/&sect;<span style="text-decoration: underline;"></span>desc-&gt;data/set_irq_data(irq, data)/</li>
+      <li>s/irq_desc&sect;<span style="text-decoration: underline;"></span>handler/irq_desc&sect;chip/</li>
+      <li>s/irq_affinity[irq]/irq_desc[irq].affinity/</li>
+      <li>Sometimes: s/irq_controller_lock/irq_desc[i].lock/<br>
+      </li>
+    </ul>
+    <li>Add IRQF_TIMER to timer's struct irqaction</li>
+    <li>Add #include &lt;linux/irq.h&gt; below interrupt.h as needed for setup_irq() prototype<br>
+    </li>
+  </ul>
+</ul>
+<ul>
+  <li>Platform_device changes</li>
+  <ul>
+    <li>&lt;linux/device.h&gt;&nbsp;&nbsp; changes to &nbsp; &lt;linux/platform_device.h&gt;</li>
+    <li>In power management functions, i.e. &sect;_{suspend,resume,probe,shutdown,remove}(struct device *dev, ..., level)</li>
+    <ul>
+      <li>s/struct device *dev/struct platform_device *pdev/</li>
+      <li>s/u32 state/pm_message_t state/</li>
+      <li>s/dev_get_drvdata(dev)/platform_get_drvdata(pdev)/</li>
+      <li>s/dev_set_drvdata(dev, data)/platform_set_drvdata(pdev, data)/<br>
+      </li>
+      <li>Remove 'level' argument on calls that have it</li>
+      <li>Strip out switch(level) statement logic, but leave all of the actions in sequence</li>
+      
+    </ul>
+    <li>to_platform_device() is not needed anymore</li>
+    <li>struct device_driver --&nbsp; change to struct platform_driver, with these field changes:</li>
+    <ul>
+      <li>Move .name to .driver = { .name = "name", },</li>
+      <li>Possibly coalesce with a struct platform_device</li>
+      <li>Remove .bus = &amp;platform_bus_type</li>
+    </ul>
+    <li>Calls to driver_register() -- change to platform_driver_register()</li>
+    <ul>
+      <li>Remove extra calls to platform_device_register()</li>
+      <li>Fix error handling logic, e.g.&nbsp; add "if(ret) return ret"</li>
+    </ul>
+    <li>Calls to driver_unregister() -- change to platform_driver_unregister() and remove calls to platform_device_unregister()<br>
+    </li>
+  </ul>
+</ul>
+<ul>
+  <li>Raw spinlock substitutions:<br>
+  </li>
+  <ul>
+    <li>s/DEFINE_RAW_SPINLOCK/DEFINE_SPINLOCK/</li>
+    <li>s/raw_spinlock_t/spinlock_t/<br>
+    </li>
+  </ul>
+</ul>
+<ul>
+  <li>sysfs API substitutions:<br>
+  </li>
+  <ul>
+    <li>s/struct class_simple/struct class/</li>
+    <li>s/class_simple_create()/class_create()/</li>
+    <li>s/class_simple_device_add()/class_device_create()/</li>
+    <li>s/class_simple_device_remove()/class_device_destroy()/</li>
+    <li>s/class_simple_destroy()/class_destroy()/<br>
+    </li>
+  </ul>
+</ul>
+<ul>
+  <li>i2c driver changes</li>
+  <ul>
+    <li>platform_device changes (as outlined above)</li>
+    <li>Remove ".name = "MXC algorithm" in mxc_i2c_algorithm initializer</li>
+    <li>To mxc_i2c_client_driver, add initializers: .driver = { .name = "MXC I2C Client", }, and .attach_adapter = mxc_i2c_client_attach<br>
+    </li>
+  </ul>
+</ul>
+<ul>
+  <li>Keypad driver changes</li>
+  <ul>
+    <li>platform_device changes (as outlined above)</li>
+    <li>devfs changes (as above)</li>
+    <li>Change mxckbd_dev to a pointer throughout the driver.&nbsp;
+Allocate it with input_allocate_device().&nbsp; Handle the out-of-memory case (printk, clean up, and return -ENOMEM if
+input_allocate_device() returns NULL)<br>
+    </li>
+  </ul>
+</ul>
+<br>
+<span style="font-weight: bold;">Porting notes from 2.6.18 to 2.6.19</span><br>
+<ul>
+  <li>Remove "#include &lt;linux/config.h&gt;" from all source
+files.&nbsp; The definitions that used to be found there now appear
+magically in the build.<br>
+  </li>
+</ul>
+<ul>
+  <li>Remove 'struct pt_regs' arguments from interrupt handlers, their
+descendants, prototypes, and invocations.&nbsp; This will include calls
+to timer_tick(), which now takes no arguments.&nbsp; The pt_regs argument was removed because
+it was so infrequently used.&nbsp; An interrupt handler that still
+needs the regs can call get_irq_regs() to get them.&nbsp; There should
+be no compilation warnings on these routines or their invocations.<br>
+  </li>
+</ul>
+<ul>
+  <li>Remove any local declarations of a bool type.&nbsp; This is now globally available to kernel code through include/linux/types.h<br>
+  </li>
+</ul>
+<br>
+<br>
+</body></html>

@@ -1,0 +1,129 @@
+TLSbo90150_MX27_Invalid_Printk.patch
+
+Fix invalid debugging printk's for i.MX27
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/devices.c linux-2.6.19.2/arch/arm/mach-mx27/devices.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/devices.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/devices.c	2007-04-25 17:37:26.000000000 -0600
+@@ -386,15 +386,15 @@ static inline void mxc_init_spi(void)
+ {
+ #ifdef CONFIG_SPI_MXC_SELECT1
+ 	if (platform_device_register(&mxcspi1_device) < 0)
+-		printk("Error: Registering the SPI Controller_1\n");
++		printk(KERN_ERR "Registering the SPI Controller_1\n");
+ #endif				/* CONFIG_SPI_MXC_SELECT1 */
+ #ifdef CONFIG_SPI_MXC_SELECT2
+ 	if (platform_device_register(&mxcspi2_device) < 0)
+-		printk("Error: Registering the SPI Controller_2\n");
++		printk(KERN_ERR "Registering the SPI Controller_2\n");
+ #endif				/* CONFIG_SPI_MXC_SELECT2 */
+ #ifdef CONFIG_SPI_MXC_SELECT3
+ 	if (platform_device_register(&mxcspi3_device) < 0)
+-		printk("Error: Registering the SPI Controller_3\n");
++		printk(KERN_ERR "Registering the SPI Controller_3\n");
+ #endif				/* CONFIG_SPI_MXC_SELECT3 */
+ }
+ #else
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads.c linux-2.6.19.2/arch/arm/mach-mx27/mx27ads.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads.c	2007-04-25 17:37:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mx27ads.c	2007-04-25 17:37:26.000000000 -0600
+@@ -115,7 +115,6 @@ static struct platform_device mxc_keypad
+ 
+ static void mxc_init_keypad(void)
+ {
+-	printk("mx27ads.c: registering mxc keypad device...\n");
+ 	(void)platform_device_register(&mxc_keypad_device);
+ }
+ #else
+@@ -342,8 +341,8 @@ static u32 mxc_card_state_changed(u32 ma
+ 		}
+ 	}
+ #ifdef MXC_CARD_DEBUG
+-	printk("\nmask=%x, s0=%x, s1=%x\n", mask, s0, s1);
+-	printk("retval=%x, stat=%x\n", retval, stat);
++	printk(KERN_INFO "\nmask=%x, s0=%x, s1=%x\n", mask, s0, s1);
++	printk(KERN_INFO "retval=%x, stat=%x\n", retval, stat);
+ #endif
+ 	return retval;
+ }
+@@ -411,26 +410,26 @@ static irqreturn_t mxc_sd_test_handler(i
+ {
+ 	int s = -1;
+ 
+-	printk("%s(irq=%d) for ", __FUNCTION__, irq);
++	printk(KERN_INFO "%s(irq=%d) for ", __FUNCTION__, irq);
+ 	if (irq == EXPIO_INT_SD1_EN) {
+-		printk("SD1");
++		printk(KERN_INFO "SD1");
+ 		s = MXC_CARD_SD1;
+ 	} else if (irq == EXPIO_INT_SD2_EN) {
+-		printk("SD2");
++		printk(KERN_INFO "SD2");
+ 		s = MXC_CARD_SD2;
+ 	} else if (irq == EXPIO_INT_SD3_EN) {
+-		printk("SD3");
++		printk(KERN_INFO "SD3");
+ 		s = MXC_CARD_SD3;
+ 	} else if (irq == EXPIO_INT_MS_EN) {
+-		printk("MS");
++		printk(KERN_INFO "MS");
+ 		s = MXC_CARD_MS;
+ 	} else {
+-		printk("None!!!!");
++		printk(KERN_INFO "None!!!!");
+ 	}
+ 	if (mxc_card_detected(s)) {
+-		printk(" inserted\n");
++		printk(KERN_INFO " inserted\n");
+ 	} else {
+-		printk(" removed\n");
++		printk(KERN_INFO " removed\n");
+ 	}
+ 
+ 	return IRQ_HANDLED;
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads_gpio.c linux-2.6.19.2/arch/arm/mach-mx27/mx27ads_gpio.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads_gpio.c	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mx27ads_gpio.c	2007-04-25 17:37:26.000000000 -0600
+@@ -347,7 +347,7 @@ void gpio_i2c_active(int i2c_num)
+ 		gpio_request_mux(MX27_PIN_I2C2_SDA, GPIO_MUX_PRIMARY);
+ 		break;
+ 	default:
+-		printk("gpio_i2c_active no compatible I2C adapter\n");
++		printk(KERN_ERR "gpio_i2c_active no compatible I2C adapter\n");
+ 		break;
+ 	}
+ }
+@@ -606,7 +606,7 @@ void gpio_fs453_reset_low(void)
+ {
+ 	gpio_free_mux(MX27_PIN_CLS);
+ 	if (gpio_request_mux(MX27_PIN_CLS, GPIO_MUX_GPIO)) {
+-		printk("bug: request GPIO PA25 failed.\n");
++		printk(KERN_ERR "bug: request GPIO PA25 failed.\n");
+ 		return;
+ 	}
+ 
+@@ -624,7 +624,7 @@ void gpio_fs453_reset_high(void)
+ {
+ 	gpio_free_mux(MX27_PIN_CLS);
+ 	if (gpio_request_mux(MX27_PIN_CLS, GPIO_MUX_GPIO)) {
+-		printk("bug: request GPIO PA25 failed.\n");
++		printk(KERN_ERR "bug: request GPIO PA25 failed.\n");
+ 		return;
+ 	}
+ 
+@@ -697,7 +697,6 @@ void gpio_ata_active(void)
+ 	gpio_request_mux(MX27_PIN_PC_RW_B, GPIO_MUX_ALT);
+ 	gpio_request_mux(MX27_PIN_PC_POE, GPIO_MUX_ALT);
+ 
+-	printk("ATA interface call clock enable ATA CLK \n");
+ 	mxc_clks_enable(ATA_CLK);
+ }
+ 
+@@ -707,7 +706,6 @@ void gpio_ata_active(void)
+  */
+ void gpio_ata_inactive(void)
+ {
+-	printk("ATA interface call clock disable ATA CLK \n");
+ 	mxc_clks_disable(ATA_CLK);
+ 
+ 	gpio_free_mux(MX27_PIN_ATA_DATA0);

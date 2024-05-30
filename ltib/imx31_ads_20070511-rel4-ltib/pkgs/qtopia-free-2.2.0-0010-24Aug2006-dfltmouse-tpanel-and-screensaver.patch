@@ -1,0 +1,43 @@
+From: John Rigby <jrigby@freescale.com>
+Date: Thu, 24 Aug 2006 14:37:15 -0600
+Subject: [PATCH] dfltmouse tpanel and screensaver
+
+Patches from MXC and MX21:
+	Make defaultMouse "TPanel"
+	Make screenSaverSleep work the same way as IPAQ
+
+This is from the MX21 PCS BSP.
+
+Signed-off-by: John Rigby <jrigby@freescale.com>
+
+---
+
+ qt2/src/kernel/qwindowsystem_qws.cpp |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+22de83947b302df1b1bfb593db96984e7c222ced
+diff --git a/qt2/src/kernel/qwindowsystem_qws.cpp b/qt2/src/kernel/qwindowsystem_qws.cpp
+index 9a813db..1ba6785 100644
+--- a/qt2/src/kernel/qwindowsystem_qws.cpp
++++ b/qt2/src/kernel/qwindowsystem_qws.cpp
+@@ -178,7 +178,7 @@ extern QQueue<QWSCommand> *qt_get_server
+ static QRect maxwindow_rect;
+ extern Q_EXPORT QRect qt_maxWindowRect;
+ static const char *defaultMouse =
+-#if defined(QT_QWS_CASSIOPEIA) || defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_YOPY) || defined(QWS_CUSTOMTOUCHPANEL)
++#if defined(QT_QWS_CASSIOPEIA) || defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_YOPY) || defined(QWS_CUSTOMTOUCHPANEL) || defined(QT_QWS_MX21) || defined(QT_QWS_MXC)
+     "TPanel"
+ #elif defined(QT_KEYPAD_MODE)
+     "None"
+@@ -3330,7 +3330,7 @@ void QWSServer::screenSaverWake()
+ void QWSServer::screenSaverSleep()
+ {
+     qt_screen->blank(TRUE);
+-#if !defined(QT_QWS_IPAQ) && !defined(QT_QWS_SL5XXX)
++#if !defined(QT_QWS_IPAQ) && !defined(QT_QWS_SL5XXX) && !defined(QT_QWS_MX21) && !defined(QT_QWS_MXC)
+     d->screensavertimer->stop();
+ #else
+     if ( screensaverinterval ) {
+-- 
+1.3.3
+

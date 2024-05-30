@@ -1,0 +1,41 @@
+# Template = kernel-common.tmpl
+
+%define pfx /opt/freescale/rootfs/%{_target_cpu}
+%define dversion 2.6.10
+%define pkg_name linux
+
+Summary         : Linux kernel (core of the Linux operating system)
+Name            : kernel
+Version         : 2.6.11
+Release         : 0uc
+License         : GPL
+Vendor          : kernel.org
+Packager        : Stuart Hughes
+Group           : System Environment/Kernel
+Source          : %{pkg_name}-%{dversion}.tar.bz2
+Patch0          : patch-%{version}.bz2
+Patch1          : linux-2.6.11-uc0.patch.gz
+Patch2          : linux-2.6.12-asm-m68knommu-bitops_h.patch
+Patch3          : linux-2.6.12-68328-ints_c-2.patch
+Patch4          : linux-2.6.12-attribute-placement.patch
+Patch5          : linux-2.6.11-68VZ328_config_c.patch
+Patch6          : linux-2.6.11-asm-m68knommu_bootstd_h.patch
+Patch7          : kernel-2.6.11-1127480794.patch
+BuildRoot       : %{_tmppath}/%{name}
+Prefix          : %{pfx}
+%Description
+%{summary}
+
+From kernel.org
+
+%Prep
+%setup -n %{pkg_name}-%{dversion}
+%patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
+

@@ -1,0 +1,19 @@
+CR: ENGR00028580
+Patch name: ENGR00028580_Fix_WFI_Wrokaround_implemetation.patch
+Date: Mon Mar 12 16:29:00 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: Do not use __initdata for the global variable used for the
+WFI workaround
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/cpu_common.c linux-2.6.19.2/arch/arm/plat-mxc/cpu_common.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/cpu_common.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/cpu_common.c	2007-04-25 17:39:21.000000000 -0600
+@@ -112,7 +112,7 @@ static void system_rev_update(void)
+ 	}
+ }
+ 
+-int mxc_jtag_enabled __initdata = 0;	/* OFF: 0 (default), ON: 1 */
++int mxc_jtag_enabled;		/* OFF: 0 (default), ON: 1 */
+ 
+ /*
+  * Here are the JTAG options from the command line. By default JTAG

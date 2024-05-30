@@ -1,0 +1,44 @@
+CR: TLSbo92112
+Patch name: TLSbo92112_Add_platform_data_for_onewire.patch
+Date: Fri Mar 2 16:52:29 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: platform data has been added for one wire for all platforms.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/devices.c linux-2.6.19.2/arch/arm/mach-mx27/devices.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/devices.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/devices.c	2007-04-25 17:38:13.000000000 -0600
+@@ -34,10 +34,15 @@ static void mxc_nop_release(struct devic
+ }
+ 
+ #if defined(CONFIG_W1_MASTER_MXC) || defined(CONFIG_W1_MASTER_MXC_MODULE)
++static struct mxc_w1_config mxc_w1_data = {
++	.search_rom_accelerator = 0,
++};
++
+ static struct platform_device mxc_w1_devices = {
+ 	.name = "mxc_w1",
+ 	.dev = {
+ 		.release = mxc_nop_release,
++		.platform_data = &mxc_w1_data,
+ 		},
+ 	.id = 0
+ };
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/devices.c linux-2.6.19.2/arch/arm/mach-mx3/devices.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/devices.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/devices.c	2007-04-25 17:38:13.000000000 -0600
+@@ -138,10 +138,15 @@ static void mxc_nop_release(struct devic
+ }
+ 
+ #if defined(CONFIG_W1_MASTER_MXC) || defined(CONFIG_W1_MASTER_MXC_MODULE)
++static struct mxc_w1_config mxc_w1_data = {
++	.search_rom_accelerator = 0,
++};
++
+ static struct platform_device mxc_w1_devices = {
+ 	.name = "mxc_w1",
+ 	.dev = {
+ 		.release = mxc_nop_release,
++		.platform_data = &mxc_w1_data,
+ 		},
+ 	.id = 0
+ };

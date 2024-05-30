@@ -1,0 +1,630 @@
+TLSbo86894_CSI_DMA_SI_Capture.patch
+
+Add CSI-DMA support for still image capture on i.MX27
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/dma.c linux-2.6.19.2/arch/arm/mach-mx27/dma.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/dma.c	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/dma.c	2007-04-25 17:37:00.000000000 -0600
+@@ -452,6 +452,19 @@ static mx2_dma_info_t mmc2_width4_dma_in
+ 	.M2D_Valid = 0,
+ };
+ 
++static mx2_dma_info_t csi_rx_dma_info = {
++	.dma_chan = MXC_DMA_DYNAMIC_CHANNEL,
++	.mode = 0,
++	.rto_en = 0,
++	.dir = 0,
++	.dma_chaining = 1,.ren = 1,
++	.burstLength = 64,.request = DMA_REQ_CSI_RX,.busuntils = 0,
++	.sourceType = DMA_TYPE_FIFO,.sourcePort = DMA_MEM_SIZE_32,
++	.destType = DMA_TYPE_LINEAR,.destPort = DMA_MEM_SIZE_32,
++	.per_address = (CSI_BASE_ADDR + 0x10),
++	.M2D_Valid = 0,
++};
++
+ /*!
+  * @brief dma info array which is actived
+  *    DEVICE_ID  RX/(RX&TX)	TX
+@@ -485,6 +498,7 @@ static dma_info_entry_t active_dma_info[
+ 	{MXC_DMA_MMC1_WIDTH_4, &mmc1_width4_dma_info},
+ 	{MXC_DMA_MMC2_WIDTH_1, &mmc2_width1_dma_info},
+ 	{MXC_DMA_MMC2_WIDTH_4, &mmc2_width4_dma_info},
++	{MXC_DMA_CSI_RX, &csi_rx_dma_info},
+ };
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/Kconfig linux-2.6.19.2/drivers/media/video/mxc/capture/Kconfig
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/Kconfig	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/Kconfig	2007-04-25 17:37:00.000000000 -0600
+@@ -12,6 +12,16 @@ config VIDEO_MXC_EMMA_CAMERA
+ 	select VIDEO_MXC_OPL
+ 	default y
+ 
++config VIDEO_MXC_CSI_DMA
++	bool "CSI-DMA Still Image Capture support"
++	depends on VIDEO_MXC_EMMA_CAMERA
++	default n
++	---help---
++	  Use CSI-DMA method instead of CSI-PrP link to capture still image. This allows
++	  to use less physical contiguous memory to capture big resolution still image. But
++	  with this method the CSC (Color Space Conversion) and resize are not supported.
++	  If unsure, say N.
++
+ choice
+ 	prompt "Select Camera"
+ 	default MXC_CAMERA_MICRON111
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_csi.c linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_csi.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_csi.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_csi.c	2007-04-25 17:37:00.000000000 -0600
+@@ -31,49 +31,24 @@
+ 
+ #include "mx27_csi.h"
+ 
+-#undef MX27_CSI_INT
+-
+ static csi_config_t g_csi_cfg;	/* csi hardware configuration */
+-static csi_status_t g_csi_status;	/* cache copy of csi status register */
+-
+ static bool gcsi_mclk_on = false;
+ static int gcsi_mclk_source = 0;
+-
+-#ifdef MX27_CSI_INT
+-static void csihw_read_status(csi_status_t * cs)
+-{
+-	cs->sff_or_int = (__raw_readl(CSI_CSISR) & BIT_SFF_OR_INT) ? 1 : 0;
+-	cs->rff_or_int = (__raw_readl(CSI_CSISR) & BIT_RFF_OR_INT) ? 1 : 0;
+-	cs->statff_int = (__raw_readl(CSI_CSISR) & BIT_STATFF_INT) ? 1 : 0;
+-	cs->rxff_int = (__raw_readl(CSI_CSISR) & BIT_RXFF_INT) ? 1 : 0;
+-	cs->eof_int = (__raw_readl(CSI_CSISR) & BIT_EOF_INT) ? 1 : 0;
+-	cs->sof_int = (__raw_readl(CSI_CSISR) & BIT_SOF_INT) ? 1 : 0;
+-	cs->f2_int = (__raw_readl(CSI_CSISR) & BIT_F2_INT) ? 1 : 0;
+-	cs->f1_int = (__raw_readl(CSI_CSISR) & BIT_F1_INT) ? 1 : 0;
+-	cs->cof_int = (__raw_readl(CSI_CSISR) & BIT_COF_INT) ? 1 : 0;
+-	cs->ecc_int = (__raw_readl(CSI_CSISR) & BIT_ECC_INT) ? 1 : 0;
+-	cs->drdy = (__raw_readl(CSI_CSISR) & BIT_DRDY) ? 1 : 0;
+-}
++static csi_irq_callback_t g_callback = 0;
++static void *g_callback_data = 0;
+ 
+ static irqreturn_t csi_irq_handler(int irq, void *data)
+ {
+-	csihw_read_status(&g_csi_status);
++	unsigned long status = __raw_readl(CSI_CSISR);
+ 
+-	/* rx fifo overflow */
+-	if (g_csi_cfg.rf_or_inten && g_csi_status.rff_or_int) {
+-		pr_debug("csi_irq_handler rx fifo overflow. \n");
+-		__raw_writel(BIT_RFF_OR_INT, CSI_CSISR);
+-	}
++	__raw_writel(status, CSI_CSISR);
++	if (g_callback)
++		g_callback(g_callback_data, status);
+ 
+-	/* start of frame */
+-	if (g_csi_cfg.sof_inten && g_csi_status.sof_int) {
+-		pr_debug("csi_irq_handler SOF.\n");
+-		__raw_writel(BIT_SOF_INT, CSI_CSISR);
+-	}
++	pr_debug("CSI status = 0x%08X\n", status);
+ 
+ 	return IRQ_HANDLED;
+ }
+-#endif
+ 
+ static void csihw_set_config(csi_config_t * cfg)
+ {
+@@ -121,9 +96,6 @@ static void csihw_set_config(csi_config_
+ 
+ 	/* update global config */
+ 	memcpy(&g_csi_cfg, cfg, sizeof(csi_config_t));
+-
+-	/* status flags */
+-	memset(&g_csi_status, 0, sizeof(csi_status_t));
+ }
+ 
+ static void csihw_enable_mclk(bool flag)
+@@ -176,7 +148,7 @@ int32_t csi_init_interface(uint16_t widt
+ 	cfg.statff_level = 0;
+ 	cfg.staff_inten = 0;
+ 	cfg.rxff_level = 2;
+-	cfg.rxff_inten = 1;
++	cfg.rxff_inten = 0;
+ 	cfg.sof_pol = 1;
+ 	cfg.sof_inten = 0;
+ 	cfg.mclkdiv = 0;
+@@ -205,6 +177,26 @@ int32_t csi_init_interface(uint16_t widt
+ }
+ 
+ /*!
++ * csi_enable_prpif
++ *    Enable or disable CSI-PrP interface
++ * @param       enable        Non-zero to enable, zero to disable
++ */
++void csi_enable_prpif(uint32_t enable)
++{
++	if (enable) {
++		g_csi_cfg.prp_if_en = 1;
++		g_csi_cfg.sof_inten = 0;
++		g_csi_cfg.pack_dir = 0;
++	} else {
++		g_csi_cfg.prp_if_en = 0;
++		g_csi_cfg.sof_inten = 1;
++		g_csi_cfg.pack_dir = 1;
++	}
++
++	csihw_set_config(&g_csi_cfg);
++}
++
++/*!
+  * csi_enable_mclk
+  *
+  * @param       src         enum define which source to control the clk
+@@ -249,6 +241,12 @@ int csi_read_mclk_flag(void)
+ 	return gcsi_mclk_source;
+ }
+ 
++void csi_set_callback(csi_irq_callback_t callback, void *data)
++{
++	g_callback = callback;
++	g_callback_data = data;
++}
++
+ int32_t __init csi_init_module(void)
+ {
+ 	int ret = 0;
+@@ -256,22 +254,18 @@ int32_t __init csi_init_module(void)
+ 	mxc_clks_enable(CSI_BAUD);
+ 	csihw_reset();
+ 
+-#ifdef MX27_CSI_INT
+ 	/* interrupt enable */
+ 	ret = request_irq(INT_CSI, csi_irq_handler, 0, "csi", 0);
+ 	if (ret)
+ 		pr_debug("CSI error: irq request fail\n");
+-#endif
+ 
+ 	return ret;
+ }
+ 
+ void __exit csi_cleanup_module(void)
+ {
+-#ifdef MX27_CSI_INT
+ 	/* free irq */
+ 	free_irq(INT_CSI, 0);
+-#endif
+ 
+ 	mxc_clks_disable(CSI_BAUD);
+ }
+@@ -282,6 +276,8 @@ module_exit(csi_cleanup_module);
+ EXPORT_SYMBOL(csi_init_interface);
+ EXPORT_SYMBOL(csi_enable_mclk);
+ EXPORT_SYMBOL(csi_read_mclk_flag);
++EXPORT_SYMBOL(csi_set_callback);
++EXPORT_SYMBOL(csi_enable_prpif);
+ 
+ MODULE_AUTHOR("Freescale Semiconductor, Inc.");
+ MODULE_DESCRIPTION("MX27 CSI driver");
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_csi.h linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_csi.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_csi.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_csi.h	2007-04-25 17:37:00.000000000 -0600
+@@ -90,8 +90,17 @@
+ #define CSI_CSICR1		(IO_ADDRESS(CSI_BASE_ADDR))
+ #define CSI_CSICR2		(IO_ADDRESS(CSI_BASE_ADDR + 0x4))
+ #define CSI_CSISR		(IO_ADDRESS(CSI_BASE_ADDR + 0x8))
+-#define CSI_CSICR3		(IO_ADDRESS(CSI_BASE_ADDR + 0x1C))
++#define CSI_STATFIFO		(IO_ADDRESS(CSI_BASE_ADDR + 0xC))
++#define CSI_CSIRXFIFO		(IO_ADDRESS(CSI_BASE_ADDR + 0x10))
+ #define CSI_CSIRXCNT		(IO_ADDRESS(CSI_BASE_ADDR + 0x14))
++#define CSI_CSICR3		(IO_ADDRESS(CSI_BASE_ADDR + 0x1C))
++
++#define CSI_CSIRXFIFO_PHYADDR	(CSI_BASE_ADDR + 0x10)
++
++static __inline void csi_clear_status(unsigned long status)
++{
++	__raw_writel(status, CSI_CSISR);
++}
+ 
+ typedef struct {
+ 	unsigned data_width:3;
+@@ -144,23 +153,13 @@ typedef struct {
+ 	unsigned int rxcnt;
+ } csi_config_t;
+ 
+-typedef struct {
+-	unsigned int sff_or_int:1;
+-	unsigned int rff_or_int:1;
+-	unsigned int statff_int:1;
+-	unsigned int rxff_int:1;
+-	unsigned int eof_int:1;
+-	unsigned int sof_int:1;
+-	unsigned int f2_int:1;
+-	unsigned int f1_int:1;
+-	unsigned int cof_int:1;
+-	unsigned int ecc_int:1;
+-	unsigned int drdy:1;
+-} csi_status_t;
++typedef void (*csi_irq_callback_t) (void *data, unsigned long status);
+ 
+ int32_t csi_enable_mclk(int src, bool flag, bool wait);
+ int32_t csi_init_interface(uint16_t width, uint16_t height,
+ 			   uint32_t pixel_fmt, csi_signal_cfg_t sig);
+ int csi_read_mclk_flag(void);
++void csi_set_callback(csi_irq_callback_t callback, void *data);
++void csi_enable_prpif(uint32_t enable);
+ 
+ #endif
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_v4l2_capture.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-04-25 17:37:00.000000000 -0600
+@@ -786,7 +786,341 @@ static int mxc_v4l_close(struct inode *i
+ 	return err;
+ }
+ 
++#ifdef CONFIG_VIDEO_MXC_CSI_DMA
++#include <asm/arch/dma.h>
++
++#define CSI_DMA_STATUS_IDLE	0	/* DMA is not started */
++#define CSI_DMA_STATUS_WORKING	1	/* DMA is transfering the data */
++#define CSI_DMA_STATUS_DONE	2	/* One frame completes successfully */
++#define CSI_DMA_STATUS_ERROR	3	/* Error occurs during the DMA */
++
++/*
++ * Sometimes the start of the DMA is not synchronized with the CSI
++ * SOF (Start of Frame) interrupt which will lead to incorrect
++ * captured image. In this case the driver will re-try capturing
++ * another frame. The following macro defines the maximum re-try
++ * times.
++ */
++#define CSI_DMA_RETRY		8
++
+ /*
++ * Size of the physical contiguous memory area used to hold image data
++ * transfered by DMA. It can be less than the size of the image data.
++ */
++#define CSI_MEM_SIZE		(1024 * 600)
++
++/* Number of bytes for one DMA transfer */
++#define CSI_DMA_LENGTH		(1024 * 200)
++
++static int g_dma_channel = 0;
++static int g_dma_status = CSI_DMA_STATUS_DONE;
++static volatile int g_dma_completed;	/* number of completed DMA transfers */
++static volatile int g_dma_copied;	/* number of copied DMA transfers */
++static struct tasklet_struct g_dma_tasklet;
++static char *g_user_buf;	/* represents the buf passed by read() */
++static int g_user_count;	/* represents the count passed by read() */
++
++/*!
++ * @brief setup the DMA to transfer data
++ *	  There may be more than one DMA to transfer the whole image. Those
++ *	  DMAs work like chain. This function is used to setup the DMA in
++ *	  case there is enough space to hold the data.
++ * @param	data	pointer to the cam structure
++ */
++static void mxc_csi_dma_chaining(void *data)
++{
++	cam_data *cam = (cam_data *) data;
++	int count, chained = 0;
++	int max_dma = CSI_MEM_SIZE / CSI_DMA_LENGTH;
++	mxc_dma_requestbuf_t dma_request;
++
++	while (chained * CSI_DMA_LENGTH < g_user_count) {
++		/*
++		 * Calculate how many bytes the DMA should transfer. It may
++		 * be less than CSI_DMA_LENGTH if the DMA is the last one.
++		 */
++		if ((chained + 1) * CSI_DMA_LENGTH > g_user_count)
++			count = g_user_count - chained * CSI_DMA_LENGTH;
++		else
++			count = CSI_DMA_LENGTH;
++		pr_debug("%s() DMA chained count = %d\n", __FUNCTION__, count);
++
++		/* Config DMA */
++		memset(&dma_request, 0, sizeof(mxc_dma_requestbuf_t));
++		dma_request.dst_addr = cam->still_buf
++		    + (chained % max_dma) * CSI_DMA_LENGTH;
++		dma_request.src_addr = (dma_addr_t) CSI_CSIRXFIFO_PHYADDR;
++		dma_request.num_of_bytes = count;
++		mxc_dma_config(g_dma_channel, &dma_request, 1,
++			       MXC_DMA_MODE_READ);
++
++		chained++;
++	}
++}
++
++/*!
++ * @brief Copy image data from physical contiguous memory to user space buffer
++ *	  Once the data are copied, there will be more spare space in the
++ *	  physical contiguous memory to receive data from DMA.
++ * @param	data	pointer to the cam structure
++ */
++static void mxc_csi_dma_task(unsigned long data)
++{
++	cam_data *cam = (cam_data *) data;
++	int count;
++	int max_dma = CSI_MEM_SIZE / CSI_DMA_LENGTH;
++
++	while (g_dma_copied < g_dma_completed) {
++		/*
++		 * Calculate how many bytes the DMA has transfered. It may
++		 * be less than CSI_DMA_LENGTH if the DMA is the last one.
++		 */
++		if ((g_dma_copied + 1) * CSI_DMA_LENGTH > g_user_count)
++			count = g_user_count - g_dma_copied * CSI_DMA_LENGTH;
++		else
++			count = CSI_DMA_LENGTH;
++		if (copy_to_user(g_user_buf + g_dma_copied * CSI_DMA_LENGTH,
++				 cam->still_buf_vaddr + (g_dma_copied % max_dma)
++				 * CSI_DMA_LENGTH, count))
++			pr_debug("Warning: some bytes not copied\n");
++
++		g_dma_copied++;
++	}
++
++	/* If the whole image has been captured */
++	if (g_dma_copied * CSI_DMA_LENGTH >= g_user_count) {
++		cam->still_counter++;
++		wake_up_interruptible(&cam->still_queue);
++	}
++
++	pr_debug("%s() DMA completed = %d copied = %d\n",
++		 __FUNCTION__, g_dma_completed, g_dma_copied);
++}
++
++/*!
++ * @brief DMA interrupt callback function
++ * @param	data	pointer to the cam structure
++ * @param	error	DMA error flag
++ * @param	count	number of bytes transfered by the DMA
++ */
++static void mxc_csi_dma_callback(void *data, int error, unsigned int count)
++{
++	cam_data *cam = (cam_data *) data;
++	int max_dma = CSI_MEM_SIZE / CSI_DMA_LENGTH;
++	unsigned long lock_flags;
++
++	spin_lock_irqsave(&cam->int_lock, lock_flags);
++
++	g_dma_completed++;
++
++	if (error != MXC_DMA_DONE) {
++		g_dma_status = CSI_DMA_STATUS_ERROR;
++		pr_debug("%s() DMA error\n", __FUNCTION__);
++	}
++
++	/* If the whole image has been captured */
++	if ((g_dma_status != CSI_DMA_STATUS_ERROR)
++	    && (g_dma_completed * CSI_DMA_LENGTH >= g_user_count))
++		g_dma_status = CSI_DMA_STATUS_DONE;
++
++	if ((g_dma_status == CSI_DMA_STATUS_WORKING) &&
++	    (g_dma_completed >= g_dma_copied + max_dma)) {
++		g_dma_status = CSI_DMA_STATUS_ERROR;
++		pr_debug("%s() Previous buffer over written\n", __FUNCTION__);
++	}
++
++	/* Schedule the tasklet */
++	tasklet_schedule(&g_dma_tasklet);
++
++	spin_unlock_irqrestore(&cam->int_lock, lock_flags);
++
++	pr_debug("%s() count = %d bytes\n", __FUNCTION__, count);
++}
++
++/*!
++ * @brief CSI interrupt callback function
++ * @param	data	pointer to the cam structure
++ * @param	status	CSI interrupt status
++ */
++static void mxc_csi_irq_callback(void *data, unsigned long status)
++{
++	cam_data *cam = (cam_data *) data;
++	unsigned long lock_flags;
++
++	spin_lock_irqsave(&cam->int_lock, lock_flags);
++
++	/* Wait for SOF (Start of Frame) interrupt to sync the image */
++	if (status & BIT_SOF_INT) {
++		if (g_dma_status == CSI_DMA_STATUS_IDLE) {
++			/* Start DMA transfer to capture image */
++			mxc_dma_enable(g_dma_channel);
++			g_dma_status = CSI_DMA_STATUS_WORKING;
++			pr_debug("%s() DMA started.\n", __FUNCTION__);
++		} else if (g_dma_status == CSI_DMA_STATUS_WORKING) {
++			/*
++			 * Another SOF occurs during DMA transfer. In this
++			 * case the image is not synchronized so need to
++			 * report error and probably try again.
++			 */
++			g_dma_status = CSI_DMA_STATUS_ERROR;
++			pr_debug("%s() Image is not synchronized with DMA - "
++				 "SOF before DMA completes\n", __FUNCTION__);
++		}
++	}
++
++	spin_unlock_irqrestore(&cam->int_lock, lock_flags);
++
++	pr_debug("%s() g_dma_status = %d\n", __FUNCTION__, g_dma_status);
++}
++
++/*!
++ * V4L interface - read function
++ *
++ * @param file       struct file *
++ * @param read buf   char *
++ * @param count      size_t
++ * @param ppos       structure loff_t *
++ *
++ * @return           bytes read
++ */
++static ssize_t
++mxc_v4l_read(struct file *file, char *buf, size_t count, loff_t * ppos)
++{
++	int err = 0;
++	struct video_device *dev = video_devdata(file);
++	cam_data *cam = dev->priv;
++	int retry = CSI_DMA_RETRY;
++
++	g_user_buf = buf;
++
++	if (down_interruptible(&cam->busy_lock))
++		return -EINTR;
++
++	/* Video capture and still image capture are exclusive */
++	if (cam->capture_on == true) {
++		err = -EBUSY;
++		goto exit0;
++	}
++
++	/* The CSI-DMA can not do CSC */
++	if (cam->v2f.fmt.pix.pixelformat != V4L2_PIX_FMT_YUYV) {
++		pr_info("mxc_v4l_read support YUYV pixel format only\n");
++		err = -EINVAL;
++		goto exit0;
++	}
++
++	/* The CSI-DMA can not do resize or crop */
++	if ((cam->v2f.fmt.pix.width != cam->crop_bounds.width)
++	    || (cam->v2f.fmt.pix.height != cam->crop_bounds.height)) {
++		pr_info("mxc_v4l_read resize is not supported\n");
++		pr_info("supported image size width = %d height = %d\n",
++			cam->crop_bounds.width, cam->crop_bounds.height);
++		err = -EINVAL;
++		goto exit0;
++	}
++	if ((cam->crop_current.left != cam->crop_bounds.left)
++	    || (cam->crop_current.width != cam->crop_bounds.width)
++	    || (cam->crop_current.top != cam->crop_bounds.top)
++	    || (cam->crop_current.height != cam->crop_bounds.height)) {
++		pr_info("mxc_v4l_read cropping is not supported\n");
++		err = -EINVAL;
++		goto exit0;
++	}
++
++	cam->still_buf_vaddr = dma_alloc_coherent(0,
++						  PAGE_ALIGN(CSI_MEM_SIZE),
++						  &cam->still_buf,
++						  GFP_DMA | GFP_KERNEL);
++
++	if (!cam->still_buf_vaddr) {
++		pr_info("mxc_v4l_read failed at allocate still_buf\n");
++		err = -ENOBUFS;
++		goto exit0;
++	}
++
++	/* Initialize DMA */
++	g_dma_channel = mxc_dma_request(MXC_DMA_CSI_RX, "CSI RX DMA");
++	if (g_dma_channel < 0) {
++		pr_debug("mxc_v4l_read failed to request DMA channel\n");
++		err = -EIO;
++		goto exit1;
++	}
++
++	err = mxc_dma_callback_set(g_dma_channel,
++				   (mxc_dma_callback_t) mxc_csi_dma_callback,
++				   (void *)cam);
++	if (err != 0) {
++		pr_debug("mxc_v4l_read failed to set DMA callback\n");
++		err = -EIO;
++		goto exit2;
++	}
++
++	g_user_buf = buf;
++	if (cam->v2f.fmt.pix.sizeimage < count)
++		g_user_count = cam->v2f.fmt.pix.sizeimage;
++	else
++		g_user_count = count & ~0x3;
++
++	tasklet_init(&g_dma_tasklet, mxc_csi_dma_task, (unsigned long)cam);
++	g_dma_status = CSI_DMA_STATUS_DONE;
++	csi_set_callback(mxc_csi_irq_callback, cam);
++	csi_enable_prpif(0);
++
++	/* clear current SOF first */
++	csi_clear_status(BIT_SOF_INT);
++	csi_enable_mclk(CSI_MCLK_RAW, true, true);
++
++	do {
++		g_dma_completed = g_dma_copied = 0;
++		mxc_csi_dma_chaining(cam);
++		cam->still_counter = 0;
++		g_dma_status = CSI_DMA_STATUS_IDLE;
++
++		if (!wait_event_interruptible_timeout(cam->still_queue,
++						      cam->still_counter != 0,
++						      10 * HZ)) {
++			pr_info("mxc_v4l_read timeout counter %x\n",
++				cam->still_counter);
++			err = -ETIME;
++			goto exit3;
++		}
++
++		if (g_dma_status == CSI_DMA_STATUS_DONE)
++			break;
++
++		if (retry-- == 0)
++			break;
++
++		pr_debug("Now retry image capture\n");
++	} while (1);
++
++	if (g_dma_status != CSI_DMA_STATUS_DONE)
++		err = -EIO;
++
++      exit3:
++	csi_enable_prpif(1);
++	g_dma_status = CSI_DMA_STATUS_DONE;
++	csi_set_callback(0, 0);
++	csi_enable_mclk(CSI_MCLK_RAW, false, false);
++	tasklet_kill(&g_dma_tasklet);
++
++      exit2:
++	mxc_dma_free(g_dma_channel);
++
++      exit1:
++	dma_free_coherent(0, PAGE_ALIGN(CSI_MEM_SIZE),
++			  cam->still_buf_vaddr, cam->still_buf);
++	cam->still_buf = 0;
++
++      exit0:
++	up(&cam->busy_lock);
++	if (err < 0)
++		return err;
++	else
++		return g_user_count;
++}
++#else
++/*!
+  * V4L interface - read function
+  *
+  * @param file       struct file *
+@@ -859,6 +1193,7 @@ mxc_v4l_read(struct file *file, char *bu
+ 	else
+ 		return (cam->v2f.fmt.pix.sizeimage - err);
+ }
++#endif				/* CONFIG_VIDEO_MXC_CSI_DMA */
+ 
+ /*!
+  * V4L interface - ioctl function
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.h linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.h	2007-04-25 17:37:00.000000000 -0600
+@@ -111,6 +111,7 @@ typedef struct _cam_data {
+ 	wait_queue_head_t still_queue;
+ 	int still_counter;
+ 	dma_addr_t still_buf;
++	void *still_buf_vaddr;
+ 
+ 	/* overlay */
+ 	struct v4l2_window win;
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dma.h linux-2.6.19.2/include/asm-arm/arch-mxc/dma.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dma.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/dma.h	2007-04-25 17:37:00.000000000 -0600
+@@ -86,6 +86,7 @@ typedef enum mxc_dma_device {
+ 	MXC_DMA_DSP_LOG1_CHNL,
+ 	MXC_DMA_DSP_LOG2_CHNL,
+ 	MXC_DMA_DSP_LOG3_CHNL,
++	MXC_DMA_CSI_RX,
+ 	MXC_DMA_TEST_RAM2D2RAM,
+ 	MXC_DMA_TEST_RAM2RAM2D,
+ 	MXC_DMA_TEST_RAM2D2RAM2D,

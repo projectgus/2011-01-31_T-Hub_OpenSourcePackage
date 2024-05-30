@@ -1,0 +1,195 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkUtil</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkText.html" title="AtkText"><link rel="next" href="AtkValue.html" title="AtkValue"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkText.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkValue.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkUtil"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkUtil</h2><p>AtkUtil &#8212; This is a utility class which supports the adding and removal of event listeners.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id325980"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkUtil.html#AtkUtil-struct">AtkUtil</a>;
+enum        <a href="AtkUtil.html#AtkCoordType">AtkCoordType</a>;
+guint       <a href="AtkUtil.html#atk-add-focus-tracker">atk_add_focus_tracker</a>           (<a href="AtkUtil.html#AtkEventListener">AtkEventListener</a> focus_tracker);
+void        <a href="AtkUtil.html#atk-remove-focus-tracker">atk_remove_focus_tracker</a>        (guint tracker_id);
+void        <a href="AtkUtil.html#atk-focus-tracker-init">atk_focus_tracker_init</a>          (<a href="AtkUtil.html#AtkEventListenerInit">AtkEventListenerInit</a> add_function);
+void        <a href="AtkUtil.html#atk-focus-tracker-notify">atk_focus_tracker_notify</a>        (<a href="AtkObject.html" title="AtkObject">AtkObject</a> *object);
+void        (<a href="AtkUtil.html#AtkEventListener">*AtkEventListener</a>)             (<a href="AtkObject.html" title="AtkObject">AtkObject</a>*);
+void        (<a href="AtkUtil.html#AtkEventListenerInit">*AtkEventListenerInit</a>)         (void);
+guint       <a href="AtkUtil.html#atk-add-global-event-listener">atk_add_global_event_listener</a>   (GSignalEmissionHook listener,
+                                             const gchar *event_type);
+void        <a href="AtkUtil.html#atk-remove-global-event-listener">atk_remove_global_event_listener</a>
+                                            (guint listener_id);
+struct      <a href="AtkUtil.html#AtkKeyEventStruct">AtkKeyEventStruct</a>;
+enum        <a href="AtkUtil.html#AtkKeyEventType">AtkKeyEventType</a>;
+gint        (<a href="AtkUtil.html#AtkKeySnoopFunc">*AtkKeySnoopFunc</a>)              (<a href="AtkUtil.html#AtkKeyEventStruct">AtkKeyEventStruct</a> *event,
+                                             gpointer func_data);
+guint       <a href="AtkUtil.html#atk-add-key-event-listener">atk_add_key_event_listener</a>      (<a href="AtkUtil.html#AtkKeySnoopFunc">AtkKeySnoopFunc</a> listener,
+                                             gpointer data);
+void        <a href="AtkUtil.html#atk-remove-key-event-listener">atk_remove_key_event_listener</a>   (guint listener_id);
+<a href="AtkObject.html" title="AtkObject">AtkObject</a>*  <a href="AtkUtil.html#atk-get-root">atk_get_root</a>                    (void);
+<a href="AtkObject.html" title="AtkObject">AtkObject</a>*  <a href="AtkUtil.html#atk-get-focus-object">atk_get_focus_object</a>            (void);
+G_CONST_RETURN gchar* <a href="AtkUtil.html#atk-get-toolkit-name">atk_get_toolkit_name</a>  (void);
+G_CONST_RETURN gchar* <a href="AtkUtil.html#atk-get-toolkit-version">atk_get_toolkit_version</a>
+                                            (void);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GObject
+   +----AtkUtil
+</pre></div><div class="refsect1"><h2>Description</h2><p>
+This is a utility class which supports the adding and removal of event 
+listeners. The adding and removing of the listeners must be done in the 
+same thread. The file also contains a number of utility functions.
+
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkUtil-struct"></a>struct AtkUtil</h3><a class="indexterm" name="id327758"></a><pre class="programlisting">struct AtkUtil;</pre><p>
+The AtkObject structure should not be accessed directly.
+
+</p></div><hr><div class="refsect2"><h3><a name="AtkCoordType"></a>enum AtkCoordType</h3><a class="indexterm" name="id327817"></a><pre class="programlisting">typedef enum {
+  ATK_XY_SCREEN,
+  ATK_XY_WINDOW
+}AtkCoordType;
+</pre><p>
+Specifies how xy coordinates are to be interpreted. Used by functions such
+as <a href="AtkComponent.html#atk-component-get-position"><tt>atk_component_get_position()</tt></a> and <a href="AtkText.html#atk-text-get-character-extents"><tt>atk_text_get_character_extents()</tt></a></p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><tt>ATK_XY_SCREEN</tt></span></td><td> specifies xy coordinates relative to the screen
+</td></tr><tr><td><span class="term"><tt>ATK_XY_WINDOW</tt></span></td><td> specifies xy coordinates relative to the widget's 
+top-level window
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-add-focus-tracker"></a>atk_add_focus_tracker ()</h3><a class="indexterm" name="id327902"></a><pre class="programlisting">guint       atk_add_focus_tracker           (<a href="AtkUtil.html#AtkEventListener">AtkEventListener</a> focus_tracker);</pre><p>
+Adds the specified function to the list of functions to be called
+when an object receives focus.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>focus_tracker</tt></i> :</span></td><td> Function to be added to the list of functions to be called
+when an object receives focus.
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> added focus tracker id, or 0 on failure.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-remove-focus-tracker"></a>atk_remove_focus_tracker ()</h3><a class="indexterm" name="id327974"></a><pre class="programlisting">void        atk_remove_focus_tracker        (guint tracker_id);</pre><p>
+Removes the specified focus tracker from the list of functions
+to be called when any object receives focus.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>tracker_id</tt></i> :</span></td><td> the id of the focus tracker to remove
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-focus-tracker-init"></a>atk_focus_tracker_init ()</h3><a class="indexterm" name="id328033"></a><pre class="programlisting">void        atk_focus_tracker_init          (<a href="AtkUtil.html#AtkEventListenerInit">AtkEventListenerInit</a> add_function);</pre><p>
+Specifies the function to be called for focus tracker initialization.
+This function should be called by an implementation of the
+ATK interface if any specific work needs to be done to enable
+focus tracking.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>add_function</tt></i> :</span></td><td> Function to be called for focus tracker initialization
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-focus-tracker-notify"></a>atk_focus_tracker_notify ()</h3><a class="indexterm" name="id328093"></a><pre class="programlisting">void        atk_focus_tracker_notify        (<a href="AtkObject.html" title="AtkObject">AtkObject</a> *object);</pre><p>
+Cause the focus tracker functions which have been specified to be
+executed for the object.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>object</tt></i> :</span></td><td> an <a href="AtkObject.html" title="AtkObject">AtkObject</a>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkEventListener"></a>AtkEventListener ()</h3><a class="indexterm" name="id328159"></a><pre class="programlisting">void        (*AtkEventListener)             (<a href="AtkObject.html" title="AtkObject">AtkObject</a>*);</pre><p>
+An AtkEventListener is user specified function which is called when an event,
+such as receiving focus, occurs. The parameter of the AtkEventListener is the
+AtkObject on which the event occurred.
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>Param1</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkEventListenerInit"></a>AtkEventListenerInit ()</h3><a class="indexterm" name="id328216"></a><pre class="programlisting">void        (*AtkEventListenerInit)         (void);</pre><p>
+An AtkEventListenerInit is an initialization function in an implementation 
+of the ATK interface used to perform implementation-specific initialization
+when enabling focus tracking.
+
+</p></div><hr><div class="refsect2"><h3><a name="atk-add-global-event-listener"></a>atk_add_global_event_listener ()</h3><a class="indexterm" name="id328249"></a><pre class="programlisting">guint       atk_add_global_event_listener   (GSignalEmissionHook listener,
+                                             const gchar *event_type);</pre><p>
+Adds the specified function to the list of functions to be called
+when an event of type event_type occurs.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>listener</tt></i> :</span></td><td> the listener to notify
+</td></tr><tr><td><span class="term"><i><tt>event_type</tt></i> :</span></td><td> the type of event for which notification is requested
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> added event listener id, or 0 on failure.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-remove-global-event-listener"></a>atk_remove_global_event_listener ()</h3><a class="indexterm" name="id328360"></a><pre class="programlisting">void        atk_remove_global_event_listener
+                                            (guint listener_id);</pre><p>
+Removes the specified event listener</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>listener_id</tt></i> :</span></td><td> the id of the event listener to remove
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkKeyEventStruct"></a>struct AtkKeyEventStruct</h3><a class="indexterm" name="id328479"></a><pre class="programlisting">struct AtkKeyEventStruct {
+
+  gint type;
+  guint state;
+  guint keyval;
+  gint length;
+  gchar *string;
+  guint16 keycode;
+  guint32 timestamp;	
+};
+</pre><p>
+The AtkKeyEventStruct describes a keyboard event.
+</p></div><hr><div class="refsect2"><h3><a name="AtkKeyEventType"></a>enum AtkKeyEventType</h3><a class="indexterm" name="id328506"></a><pre class="programlisting">typedef enum
+{
+  ATK_KEY_EVENT_PRESS,
+  ATK_KEY_EVENT_RELEASE,
+  ATK_KEY_EVENT_LAST_DEFINED
+} AtkKeyEventType;
+</pre><p>
+Specifies the type of a keyboard evemt.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><tt>ATK_KEY_EVENT_PRESS</tt></span></td><td> specifies a key press event
+</td></tr><tr><td><span class="term"><tt>ATK_KEY_EVENT_RELEASE</tt></span></td><td> specifies a key release event
+</td></tr><tr><td><span class="term"><tt>ATK_KEY_EVENT_LAST_DEFINED</tt></span></td><td> Not a valid value; specifies end of enumeration
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkKeySnoopFunc"></a>AtkKeySnoopFunc ()</h3><a class="indexterm" name="id328587"></a><pre class="programlisting">gint        (*AtkKeySnoopFunc)              (<a href="AtkUtil.html#AtkKeyEventStruct">AtkKeyEventStruct</a> *event,
+                                             gpointer func_data);</pre><p>
+An AtkKeySnoopFunc is a function which is called when a keyboard event occurs.
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>event</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i><tt>func_data</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-add-key-event-listener"></a>atk_add_key_event_listener ()</h3><a class="indexterm" name="id328716"></a><pre class="programlisting">guint       atk_add_key_event_listener      (<a href="AtkUtil.html#AtkKeySnoopFunc">AtkKeySnoopFunc</a> listener,
+                                             gpointer data);</pre><p>
+Adds the specified function to the list of functions to be called
+       when a key event occurs.  The <i><tt>data</tt></i> element will be passed to the
+       <a href="AtkUtil.html#AtkKeySnoopFunc">AtkKeySnoopFunc</a> (<i><tt>listener</tt></i>) as the <i><tt>func_data</tt></i> param, on notification.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>listener</tt></i> :</span></td><td> the listener to notify
+</td></tr><tr><td><span class="term"><i><tt>data</tt></i> :</span></td><td> a gpointer that points to a block of data that should be sent to the registered listeners,
+       along with the event notification, when it occurs.  
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> added event listener id, or 0 on failure.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-remove-key-event-listener"></a>atk_remove_key_event_listener ()</h3><a class="indexterm" name="id328840"></a><pre class="programlisting">void        atk_remove_key_event_listener   (guint listener_id);</pre><p>
+Removes the specified event listener</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>listener_id</tt></i> :</span></td><td> the id of the event listener to remove
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-get-root"></a>atk_get_root ()</h3><a class="indexterm" name="id328897"></a><pre class="programlisting"><a href="AtkObject.html" title="AtkObject">AtkObject</a>*  atk_get_root                    (void);</pre><p>
+Gets the root accessible container for the current application.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> the root accessible container for the current application
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-get-focus-object"></a>atk_get_focus_object ()</h3><a class="indexterm" name="id328990"></a><pre class="programlisting"><a href="AtkObject.html" title="AtkObject">AtkObject</a>*  atk_get_focus_object            (void);</pre><p>
+Gets the currently focused object.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> the currently focused object for the current application
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-get-toolkit-name"></a>atk_get_toolkit_name ()</h3><a class="indexterm" name="id329039"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_get_toolkit_name  (void);</pre><p>
+Gets name string for the GUI toolkit implementing ATK for this application.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> name string for the GUI toolkit implementing ATK for this application
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-get-toolkit-version"></a>atk_get_toolkit_version ()</h3><a class="indexterm" name="id329091"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_get_toolkit_version
+                                            (void);</pre><p>
+Gets version string for the GUI toolkit implementing ATK for this application.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> version string for the GUI toolkit implementing ATK for this application
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkText.html"><b>&lt;&lt; AtkText</b></a></td><td align="right"><a accesskey="n" href="AtkValue.html"><b>AtkValue &gt;&gt;</b></a></td></tr></table></body></html>

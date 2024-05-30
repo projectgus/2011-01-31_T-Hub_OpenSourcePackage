@@ -1,0 +1,94 @@
+TLSbo89472_From-RMK-review-MXC_ERR_CHK-is-bad.patch
+
+Remove MXC_ERR_CHK macro. Replace it with BUG_ON().
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/iomux.c linux-2.6.19.2/arch/arm/mach-mx3/iomux.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/iomux.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/iomux.c	2007-04-25 17:37:16.000000000 -0600
+@@ -92,8 +92,8 @@ int iomux_config_mux(iomux_pin_name_t pi
+ 	u32 mux_mask = GET_FIELD_MASK(MUX_CTL_BIT_LEN, mux_field);
+ 	u8 *rp;
+ 
+-	MXC_ERR_CHK((mux_index > (MUX_PIN_NUM_MAX / MUX_CTL_FIELDS - 1)) ||
+-		    (mux_field >= MUX_CTL_FIELDS));
++	BUG_ON((mux_index > (MUX_PIN_NUM_MAX / MUX_CTL_FIELDS - 1)) ||
++	       (mux_field >= MUX_CTL_FIELDS));
+ 
+ 	reg = IOMUXSW_MUX_CTL + (mux_index * 4);
+ 	spin_lock(&gpio_mux_lock);
+@@ -167,8 +167,8 @@ void mxc_free_iomux(iomux_pin_name_t pin
+ 	u32 mux_field = PIN_TO_IOMUX_FIELD(pin);
+ 	u8 *rp = iomux_pin_res_table + mux_index * MUX_CTL_FIELDS + mux_field;
+ 
+-	MXC_ERR_CHK((mux_index > (MUX_PIN_NUM_MAX / MUX_CTL_FIELDS - 1)) ||
+-		    (mux_field >= MUX_CTL_FIELDS));
++	BUG_ON((mux_index > (MUX_PIN_NUM_MAX / MUX_CTL_FIELDS - 1)) ||
++	       (mux_field >= MUX_CTL_FIELDS));
+ 
+ 	*rp = 0;
+ 	if (out == OUTPUTCONFIG_GPIO && in == INPUTCONFIG_GPIO) {
+@@ -189,8 +189,8 @@ void mxc_iomux_set_pad(iomux_pin_name_t 
+ 	u32 pad_field = (pin >> PAD_F) & ((1 << (MUX_IO_I - PAD_F)) - 1);
+ 	u32 pad_mask = GET_FIELD_MASK(MUX_PAD_BIT_LEN, pad_field);
+ 
+-	MXC_ERR_CHK((pad_index > (PAD_CTL_NUM_MAX / PAD_CTL_FIELDS - 1)) ||
+-		    (pad_field >= PAD_CTL_FIELDS));
++	BUG_ON((pad_index > (PAD_CTL_NUM_MAX / PAD_CTL_FIELDS - 1)) ||
++	       (pad_field >= PAD_CTL_FIELDS));
+ 
+ 	reg = IOMUXSW_PAD_CTL + (pad_index * 4);
+ 	spin_lock(&gpio_mux_lock);
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ipu/ipu_common.c linux-2.6.19.2/drivers/mxc/ipu/ipu_common.c
+--- linux-2.6.19.2.orig/drivers/mxc/ipu/ipu_common.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ipu/ipu_common.c	2007-04-25 17:37:16.000000000 -0600
+@@ -1376,7 +1376,7 @@ int ipu_request_irq(uint32_t irq,
+ {
+ 	uint32_t lock_flags;
+ 
+-	MXC_ERR_CHK(irq >= IPU_IRQ_COUNT);
++	BUG_ON(irq >= IPU_IRQ_COUNT);
+ 
+ 	spin_lock_irqsave(&ipu_lock, lock_flags);
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ipu/ipu_ic.c linux-2.6.19.2/drivers/mxc/ipu/ipu_ic.c
+--- linux-2.6.19.2.orig/drivers/mxc/ipu/ipu_ic.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ipu/ipu_ic.c	2007-04-25 17:37:16.000000000 -0600
+@@ -350,8 +350,7 @@ static void _init_csc(uint8_t ic_task, i
+ 	} else if (ic_task == IC_TASK_POST_PROCESSOR) {
+ 		address = 0x87C << 3;
+ 	} else {
+-		MXC_ERR_CHK(1);
+-		return;
++		BUG();
+ 	}
+ 
+ 	if ((in_format == YCbCr) && (out_format == RGB)) {
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/hardware.h linux-2.6.19.2/include/asm-arm/arch-mxc/hardware.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/hardware.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/hardware.h	2007-04-25 17:37:16.000000000 -0600
+@@ -37,25 +37,6 @@
+  */
+ #define MXC_SET_FIELD(val, len, sh, nval)    ((val & ~(((1 << len) - 1) << sh)) | nval << sh)
+ 
+-/* This is used to turn on/off debugging */
+-#define MXC_TRACE
+-#ifdef MXC_TRACE
+-/*!
+- * This is used for error checking in debugging mode.
+- */
+-#define MXC_ERR_CHK(a) \
+-        do { \
+-                if ((a)) { \
+-                        printk("Error at line %d in function %s in file %s", \
+-                                __LINE__, __FUNCTION__, __FILE__); \
+-                        BUG(); \
+-                } \
+-        } \
+-        while (0)
+-#else
+-#define MXC_ERR_CHK(a)
+-#endif
+-
+ /*
+  * ---------------------------------------------------------------------------
+  * Processor specific defines

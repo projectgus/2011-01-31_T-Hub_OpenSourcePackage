@@ -1,0 +1,12 @@
+diff -uNpr madplay-0.15.2b.orig/Makefile.in madplay-0.15.2b/Makefile.in
+--- madplay-0.15.2b.orig/Makefile.in	2004-02-23 14:36:13.000000000 -0700
++++ madplay-0.15.2b/Makefile.in	2006-01-24 11:35:23.000000000 -0700
+@@ -330,7 +330,7 @@ madtag_LDADD = $(ldadd) $(ldadd_libid3ta
+ localedir = $(datadir)/locale
+ INCLUDES = -Iintl -DLOCALEDIR=\"$(localedir)\"
+ ldadd_libmad = -lmad
+-ldadd_libid3tag = -lid3tag
++ldadd_libid3tag = -lid3tag -lz
+ depend = @LIBOBJS@
+ ldadd = $(depend) @LTLIBINTL@
+ DEPENDENCIES = $(depend)

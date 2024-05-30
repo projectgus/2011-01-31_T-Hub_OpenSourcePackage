@@ -1,0 +1,29 @@
+
+comment "Choose your Customization"
+choice
+prompt "Client"
+    config CLIENT_SAGEM_PRECONFIG
+        bool "Sagem"
+    config CLIENT_ORANGE_PRECONFIG 
+        bool "Orange"
+    config CLIENT_TELSTRA_PRECONFIG 
+        bool "Telstra"
+endchoice
+
+
+menu "Feature Selection"
+    config CONFIG_FEATURE_DLNA_PRECONFIG
+        bool "dlna"
+        default y if CLIENT_SAGEM_PRECONFIG
+        default y if CLIENT_ORANGE_PRECONFIG
+        default y if CLIENT_TELSTRA_PRECONFIG
+
+    config CONFIG_FEATURE_FLASH_PRECONFIG
+        bool "flash"
+        default y if CLIENT_SAGEM_PRECONFIG
+        default y if CLIENT_ORANGE_PRECONFIG
+        default y if CLIENT_TELSTRA_PRECONFIG
+
+endmenu
+
+

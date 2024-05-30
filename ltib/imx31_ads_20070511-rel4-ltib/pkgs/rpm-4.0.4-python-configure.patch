@@ -1,0 +1,11 @@
+--- rpm-4.0.4/configure.orig	Mon Apr 25 18:03:27 2005
++++ rpm-4.0.4/configure	Mon Apr 25 18:04:07 2005
+@@ -12772,7 +12772,7 @@
+ 
+ fi
+ 
+-if test -n "$WITH_PYTHON_VERSION" ; then
++if [ "$WITH_PYTHON_VERSION" != "no" ] ; then
+   WITH_PYTHON_SUBDIR=python
+   WITH_PYTHON_SUBPACKAGE=1
+ else

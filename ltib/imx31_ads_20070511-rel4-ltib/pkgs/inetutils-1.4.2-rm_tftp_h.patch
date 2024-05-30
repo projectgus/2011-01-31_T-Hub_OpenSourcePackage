@@ -1,0 +1,19 @@
+Tue May 2 2006 Stuart Hughes <stuarth@freescale.com>
+
+Remove the internet tftp.h header file.  The 'struct  tftphdr' defined
+in it lacks the packed attributes used by uclibc/glibc.  This resulted
+in requests to tftpd losing the first 2 characters of their file 
+names, and also the error code replies were hosed.
+
+diff --exclude CVS -uNr inetutils-1.4.2/configure inetutils-1.4.2.modified/configure
+--- inetutils-1.4.2/configure	2002-12-23 04:32:28.000000000 +0000
++++ inetutils-1.4.2.modified/configure	2006-05-02 13:45:07.000000000 +0100
+@@ -1448,7 +1448,7 @@
+ 
+ # Include files that we link into our own include directory from headers.
+ # Initialize it with the things we always want to use.
+-INCLUDES="crypt.h arpa/telnet.h arpa/ftp.h arpa/tftp.h protocols/talkd.h
++INCLUDES="crypt.h arpa/telnet.h arpa/ftp.h protocols/talkd.h
+ 	tftpsubs.h"
+ 
+ # Files that we link from somewhere other than headers to includes .  The

@@ -1,0 +1,34 @@
+Bugzilla 43 - FIR on MX31
+    
+After adding FIR support, loading mxc_ir.ko fails with ENOMEM and
+"Failed to request UART memory region".  This patch makes sure UART2
+is left available for the FIR driver.
+===================================================================
+--- linux-2.6.19.2/arch/arm/mach-mx3/serial.c	30 Mar 2007 23:50:15 -0000	1.3
++++ linux-2.6.19.2-mx/arch/arm/mach-mx3/serial.c	4 May 2007 19:24:32 -0000	1.4
+@@ -177,6 +177,7 @@ static struct platform_device mxc_uart_d
+ 		},
+ };
+ 
++#if UART2_ENABLED == 1
+ static struct platform_device mxc_uart_device2 = {
+ 	.name = "mxcintuart",
+ 	.id = 1,
+@@ -184,6 +185,7 @@ static struct platform_device mxc_uart_d
+ 		.platform_data = &mxc_ports[1],
+ 		},
+ };
++#endif
+ 
+ static struct platform_device mxc_uart_device3 = {
+ 	.name = "mxcintuart",
+@@ -215,7 +217,9 @@ static int __init mxc_init_uart(void)
+ {
+ 	/* Register all the MXC UART platform device structures */
+ 	platform_device_register(&mxc_uart_device1);
++#if UART2_ENABLED == 1
+ 	platform_device_register(&mxc_uart_device2);
++#endif
+ 
+ 	/* Grab ownership of shared UARTs 3 and 4, only when enabled */
+ #if UART3_ENABLED == 1

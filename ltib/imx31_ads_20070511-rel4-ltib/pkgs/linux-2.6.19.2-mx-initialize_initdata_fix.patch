@@ -1,0 +1,16 @@
+TLSbo89471_From-RMK-review-initialize-__initdata.patch
+
+Data which is marked __initdata must be initialised
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/cpu_common.c linux-2.6.19.2/arch/arm/plat-mxc/cpu_common.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/cpu_common.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/cpu_common.c	2007-04-25 17:37:23.000000000 -0600
+@@ -112,7 +112,7 @@ static void system_rev_update(void)
+ 	}
+ }
+ 
+-static int mxc_jtag_enabled __initdata;	/* OFF: 0 (default), ON: 1 */
++static int mxc_jtag_enabled __initdata = 0;	/* OFF: 0 (default), ON: 1 */
+ 
+ /*
+  * Here are the JTAG options from the command line. By default JTAG

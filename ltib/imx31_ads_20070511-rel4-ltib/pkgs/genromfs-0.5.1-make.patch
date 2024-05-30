@@ -1,0 +1,18 @@
+Wed Apr 12 2006 Stuart Hughes <stuarth@freescale.com>
+
+Fixups to the Makefile
+
+diff --exclude CVS -uNr genromfs-0.5.1/Makefile genromfs-0.5.1.modified/Makefile
+--- genromfs-0.5.1/Makefile	2002-01-22 09:12:01.000000000 +0000
++++ genromfs-0.5.1.modified/Makefile	2006-04-12 10:18:12.000000000 +0100
+@@ -47,9 +47,6 @@
+ 	install -m 755 genromfs $(PREFIX)$(bindir)/
+ 
+ install-man:
+-	mkdir -p $(PREFIX)$(mandir)
+-	if [ -f $(PREFIX)$(bindir)/man8 ]; then \
+-	rm -f $(PREFIX)$(bindir)/man8; \
+-	fi
++	mkdir -p $(PREFIX)$(mandir)/man8
+ 	install -m 644 genromfs.8 $(PREFIX)$(mandir)/man8/
+ 

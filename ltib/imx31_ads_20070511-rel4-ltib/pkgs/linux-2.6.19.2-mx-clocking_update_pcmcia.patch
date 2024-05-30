@@ -1,0 +1,18 @@
+CR: ENGR00029423
+Patch name: ENGR00029423_clocking_update_pcmcia.patch
+Date: Thu Mar 22 10:21:56 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: pcmcia_clk is replaced with ahb_clk in clk_get fn. argument
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/pcmcia/mx31ads-pcmcia.c linux-2.6.19.2/drivers/pcmcia/mx31ads-pcmcia.c
+--- linux-2.6.19.2.orig/drivers/pcmcia/mx31ads-pcmcia.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/pcmcia/mx31ads-pcmcia.c	2007-04-25 17:39:53.000000000 -0600
+@@ -1070,7 +1070,7 @@ static int mx31ads_common_drv_pcmcia_pro
+ 	skt->dev = &pdev->dev;
+ 	skt->ops = ops;
+ 
+-	skt->clk = clk_get(NULL, "pcmcia_clk");
++	skt->clk = clk_get(NULL, "ahb_clk");
+ 
+ 	skt->res_skt.start = _PCMCIA(0);
+ 	skt->res_skt.end = _PCMCIA(0) + PCMCIASp - 1;

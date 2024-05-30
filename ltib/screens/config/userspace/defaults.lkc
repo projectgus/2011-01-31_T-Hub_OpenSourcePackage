@@ -1,0 +1,39 @@
+config ERASE_BLOCK_SIZE
+    string
+    default 128
+config SYSCFG_RAM_DIRS
+    string
+    default ""
+config CAP_UCLIBC
+    bool
+    default y
+config CAP_GLIBC
+    bool
+    default y
+config CAP_LFS_5_1
+    bool
+    default y
+config CAP_FC2
+    bool
+config DISTRO
+    string
+    default "dist/lfs-5.1"
+config BI_ENDIAN
+    bool
+config CAP_DEPLOYMENT_ROMFS
+    bool
+
+config ENDIAN
+    string
+    default "big" if LINTARCH = "ppc" || LINTARCH = "powerpc" || LINTARCH = "sparc" || LINTARCH = "m68k" || LINTARCH = "m68knommu" || LINTARCH = "ppc64"
+    default "little"
+config SYSCFG_TMPFS
+    string
+    default "tmpfs"
+config INITTAB_LINE
+    string
+    default "::respawn:/sbin/getty -L console 0 screen"
+
+config LTIB_RELEASE
+    string
+    default "6.2.1"

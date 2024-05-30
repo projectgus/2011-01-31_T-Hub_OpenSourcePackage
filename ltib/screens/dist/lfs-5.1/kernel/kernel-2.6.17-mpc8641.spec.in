@@ -1,0 +1,56 @@
+# Template = kernel-common.tmpl
+
+%define pfx /opt/freescale/rootfs/%{_target_cpu}
+%define dversion 2.6.17
+%define pkg_name linux
+
+Summary         : Linux kernel (core of the Linux operating system)
+Name            : kernel
+Version         : 2.6.17
+Release         : 0
+License         : GPL
+Vendor          : Kernel.org + freescale patches
+Packager        : Ebony Zhu
+Group           : System Environment/Kernel
+Source          : %{pkg_name}-%{dversion}.tar.bz2
+Patch1          : linux-fsl-2.6.17-6xx_L3CR.patch
+Patch2          : linux-fsl-2.6.17-device_tree_reserve.patch
+Patch3          : linux-fsl-2.6.17-MPC8641_Kconfig_Makefiles.patch
+Patch4          : linux-fsl-2.6.17-MPC8641_defconfig.patch
+Patch5          : linux-fsl-2.6.17-MPC8641_SMP_start.patch
+Patch6          : linux-fsl-2.6.17-MPC8641_HPCN.patch
+Patch7          : linux-fsl-2.6.17-MPC8641_PCIE.patch
+Patch8          : linux-fsl-2.6.17-MPC8641_register_definitions.patch
+Patch9          : linux-fsl-2.6.17-MPC8641_I2C_Kconfig.patch
+Patch10         : linux-fsl-2.6.17-Vitesse_8244_PHY.patch
+Patch11         : linux-fsl-2.6.17-remove_redundant_PPC_86xx_check.patch
+Patch12         : linux-fsl-2.6.17-MPC8641_I8259.patch
+Patch13         : linux-fsl-2.6.17-remove_redundant_STD_MMU.patch
+Patch14         : linux-fsl-2.6.17-remove_obsolete_include.patch
+Patch15         : linux-fsl-2.6.17-MPC8641_minor_cleanups.patch
+BuildRoot       : %{_tmppath}/%{name}
+Prefix          : %{pfx}
+
+%Description
+%{summary}
+
+From kernel.org plus Freescale patches
+
+%Prep
+%setup -n %{pkg_name}-%{dversion}
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
+%patch14 -p1
+%patch15 -p1
+

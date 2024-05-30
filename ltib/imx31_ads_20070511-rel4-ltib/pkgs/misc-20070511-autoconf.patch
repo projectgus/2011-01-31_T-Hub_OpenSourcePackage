@@ -1,0 +1,105 @@
+diff -uNpr misc.orig/module_test/ipctestmod.c misc/module_test/ipctestmod.c
+--- misc.orig/module_test/ipctestmod.c	2007-05-11 10:46:57.000000000 -0600
++++ misc/module_test/ipctestmod.c	2007-05-11 10:32:47.000000000 -0600
+@@ -14,6 +14,7 @@
+ /*
+  * Include Files
+  */
++#include <linux/autoconf.h>
+ #include <linux/module.h>
+ #include <linux/init.h>
+ #include <linux/device.h>
+diff -uNpr misc.orig/module_test/mxc_pm_test.c misc/module_test/mxc_pm_test.c
+--- misc.orig/module_test/mxc_pm_test.c	2007-05-11 10:46:57.000000000 -0600
++++ misc/module_test/mxc_pm_test.c	2007-05-11 10:32:47.000000000 -0600
+@@ -14,6 +14,7 @@
+ /*
+  * General Include Files
+  */
++#include <linux/autoconf.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/version.h>
+diff -uNpr misc.orig/module_test/mxc_wdog_tm.c misc/module_test/mxc_wdog_tm.c
+--- misc.orig/module_test/mxc_wdog_tm.c	2007-05-11 10:46:57.000000000 -0600
++++ misc/module_test/mxc_wdog_tm.c	2007-05-11 10:32:47.000000000 -0600
+@@ -14,6 +14,7 @@
+ /*
+  * General Include Files
+  */
++#include <linux/autoconf.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/version.h>
+diff -uNpr misc.orig/test/mxc_dma_test/mxc_dma_test.c misc/test/mxc_dma_test/mxc_dma_test.c
+--- misc.orig/test/mxc_dma_test/mxc_dma_test.c	2007-01-12 15:14:46.000000000 -0700
++++ misc/test/mxc_dma_test/mxc_dma_test.c	2007-05-11 10:44:45.000000000 -0600
+@@ -23,8 +23,8 @@
+ #include<asm/page.h>
+ #include<sys/ioctl.h>
+ 
+-
+-#ifdef CONFIG_ARCH_MX2ADS
++#include <linux/autoconf.h>
++#ifdef CONFIG_ARCH_MX27
+ #include <asm/dma.h>
+ #include <asm/arch/dma.h>
+ #endif
+diff -uNpr misc.orig/test/mxc_keyb_test/mxc_keyb_test.c misc/test/mxc_keyb_test/mxc_keyb_test.c
+--- misc.orig/test/mxc_keyb_test/mxc_keyb_test.c	2007-05-11 10:46:57.000000000 -0600
++++ misc/test/mxc_keyb_test/mxc_keyb_test.c	2007-05-11 10:32:47.000000000 -0600
+@@ -22,6 +22,7 @@
+  * mxc_keyb_test.c 
+  *
+  */
++#include <linux/autoconf.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+diff -uNpr misc.orig/test/mxc_pmic_test/pmic_module_power/pmic_power_module.c misc/test/mxc_pmic_test/pmic_module_power/pmic_power_module.c
+--- misc.orig/test/mxc_pmic_test/pmic_module_power/pmic_power_module.c	2007-05-11 10:46:57.000000000 -0600
++++ misc/test/mxc_pmic_test/pmic_module_power/pmic_power_module.c	2007-05-11 10:32:47.000000000 -0600
+@@ -31,6 +31,7 @@ Test Executable Name:  pmic_power_module
+ ==============================================================================*/
+ #include <linux/kernel.h>
+ #include <linux/module.h>
++#include <linux/autoconf.h>
+ #include <linux/device.h>
+ #include <linux/kdev_t.h>
+ #include <linux/major.h>
+diff -uNpr misc.orig/test/mxc_pm_test/mxc_pm_test.c misc/test/mxc_pm_test/mxc_pm_test.c
+--- misc.orig/test/mxc_pm_test/mxc_pm_test.c	2007-05-11 10:46:57.000000000 -0600
++++ misc/test/mxc_pm_test/mxc_pm_test.c	2007-05-11 10:32:47.000000000 -0600
+@@ -20,6 +20,7 @@
+ #include <fcntl.h>
+ #include <limits.h>
+ #include "mxc_test.h"
++#include <linux/autoconf.h>
+ 
+ #include <asm/arch/mxc_pm.h>
+ 
+diff -uNpr misc.orig/test/mxc_udma_test/mxc_udma_test.c misc/test/mxc_udma_test/mxc_udma_test.c
+--- misc.orig/test/mxc_udma_test/mxc_udma_test.c	2007-01-12 15:14:51.000000000 -0700
++++ misc/test/mxc_udma_test/mxc_udma_test.c	2007-05-11 10:45:48.000000000 -0600
+@@ -10,8 +10,8 @@
+ #include<asm/page.h>
+ #include<sys/ioctl.h>
+ 
+-
+-#ifdef CONFIG_ARCH_MX2ADS
++#include <linux/autoconf.h>
++#ifdef CONFIG_ARCH_MX27
+ #include <asm/dma.h>
+ #include <asm/arch/dma.h>
+ #endif
+diff -uNpr misc.orig/test/mxc_v4l2_test/mxc_v4l2_test.c misc/test/mxc_v4l2_test/mxc_v4l2_test.c
+--- misc.orig/test/mxc_v4l2_test/mxc_v4l2_test.c	2007-05-11 10:46:57.000000000 -0600
++++ misc/test/mxc_v4l2_test/mxc_v4l2_test.c	2007-05-11 10:32:47.000000000 -0600
+@@ -49,6 +49,7 @@ extern "C"{
+ #include <linux/compiler.h>
+ #include <linux/videodev.h>
+ 
++#include <linux/autoconf.h>
+ #if !defined( CONFIG_MACH_MX31ADS ) && !defined( CONFIG_MACH_MX21ADS )
+ #include <linux/delay.h>
+ #endif

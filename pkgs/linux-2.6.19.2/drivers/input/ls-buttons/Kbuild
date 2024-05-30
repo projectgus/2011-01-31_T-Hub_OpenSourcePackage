@@ -1,0 +1,3 @@
+#kbuilt part of the Makefile
+obj-$(CONFIG_INPUT_LB2TABLET_BUTTONS) := lb2tablet_buttons_driver.o
+

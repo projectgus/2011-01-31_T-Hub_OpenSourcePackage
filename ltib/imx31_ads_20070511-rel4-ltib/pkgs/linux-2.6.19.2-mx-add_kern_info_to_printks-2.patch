@@ -1,0 +1,47 @@
+Bug 501. Add KERN_INFO to the beginning of printk message strings.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/dpm.c linux-2.6.19.2/arch/arm/mach-mx27/dpm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/dpm.c	2007-04-25 17:39:57.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/dpm.c	2007-04-25 17:40:06.000000000 -0600
+@@ -392,7 +392,7 @@ static void mxc_dpm_cleanup(void)
+ 
+ static int __init mxc_dpm_init(void)
+ {
+-	printk("Freescale i.MX27 Dynamic Power Management.\n");
++	printk(KERN_INFO "Freescale i.MX27 Dynamic Power Management.\n");
+ 
+ 	dpm_md.init_opt = mxc_dpm_init_opt;
+ 	dpm_md.set_opt = mxc_dpm_set_opt;
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mxc_pm.c linux-2.6.19.2/arch/arm/mach-mx27/mxc_pm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mxc_pm.c	2007-04-25 17:39:57.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mxc_pm.c	2007-04-25 17:40:06.000000000 -0600
+@@ -449,7 +449,7 @@ int mxc_pm_pllscale(long armfreq, long a
+  */
+ static int __init mxc_pm_init_module(void)
+ {
+-	printk("MX27: Power management module initialized\n");
++	printk(KERN_INFO "MX27: Power management module initialized\n");
+ 	return 0;
+ }
+ 
+@@ -458,7 +458,7 @@ static int __init mxc_pm_init_module(voi
+  */
+ static void __exit mxc_pm_cleanup_module(void)
+ {
+-	printk("MX27: Power management module exit\n");
++	printk(KERN_INFO "MX27: Power management module exit\n");
+ }
+ 
+ module_init(mxc_pm_init_module);
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/dpm.c linux-2.6.19.2/arch/arm/mach-mx3/dpm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/dpm.c	2007-04-25 17:40:02.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/dpm.c	2007-04-25 17:40:06.000000000 -0600
+@@ -392,7 +392,7 @@ static void mxc_dpm_cleanup(void)
+ 
+ static int __init mxc_dpm_init(void)
+ {
+-	printk("Freescale i.MX31 Dynamic Power Management.\n");
++	printk(KERN_INFO "Freescale i.MX31 Dynamic Power Management.\n");
+ 
+ 	dpm_md.init_opt = mxc_dpm_init_opt;
+ 	dpm_md.set_opt = mxc_dpm_set_opt;

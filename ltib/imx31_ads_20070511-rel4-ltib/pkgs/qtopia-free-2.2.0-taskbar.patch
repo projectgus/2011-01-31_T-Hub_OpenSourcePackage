@@ -1,0 +1,16 @@
+Fri Sep 29 2006 Stuart Hughes <stuarth@freescale.com>
+
+This fixed compilation issue when using tc-fsl-x86lnx-armeabi-4.1.0-8.i386.rpm
+
+diff --exclude CVS -uNr qtopia-free-2.2.0/qtopia/src/server/pda/taskbar.cpp qtopia-free-2.2.0.modified/qtopia/src/server/pda/taskbar.cpp
+--- qtopia-free-2.2.0/qtopia/src/server/pda/taskbar.cpp	2005-11-11 02:43:32.000000000 +0000
++++ qtopia-free-2.2.0.modified/qtopia/src/server/pda/taskbar.cpp	2006-09-28 18:45:59.000000000 +0100
+@@ -64,6 +64,8 @@
+ #include <qgfx_qws.h>
+ #endif
+ 
++#include <qpainter.h>
++#include <qtopia/resource.h>
+ 
+ static bool initNumLock()
+ {

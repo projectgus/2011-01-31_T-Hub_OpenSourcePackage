@@ -1,0 +1,22 @@
+Thu Mar 2 2006 Stuart Hughes <stuarth@freescale.com>
+
+This patch is to prevent libtool using headers from /usr/include when
+cross compiling iconv
+
+
+diff --exclude CVS -uNr php-5.0.4/configure php-5.0.4.modified/configure
+--- php-5.0.4/configure	2006-03-02 11:53:03.000000000 -0600
++++ php-5.0.4.modified/configure	2006-03-02 11:52:14.000000000 -0600
+@@ -41537,7 +41537,11 @@
+   ext_builddir=ext/iconv
+   ext_srcdir=$abs_srcdir/ext/iconv
+ 
+-  ac_extra=`echo "-I\"$PHP_ICONV_PREFIX/include\""|sed s#@ext_srcdir@#$ext_srcdir#g`
++  if test "$cross_compiling" = yes; then
++      ac_extra=
++  else
++      ac_extra=`echo "-I\"$PHP_ICONV_PREFIX/include\""|sed s#@ext_srcdir@#$ext_srcdir#g`
++  fi
+ 
+   if test "$ext_shared" != "shared" && test "$ext_shared" != "yes" && test "" != "cli"; then
+ 

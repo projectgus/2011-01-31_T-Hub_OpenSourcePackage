@@ -1,0 +1,162 @@
+CR: TLSbo91782
+Patch name: TLSbo91782_add_usb_for_xxx.patch
+Date: Thu Mar 22 14:49:48 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: Combine mx27 and mx31 usb headers.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/host/Kconfig linux-2.6.19.2/drivers/usb/host/Kconfig
+--- linux-2.6.19.2.orig/drivers/usb/host/Kconfig	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/host/Kconfig	2007-04-25 17:39:55.000000000 -0600
+@@ -49,13 +49,13 @@ config USB_EHCI_ARC
+ 
+ config USB_EHCI_ARC_H1
+ 	bool "Support for Host1 port on ARC controller"
+-	depends on USB_EHCI_ARC
++	depends on USB_EHCI_ARC	&& (ARCH_MX27 || ARCH_MX3)
+ 	---help---
+ 	  Enable support for the USB Host1 port.
+ 
+ config USB_EHCI_ARC_H2
+ 	bool "Support for Host2 port on ARC controller"
+-	depends on USB_EHCI_ARC
++	depends on USB_EHCI_ARC	&& (ARCH_MX27 || ARCH_MX3)
+ 	---help---
+ 	  Enable support for the USB Host2 port.
+ 
+@@ -79,6 +80,7 @@ config USB_EHCI_ARC_OTGHS
+ 
+ config USB_EHCI_ARC_OTGFS
+ 	bool "Full Speed"
++	depends on MACH_MX31ADS || MACH_MX27ADS
+ 	---help---
+ 	  Enable support for the USB OTG port in FS Host mode.
+ endchoice
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/host/ehci-arc.c linux-2.6.19.2/drivers/usb/host/ehci-arc.c
+--- linux-2.6.19.2.orig/drivers/usb/host/ehci-arc.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/host/ehci-arc.c	2007-04-25 17:39:55.000000000 -0600
+@@ -30,13 +30,7 @@
+ #include <asm/arch/arc_otg.h>
+ #include <asm/arch/isp1504.h>
+ 
+-#ifdef CONFIG_ARCH_MX3
+-#include <asm/arch/mx31_usb.h>
+-#endif
+-
+-#ifdef CONFIG_ARCH_MX27
+-#include <asm/arch/mx27_usb.h>
+-#endif
++#include <asm/arch/arc_usb.h>
+ 
+ #undef dbg
+ #undef vdbg
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/arc_usb.h linux-2.6.19.2/include/asm-arm/arch-mxc/arc_usb.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/arc_usb.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/arc_usb.h	2007-04-25 17:39:55.000000000 -0600
+@@ -0,0 +1,33 @@
++/*
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
++ */
++
++/*
++ * The code contained herein is licensed under the GNU General Public
++ * License. You may obtain a copy of the GNU General Public License
++ * Version 2 or later at the following locations:
++ *
++ * http://www.opensource.org/licenses/gpl-license.html
++ * http://www.gnu.org/copyleft/gpl.html
++ */
++
++/* ehci_arc_hc_driver.flags value */
++#define FSL_PLATFORM_HC_FLAGS HCD_USB2
++
++static inline int fsl_platform_verify(struct platform_device *pdev)
++{
++	return 0;
++}
++
++static inline void fsl_platform_usb_setup(struct usb_hcd *hcd)
++{
++}
++
++static inline void fsl_platform_set_host_mode(struct usb_hcd *hcd)
++{
++	unsigned int temp;
++
++	/* set host mode */
++	temp = readl(hcd->regs + 0x1a8);
++	writel(temp | USBMODE_CM_HOST, hcd->regs + 0x1a8);
++}
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx27_usb.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx27_usb.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx27_usb.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx27_usb.h	2007-04-25 17:39:55.000000000 -0600
+@@ -1,33 +0,0 @@
+-/*
+- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+- */
+-
+-/*
+- * The code contained herein is licensed under the GNU General Public
+- * License. You may obtain a copy of the GNU General Public License
+- * Version 2 or later at the following locations:
+- *
+- * http://www.opensource.org/licenses/gpl-license.html
+- * http://www.gnu.org/copyleft/gpl.html
+- */
+-
+-/* ehci_arc_hc_driver.flags value */
+-#define FSL_PLATFORM_HC_FLAGS (HCD_USB2 | HCD_USB2)
+-
+-static inline int fsl_platform_verify(struct platform_device *pdev)
+-{
+-	return 0;
+-}
+-
+-static inline void fsl_platform_usb_setup(struct usb_hcd *hcd)
+-{
+-}
+-
+-static inline void fsl_platform_set_host_mode(struct usb_hcd *hcd)
+-{
+-	unsigned int temp;
+-
+-	/* set host mode */
+-	temp = readl(hcd->regs + 0x1a8);
+-	writel(temp | USBMODE_CM_HOST, hcd->regs + 0x1a8);
+-}
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx31_usb.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx31_usb.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx31_usb.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx31_usb.h	2007-04-25 17:39:55.000000000 -0600
+@@ -1,33 +0,0 @@
+-/*
+- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+- */
+-
+-/*
+- * The code contained herein is licensed under the GNU General Public
+- * License. You may obtain a copy of the GNU General Public License
+- * Version 2 or later at the following locations:
+- *
+- * http://www.opensource.org/licenses/gpl-license.html
+- * http://www.gnu.org/copyleft/gpl.html
+- */
+-
+-/* ehci_arc_hc_driver.flags value */
+-#define FSL_PLATFORM_HC_FLAGS (HCD_USB2 | HCD_USB2)
+-
+-static inline int fsl_platform_verify(struct platform_device *pdev)
+-{
+-	return 0;
+-}
+-
+-static inline void fsl_platform_usb_setup(struct usb_hcd *hcd)
+-{
+-}
+-
+-static inline void fsl_platform_set_host_mode(struct usb_hcd *hcd)
+-{
+-	unsigned int temp;
+-
+-	/* set host mode */
+-	temp = readl(hcd->regs + 0x1a8);
+-	writel(temp | USBMODE_CM_HOST, hcd->regs + 0x1a8);
+-}

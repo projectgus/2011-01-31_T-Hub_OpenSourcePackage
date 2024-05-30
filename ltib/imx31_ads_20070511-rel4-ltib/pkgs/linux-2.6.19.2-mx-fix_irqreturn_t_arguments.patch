@@ -1,0 +1,14 @@
+Updated the irq handler to conform to 2.6.19 irqreturn_t arguments.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.c linux-2.6.19.2/drivers/video/mxc/mx2fb.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.c	2007-04-25 17:37:21.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mx2fb.c	2007-04-25 17:37:42.000000000 -0600
+@@ -1099,7 +1099,7 @@ static void _set_brightness(unsigned cha
+ /*
+  * @brief LCDC interrupt handler
+  */
+-static irqreturn_t mx2fb_isr(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t mx2fb_isr(int irq, void *dev_id)
+ {
+ 	struct fb_event event;
+ 	unsigned long status = __raw_readl(LCDC_REG(LCDC_LISR));

@@ -1,0 +1,52 @@
+CR: ENGR00028544
+Patch name: ENGR00028544_Adding_clock_Enable_Disable_RNG.patch
+Date: Wed Mar 14 15:31:22 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: Adding clock enable & disable in RNG for all platforms
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/Kconfig linux-2.6.19.2/drivers/mxc/security/Kconfig
+--- linux-2.6.19.2.orig/drivers/mxc/security/Kconfig	2007-04-25 17:38:48.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/Kconfig	2007-04-25 17:39:31.000000000 -0600
+@@ -25,7 +25,7 @@ config MXC_SECURITY_RNG
+ 	  If you are unsure about this, say N here.
+ 
+ config MXC_RNG_TEST_DRIVER
+-	bool "MXC RNG module debugging"
++	bool "MXC RNG debug register"
+ 	depends on MXC_SECURITY_RNG
+ 	default n
+ 	---help---
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/rng_driver.c linux-2.6.19.2/drivers/mxc/security/rng/rng_driver.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/rng_driver.c	2007-04-25 17:38:54.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/rng_driver.c	2007-04-25 17:39:31.000000000 -0600
+@@ -168,14 +168,18 @@ OS_WAIT_OBJECT(rng_wait_queue);
+  */
+ OS_DEV_INIT(rng_init)
+ {
++	struct clk *clk;
+ 	os_error_code return_code = OS_ERROR_FAIL_S;
+ 	rng_availability = RNG_STATUS_CHECKING;
++
+ #if defined(FSL_HAVE_RNGC)
+ 	INIT_COMPLETION(rng_self_testing);
+ 	INIT_COMPLETION(rng_seed_done);
+ #endif
+ 	rng_work_queue.head = NULL;
+ 	rng_work_queue.tail = NULL;
++	clk = clk_get(NULL, "rng_clk");
++	clk_enable(clk);
+ 
+ 	printk(KERN_INFO "RNG Driver: Loading\n");
+ 	return_code = rng_map_RNG_memory();
+@@ -348,8 +352,10 @@ OS_DEV_SHUTDOWN(rng_shutdown)
+  */
+ static void rng_cleanup(void)
+ {
++	struct clk *clk;
+ 	scc_stop_monitoring_security_failure(rng_sec_failure);
+-
++	clk = clk_get(NULL, "rng_clk");
++	clk_disable(clk);
+ 	if (task_started) {
+ 		os_dev_stop_task(rng_entropy_task);
+ 	}

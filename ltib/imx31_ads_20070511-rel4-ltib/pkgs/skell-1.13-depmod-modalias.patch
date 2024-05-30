@@ -1,0 +1,23 @@
+#  depmod.pl run on the host does a fine job of creating
+#  a modules.dep file, but creating a modules.alias file is beyond
+#  its scope.  Having a modules.alias file is vital for kernel
+#  module auto-loading, and the only way to get one is to run
+#  depmod on the target.
+#
+#  The depmod rc script will only run depmod on the target
+#  if modules.dep doesn't exist, but since depmod.pl has already
+#  created it, it never runs.  This patch tests for the existence of
+#  modules.alias instead, which will be created the first time
+#  depmod runs on the target.
+
+--- skell-1.13/etc/rc.d/init.d/depmod~	2007-05-09 15:24:05.000000000 -0600
++++ skell-1.13/etc/rc.d/init.d/depmod	2007-05-09 15:24:15.000000000 -0600
+@@ -5,7 +5,7 @@
+     exit 0
+ fi
+ 
+-if [ "$1" = "start"  -a ! -s /lib/modules/`uname -r`/modules.dep ]
++if [ "$1" = "start"  -a ! -s /lib/modules/`uname -r`/modules.alias ]
+ then
+     echo Running depmod
+     /sbin/depmod -a

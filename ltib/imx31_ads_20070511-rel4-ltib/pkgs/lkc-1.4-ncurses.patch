@@ -1,0 +1,32 @@
+diff -uNr lkc-1.4.orig/lxdialog/Makefile lkc-1.4/lxdialog/Makefile
+--- lkc-1.4.orig/lxdialog/Makefile	Mon Apr  4 20:59:07 2005
++++ lkc-1.4/lxdialog/Makefile	Mon Apr  4 21:04:11 2005
+@@ -6,27 +6,7 @@
+ all: ncurses lxdialog.a 
+ 
+ LIBS = -lncurses
+-ifeq (/usr/include/ncurses/ncurses.h, $(wildcard /usr/include/ncurses/ncurses.h))
+-	HOSTNCURSES += -I/usr/include/ncurses -DCURSES_LOC="<ncurses.h>"
+-else
+-ifeq (/usr/include/ncurses/curses.h, $(wildcard /usr/include/ncurses/curses.h))
+-	HOSTNCURSES += -I/usr/include/ncurses -DCURSES_LOC="<ncurses/curses.h>"
+-else
+-ifeq (/usr/local/include/ncurses/ncurses.h, $(wildcard /usr/local/include/ncurses/ncurses.h))
+-	HOSTCFLAGS += -I/usr/local/include/ncurses -DCURSES_LOC="<ncurses.h>"
+-else
+-ifeq (/usr/local/include/ncurses/curses.h, $(wildcard /usr/local/include/ncurses/curses.h))
+-	HOSTCFLAGS += -I/usr/local/include/ncurses -DCURSES_LOC="<ncurses/curses.h>"
+-else
+-ifeq (/usr/include/ncurses.h, $(wildcard /usr/include/ncurses.h))
+-	HOSTNCURSES += -DCURSES_LOC="<ncurses.h>"
+-else
+-	HOSTNCURSES += -DCURSES_LOC="<curses.h>"
+-endif
+-endif
+-endif
+-endif
+-endif
++HOSTNCURSES =  -DCURSES_LOC="<ncurses.h>"
+ 
+ LXDIALOG_SRC =checklist.c menubox.c textbox.c yesno.c inputbox.c util.c msgbox.c
+ LXDIALOG_OBJS=$(patsubst %.c,%.o, $(LXDIALOG_SRC))

@@ -1,0 +1,18 @@
+Fri Aug 4 2006 Stuart Hughes <stuarth@freescale.com>
+
+This patch will make df show the output for the root mounted device,
+even if /dev/root is missing.  This seems to happen for me when
+booting the root filesystem over NFS and using devfs
+
+diff --exclude CVS -uNr busybox-1.1.3/coreutils/df.c busybox-1.1.3.modified/coreutils/df.c
+--- busybox-1.1.3/coreutils/df.c	2006-03-22 21:16:21.000000000 +0000
++++ busybox-1.1.3.modified/coreutils/df.c	2006-08-04 15:56:07.000000000 +0100
+@@ -131,7 +131,7 @@
+ 				/* Adjusts device to be the real root device,
+ 				* or leaves device alone if it can't find it */
+ 				if ((device = find_block_device("/")) == NULL) {
+-					goto SET_ERROR;
++					device = "/dev/root";
+ 				}
+ 			}
+ 

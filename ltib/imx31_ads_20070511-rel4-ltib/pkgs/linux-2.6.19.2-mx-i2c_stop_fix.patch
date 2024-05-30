@@ -1,0 +1,39 @@
+Bugzilla 217 - I2C stop condition setup timing violation
+
+Re-engineered patch to ensure timing is met, but also with
+deadlock prevention.
+
+cvs diff -puN -r1.2 -r1.3 drivers/i2c/busses/mxc_i2c.c
+Index: drivers/i2c/busses/mxc_i2c.c
+===================================================================
+RCS file: /cvs/local/ltib/imx27ads/linux-2.6.19/drivers/i2c/busses/mxc_i2c.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -p -u -r1.2 -r1.3
+--- linux-2.6.19.2/drivers/i2c/busses/mxc_i2c.c	15 Jan 2007 05:50:46 -0000	1.2
++++ linux-2.6.19.2-mx/drivers/i2c/busses/mxc_i2c.c	25 Jan 2007 01:02:55 -0000	1.3
+@@ -122,10 +122,24 @@ extern void gpio_i2c_inactive(int i2c_nu
+ static void mxc_i2c_stop(mxc_i2c_device * dev)
+ {
+ 	volatile unsigned int cr;
++	int retry = 16;
+ 
+ 	cr = readw(dev->membase + MXC_I2CR);
+ 	cr &= ~(MXC_I2CR_MSTA | MXC_I2CR_MTX);
+ 	writew(cr, dev->membase + MXC_I2CR);
++
++	/*
++	 * Make sure STOP meets setup requirement.
++	 */
++	for (;;) {
++		unsigned int sr = readw(dev->membase + MXC_I2SR);
++		if ((sr & MXC_I2SR_IBB) == 0) break;
++		if (retry-- <= 0) {
++			printk(KERN_DEBUG "Bus busy\n");
++			break;
++		}
++		udelay(3);
++	}
+ }
+ 
+ /*!

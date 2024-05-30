@@ -1,0 +1,11 @@
+--- linux-2.6.19.2/net/irda/irttp.c	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/net/irda/irttp.c	2007-01-10 16:58:50.000000000 -0700
+@@ -1099,7 +1099,7 @@ int irttp_connect_request(struct tsap_cb
+ 			return -ENOMEM;
+ 
+ 		/* Reserve space for MUX_CONTROL and LAP header */
+-		skb_reserve(tx_skb, TTP_MAX_HEADER + TTP_SAR_HEADER);
++		skb_reserve(tx_skb, TTP_MAX_HEADER + TTP_SAR_HEADER + TTP_SAR_HEADER);
+ 	} else {
+ 		tx_skb = userdata;
+ 		/*

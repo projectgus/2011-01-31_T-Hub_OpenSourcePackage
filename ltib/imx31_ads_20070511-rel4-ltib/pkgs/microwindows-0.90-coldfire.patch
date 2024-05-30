@@ -1,0 +1,372 @@
+diff -ruN microwindows-0.90.orig/src/config microwindows-0.90/src/config
+--- microwindows-0.90.orig/src/config	2003-05-30 22:00:18.000000000 -0600
++++ microwindows-0.90/src/config	2005-11-21 12:06:47.000000000 -0700
+@@ -50,11 +50,10 @@
+ # Compiling options
+ #
+ ####################################################################
+-OPTIMIZE                 = Y
+-DEBUG                    = Y
+-VERBOSE                  = N
+-THREADSAFE               = Y
+-GPROF                    = N
++OPTIMIZE                 = N
++DEBUG                    = N
++VERBOSE                  = Y
++THREADSAFE               = N
+ 
+ ####################################################################
+ #
+@@ -98,8 +97,7 @@
+ # define MWPF_TRUECOLOR332  /* pixel is packed 8 bits 3/3/2 truecolor*/
+ #
+ ####################################################################
+-SCREEN_PIXTYPE           = MWPF_TRUECOLOR0888
+-
++SCREEN_PIXTYPE           = MWPF_TRUECOLOR565
+ ####################################################################
+ #
+ # NanoX: Put Y to the following line to link the nano-X application
+@@ -112,7 +110,7 @@
+ ####################################################################
+ # Shared memory support for Nano-X client/server protocol speedup
+ ####################################################################
+-HAVE_SHAREDMEM_SUPPORT   = N
++HAVE_SHAREDMEM_SUPPORT   = Y
+ 
+ ####################################################################
+ #
+@@ -133,7 +131,7 @@
+ ####################################################################
+ # JPEG support through libjpeg, see README.txt in contrib/jpeg
+ ####################################################################
+-HAVE_JPEG_SUPPORT        = Y
++HAVE_JPEG_SUPPORT        = N
+ INCJPEG                  = .
+ LIBJPEG                  = /usr/lib/libjpeg.a
+ 
+@@ -169,7 +167,7 @@
+ ####################################################################
+ # TrueType font support thru FreeType 1.x
+ ####################################################################
+-HAVE_FREETYPE_SUPPORT    = Y
++HAVE_FREETYPE_SUPPORT    = N
+ INCFTLIB                 = /usr/include
+ LIBFTLIB                 = /usr/lib/libttf.so
+ FREETYPE_FONT_DIR        = "fonts/truetype"
+@@ -187,8 +185,8 @@
+ # Selecting HAVE_PCFGZ_SUPPORT will allow you to directly read
+ # .pcf.gz files, but it will add libz to the size of the server
+ ####################################################################
+-HAVE_PCF_SUPPORT         = Y
+-HAVE_PCFGZ_SUPPORT       = Y
++HAVE_PCF_SUPPORT         = N
++HAVE_PCFGZ_SUPPORT       = N
+ PCF_FONT_DIR             = "fonts/pcf"
+ 
+ ####################################################################
+@@ -275,8 +273,8 @@
+ # set FBREVERSE to reverse bit orders in 1,2,4 bpp
+ # set FBVGA=N for all systems without VGA hardware (for MIPS must=N)
+ FRAMEBUFFER              = Y
+-FBVGA                    = Y
+-VTSWITCH                 = Y
++FBVGA                    = N
++VTSWITCH                 = N
+ FBREVERSE                = N
+ 
+ # set HAVETEXTMODE=Y for systems that can switch between text & graphics.
+@@ -310,8 +308,8 @@
+ # YOPYMOUSE	Yopy (/dev/yopy-ts)
+ # HARRIERMOUSE	NEC Harrier (/dev/tpanel)
+ ####################################################################
+-GPMMOUSE                 = Y
+-SERMOUSE                 = N
++GPMMOUSE                 = N
++SERMOUSE                 = Y
+ SUNMOUSE                 = N
+ NOMOUSE                  = N
+ IPAQMOUSE                = N
+@@ -327,8 +325,8 @@
+ HARRIERMOUSE             = N
+ 
+ # keyboard or null kbd driver
+-TTYKBD                   = N
+-SCANKBD                  = Y
++TTYKBD                   = Y
++SCANKBD                  = N
+ PIPEKBD                  = N
+ IPAQKBD                  = N
+ LIRCKBD                  = N
+diff -ruN microwindows-0.90.orig/src/drivers/fblin16.c microwindows-0.90/src/drivers/fblin16.c
+--- microwindows-0.90.orig/src/drivers/fblin16.c	2003-05-11 12:18:11.000000000 -0600
++++ microwindows-0.90/src/drivers/fblin16.c	2005-11-21 14:00:58.000000000 -0700
+@@ -19,18 +19,75 @@
+ #include "device.h"
+ #include "fb.h"
+ 
++#define COLDFIRE 1
++
+ #define USE_16BIT_ACCESS 0	/* =1 to force 16 bit display access*/
+ 
+-#if USE_16BIT_ACCESS
+-#define memcpy(d,s,nbytes)	memcpy16(d,s,(nbytes)>>1)
+-#define memmove(d,s,nbytes)	memcpy16(d,s,(nbytes)>>1)
+-static void
+-memcpy16(unsigned short *dst, unsigned short *src, int nwords)
++//#if USE_16BIT_ACCESS
++//#define memcpy(d,s,nbytes)	memcpy16(d,s,(nbytes)>>1)
++//#define memmove(d,s,nbytes)	memcpy16(d,s,(nbytes)>>1)
++//static void
++//memcpy16(unsigned short *dst, unsigned short *src, int nwords)
++//{
++//	while (--nwords >= 0)
++//		*dst++ = *src++;
++//}
++//#endif
++
++#define memcpy(d,s,nbytes)	memcpy_cf(d,s,nbytes)
++#define memmove(d,s,nbytes)	memcpy_cf(d,s,nbytes)
++
++void * memcpy_cf(void * to, const void * from, size_t n)
+ {
+-	while (--nwords >= 0)
+-		*dst++ = *src++;
++  void *xto = to;
++  size_t temp;
++
++  if (!n)
++    return xto;
++  if ((long) to & 1)
++    {
++      char *cto = to;
++      const char *cfrom = from;
++      *cto++ = *cfrom++;
++      to = cto;
++      from = cfrom;
++      n--;
++    }
++  if (n > 2 && (long) to & 2)
++    {
++      short *sto = to;
++      const short *sfrom = from;
++      *sto++ = *sfrom++;
++      to = sto;
++      from = sfrom;
++      n -= 2;
++    }
++  temp = n >> 2;
++  if (temp)
++    {
++      long *lto = to;
++      const long *lfrom = from;
++      for (; temp; temp--)
++	*lto++ = *lfrom++;
++      to = lto;
++      from = lfrom;
++    }
++  if (n & 2)
++    {
++      short *sto = to;
++      const short *sfrom = from;
++      *sto++ = *sfrom++;
++      to = sto;
++      from = sfrom;
++    }
++  if (n & 1)
++    {
++      char *cto = to;
++      const char *cfrom = from;
++      *cto = *cfrom;
++    }
++  return xto;
+ }
+-#endif
+ 
+ /* Calc linelen and mmap size, return 0 on fail*/
+ static int
+@@ -49,6 +106,9 @@
+ linear16_drawpixel(PSD psd, MWCOORD x, MWCOORD y, MWPIXELVAL c)
+ {
+ 	ADDR16	addr = psd->addr;
++#ifdef COLDFIRE
++	c = ((0x00ff & c) << 8) | ((0xff00 & c) >> 8);
++#endif
+ 
+ 	assert (addr != 0);
+ 	assert (x >= 0 && x < psd->xres);
+@@ -67,13 +127,18 @@
+ static MWPIXELVAL
+ linear16_readpixel(PSD psd, MWCOORD x, MWCOORD y)
+ {
++	MWPIXELVAL c;
+ 	ADDR16	addr = psd->addr;
+ 
+ 	assert (addr != 0);
+ 	assert (x >= 0 && x < psd->xres);
+ 	assert (y >= 0 && y < psd->yres);
+ 
+-	return addr[x + y * psd->linelen];
++	c = addr[x + y * psd->linelen];
++#ifdef COLDFIRE
++	c = ((0x00ff & c) << 8) | ((0xff00 & c) >> 8);
++#endif
++	return c;
+ }
+ 
+ /* Draw horizontal line from x1,y to x2,y including final point*/
+@@ -82,6 +147,9 @@
+ {
+ 	ADDR16	addr = psd->addr;
+ 
++#ifdef COLDFIRE
++	c = ((0x00ff & c) << 8) | ((0xff00 & c) >> 8);
++#endif
+ 	assert (addr != 0);
+ 	assert (x1 >= 0 && x1 < psd->xres);
+ 	assert (x2 >= 0 && x2 < psd->xres);
+@@ -111,6 +179,9 @@
+ 	ADDR16	addr = psd->addr;
+ 	int	linelen = psd->linelen;
+ 
++#ifdef COLDFIRE
++	c = ((0x00ff & c) << 8) | ((0xff00 & c) >> 8);
++#endif
+ 	assert (addr != 0);
+ 	assert (x >= 0 && x < psd->xres);
+ 	assert (y1 >= 0 && y1 < psd->yres);
+diff -ruN microwindows-0.90.orig/src/drivers/kbd_tty.c microwindows-0.90/src/drivers/kbd_tty.c
+--- microwindows-0.90.orig/src/drivers/kbd_tty.c	2002-08-21 10:36:18.000000000 -0600
++++ microwindows-0.90/src/drivers/kbd_tty.c	2005-11-21 12:06:47.000000000 -0700
+@@ -17,7 +17,7 @@
+ #if ELKS
+ #define	KEYBOARD	"/dev/tty1"	/* keyboard associated with screen*/
+ #else
+-#define	KEYBOARD	"/dev/tty"	/* keyboard associated with screen*/
++#define	KEYBOARD	"/dev/tty0"	/* keyboard associated with screen*/
+ #endif
+ 
+ extern int escape_quits;
+diff -ruN microwindows-0.90.orig/src/drivers/mou_ser.c microwindows-0.90/src/drivers/mou_ser.c
+--- microwindows-0.90.orig/src/drivers/mou_ser.c	2003-04-30 00:01:40.000000000 -0600
++++ microwindows-0.90/src/drivers/mou_ser.c	2005-11-21 14:04:38.000000000 -0700
+@@ -46,7 +46,7 @@
+ #if ELKS
+ #define	MOUSE_PORT	"/dev/ttys0"	/* default mouse tty port */
+ #else
+-/*#define MOUSE_PORT	"/dev/ttyS1"	/* default mouse tty port */*/
++/*#define MOUSE_PORT	"/dev/ttyS1"	/* default mouse tty port */
+ #define MOUSE_PORT	"/dev/psaux"	/* default mouse tty port*/
+ #endif
+ /*#define MOUSE_TYPE	"pc"		/* default mouse type "ms","pc","ps2" */
+diff -ruN microwindows-0.90.orig/src/engine/devdraw.c microwindows-0.90/src/engine/devdraw.c
+--- microwindows-0.90.orig/src/engine/devdraw.c	2003-05-29 19:18:00.000000000 -0600
++++ microwindows-0.90/src/engine/devdraw.c	2005-11-21 12:17:30.000000000 -0700
+@@ -18,7 +18,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <assert.h>
+-#include "device.h"
++#include <device.h>
+ 
+ extern MWPIXELVAL gr_foreground;      /* current foreground color */
+ extern MWPIXELVAL gr_background;      /* current background color */
+@@ -862,6 +862,7 @@
+ 		while (height > 0) {
+ 
+ 			cr = *data++;
++#ifndef CONFIG_COLDFIRE
+ #if MW_CPU_BIG_ENDIAN
+ 			if (rgborder)
+ 			{
+@@ -885,6 +886,7 @@
+ 					| ((cr & 0x000000FFUL) << 16);
+ 			}
+ #endif
++#endif
+ 
+ 			switch (psd->pixtype) {
+ 			case MWPF_PALETTE:
+@@ -2243,7 +2245,7 @@
+ #if MWPIXEL_FORMAT == MWPF_PALETTE
+ 			colorval = GETPALENTRY(gr_palette, pixelval);
+ #else
+-			colorval = PIXELVALTOCOLORVAL(pixelval);
++			colorval = PIXEL565TOCOLORVAL(pixelval);
+ #endif
+ 			break;
+ 		case MWPF_PALETTE:
+@@ -2296,7 +2298,7 @@
+ 			*(MWPIXELVAL *)outbuf = GdFindNearestColor(gr_palette,
+ 					gr_palsize, colorval);
+ #else
+-			*(MWPIXELVAL *)outbuf = COLORVALTOPIXELVAL(colorval);
++			*(MWPIXELVAL *)outbuf = COLOR2PIXEL565(colorval);
+ #endif
+ 			outbuf += sizeof(MWPIXELVAL);
+ 			break;
+diff -ruN microwindows-0.90.orig/src/engine/devmouse.c microwindows-0.90/src/engine/devmouse.c
+--- microwindows-0.90.orig/src/engine/devmouse.c	2003-05-13 11:01:56.000000000 -0600
++++ microwindows-0.90/src/engine/devmouse.c	2005-11-21 12:06:47.000000000 -0700
+@@ -70,6 +70,7 @@
+  *
+  * @return < 0 on error, or mouse fd on success
+  */
++extern MOUSEDEVICE mousedev;
+ int
+ GdOpenMouse(void)
+ {
+diff -ruN microwindows-0.90.orig/src/include/device.h microwindows-0.90/src/include/device.h
+--- microwindows-0.90.orig/src/include/device.h	2003-05-13 11:19:06.000000000 -0600
++++ microwindows-0.90/src/include/device.h	2005-11-21 12:06:47.000000000 -0700
+@@ -930,6 +930,10 @@
+ #define assert(x)
+ #endif
+ 
++#undef assert
++#define assert(x)
++		
++
+ /* RTEMS requires rtems_main()*/
+ #if __rtems__
+ #define main	rtems_main
+diff -ruN microwindows-0.90.orig/src/include/swap.h microwindows-0.90/src/include/swap.h
+--- microwindows-0.90.orig/src/include/swap.h	2003-05-10 17:54:18.000000000 -0600
++++ microwindows-0.90/src/include/swap.h	2005-11-21 12:06:47.000000000 -0700
+@@ -53,9 +53,9 @@
+ 
+ # include <endian.h>
+ # if __BYTE_ORDER == __BIG_ENDIAN
+-#  if !MW_CPU_BIG_ENDIAN
+-#   error MW_CPU_BIG_ENDIAN and your OS disagree about your CPUs byte-order.  Did you forget to set BIGENDIAN in the config file?
+-#  endif
++//#  if !MW_CPU_BIG_ENDIAN
++//#   error MW_CPU_BIG_ENDIAN and your OS disagree about your CPUs byte-order.  Did you forget to set BIGENDIAN in the config file?
++//#  endif
+ #  undef wswap
+ #  undef dwswap
+ #  include <byteswap.h>
+diff -ruN microwindows-0.90.orig/src/mwin/winmain.c microwindows-0.90/src/mwin/winmain.c
+--- microwindows-0.90.orig/src/mwin/winmain.c	2003-04-04 19:27:27.000000000 -0700
++++ microwindows-0.90/src/mwin/winmain.c	2005-11-21 12:06:47.000000000 -0700
+@@ -46,7 +46,7 @@
+ DWORD		startTicks;		/* tickcount on startup */
+ int		keyb_fd;		/* the keyboard file descriptor */
+ int		mouse_fd;		/* the mouse file descriptor */
+-int		escape_quits = 1;	/* terminate when pressing ESC */
++int		escape_quits = 0;	/* terminate when pressing ESC */
+ 
+ int
+ main(int ac,char **av)
+diff -ruN microwindows-0.90.orig/src/nanox/srvmain.c microwindows-0.90/src/nanox/srvmain.c
+--- microwindows-0.90.orig/src/nanox/srvmain.c	2003-05-17 23:58:42.000000000 -0600
++++ microwindows-0.90/src/nanox/srvmain.c	2005-11-21 12:06:47.000000000 -0700
+@@ -72,7 +72,7 @@
+ GR_EVENT_LIST	*eventfree;		/* list of free events */
+ GR_BOOL		focusfixed;		/* TRUE if focus is fixed on a window */
+ PMWFONT		stdfont;		/* default font*/
+-int		escape_quits = TRUE;	/* terminate when pressing ESC */
++int		escape_quits = FALSE;	/* terminate when pressing ESC */
+ char		*progname;		/* Name of this program.. */
+ 
+ int		current_fd;		/* the fd of the client talking to */

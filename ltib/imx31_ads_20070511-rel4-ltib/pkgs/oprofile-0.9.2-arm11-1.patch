@@ -1,0 +1,243 @@
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/daemon/opd_cookie.c oprofile-0.9.2/daemon/opd_cookie.c
+--- oprofile-0.9.2-stock/daemon/opd_cookie.c	2005-10-18 19:28:26.000000000 -0400
++++ oprofile-0.9.2/daemon/opd_cookie.c	2006-10-11 12:05:01.000000000 -0400
+@@ -75,6 +75,12 @@
+ 		       (unsigned long)(cookie & 0xffffffff),
+ 		       (unsigned long)(cookie >> 32), buf, size);
+ }
++#elif defined(__arm__) // Added for ABI mismatch on ARM EABI platforms. 
++static inline int lookup_dcookie(cookie_t cookie, char * buf, size_t size)
++{
++	return syscall(__NR_lookup_dcookie, (unsigned long)(cookie & 0xffffffff),
++                       (unsigned long)(cookie >> 32), buf, size);
++}
+ #else
+ static inline int lookup_dcookie(cookie_t cookie, char * buf, size_t size)
+ {
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/events/Makefile.am oprofile-0.9.2/events/Makefile.am
+--- oprofile-0.9.2-stock/events/Makefile.am	2006-08-23 10:23:47.000000000 -0400
++++ oprofile-0.9.2/events/Makefile.am	2006-10-11 12:10:40.000000000 -0400
+@@ -24,6 +24,7 @@
+ 	x86-64/hammer/events x86-64/hammer/unit_masks \
+ 	arm/xscale1/events arm/xscale1/unit_masks \
+ 	arm/xscale2/events arm/xscale2/unit_masks \
++	arm/arm11/events arm/arm11/unit_masks \
+ 	mips/20K/events mips/20K/unit_masks \
+ 	mips/24K/events mips/24K/unit_masks \
+ 	mips/25K/events mips/25K/unit_masks \
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/events/Makefile.in oprofile-0.9.2/events/Makefile.in
+--- oprofile-0.9.2-stock/events/Makefile.in	2006-09-15 14:32:02.000000000 -0400
++++ oprofile-0.9.2/events/Makefile.in	2006-10-11 12:12:17.000000000 -0400
+@@ -203,6 +203,7 @@
+ 	x86-64/hammer/events x86-64/hammer/unit_masks \
+ 	arm/xscale1/events arm/xscale1/unit_masks \
+ 	arm/xscale2/events arm/xscale2/unit_masks \
++	arm/arm11/events arm/arm11/unit_masks \
+ 	mips/20K/events mips/20K/unit_masks \
+ 	mips/24K/events mips/24K/unit_masks \
+ 	mips/25K/events mips/25K/unit_masks \
+@@ -261,7 +262,7 @@
+ 
+ 
+ distdir: $(DISTFILES)
+-	$(mkdir_p) $(distdir)/alpha/ev4 $(distdir)/alpha/ev5 $(distdir)/alpha/ev6 $(distdir)/alpha/ev67 $(distdir)/alpha/pca56 $(distdir)/arm/xscale1 $(distdir)/arm/xscale2 $(distdir)/i386/athlon $(distdir)/i386/core $(distdir)/i386/core_2 $(distdir)/i386/p4 $(distdir)/i386/p4-ht $(distdir)/i386/p6_mobile $(distdir)/i386/pii $(distdir)/i386/piii $(distdir)/i386/ppro $(distdir)/ia64/ia64 $(distdir)/ia64/itanium $(distdir)/ia64/itanium2 $(distdir)/mips/20K $(distdir)/mips/24K $(distdir)/mips/25K $(distdir)/mips/34K $(distdir)/mips/5K $(distdir)/mips/r10000 $(distdir)/mips/r12000 $(distdir)/mips/rm7000 $(distdir)/mips/rm9000 $(distdir)/mips/sb1 $(distdir)/mips/vr5432 $(distdir)/mips/vr5500 $(distdir)/ppc/7450 $(distdir)/ppc/e500 $(distdir)/ppc/e500v2 $(distdir)/ppc64/970 $(distdir)/ppc64/power4 $(distdir)/ppc64/power5 $(distdir)/ppc64/power5+ $(distdir)/rtc $(distdir)/x86-64/hammer
++	$(mkdir_p) $(distdir)/alpha/ev4 $(distdir)/alpha/ev5 $(distdir)/alpha/ev6 $(distdir)/alpha/ev67 $(distdir)/alpha/pca56 $(distdir)/arm/xscale1 $(distdir)/arm/xscale2 $(distdir)/arm/arm11 $(distdir)/i386/athlon $(distdir)/i386/core $(distdir)/i386/core_2 $(distdir)/i386/p4 $(distdir)/i386/p4-ht $(distdir)/i386/p6_mobile $(distdir)/i386/pii $(distdir)/i386/piii $(distdir)/i386/ppro $(distdir)/ia64/ia64 $(distdir)/ia64/itanium $(distdir)/ia64/itanium2 $(distdir)/mips/20K $(distdir)/mips/24K $(distdir)/mips/25K $(distdir)/mips/34K $(distdir)/mips/5K $(distdir)/mips/r10000 $(distdir)/mips/r12000 $(distdir)/mips/rm7000 $(distdir)/mips/rm9000 $(distdir)/mips/sb1 $(distdir)/mips/vr5432 $(distdir)/mips/vr5500 $(distdir)/ppc/7450 $(distdir)/ppc/e500 $(distdir)/ppc/e500v2 $(distdir)/ppc64/970 $(distdir)/ppc64/power4 $(distdir)/ppc64/power5 $(distdir)/ppc64/power5+ $(distdir)/rtc $(distdir)/x86-64/hammer
+ 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
+ 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
+ 	list='$(DISTFILES)'; for file in $$list; do \
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/events/arm/arm11/events oprofile-0.9.2/events/arm/arm11/events
+--- oprofile-0.9.2-stock/events/arm/arm11/events	1969-12-31 19:00:00.000000000 -0500
++++ oprofile-0.9.2/events/arm/arm11/events	2006-10-11 12:05:01.000000000 -0400
+@@ -0,0 +1,26 @@
++# ARM11 PMU events
++#
++event:0x00 counters:1,2 um:zero minimum:500 name:ICACHE_MISS : Instruction cache miss 
++event:0x01 counters:1,2 um:zero minimum:500 name:CYCLES_STALL_INSTR : cycles instruction fetch pipe is stalled
++event:0x02 counters:1,2 um:zero minimum:500 name:CYCLES_DATA_STALL : cycles stall occurs for due to data dependency
++event:0x03 counters:1,2 um:zero minimum:500 name:ITLB_MISS : number of ITLB misses
++event:0x04 counters:1,2 um:zero minimum:500 name:DTLB_MISS : number of DTLB misses
++event:0x05 counters:1,2 um:zero minimum:500 name:BR_INST_EXECUTED : branch instruction executed w/ or w/o program flow change
++event:0x06 counters:1,2 um:zero minimum:500 name:BR_INST_MISS_PRED : branch mispredicted
++event:0x07 counters:1,2 um:zero minimum:500 name:INSN_EXECUTED : instruction executed
++event:0x09 counters:1,2 um:zero minimum:500 name:DCACHE_FULL_STALL_CONTIG : data cache access
++event:0x0a counters:1,2 um:zero minimum:500 name:DCACHE_ACCESS : data cache access, regardless of location.
++event:0x0b counters:1,2 um:zero minimum:500 name:DCACHE_MISS : data cache miss
++event:0x0c counters:1,2 um:zero minimum:500 name:DCACE_WRITE_BACK : data cache writeback, 1 event for every half cacheline
++event:0x0d counters:1,2 um:zero minimum:500 name:PC_CHANGED : number of times the program counter was changed without a mode switch
++event:0x0f counters:1,2 um:zero minimum:500 name:MTLB_MISS : Main TLB miss
++event:0x10 counters:1,2 um:zero minimum:500 name:BCU_REQUEST : External memory request
++event:0x11 counters:1,2 um:zero minimum:500 name:BCU_FULL : Stall because of load store unit request queue being full
++event:0x12 counters:1,2 um:zero minimum:500 name:BCU_DRAIN : Number of times the write buffer was drained.
++event:0x20 counters:1,2 um:zero minimum:500 name:ETMEXTOT0 : METMEXTOUT[0] signal was asserted for a cycle.
++event:0x21 counters:1,2 um:zero minimum:500 name:ETMEXTOT1 : METMEXTOUT[1] signal was asserted for a cycle.
++event:0x22 counters:1,2 um:zero minimum:500 name:ETMEXTOUT_0_1 : Both METMEXTOUT[0] and METMEXTOUT[1] signals asserted. 
++event:0xff counters:1,2 um:zero minimum:500 name:INCREMENT_CYCLE : An increment each cycle.
++event:0xfe counters:0 um:zero minimum:500 name:CPU_CYCLES : clock cycles counter
++
++
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/events/arm/arm11/unit_masks oprofile-0.9.2/events/arm/arm11/unit_masks
+--- oprofile-0.9.2-stock/events/arm/arm11/unit_masks	1969-12-31 19:00:00.000000000 -0500
++++ oprofile-0.9.2/events/arm/arm11/unit_masks	2006-10-11 12:05:01.000000000 -0400
+@@ -0,0 +1,4 @@
++# ARM11 PMU possible unit masks
++#
++name:zero type:mandatory default:0x00
++	0x00 No unit mask
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/libop/op_cpu_type.c oprofile-0.9.2/libop/op_cpu_type.c
+--- oprofile-0.9.2-stock/libop/op_cpu_type.c	2006-08-23 10:23:51.000000000 -0400
++++ oprofile-0.9.2/libop/op_cpu_type.c	2006-10-11 12:05:01.000000000 -0400
+@@ -43,6 +43,7 @@
+ 	{ "Pentium M (P6 core)", "i386/p6_mobile", CPU_P6_MOBILE, 2 },
+ 	{ "ARM/XScale PMU1", "arm/xscale1", CPU_ARM_XSCALE1, 3 },
+ 	{ "ARM/XScale PMU2", "arm/xscale2", CPU_ARM_XSCALE2, 5 },
++	{ "ARM/ARM11 PMU", "arm/arm11", CPU_ARM_ARM11, 3 },
+ 	{ "ppc64 POWER4", "ppc64/power4", CPU_PPC64_POWER4, 8 },
+ 	{ "ppc64 POWER5", "ppc64/power5", CPU_PPC64_POWER5, 6 },
+ 	{ "ppc64 POWER5+", "ppc64/power5+", CPU_PPC64_POWER5p, 6 },
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/libop/op_cpu_type.h oprofile-0.9.2/libop/op_cpu_type.h
+--- oprofile-0.9.2-stock/libop/op_cpu_type.h	2006-08-23 10:23:51.000000000 -0400
++++ oprofile-0.9.2/libop/op_cpu_type.h	2006-10-11 12:05:01.000000000 -0400
+@@ -39,6 +39,7 @@
+ 	CPU_P6_MOBILE, /**< Pentium M series */
+ 	CPU_ARM_XSCALE1, /**< ARM XScale 1 */
+ 	CPU_ARM_XSCALE2, /**< ARM XScale 2 */
++	CPU_ARM_ARM11, /**< ARM ARM11 */	
+ 	CPU_PPC64_POWER4, /**< ppc64 POWER4 family */
+ 	CPU_PPC64_POWER5, /**< ppc64 POWER5 family */
+ 	CPU_PPC64_POWER5p, /**< ppc64 Power5+ family */
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/libop/op_events.c oprofile-0.9.2/libop/op_events.c
+--- oprofile-0.9.2-stock/libop/op_events.c	2006-08-23 10:23:51.000000000 -0400
++++ oprofile-0.9.2/libop/op_events.c	2006-10-11 12:05:01.000000000 -0400
+@@ -782,6 +782,11 @@
+ 			descr->name = "CPU_CYCLES";
+ 			break;
+ 
++		// we could possibly use the CCNT
++		case CPU_ARM_ARM11:
++			descr->name = "CPU_CYCLES";
++			break;
++
+ 		case CPU_PPC64_970:
+  		case CPU_PPC_7450:
+ 		case CPU_PPC64_POWER4:
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/libopt++/popt_options.cpp oprofile-0.9.2/libopt++/popt_options.cpp
+--- oprofile-0.9.2-stock/libopt++/popt_options.cpp	2005-08-07 07:15:50.000000000 -0400
++++ oprofile-0.9.2/libopt++/popt_options.cpp	2006-10-11 12:05:01.000000000 -0400
+@@ -58,6 +58,11 @@
+ static vector<poptOption> popt_options;
+ static vector<option_base *> options_list;
+ 
++// No of options currnently supported.
++#define NO_OPTIONS 20
++struct poptOption opt_arr[NO_OPTIONS];
++option_base *opt_list[NO_OPTIONS];
++int opt_ind = 0;
+ static int showvers;
+ 
+ static struct poptOption appended_options[] = {
+@@ -248,6 +253,10 @@
+ 	popt_options.push_back(opt);
+ 
+ 	options_list.push_back(this);
++        if (opt_ind < NO_OPTIONS) {
++	opt_arr[opt_ind] = opt;
++	opt_list[opt_ind++] = this;
++        }
+ }
+ 
+ 
+@@ -316,3 +325,14 @@
+ }
+ 
+ } // namespace popt
++
++// Populate all the oprofile options with arrays.
++void populateVectors()
++{
++	int i;
++	for( i=0; i<popt::opt_ind; i++)
++	{
++		popt::popt_options.push_back(popt::opt_arr[i]);
++		popt::options_list.push_back(popt::opt_list[i]);
++	}
++}
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/pp/opannotate.cpp oprofile-0.9.2/pp/opannotate.cpp
+--- oprofile-0.9.2-stock/pp/opannotate.cpp	2005-08-07 07:15:53.000000000 -0400
++++ oprofile-0.9.2/pp/opannotate.cpp	2006-10-11 12:05:01.000000000 -0400
+@@ -721,12 +721,13 @@
+ 
+ } // anonymous namespace
+ 
+-
++void populateVectors();
+ int main(int argc, char const * argv[])
+ {
+ 	// set the invocation, for the file headers later
+ 	for (int i = 0 ; i < argc ; ++i)
+ 		cmdline += string(argv[i]) + " ";
+-
++        // Work around for MV ARMv6 C++ compiler issue.
++        populateVectors();
+ 	return run_pp_tool(argc, argv, opannotate);
+ }
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/pp/oparchive.cpp oprofile-0.9.2/pp/oparchive.cpp
+--- oprofile-0.9.2-stock/pp/oparchive.cpp	2005-08-10 20:15:44.000000000 -0400
++++ oprofile-0.9.2/pp/oparchive.cpp	2006-10-11 12:05:01.000000000 -0400
+@@ -147,8 +147,10 @@
+ 
+ }  // anonymous namespace
+ 
+-
++void populateVectors();
+ int main(int argc, char const * argv[])
+ {
++        // Work around for MV ARMv6 C++ compiler issue.
++        populateVectors();
+ 	run_pp_tool(argc, argv, oparchive);
+ }
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/pp/opgprof.cpp oprofile-0.9.2/pp/opgprof.cpp
+--- oprofile-0.9.2-stock/pp/opgprof.cpp	2005-08-15 16:56:36.000000000 -0400
++++ oprofile-0.9.2/pp/opgprof.cpp	2006-10-11 12:05:01.000000000 -0400
+@@ -310,8 +310,10 @@
+ 
+ } // anonymous namespace
+ 
+-
++void populateVectors();
+ int main(int argc, char const * argv[])
+ {
++        // Work around for MV ARMv6 C++ compiler issue.
++        populateVectors();
+ 	return run_pp_tool(argc, argv, opgprof);
+ }
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/pp/opreport.cpp oprofile-0.9.2/pp/opreport.cpp
+--- oprofile-0.9.2-stock/pp/opreport.cpp	2005-08-15 16:26:35.000000000 -0400
++++ oprofile-0.9.2/pp/opreport.cpp	2006-10-11 12:05:01.000000000 -0400
+@@ -532,9 +532,11 @@
+ 
+ }  // anonymous namespace
+ 
+-
++void populateVectors();
+ int main(int argc, char const * argv[])
+ {
+ 	cout.tie(0);
++        // Work around for MV ARMv6 C++ compiler issue.
++        populateVectors();  
+ 	return run_pp_tool(argc, argv, opreport);
+ }
+diff -Naur --exclude='*.orig' --exclude='*.rej' oprofile-0.9.2-stock/utils/ophelp.c oprofile-0.9.2/utils/ophelp.c
+--- oprofile-0.9.2-stock/utils/ophelp.c	2006-08-23 10:23:53.000000000 -0400
++++ oprofile-0.9.2/utils/ophelp.c	2006-10-11 12:05:01.000000000 -0400
+@@ -411,6 +411,11 @@
+ 		break;
+ 		break;
+ 
++	case CPU_ARM_ARM11:
++		printf("See ARM1136JF-S Technical Reference Manual\n"
++		       "Chapter 3 Control Coprocessor\n");
++		break;
++
+ 	case CPU_PPC64_POWER4:
+ 	case CPU_PPC64_POWER5:
+ 	case CPU_PPC64_POWER5p:

@@ -1,0 +1,26 @@
+#Kernel Memory Driver
+
+menu "Vbufpool Kernel Memory Driver"
+
+config VBUFPOOL
+	bool "Vbufpool driver"
+	help
+		Kernel memory large buffer allocation pool, say Y if you use large kernel buffers.
+config VBUFPOOL_INIT_ALLOC
+	depends on VBUFPOOL
+	bool "Use initial allocated size"
+	help
+		If true, specify a initial allocation size on boot
+		
+config VBUFPOOL_INIT_ALLOC_SIZE
+	int "Initial allocated size in kbyte (power of 2)"
+	default 4096
+	depends on VBUFPOOL_INIT_ALLOC
+
+config VBUFPOOL_DYNAMIC
+	bool "Vbufpool Dynamic"
+	depends on VBUFPOOL
+	help
+		If this option is checked, the vbufpool driver will try to use normal memory 
+		with dma_alloc_coherent() if no memory is allocated for the VBufpool. 
+endmenu

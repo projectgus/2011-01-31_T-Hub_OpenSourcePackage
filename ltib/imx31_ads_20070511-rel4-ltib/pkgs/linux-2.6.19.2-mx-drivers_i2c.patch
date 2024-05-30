@@ -1,0 +1,1016 @@
+--- linux-2.6.19.2/drivers/i2c/busses/Kconfig	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/i2c/busses/Kconfig	2007-01-10 16:18:53.000000000 -0700
+@@ -92,7 +92,7 @@ config I2C_ELEKTOR
+ 	  This supports the PCF8584 ISA bus I2C adapter.  Say Y if you own
+ 	  such an adapter.
+ 
+-	  This support is also available as a module.  If so, the module 
++	  This support is also available as a module.  If so, the module
+ 	  will be called i2c-elektor.
+ 
+ config I2C_HYDRA
+@@ -135,7 +135,7 @@ config I2C_I810
+ 	select I2C_ALGOBIT
+ 	help
+ 	  If you say yes to this option, support will be included for the Intel
+-	  810/815 family of mainboard I2C interfaces.  Specifically, the 
++	  810/815 family of mainboard I2C interfaces.  Specifically, the
+ 	  following versions of the chipset are supported:
+ 	    i810AA
+ 	    i810AB
+@@ -188,8 +188,8 @@ config I2C_IBM_IIC
+ 	tristate "IBM PPC 4xx on-chip I2C interface"
+ 	depends on IBM_OCP && I2C
+ 	help
+-	  Say Y here if you want to use IIC peripheral found on 
+-	  embedded IBM PPC 4xx based systems. 
++	  Say Y here if you want to use IIC peripheral found on
++	  embedded IBM PPC 4xx based systems.
+ 
+ 	  This driver can also be built as a module.  If so, the module
+ 	  will be called i2c-ibm_iic.
+@@ -217,7 +217,7 @@ config I2C_ITE
+ 	  systems. Say Y if you have one of these. You should also say Y for
+ 	  the ITE I2C driver algorithm support above.
+ 
+-	  This support is also available as a module.  If so, the module 
++	  This support is also available as a module.  If so, the module
+ 	  will be called i2c-ite.
+ 
+ config I2C_IXP4XX
+@@ -225,7 +225,7 @@ config I2C_IXP4XX
+ 	depends on I2C && ARCH_IXP4XX
+ 	select I2C_ALGOBIT
+ 	help
+-	  Say Y here if you have an Intel IXP4xx(420,421,422,425) based 
++	  Say Y here if you have an Intel IXP4xx(420,421,422,425) based
+ 	  system and are using GPIO lines for an I2C bus.
+ 
+ 	  This support is also available as a module. If so, the module
+@@ -236,7 +236,7 @@ config I2C_IXP2000
+ 	depends on I2C && ARCH_IXP2000
+ 	select I2C_ALGOBIT
+ 	help
+-	  Say Y here if you have an Intel IXP2000(2400, 2800, 2850) based 
++	  Say Y here if you have an Intel IXP2000(2400, 2800, 2850) based
+ 	  system and are using GPIO lines for an I2C bus.
+ 
+ 	  This support is also available as a module. If so, the module
+@@ -266,6 +266,15 @@ config I2C_MPC
+ 	  This driver can also be built as a module.  If so, the module
+ 	  will be called i2c-mpc.
+ 
++config I2C_MXC
++	tristate "MXC I2C support"
++	depends on I2C && ARCH_MXC
++	help
++	  If you say yes to this option, support will be included for Freescale
++	  MXC I2C modules.
++
++	  This driver can also be built as a module.
++
+ config I2C_NFORCE2
+ 	tristate "Nvidia nForce2, nForce3 and nForce4"
+ 	depends on I2C && PCI
+@@ -318,7 +327,7 @@ config I2C_PARPORT
+ 	  on the parport driver.  This is meant for embedded systems. Don't say
+ 	  Y here if you intend to say Y or M there.
+ 
+-	  This support is also available as a module.  If so, the module 
++	  This support is also available as a module.  If so, the module
+ 	  will be called i2c-parport.
+ 
+ config I2C_PARPORT_LIGHT
+@@ -337,12 +346,12 @@ config I2C_PARPORT_LIGHT
+ 	  the clean but heavy parport handling is not an option.  The
+ 	  drawback is a reduced portability and the impossibility to
+ 	  daisy-chain other parallel port devices.
+-	  
++
+ 	  Don't say Y here if you said Y or M to i2c-parport.  Saying M to
+ 	  both is possible but both modules should not be loaded at the same
+ 	  time.
+ 
+-	  This support is also available as a module.  If so, the module 
++	  This support is also available as a module.  If so, the module
+ 	  will be called i2c-parport-light.
+ 
+ config I2C_PROSAVAGE
+@@ -357,7 +366,7 @@ config I2C_PROSAVAGE
+ 	    S3/VIA KM266/VT8375 aka ProSavage8
+ 	    S3/VIA KM133/VT8365 aka Savage4
+ 
+-	  This support is also available as a module.  If so, the module 
++	  This support is also available as a module.  If so, the module
+ 	  will be called i2c-prosavage.
+ 
+ config I2C_RPXLITE
+@@ -377,7 +386,7 @@ config I2C_SAVAGE4
+ 	depends on I2C && PCI && EXPERIMENTAL
+ 	select I2C_ALGOBIT
+ 	help
+-	  If you say yes to this option, support will be included for the 
++	  If you say yes to this option, support will be included for the
+ 	  S3 Savage 4 I2C interface.
+ 
+ 	  This driver can also be built as a module.  If so, the module
+@@ -398,7 +407,7 @@ config SCx200_I2C
+ 
+ 	  If you don't know what to do here, say N.
+ 
+-	  This support is also available as a module.  If so, the module 
++	  This support is also available as a module.  If so, the module
+ 	  will be called scx200_i2c.
+ 
+ config SCx200_I2C_SCL
+@@ -426,14 +435,14 @@ config SCx200_ACB
+ 
+ 	  If you don't know what to do here, say N.
+ 
+-	  This support is also available as a module.  If so, the module 
++	  This support is also available as a module.  If so, the module
+ 	  will be called scx200_acb.
+ 
+ config I2C_SIS5595
+ 	tristate "SiS 5595"
+ 	depends on I2C && PCI
+ 	help
+-	  If you say yes to this option, support will be included for the 
++	  If you say yes to this option, support will be included for the
+ 	  SiS5595 SMBus (a subset of I2C) interface.
+ 
+ 	  This driver can also be built as a module.  If so, the module
+@@ -443,7 +452,7 @@ config I2C_SIS630
+ 	tristate "SiS 630/730"
+ 	depends on I2C && PCI
+ 	help
+-	  If you say yes to this option, support will be included for the 
++	  If you say yes to this option, support will be included for the
+ 	  SiS630 and SiS730 SMBus (a subset of I2C) interface.
+ 
+ 	  This driver can also be built as a module.  If so, the module
+@@ -528,7 +537,7 @@ config I2C_PCA_ISA
+ 	help
+ 	  This driver supports ISA boards using the Philips PCA 9564
+ 	  Parallel bus to I2C bus controller
+-	  
++
+ 	  This driver can also be built as a module.  If so, the module
+ 	  will be called i2c-pca-isa.
+ 
+--- linux-2.6.19.2/drivers/i2c/busses/Makefile	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/i2c/busses/Makefile	2007-01-10 15:35:26.000000000 -0700
+@@ -44,6 +44,7 @@ obj-$(CONFIG_I2C_VIAPRO)	+= i2c-viapro.o
+ obj-$(CONFIG_I2C_VOODOO3)	+= i2c-voodoo3.o
+ obj-$(CONFIG_SCx200_ACB)	+= scx200_acb.o
+ obj-$(CONFIG_SCx200_I2C)	+= scx200_i2c.o
++obj-$(CONFIG_I2C_MXC)		+= mxc_i2c.o
+ 
+ ifeq ($(CONFIG_I2C_DEBUG_BUS),y)
+ EXTRA_CFLAGS += -DDEBUG
+--- linux-2.6.19.2/drivers/i2c/busses/mxc_i2c.c	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/i2c/busses/mxc_i2c.c	2007-01-10 17:09:58.000000000 -0700
+@@ -0,0 +1,800 @@
++/*
++ * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ */
++
++/*
++ * The code contained herein is licensed under the GNU General Public
++ * License. You may obtain a copy of the GNU General Public License
++ * Version 2 or later at the following locations:
++ *
++ * http://www.opensource.org/licenses/gpl-license.html
++ * http://www.gnu.org/copyleft/gpl.html
++ */
++
++/*!
++ * @file mxc_i2c.c
++ *
++ * @brief Driver for the Freescale Semiconductor MXC I2C buses.
++ *
++ * Based on i2c driver algorithm for PCF8584 adapters
++ *
++ * @ingroup MXCI2C
++ */
++
++/*
++ * Include Files
++ */
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/delay.h>
++#include <linux/interrupt.h>
++#include <linux/platform_device.h>
++#include <asm/irq.h>
++#include <asm/io.h>
++#include <linux/i2c.h>
++#include <asm/arch/mxc_i2c.h>
++#include <asm/arch/clock.h>
++#include "mxc_i2c_reg.h"
++
++/*!
++ * In case the MXC device has multiple I2C modules, this structure is used to
++ * store information specific to each I2C module.
++ */
++typedef struct {
++	/*!
++	 * This structure is used to identify the physical i2c bus along with
++	 * the access algorithms necessary to access it.
++	 */
++	struct i2c_adapter adap;
++
++	/*!
++	 * This waitqueue is used to wait for the data transfer to complete.
++	 */
++	wait_queue_head_t wq;
++
++	/*!
++	 * The base address of the I2C device.
++	 */
++	char *membase;
++
++	/*!
++	 * The interrupt number used by the I2C device.
++	 */
++	int irq;
++
++	/*!
++	 * The default clock divider value to be used.
++	 */
++	unsigned int clkdiv;
++
++	/*!
++	 * The current power state of the device
++	 */
++	bool low_power;
++} mxc_i2c_device;
++
++/*!
++ * Boolean to indicate if data was transferred
++ */
++static bool transfer_done = false;
++
++/*!
++ * Boolean to indicate if we received an ACK for the data transmitted
++ */
++static bool tx_success = false;
++
++/*!
++ * This is an array where each element holds information about a I2C module,
++ * like base address, interrupt number etc. This elements of this structure
++ * are stored in the appropriate i2c_adapter structure during the module
++ * initialization.
++ */
++static mxc_i2c_device mxc_i2c_devs[I2C_NR] = {
++	[0] = {
++	       .membase = (void *)IO_ADDRESS(I2C_BASE_ADDR),
++	       .irq = INT_I2C,
++	       .clkdiv = I2C1_FRQ_DIV,
++	       },
++#if I2C_NR > 1
++	[1] = {
++	       .membase = (void *)IO_ADDRESS(I2C2_BASE_ADDR),
++	       .irq = INT_I2C2,
++	       .clkdiv = I2C2_FRQ_DIV,
++	       },
++#if I2C_NR > 2
++	[2] = {
++	       .membase = (void *)IO_ADDRESS(I2C3_BASE_ADDR),
++	       .irq = INT_I2C3,
++	       .clkdiv = I2C3_FRQ_DIV,
++	       }
++#endif
++#endif
++};
++
++extern void gpio_i2c_active(int i2c_num);
++extern void gpio_i2c_inactive(int i2c_num);
++
++/*!
++ * Transmit a \b STOP signal to the slave device.
++ *
++ * @param   dev   the mxc i2c structure used to get to the right i2c device
++ */
++static void mxc_i2c_stop(mxc_i2c_device * dev)
++{
++	volatile unsigned int cr;
++
++	cr = readw(dev->membase + MXC_I2CR);
++	cr &= ~(MXC_I2CR_MSTA | MXC_I2CR_MTX);
++	writew(cr, dev->membase + MXC_I2CR);
++}
++
++/*!
++ * Wait for the transmission of the data byte to complete. This function waits
++ * till we get a signal from the interrupt service routine indicating completion
++ * of the address cycle or we time out.
++ *
++ * @param   dev         the mxc i2c structure used to get to the right i2c device
++ * @param   trans_flag  transfer flag
++ *
++ *
++ * @return  The function returns 0 on success or -1 if an ack was not received
++ */
++
++static int mxc_i2c_wait_for_tc(mxc_i2c_device * dev, int trans_flag)
++{
++	int retry = 16;
++	volatile unsigned int sr, cr;
++
++	if (trans_flag & MXC_I2C_FLAG_POLLING) {
++		/* I2C_POLLING_MODE */
++		unsigned long x = jiffies + dev->adap.timeout * HZ;
++		while (!(readw(dev->membase + MXC_I2SR) & MXC_I2SR_IIF)) {
++			if (unlikely(time_after(jiffies, x))) {
++				/* Poll timeout */
++				retry = -ETIMEDOUT;
++				break;
++			}
++			if (unlikely(signal_pending(current))) {
++				/* Poll interrupted */
++				retry = -ERESTARTSYS;
++				break;
++			}
++			if (!irqs_disabled()) {
++				schedule();
++			}
++		}
++		sr = readw(dev->membase + MXC_I2SR);
++		cr = readw(dev->membase + MXC_I2CR);
++		writew(0, dev->membase + MXC_I2SR);
++
++		tx_success = false;
++		/* Check if RXAK is received in Transmit mode */
++		if ((cr & MXC_I2CR_MTX) && (!(sr & MXC_I2SR_RXAK))) {
++			tx_success = true;
++		}
++	} else {
++		/* Interrupt mode */
++		while (retry-- && !transfer_done) {
++			wait_event_interruptible_timeout(dev->wq,
++							 transfer_done,
++							 dev->adap.timeout);
++		}
++		transfer_done = false;
++	}
++	if (retry <= 0) {
++		/* Unable to send data */
++		printk(KERN_DEBUG "Data not transmitted\n");
++		return -1;
++	} else if (!(trans_flag & I2C_M_RD)) {
++		if (!tx_success) {
++			/* An ACK was not received for transmitted byte */
++			printk(KERN_DEBUG "ACK not received \n");
++			return -1;
++		}
++	}
++
++	return 0;
++}
++
++/*!
++ * Transmit a \b START signal to the slave device.
++ *
++ * @param   dev   the mxc i2c structure used to get to the right i2c device
++ * @param   *msg  pointer to a message structure that contains the slave
++ *                address
++ */
++static void mxc_i2c_start(mxc_i2c_device * dev, struct i2c_msg *msg)
++{
++	volatile unsigned int cr, sr;
++	unsigned int addr_trans;
++	int retry = 16;
++
++	/*
++	 * Set the slave address and the requested transfer mode
++	 * in the data register
++	 */
++	addr_trans = msg->addr << 1;
++	if (msg->flags & I2C_M_RD) {
++		addr_trans |= 0x01;
++	}
++
++	/* Set the Master bit */
++	cr = readw(dev->membase + MXC_I2CR);
++	cr |= MXC_I2CR_MSTA;
++	writew(cr, dev->membase + MXC_I2CR);
++
++	/* Wait till the Bus Busy bit is set */
++	sr = readw(dev->membase + MXC_I2SR);
++	while (retry-- && (!(sr & MXC_I2SR_IBB))) {
++		udelay(3);
++		sr = readw(dev->membase + MXC_I2SR);
++	}
++	if (retry <= 0) {
++		printk(KERN_DEBUG "Could not grab Bus ownership\n");
++	}
++
++	/* Set the Transmit bit */
++	cr = readw(dev->membase + MXC_I2CR);
++	cr |= MXC_I2CR_MTX;
++	writew(cr, dev->membase + MXC_I2CR);
++
++	writew(addr_trans, dev->membase + MXC_I2DR);
++}
++
++/*!
++ * Transmit a \b REPEAT START to the slave device
++ *
++ * @param   dev   the mxc i2c structure used to get to the right i2c device
++ * @param   *msg  pointer to a message structure that contains the slave
++ *                address
++ */
++static void mxc_i2c_repstart(mxc_i2c_device * dev, struct i2c_msg *msg)
++{
++	volatile unsigned int cr;
++	unsigned int addr_trans;
++
++	/*
++	 * Set the slave address and the requested transfer mode
++	 * in the data register
++	 */
++	addr_trans = msg->addr << 1;
++	if (msg->flags & I2C_M_RD) {
++		addr_trans |= 0x01;
++	}
++	cr = readw(dev->membase + MXC_I2CR);
++	cr |= MXC_I2CR_RSTA;
++	writew(cr, dev->membase + MXC_I2CR);
++	udelay(3);
++	writew(addr_trans, dev->membase + MXC_I2DR);
++}
++
++/*!
++ * Read the received data. The function waits till data is available or times
++ * out. Generates a stop signal if this is the last message to be received.
++ * Sends an ack for all the bytes received except the last byte.
++ *
++ * @param  dev       the mxc i2c structure used to get to the right i2c device
++ * @param  *msg      pointer to a message structure that contains the slave
++ *                   address and a pointer to the receive buffer
++ * @param  last      indicates that this is the last message to be received
++ * @param  addr_comp flag indicates that we just finished the address cycle
++ *
++ * @return  The function returns the number of bytes read or -1 on time out.
++ */
++static int mxc_i2c_readbytes(mxc_i2c_device * dev, struct i2c_msg *msg,
++			     int last, int addr_comp)
++{
++	int i;
++	char *buf = msg->buf;
++	int len = msg->len;
++	volatile unsigned int cr;
++
++	cr = readw(dev->membase + MXC_I2CR);
++	/*
++	 * Clear MTX to switch to receive mode.
++	 */
++	cr &= ~MXC_I2CR_MTX;
++	/*
++	 * Clear the TXAK bit to gen an ack when receiving only one byte.
++	 */
++	if (len == 1) {
++		cr |= MXC_I2CR_TXAK;
++	} else {
++		cr &= ~MXC_I2CR_TXAK;
++	}
++	writew(cr, dev->membase + MXC_I2CR);
++	/*
++	 * Dummy read only at the end of an address cycle
++	 */
++	if (addr_comp > 0) {
++		readw(dev->membase + MXC_I2DR);
++	}
++
++	for (i = 0; i < len; i++) {
++		/*
++		 * Wait for data transmission to complete
++		 */
++		if (mxc_i2c_wait_for_tc(dev, msg->flags)) {
++			mxc_i2c_stop(dev);
++			return -1;
++		}
++		/*
++		 * Do not generate an ACK for the last byte
++		 */
++		if (i == (len - 2)) {
++			cr = readw(dev->membase + MXC_I2CR);
++			cr |= MXC_I2CR_TXAK;
++			writew(cr, dev->membase + MXC_I2CR);
++		} else if (i == (len - 1)) {
++			if (last) {
++				mxc_i2c_stop(dev);
++			}
++		}
++		/* Read the data */
++		*buf++ = readw(dev->membase + MXC_I2DR);
++	}
++
++	return i;
++}
++
++/*!
++ * Write the data to the data register. Generates a stop signal if this is
++ * the last message to be sent or if no ack was received for the data sent.
++ *
++ * @param   dev   the mxc i2c structure used to get to the right i2c device
++ * @param   *msg  pointer to a message structure that contains the slave
++ *                address and data to be sent
++ * @param   last  indicates that this is the last message to be received
++ *
++ * @return  The function returns the number of bytes written or -1 on time out
++ *          or if no ack was received for the data that was sent.
++ */
++static int mxc_i2c_writebytes(mxc_i2c_device * dev, struct i2c_msg *msg,
++			      int last)
++{
++	int i;
++	char *buf = msg->buf;
++	int len = msg->len;
++	volatile unsigned int cr;
++
++	cr = readw(dev->membase + MXC_I2CR);
++	/* Set MTX to switch to transmit mode */
++	cr |= MXC_I2CR_MTX;
++	writew(cr, dev->membase + MXC_I2CR);
++
++	for (i = 0; i < len; i++) {
++		/*
++		 * Write the data
++		 */
++		writew(*buf++, dev->membase + MXC_I2DR);
++		if (mxc_i2c_wait_for_tc(dev, msg->flags)) {
++			mxc_i2c_stop(dev);
++			return -1;
++		}
++	}
++	if (last > 0) {
++		mxc_i2c_stop(dev);
++	}
++
++	return i;
++}
++
++/*!
++ * Function enables the I2C module and initializes the registers.
++ *
++ * @param   dev   the mxc i2c structure used to get to the right i2c device
++ * @param   trans_flag  transfer flag
++ */
++static void mxc_i2c_module_en(mxc_i2c_device * dev, int trans_flag)
++{
++	mxc_clks_enable(I2C_CLK);
++	/* Set the frequency divider */
++	writew(dev->clkdiv, dev->membase + MXC_IFDR);
++	/* Clear the status register */
++	writew(0x0, dev->membase + MXC_I2SR);
++	/* Enable I2C and its interrupts */
++	if (trans_flag & MXC_I2C_FLAG_POLLING) {
++		writew(MXC_I2CR_IEN, dev->membase + MXC_I2CR);
++	} else {
++		writew(MXC_I2CR_IEN, dev->membase + MXC_I2CR);
++		writew(MXC_I2CR_IEN | MXC_I2CR_IIEN, dev->membase + MXC_I2CR);
++	}
++}
++
++/*!
++ * Disables the I2C module.
++ *
++ * @param   dev   the mxc i2c structure used to get to the right i2c device
++ */
++static void mxc_i2c_module_dis(mxc_i2c_device * dev)
++{
++	writew(0x0, dev->membase + MXC_I2CR);
++	mxc_clks_disable(I2C_CLK);
++}
++
++/*!
++ * The function is registered in the adapter structure. It is called when an MXC
++ * driver wishes to transfer data to a device connected to the I2C device.
++ *
++ * @param   adap   adapter structure for the MXC i2c device
++ * @param   msgs[] array of messages to be transferred to the device
++ * @param   num    number of messages to be transferred to the device
++ *
++ * @return  The function returns the number of messages transferred,
++ *          \b -EREMOTEIO on I2C failure and a 0 if the num argument is
++ *          less than 0.
++ */
++static int mxc_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[],
++			int num)
++{
++	mxc_i2c_device *dev = (mxc_i2c_device *) (i2c_get_adapdata(adap));
++	int i, ret = 0, addr_comp = 0;
++	volatile unsigned int sr;
++
++	if (dev->low_power) {
++		printk(KERN_ERR "I2C Device in low power mode\n");
++		return -EREMOTEIO;
++	}
++
++	if (num < 1) {
++		return 0;
++	}
++
++	mxc_i2c_module_en(dev, msgs[0].flags);
++	sr = readw(dev->membase + MXC_I2SR);
++	/*
++	 * Check bus state
++	 */
++	if (sr & MXC_I2SR_IBB) {
++		mxc_i2c_module_dis(dev);
++		printk(KERN_DEBUG "Bus busy\n");
++		return -EREMOTEIO;
++	}
++	//gpio_i2c_active(dev->adap.id);
++	transfer_done = false;
++	tx_success = false;
++	for (i = 0; i < num && ret >= 0; i++) {
++		addr_comp = 0;
++		/*
++		 * Send the slave address and transfer direction in the
++		 * address cycle
++		 */
++		if (i == 0) {
++			/*
++			 * Send a start or repeat start signal
++			 */
++			mxc_i2c_start(dev, &msgs[0]);
++			/* Wait for the address cycle to complete */
++			if (mxc_i2c_wait_for_tc(dev, msgs[0].flags)) {
++				mxc_i2c_stop(dev);
++				//gpio_i2c_inactive(dev->adap.id);
++				mxc_i2c_module_dis(dev);
++				return -EREMOTEIO;
++			}
++			addr_comp = 1;
++		} else {
++			/*
++			 * Generate repeat start only if required i.e the address
++			 * changed or the transfer direction changed
++			 */
++			if ((msgs[i].addr != msgs[i - 1].addr) ||
++			    ((msgs[i].flags & I2C_M_RD) !=
++			     (msgs[i - 1].flags & I2C_M_RD))) {
++				mxc_i2c_repstart(dev, &msgs[i]);
++				/* Wait for the address cycle to complete */
++				if (mxc_i2c_wait_for_tc(dev, msgs[i].flags)) {
++					mxc_i2c_stop(dev);
++					//gpio_i2c_inactive(dev->adap.id);
++					mxc_i2c_module_dis(dev);
++					return -EREMOTEIO;
++				}
++				addr_comp = 1;
++			}
++		}
++
++		/* Transfer the data */
++		if (msgs[i].flags & I2C_M_RD) {
++			/* Read the data */
++			ret = mxc_i2c_readbytes(dev, &msgs[i], (i + 1 == num),
++						addr_comp);
++			if (ret < 0) {
++				printk(KERN_ERR "mxc_i2c_readbytes: fail.\n");
++				break;
++			}
++		} else {
++			/* Write the data */
++			ret = mxc_i2c_writebytes(dev, &msgs[i], (i + 1 == num));
++			if (ret < 0) {
++				printk(KERN_ERR "mxc_i2c_writebytes: fail.\n");
++				break;
++			}
++		}
++	}
++
++	//gpio_i2c_inactive(dev->adap.id);
++	mxc_i2c_module_dis(dev);
++	/*
++	 * Decrease by 1 as we do not want Start message to be included in
++	 * the count
++	 */
++	return (i - 1);
++}
++
++/*!
++ * Returns the i2c functionality supported by this driver.
++ *
++ * @param   adap adapter structure for this i2c device
++ *
++ * @return Returns the functionality that is supported.
++ */
++static u32 mxc_i2c_func(struct i2c_adapter *adap)
++{
++	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
++}
++
++/*!
++ * Stores the pointers for the i2c algorithm functions. The algorithm functions
++ * is used by the i2c bus driver to talk to the i2c bus
++ */
++static struct i2c_algorithm mxc_i2c_algorithm = {
++	.master_xfer = mxc_i2c_xfer,
++	.functionality = mxc_i2c_func
++};
++
++/*!
++ * Interrupt Service Routine. It signals to the process about the data transfer
++ * completion. Also sets a flag if bus arbitration is lost.
++ * @param   irq    the interrupt number
++ * @param   dev_id driver private data
++ * @param   regs   holds a snapshot of the processor's context before the
++ *                 processor entered the interrupt code
++ *
++ * @return  The function returns \b IRQ_HANDLED.
++ */
++static irqreturn_t mxc_i2c_handler(int irq, void *dev_id, struct pt_regs *regs)
++{
++	mxc_i2c_device *dev = dev_id;
++	volatile unsigned int sr, cr;
++
++	sr = readw(dev->membase + MXC_I2SR);
++	cr = readw(dev->membase + MXC_I2CR);
++
++	/*
++	 * Clear the interrupt bit
++	 */
++	writew(0x0, dev->membase + MXC_I2SR);
++
++	if (sr & MXC_I2SR_IAL) {
++		printk(KERN_DEBUG "Bus Arbitration lost\n");
++	} else {
++		/* Interrupt due byte transfer completion */
++		tx_success = false;
++		/* Check if RXAK is received in Transmit mode */
++		if ((cr & MXC_I2CR_MTX) && (!(sr & MXC_I2SR_RXAK))) {
++			tx_success = true;
++		}
++		transfer_done = true;
++		wake_up_interruptible(&dev->wq);
++	}
++
++	return IRQ_HANDLED;
++}
++
++/*!
++ * This function is called to put the I2C adapter in a low power state. Refer to the
++ * document driver-model/driver.txt in the kernel source tree for more
++ * information.
++ *
++ * @param   pdev  the device structure used to give information on which I2C
++ *                to suspend
++ * @param   state the power state the device is entering
++ *
++ * @return  The function returns 0 on success and -1 on failure.
++ */
++static int mxci2c_suspend(struct platform_device *pdev, pm_message_t state)
++{
++	mxc_i2c_device *mxcdev = platform_get_drvdata(pdev);
++	volatile unsigned int sr = 0;
++
++	if (mxcdev == NULL) {
++		return -1;
++	}
++
++	/* Prevent further calls to be processed */
++	mxcdev->low_power = true;
++	/* Wait till we finish the current transfer */
++	sr = readw(mxcdev->membase + MXC_I2SR);
++	while (sr & MXC_I2SR_IBB) {
++		msleep(10);
++		sr = readw(mxcdev->membase + MXC_I2SR);
++	}
++	gpio_i2c_inactive(mxcdev->adap.id);
++
++	return 0;
++}
++
++/*!
++ * This function is called to bring the I2C adapter back from a low power state. Refer
++ * to the document driver-model/driver.txt in the kernel source tree for more
++ * information.
++ *
++ * @param   pdev  the device structure used to give information on which I2C
++ *                to resume
++ *
++ * @return  The function returns 0 on success and -1 on failure
++ */
++static int mxci2c_resume(struct platform_device *pdev)
++{
++	mxc_i2c_device *mxcdev = platform_get_drvdata(pdev);
++
++	if (mxcdev == NULL)
++		return -1;
++
++	mxcdev->low_power = false;
++	gpio_i2c_active(mxcdev->adap.id);
++
++	return 0;
++}
++
++/*!
++ * This function is called during the driver binding process.
++ *
++ * @param   pdev  the device structure used to store device specific
++ *                information that is used by the suspend, resume and remove
++ *                functions
++ *
++ * @return  The function always returns 0.
++ */
++static int mxci2c_probe(struct platform_device *pdev)
++{
++	int id = pdev->id;
++	int i;
++
++	for (i = 0; i < I2C_NR; i++) {
++		/*
++		 * Get the appropriate device structure for this I2C adapter
++		 */
++		if (mxc_i2c_devs[i].adap.id != id) {
++			continue;
++		}
++		platform_set_drvdata(pdev, &mxc_i2c_devs[i]);
++	}
++	return 0;
++}
++
++/*!
++ * Dissociates the driver from the I2C device.
++ *
++ * @param   pdev   the device structure used to give information on which I2C
++ *                to remove
++ *
++ * @return  The function always returns 0.
++ */
++static int mxci2c_remove(struct platform_device *pdev)
++{
++	platform_set_drvdata(pdev, NULL);
++	return 0;
++}
++
++/*!
++ * This structure contains pointers to the power management callback functions.
++ */
++static struct platform_driver mxci2c_driver = {
++	.driver = {
++		   .name = "mxci2c",
++		   .owner = THIS_MODULE,
++		   },
++	.probe = mxci2c_probe,
++	.remove = mxci2c_remove,
++	.suspend = mxci2c_suspend,
++	.resume = mxci2c_resume,
++};
++
++/*! Device Definition for MXC I2C devices */
++static struct platform_device mxci2c_devices[I2C_NR] = {
++	[0] = {
++	       .name = "mxci2c",
++	       .id = 0,
++	       },
++#if I2C_NR > 1
++	[1] = {
++	       .name = "mxci2c",
++	       .id = 1,
++	       },
++#if I2C_NR > 2
++	[2] = {
++	       .name = "mxci2c",
++	       .id = 2,
++	       }
++#endif
++#endif
++};
++
++/*!
++ * Function requests the interrupts and registers the i2c adapter structures.
++ *
++ * @return The function returns 0 on success and a non-zero value on failure.
++ */
++static int __init mxc_i2c_init(void)
++{
++	int i, ret = 0, err = 0;
++
++	printk(KERN_INFO "MXC I2C driver\n");
++
++	/* Register the device driver structure. */
++	ret = platform_driver_register(&mxci2c_driver);
++	if (ret != 0) {
++		return ret;
++	}
++
++	for (i = 0; i < I2C_NR; i++) {
++		/*
++		 * Request the I2C interrupt
++		 */
++		ret = request_irq(mxc_i2c_devs[i].irq, mxc_i2c_handler,
++				  0, "MXC I2C", &mxc_i2c_devs[i]);
++		if (ret != 0) {
++			printk(KERN_CRIT "mxc-i2c%d: failed to request i2c "
++			       "interrupt\n", i);
++			err = ret;
++			continue;
++		}
++
++		init_waitqueue_head(&mxc_i2c_devs[i].wq);
++
++		mxc_i2c_devs[i].low_power = false;
++		/*
++		 * Set the adapter information
++		 */
++		strcpy(mxc_i2c_devs[i].adap.name, MXC_ADAPTER_NAME);
++		mxc_i2c_devs[i].adap.id = i;	/* Used by MXC I2C client */
++		mxc_i2c_devs[i].adap.algo = &mxc_i2c_algorithm;
++		mxc_i2c_devs[i].adap.timeout = 1;
++		i2c_set_adapdata(&mxc_i2c_devs[i].adap, &mxc_i2c_devs[i]);
++
++		if ((ret = i2c_add_adapter(&mxc_i2c_devs[i].adap)) != 0) {
++			printk(KERN_CRIT "mxc-i2c%d: failed to register i2c "
++			       "adapter\n", i);
++			free_irq(mxc_i2c_devs[i].irq, &mxc_i2c_devs[i]);
++			err = ret;
++			continue;
++		}
++		/* Register the I2C device */
++		ret = platform_device_register(&mxci2c_devices[i]);
++		if (ret != 0) {
++			printk(KERN_CRIT "mxc-i2c%d: failed to register i2c "
++			       "platform device\n", i);
++			free_irq(mxc_i2c_devs[i].irq, &mxc_i2c_devs[i]);
++			err = ret;
++		}
++		/*
++		 * Enable the I2C pins
++		 */
++		gpio_i2c_active(i);
++	}
++
++	return err;
++}
++
++/*!
++ * This function is used to cleanup all resources before the driver exits.
++ */
++static void __exit mxc_i2c_exit(void)
++{
++	int i;
++
++	for (i = 0; i < I2C_NR; i++) {
++		gpio_i2c_inactive(i);
++		free_irq(mxc_i2c_devs[i].irq, &mxc_i2c_devs[i]);
++		i2c_del_adapter(&mxc_i2c_devs[i].adap);
++		platform_driver_unregister(&mxci2c_driver);
++		platform_device_unregister(&mxci2c_devices[i]);
++	}
++}
++
++subsys_initcall(mxc_i2c_init);
++module_exit(mxc_i2c_exit);
++
++MODULE_AUTHOR("Freescale Semiconductor, Inc.");
++MODULE_DESCRIPTION("MXC I2C driver");
++MODULE_LICENSE("GPL");
+--- linux-2.6.19.2/drivers/i2c/busses/mxc_i2c_reg.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/i2c/busses/mxc_i2c_reg.h	2007-01-10 17:09:58.000000000 -0700
+@@ -0,0 +1,40 @@
++/*
++ * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ */
++
++/*
++ * The code contained herein is licensed under the GNU General Public
++ * License. You may obtain a copy of the GNU General Public License
++ * Version 2 or later at the following locations:
++ *
++ * http://www.opensource.org/licenses/gpl-license.html
++ * http://www.gnu.org/copyleft/gpl.html
++ */
++#ifndef __MXC_I2C_REG_H__
++#define __MXC_I2C_REG_H__
++
++/* Address offsets of the I2C registers */
++#define MXC_IADR                0x00	/* Address Register */
++#define MXC_IFDR                0x04	/* Freq div register */
++#define MXC_I2CR                0x08	/* Control regsiter */
++#define MXC_I2SR                0x0C	/* Status register */
++#define MXC_I2DR                0x10	/* Data I/O register */
++
++/* Bit definitions of I2CR */
++#define MXC_I2CR_IEN            0x0080
++#define MXC_I2CR_IIEN           0x0040
++#define MXC_I2CR_MSTA           0x0020
++#define MXC_I2CR_MTX            0x0010
++#define MXC_I2CR_TXAK           0x0008
++#define MXC_I2CR_RSTA           0x0004
++
++/* Bit definitions of I2SR */
++#define MXC_I2SR_ICF            0x0080
++#define MXC_I2SR_IAAS           0x0040
++#define MXC_I2SR_IBB            0x0020
++#define MXC_I2SR_IAL            0x0010
++#define MXC_I2SR_SRW            0x0004
++#define MXC_I2SR_IIF            0x0002
++#define MXC_I2SR_RXAK           0x0001
++
++#endif				/* __MXC_I2C_REG_H__ */

@@ -1,0 +1,3 @@
+#kbuilt part of the Makefile
+obj-$(CONFIG_CS4341A) := cs4341a.o
+EXTRA_CFLAGS := -Idrivers/mxc -DUSE_DEBUG

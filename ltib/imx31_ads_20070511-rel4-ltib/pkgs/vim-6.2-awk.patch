@@ -1,0 +1,22 @@
+Stuarth Hughes, stuarth@freescale.com, 14th April 2005
+
+This fixes the problem whereby when cross compiling the path of
+awk at build time is used as a substitute value in mve.awk.
+We fix it to be /usr/bin/awk, which is reasonably safe
+
+diff --exclude CVS -uNr vim62/src/Makefile vim62.modified/src/Makefile
+--- vim62/src/Makefile	2003-06-01 06:18:29.000000000 -0700
++++ vim62.modified/src/Makefile	2005-04-14 10:17:17.000000000 -0700
+@@ -1720,10 +1720,7 @@
+ 	      fi
+ 	-chmod $(FILEMOD) $(DEST_TOOLS)/*
+ # replace the path in some tools
+-	perlpath=`./which.sh perl` && sed -e "s+/usr/bin/perl+$$perlpath+" $(TOOLSSOURCE)/efm_perl.pl >$(DEST_TOOLS)/efm_perl.pl
+-	awkpath=`./which.sh nawk` && sed -e "s+/usr/bin/nawk+$$awkpath+" $(TOOLSSOURCE)/mve.awk >$(DEST_TOOLS)/mve.awk; if test -z "$$awkpath"; then \
+-		awkpath=`./which.sh gawk` && sed -e "s+/usr/bin/nawk+$$awkpath+" $(TOOLSSOURCE)/mve.awk >$(DEST_TOOLS)/mve.awk; if test -z "$$awkpath"; then \
+-		awkpath=`./which.sh awk` && sed -e "s+/usr/bin/nawk+$$awkpath+" $(TOOLSSOURCE)/mve.awk >$(DEST_TOOLS)/mve.awk; fi; fi
++	awkpath=/usr/bin/awk ; sed -e "s+/usr/bin/nawk+$$awkpath+" $(TOOLSSOURCE)/mve.awk >$(DEST_TOOLS)/mve.awk
+ 	-chmod $(SCRIPTMOD) `grep -l "^#!" $(DEST_TOOLS)/*`
+ 
+ # install the language specific files, if they were unpacked
+diff --exclude CVS -uNr vim62/src/auto/config.log vim62.modified/src/auto/config.log

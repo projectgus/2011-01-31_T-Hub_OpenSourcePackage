@@ -1,0 +1,12 @@
+diff -ruN util-linux-2.12_orig/fdisk/fdisk.h util-linux-2.12/fdisk/fdisk.h
+--- util-linux-2.12_orig/fdisk/fdisk.h	2003-07-13 11:25:00.000000000 -0700
++++ util-linux-2.12/fdisk/fdisk.h	2004-08-26 01:09:39.000000000 -0700
+@@ -40,7 +40,7 @@
+ 	unsigned char end_cyl;          /* end cylinder */
+ 	unsigned char start4[4];        /* starting sector counting from 0 */
+ 	unsigned char size4[4];         /* nr of sectors in partition */
+-};
++} __attribute__((packed));
+ 
+ enum failure {usage, usage2, ioctl_error,
+ 	unable_to_open, unable_to_read, unable_to_seek,

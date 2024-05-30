@@ -1,0 +1,137 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkState</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkSelection.html" title="AtkSelection"><link rel="next" href="AtkStateSet.html" title="AtkStateSet"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkSelection.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkStateSet.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="atk-AtkState"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkState</h2><p>AtkState &#8212; An AtkState describes a component's particular state.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id291511"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+enum        <a href="atk-AtkState.html#AtkStateType">AtkStateType</a>;
+typedef     <a href="atk-AtkState.html#AtkState">AtkState</a>;
+<a href="atk-AtkState.html#AtkStateType">AtkStateType</a> <a href="atk-AtkState.html#atk-state-type-register">atk_state_type_register</a>        (const gchar *name);
+G_CONST_RETURN gchar* <a href="atk-AtkState.html#atk-state-type-get-name">atk_state_type_get_name</a>
+                                            (<a href="atk-AtkState.html#AtkStateType">AtkStateType</a> type);
+<a href="atk-AtkState.html#AtkStateType">AtkStateType</a> <a href="atk-AtkState.html#atk-state-type-for-name">atk_state_type_for_name</a>        (const gchar *name);
+
+</pre></div><div class="refsect1"><h2>Description</h2><p>
+An AtkState describes a component's particular state. The actual state of
+an component is described by its AtkStateSet, which is a set of AtkStates.
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkStateType"></a>enum AtkStateType</h3><a class="indexterm" name="id292990"></a><pre class="programlisting">typedef enum
+{
+  ATK_STATE_INVALID,
+  ATK_STATE_ACTIVE,
+  ATK_STATE_ARMED,
+  ATK_STATE_BUSY,
+  ATK_STATE_CHECKED,
+  ATK_STATE_DEFUNCT,
+  ATK_STATE_EDITABLE,
+  ATK_STATE_ENABLED,
+  ATK_STATE_EXPANDABLE,
+  ATK_STATE_EXPANDED,
+  ATK_STATE_FOCUSABLE,
+  ATK_STATE_FOCUSED,
+  ATK_STATE_HORIZONTAL,
+  ATK_STATE_ICONIFIED,
+  ATK_STATE_MODAL,
+  ATK_STATE_MULTI_LINE,
+  ATK_STATE_MULTISELECTABLE,
+  ATK_STATE_OPAQUE,
+  ATK_STATE_PRESSED,
+  ATK_STATE_RESIZABLE,
+  ATK_STATE_SELECTABLE,
+  ATK_STATE_SELECTED,
+  ATK_STATE_SENSITIVE,
+  ATK_STATE_SHOWING,
+  ATK_STATE_SINGLE_LINE,
+  ATK_STATE_STALE,
+  ATK_STATE_TRANSIENT,
+  ATK_STATE_VERTICAL,
+  ATK_STATE_VISIBLE,
+  ATK_STATE_MANAGES_DESCENDANTS,
+  ATK_STATE_INDETERMINATE,
+  ATK_STATE_LAST_DEFINED
+} AtkStateType;
+</pre><p>
+The possible types of states of an object</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><tt>ATK_STATE_INVALID</tt></span></td><td> Indicates an invalid state
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_ACTIVE</tt></span></td><td> Indicates a window is currently the active window
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_ARMED</tt></span></td><td> Indicates that the object is armed
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_BUSY</tt></span></td><td> Indicates the current object is busy
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_CHECKED</tt></span></td><td> Indicates this object is currently checked
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_DEFUNCT</tt></span></td><td> Indicates the user interface object corresponding to this object no longer exists
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_EDITABLE</tt></span></td><td> Indicates the user can change the contents of this object
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_ENABLED</tt></span></td><td> Indicates that this object is enabled
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_EXPANDABLE</tt></span></td><td> Indicates this object allows progressive disclosure of its children
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_EXPANDED</tt></span></td><td> Indicates this object its expanded
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_FOCUSABLE</tt></span></td><td> Indicates this object can accept keyboard focus, which means all events resulting from typing on the keyboard will normally be passed to it when it has focus
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_FOCUSED</tt></span></td><td> Indicates this object currently has the keyboard focus
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_HORIZONTAL</tt></span></td><td> Indicates the orientation of this object is horizontal
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_ICONIFIED</tt></span></td><td> Indicates this object is minimized and is represented only by an icon
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_MODAL</tt></span></td><td> Indicates something must be done with this object before the user can interact with an object in a different window
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_MULTI_LINE</tt></span></td><td> Indicates this (text) object can contain multiple lines of text
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_MULTISELECTABLE</tt></span></td><td> Indicates this object allows more than one of its children to be selected at the same time
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_OPAQUE</tt></span></td><td> Indicates this object paints every pixel within its rectangular region
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_PRESSED</tt></span></td><td> Indicates this object is currently pressed
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_RESIZABLE</tt></span></td><td> Indicates the size of this object is not fixed
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_SELECTABLE</tt></span></td><td> Indicates this object is the child of an object that allows its children to be selected and that this child is one of those children that can be selected
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_SELECTED</tt></span></td><td> Indicates this object is the child of an object that allows its children to be selected and that this child is one of those children that has been selected
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_SENSITIVE</tt></span></td><td> Indicates this object is sensitive
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_SHOWING</tt></span></td><td> Indicates this object, the object's parent, the object's parent's parent, and so on, are all visible
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_SINGLE_LINE</tt></span></td><td> Indicates this (text) object can contain only a single line of text
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_STALE</tt></span></td><td> Indicates that the index associated with this object has changed since the user accessed the object.
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_TRANSIENT</tt></span></td><td> Indicates this object is transient
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_VERTICAL</tt></span></td><td> Indicates the orientation of this object is vertical
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_VISIBLE</tt></span></td><td> Indicates this object is visible
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_MANAGES_DESCENDANTS</tt></span></td><td> Indicates that "active-descendant-changed" event
+is sent when children become 'active' (i.e. are selected or navigated to onscreen).
+Used to prevent need to enumerate all children in very large containers, like tables.
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_INDETERMINATE</tt></span></td><td> Indicates that a check box is in a state other than checked or not checked.
+</td></tr><tr><td><span class="term"><tt>ATK_STATE_LAST_DEFINED</tt></span></td><td> Not a valid state, used for finding end of enumeration
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkState"></a>AtkState</h3><a class="indexterm" name="id293600"></a><pre class="programlisting">typedef guint64      AtkState;
+</pre><p>
+The AtkState value should not be referenceed directly.
+
+</p></div><hr><div class="refsect2"><h3><a name="atk-state-type-register"></a>atk_state_type_register ()</h3><a class="indexterm" name="id293624"></a><pre class="programlisting"><a href="atk-AtkState.html#AtkStateType">AtkStateType</a> atk_state_type_register        (const gchar *name);</pre><p>
+Register a new object state.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>name</tt></i> :</span></td><td> a character string describing the new state.
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> an <a href="atk-AtkState.html#AtkState">AtkState</a> value for the new state.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-state-type-get-name"></a>atk_state_type_get_name ()</h3><a class="indexterm" name="id293734"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_state_type_get_name
+                                            (<a href="atk-AtkState.html#AtkStateType">AtkStateType</a> type);</pre><p>
+Gets the description string describing the <a href="atk-AtkState.html#AtkStateType">AtkStateType</a> <i><tt>type</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>type</tt></i> :</span></td><td> The <a href="atk-AtkState.html#AtkStateType">AtkStateType</a> whose name is required
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> the string describing the AtkStateType
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-state-type-for-name"></a>atk_state_type_for_name ()</h3><a class="indexterm" name="id293823"></a><pre class="programlisting"><a href="atk-AtkState.html#AtkStateType">AtkStateType</a> atk_state_type_for_name        (const gchar *name);</pre><p>
+Gets the <a href="atk-AtkState.html#AtkStateType">AtkStateType</a> corresponding to the description string <i><tt>name</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>name</tt></i> :</span></td><td> a character string state name
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> an <a href="atk-AtkState.html#AtkStateType">AtkStateType</a> corresponding to <i><tt>name</tt></i> 
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkSelection.html"><b>&lt;&lt; AtkSelection</b></a></td><td align="right"><a accesskey="n" href="AtkStateSet.html"><b>AtkStateSet &gt;&gt;</b></a></td></tr></table></body></html>

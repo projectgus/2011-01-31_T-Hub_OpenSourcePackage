@@ -1,0 +1,16 @@
+Stuart Hughes, stuarth@freescale.com, 11th July 2005
+
+This installs the man pages into the desired spot
+
+diff --exclude CVS -uNr flex-2.5.4/Makefile.in flex-2.5.4.modified/Makefile.in
+--- flex-2.5.4/Makefile.in	1996-09-11 00:59:11.000000000 +0100
++++ flex-2.5.4.modified/Makefile.in	2005-07-11 16:51:03.000000000 +0100
+@@ -34,7 +34,7 @@
+ libdir = $(exec_prefix)/lib
+ includedir = $(prefix)/include
+ manext = 1
+-mandir = $(prefix)/man/man$(manext)
++mandir = $(prefix)/share/man/man$(manext)
+ 
+ # You can define these to be "lex" and "libl.a" if you want to replace
+ # lex at your site.

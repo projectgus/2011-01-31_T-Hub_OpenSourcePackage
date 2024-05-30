@@ -1,0 +1,303 @@
+%TOPICTITLE%
+---
+See also: LtibFaq
+
+%TOC%
+
+---+ Packages
+
+---++ How do I know which packages are available/will be installed?
+
+Before configuring ltib, you can run bin/listpkgs on an ltib config file,
+for instance, for the mpc8548cds, you could run:
+
+<verbatim>
+bin/listpkgs config/platform/mpc8548cds/defconfig
+</verbatim>
+
+This will list all the packages that can be selected.  The ones with a 'y'
+in the 'Enabled' column will be built/installed by default.
+
+If you have configured ltib already, you can get a more accurate (exact)
+listing by running:
+
+<verbatim>
+./ltib -m listpkgs
+</verbatim>
+
+To select only those packages that are enabled, pipe either of the previous
+commands to grep as follows:
+
+<verbatim>
+ ./ltib -m listpkgs | grep ' y '
+</verbatim>
+
+---++ How do I know what license a package has?
+
+Look in the license field from the output of either of the last 2 commands
+(e.g ./ltib -m listpkgs or bin/listpkgs)
+
+---++ Can I change the list of packages to be built?
+
+Yes.  To do this, run the following command:
+<verbatim>
+./ltib --configure
+</verbatim>
+
+After exiting the *Platform choice* configuration, scroll down
+to the *Package list* menu:
+<verbatim>
+    --- Configure by package
+        Package list  --->
+</verbatim>
+
+Enter this menu and selected/de-select packages as required.  When you
+exit and save the package selection, the targe image will be adjusted
+accordingly.
+
+---++ How do I build/install just a single package?
+<verbatim>
+./ltib -p <package_name>
+</verbatim>
+
+Note: When specifying a package *-p*, the package will be force
+      re-built, even if it is up-to-date.
+
+Note: The build/install will fail if dependent packages are not
+      already installed.
+
+
+---++ How do I make changes to a package and capture them?
+
+By default, rpm will remove, unpack, configure, build, remove all
+in one step.  This is a deliberate feature to make sure a package is
+fully rebuilt from pristine sources plus patches in a consistent way.
+
+Obviously, if you're trying to work on a package, this scheme is not
+helpful.  To facilitate this kind of development process, rpm
+provides the notion of short-circuited builds/installs.
+
+---+++ Example work-flow
+
+ 1. Unpack the sources and apply all current patches:
+ <verbatim>
+./ltib -m prep -p <package>
+ </verbatim>
+
+ 2. Edit/add files under *rpm/BUILD/package/*
+
+ 3. Build the package with your changes:
+ <verbatim>
+./ltib -m scbuild -p <package>
+ </verbatim>
+
+ 4. Once the package builds successfully, check the install phase:
+ <verbatim>
+ ./ltib -m scinstall -p <package>
+ </verbatim>
+
+ 5. If you want to test your package before committing the changes:
+ <verbatim>
+ ./ltib -m scdeploy -p <package>
+ </verbatim>
+
+ 6. Repeat steps 2 -> 5  until you are satisfied with your results.
+
+ 7. Generate a patch and update the spec file:
+ <verbatim>
+./ltib -m patchmerge -p <package>
+ </verbatim>
+
+ 6. Manually clean up the patch file (as required).
+
+ 7. Build from scratch and install
+ <verbatim>
+./ltib  -p <package>
+ </verbatim>
+
+Once you're happy with all your changes.
+
+ * Commit the updated specfile:
+ <verbatim>
+ cvs commit
+ </verbatim>
+
+ * send the patch to the maintainer (stuarth@freescale.com) for
+ inclusion in the GPP.
+
+---++ How can I add a completely new package to the rootfs?
+
+The following work-flow examples show the process of importing
+new packages to the root filesystem.
+
+---+++ I have an existing srpm I want to use
+
+ 1. Import the srpm.  This will place materials under the sub-diretory *rpm*.
+ <verbatim>
+./ltib -m addsrpms <path_of_the_srpm_to_import>
+ </verbatim>
+
+ 2. Modify the spec file as required. (Look at
+ *dist/lfs-5.1/template/template.spec* for an example.)
+
+ 3. Make sure the package builds:
+ <verbatim>
+./ltib -m scbuild -p <new_package>
+ </verbatim>
+
+ 4. Modify sources under *rpm/BUILD/new_package* as needed.
+
+ 5. Generate and merge a patch that encapsulates your changes:
+ <verbatim>
+./ltib -m patchmerge -p <new_package>
+ </verbatim>
+
+ 6. Manually clean up the patch file (as required).
+
+ 7. Build from scratch and install.
+ <verbatim>
+./ltib -p <new_package>-x.y
+ </verbatim>
+
+ 8. Save your changes:
+
+  8.1. Move the spec-file from the temporary area to a permanent area and
+  check into cvs/svn (as appropriate), for example:
+  <verbatim>
+mkdir dist/lfs-5.1/new_package
+mv rpm/SPECS/new_package.spec dist/lfs-5.1/new_package/
+cd dist/lfs-5.1/new_package
+cvs add new_package.spec
+cvs commit -m "added new_package" new_package-x.y.spec
+  </verbatim>
+
+  8.2. Copy the sources to your LPP (Local Package Pool), this is the directory
+  specified by the entry in *.ltibrc* with the tag: *%lpp*.  For
+  example:
+  <verbatim>
+rsync  -vptgo --ignore-existing  rpm/SOURCES/* /opt/freescale/pkgs/
+  </verbatim>
+
+  8.3. You now need to upload your sources/patches to the PPP.  To do this
+point your browser at:
+ http://auslxpb02.mtwk.freescale.net/ltib-cgi/ppp_upload.cgi
+
+And upload each file not already in the PPP/GPP.
+
+
+
+---+++ I do not have an existing package, and I want to make a package
+
+ 1. First clean your sources (remove any .o, .a, .so generated files)
+ and then make a 'tarball', for instance:
+ <verbatim>
+cd <my_new_package>-x.y
+make clean
+cd ..
+tar zcvf <my_new_package>-x.y.tar.gz <my_new_package>-x.y
+ </verbatim>
+
+
+ 2. Move this tarball to the lpp so *ltib* can find it.
+ <verbatim>
+mv <my_new_package>-x.y.tar.gz <lpp>
+ </verbatim>
+
+ 3. Create a specfile using the existing template.
+ <verbatim>
+mkdir dist/lfs-5.1/<my_new_package>
+cp dist/lfs-5.1/template/template.spec dist/lfs-5.1/<my_new_package>/<my_new_package>.spec
+ </verbatim>
+
+ 4. Edit and fixup the template to reflect your package.  The fields
+ that need changing are:
+ | *Field* | *Description* |
+ | Summary | put in a summary of what the package is/does |
+ | Name    | put in the name of the packge (usually from the tarball name) |
+ | Version | put in the version (usually from the tarball/directory |
+ | Release | start at 1 and rev each time you change the spec file |
+ | License | e.g GPL/LGPL/BSD, look this up in the package's files |
+ | Group   | If this exists on an rpm based machine, copy from rpm -qi <package> <br> If not, choose something from /usr/share/doc/rpm-<version>/GROUPS |
+ | %Build  | often you'll need to add *--host=$CFGHOST --build=%{_build}* to the configure clause |
+
+
+ 5. Unpack the new package sources:
+ <verbatim>
+./ltib -m prep -p <my_new_package>
+ </verbatim>
+
+ 6. Build the new package with your changes:
+ <verbatim>
+./ltib -m scbuild -p <my_new_package>
+ </verbatim>
+
+ 7. Once the new package builds okay, check the install phase:
+ <verbatim>
+ ./ltib -m scinstall -p <my_new_package>
+ </verbatim>
+
+ 8. If you want to test your package before commiting the changes:
+ <verbatim>
+ ./ltib -m scdeploy -p <my_new_package>
+ </verbatim>
+
+ 9. Once you're happy with the new package.
+
+ * Commit the updated specfile:
+ <verbatim>
+ cvs add dist/lfs-5.1/<my_new_package>
+ cvs add dist/lfs-5.1/<my_new_package>/<my_new_package>.spec
+ cvs commit -m "added new_package" dist/lfs-5.1/<my_new_package>/<my_new_package>.spec
+ </verbatim>
+
+ * send the new package to the maintainer (stuarth@freescale.com) for
+ inclusion in the GPP.
+
+10. Follow the steps in the section "How to introduce the new package to the config system?"
+
+
+---++ How do I introduce my new package to the config system?
+
+Here is an example for package 'strace'
+
+   1. Edit config/userspace/packages.lkc, this is in alphabetic order.
+   Just after the 'PKG_SKELL' entry add:
+   <verbatim>
+   config PKG_STRACE
+       bool "strace"
+   </verbatim>
+   1. Edit dist/lfs/common/pkg_map. This is in build order.  Put your package where it should go in the
+   build order, and add an entry that ties
+   the config key, to the directory containing the spec file for the
+   package.  For strace, I put this after gdb as shown:
+   <verbatim>
+   PKG_GDB             =   gdb
+   PKG_STRACE          =   strace
+   </verbatim>
+   1. Commit your changes
+ <verbatim>
+ cvs commit -m "added new_package"
+ </verbatim>
+
+---++ How to add a daemon to init
+   1. Add the package that provides your service (see above)
+   1. Write an init script.  This goes into the skell package.  The easiest thing is to copy and modify something that already exists (for instance dropbear).  Your script should not have any numeric prefix.  For example etc/rc.d/init.d/named.
+   1. Add an entry into config/userspace/sysconfig.lkc, for instance:
+   <verbatim>
+   config SYSCFG_START_NAMED
+       depends PKG_NAMED
+       bool "start named (nameserver)"
+       default y
+   </verbatim>
+   1. Add entries in dist/lfs-5.1/sysconfig/sysconfig.spec to process this new service:
+   <verbatim>
+   if [ "$SYSCFG_START_NAMED" = "y" ]
+   then
+       named=named
+   fi
+   </verbatim>
+   1. Add 'named' into the all_services= line in the position you want it to be run.
+   1. Add 'named' into the all_services_r= line (this is the reverse of the previous line, for shutdown).
+   1. Add '$named' into cfg_services and cfg_services_r.
+
+-- Main.JohnFaith - %SERVERTIME%

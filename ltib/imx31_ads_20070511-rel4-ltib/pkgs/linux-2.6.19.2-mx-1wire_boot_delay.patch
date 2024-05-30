@@ -1,0 +1,28 @@
+CR: ENGR00028972
+Patch name: ENGR00028972_Fix_Onewire_Bootup_delay_without_Boardmods.patch
+Date: Fri Mar 16 17:31:41 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: Fix for onewire bootup delay without board mods.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/w1/masters/mxc_w1.c linux-2.6.19.2/drivers/w1/masters/mxc_w1.c
+--- linux-2.6.19.2.orig/drivers/w1/masters/mxc_w1.c	2007-04-25 17:39:28.000000000 -0600
++++ linux-2.6.19.2/drivers/w1/masters/mxc_w1.c	2007-04-25 17:39:40.000000000 -0600
+@@ -240,14 +240,16 @@ void search_ROM_accelerator(void *data, 
+ 			reg_val = rn2[z] >> (8 * w);
+ 			mxc_w1_ds2_write_byte(data, reg_val);
+ 			reg_val = mxc_w1_read_byte(data);
++			if ((reg_val & 0x3) == 0x3) {
++				pr_debug("Device is Not Responding\n");
++				break;
++			}
+ 			for (j = 0; j < 8; j += 2) {
+ 				byte = 0xFF;
+ 				byte1 = 1;
+ 				byte ^= byte1 << j;
+ 				bit = (reg_val >> j) & 0x1;
+ 				bit2 = (reg_val >> j);
+-				if ((bit2 & 0x3) == 0x3)
+-					pr_debug("Device is Not Responding\n");
+ 				if (bit) {
+ 					prev_disc = disc;
+ 					disc = 8 * i + j;

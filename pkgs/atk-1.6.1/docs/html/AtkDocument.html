@@ -1,0 +1,65 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkDocument</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkComponent.html" title="AtkComponent"><link rel="next" href="AtkEditableText.html" title="AtkEditableText"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkComponent.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkEditableText.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkDocument"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkDocument</h2><p>AtkDocument &#8212; The ATK interface which allows access to a DOM associated with on object.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id251568"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkDocument.html#AtkDocument-struct">AtkDocument</a>;
+G_CONST_RETURN gchar* <a href="AtkDocument.html#atk-document-get-document-type">atk_document_get_document_type</a>
+                                            (<a href="AtkDocument.html" title="AtkDocument">AtkDocument</a> *document);
+gpointer    <a href="AtkDocument.html#atk-document-get-document">atk_document_get_document</a>       (<a href="AtkDocument.html" title="AtkDocument">AtkDocument</a> *document);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GInterface
+   +----AtkDocument
+</pre></div><div class="refsect1"><h2>Description</h2><p>
+The AtkDocument interface should be supported by any object that has an
+associated document object model (DOM). This interface provides the
+standard mechanism allowing an assistive technology access to the DOM.
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkDocument-struct"></a>struct AtkDocument</h3><a class="indexterm" name="id253041"></a><pre class="programlisting">struct AtkDocument;</pre><p>
+The AtkDocument structure does not contain any fields.
+
+
+</p></div><hr><div class="refsect2"><h3><a name="atk-document-get-document-type"></a>atk_document_get_document_type ()</h3><a class="indexterm" name="id253065"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_document_get_document_type
+                                            (<a href="AtkDocument.html" title="AtkDocument">AtkDocument</a> *document);</pre><p>
+Gets a string indicating the document type.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>document</tt></i> :</span></td><td> a GObject instance that implements AtkDocumentIface
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a string indicating the document type
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-document-get-document"></a>atk_document_get_document ()</h3><a class="indexterm" name="id253160"></a><pre class="programlisting">gpointer    atk_document_get_document       (<a href="AtkDocument.html" title="AtkDocument">AtkDocument</a> *document);</pre><p>
+Gets a <tt>gpointer</tt> that points to an instance of the DOM.  It is
+up to the caller to check atk_document_get_type to determine
+how to cast this pointer.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>document</tt></i> :</span></td><td> a GObject instance that implements AtkDocumentIface
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a <tt>gpointer</tt> that points to an instance of the DOM.
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkComponent.html"><b>&lt;&lt; AtkComponent</b></a></td><td align="right"><a accesskey="n" href="AtkEditableText.html"><b>AtkEditableText &gt;&gt;</b></a></td></tr></table></body></html>

@@ -1,0 +1,195 @@
+= Prerequisites =
+
+== rpm version ==
+
+From the bug report, it looks as though this was a setup problem
+(a daemon leaving lock files in the rpm database dir).  Probably
+it would be okay to use a machine with this version of rpm, the report
+closes saying that 'it was not a bug'
+
+== sudo ==
+
+This is a pre-requisite, a user would have to install it if it is missing.
+If they're not a check for this, I'll add it.
+
+Noted in the TODO list.
+
+== rpm on debian  ==
+
+error: cannot open Packages index using db3 - No such file or directory (2)
+
+rpm should work on Debian.  I only have 1 box here running Debian
+(testing/unstable), that worked okay after doing an 'rpm --initdb'.
+
+It looks as thought the problem is a missing rpmdb root directory, but
+I'd need to look into this on a box with this problem.
+
+Noted in the TODO list.
+
+== running the rfs builder on a non x86 machine (ppc) ==
+
+Currently not supported.
+
+Noted in the TODO list.
+
+== requiring cross toolchain rpm ==
+
+This is a bug.  If you specify a location for a toolchain and omit the
+rpm name, it should be possible to run the builder.
+
+However note: Using a toolchain other than one known to work with the 
+package set may result in build failures (mind you there are a whole
+slew of other things that could cause this too :-).
+
+Noted in the TODO list.
+
+
+= configuring fsb =
+
+== %token versus token=value ==
+
+The reason this is used is that the tokens can span multiple lines.
+This leaves the code that inteprets a particular token to use it
+for any purpose.  This allows support of lists as requested:
+pkg_list_name=networking_base.list,ipsec_addons.list by using:
+
+%pkg_list_name
+networking_base
+ipsec_addons.list 
+
+Note: This is under review.  We're adding a more general config system
+(like menuconfig) and so the fsbrc file will likely end up only being
+used for environment setup (e.g. proxy, gpp etc).
+ 
+
+= running fsb =
+
+== why /opt/mtwk/pkgs (the LPP) must be rwxrwxrwx ==
+
+The idea of the LPP (Local Package Pool) is that a number of users on a
+single machine can share a large pool of packages (linux kernels and the
+like).  When a user runs the builder and has to download a package
+source, this lands in the LPP.  This packages can then be shared
+across users.  To let anyone download into this directory, the
+permissions have to be open.
+
+== non-proxies when proxies configured ==
+
+I'll need to check into this.  I think it may be intentional, but it should
+be last after proxies have failed.
+
+Noted in the TODO list.
+
+== using fsb with different package lists ==
+
+=== needing to specify the specific versions of a package ===
+
+The way this works is that when you select a package list (%pkg_list_name),
+the file selected (e.g desktop_base.list) specifies the exact versions
+of the packages that are known to work together.
+
+If the package you want to build is mentioned in this list, the you 
+can build a package without specifying the exact version, so you
+can run the command:
+
+fsb -p net-tools
+
+If the package is not mentioned in the %pkg_list_name file, then you do
+have to give the exact name of the spec file (without the .spec extension).
+
+I'm not sure how to improve on this, as over time we'll end up with
+multiple versions of the same package and so have to specify the version
+somewhere.
+
+===  bdist/SPECS/wget-1.9.1.spec ===
+
+./configure --prefix=%{_prefix} --sysconfdir=%{pfx}/etc --host=$CFGHOST
+
+should be:
+
+./configure --prefix=%{_prefix} --sysconfdir=/etc --host=$CFGHOST
+
+I'll look into this:
+
+Added to the TODO list
+
+=== e500 cross tools won't compile vim ===
+
+I'll look into this.
+
+Added to the TODO list.
+
+
+=== The 2.4.24 kernel specfile in bdinst/SPECS produces an error ===
+
+We'll end up with more than one 2.4 kernel rpm.  Hopefully we can keep
+the number of distinct rpms down.  That particular rpm comes from
+DENX and would probably be okay for a number of PQ1/PQ2 boards.
+
+We're working on a configuration scheme (like uclinux/buildroot) that
+will make it easy to associate a kernel and config to a particular board.
+
+
+=== ./fsb --mode addsrpms lynx-2.8.5-15.src.rpm ===
+
+Glad you tried this, didn't think anyone would.
+
+The tricky part here is getting the right balance between adequate
+inter-package dependancies, without forcing the pedantic inclusion
+of optional packages.  In the results you have, some of the packages
+are actually installed (ncurses-devel, zlib-devel), they just
+don't show up because of the simplisitic way in which we put together
+the spec files (from LFS).  A simple solution for those is to add
+a 'provides : ncurses-devel' into the SPEC file.  For those that are
+actually missing, some are probably optional nice to haves (e.g 
+openssl).
+
+I expect that when importing an rpm a certain amount of tweaking will
+always be needed, in particular:
+
+ * some kind of patch to make it cross compile (the methodology is general)
+ * simplification or relaxation of dependancies.
+
+The biggest issue of all is the dependancy stuff, you often find that
+you'll try to install a missing package to satisfy the immediate 
+dependancy failures, only to find that package has 5 more dependancy
+failures of its own.  I know that YUM/APT go a long way to solve this,
+but these tools come at the price of assuming that the target storage
+footprint is essentially unlimited.
+
+I guess it's all about balance at the end of the day, I'll discuss this
+with the other people working on this to see what is a reasonable
+compromise.
+
+
+=== Does the .list file get modified by fsb ===
+
+No, I don't think it does.  Which one was it? (desktop_base.list??), let
+me know and I'll take a look into it.
+
+
+= specfile maintenance =
+
+For new packages, a user should copy the file: bdist/SPECS/template-x.y.spec
+to their package name/version and then edit/test and checkin to CVS.
+
+For existing packages, you can prep a package and then do --scbuild/--scdeploy,
+then the package works okay, you then do a --patchmerge.  This generates
+a patch (that may need pruning) and also updates the originating spec
+file automatically.  The spec file then needs to be checked into CVS,
+the patch file will be pushed to the LPP then GPP so it becomes available
+to all users.
+
+
+----
+
+
+
+
+
+
+
+
+
+
+

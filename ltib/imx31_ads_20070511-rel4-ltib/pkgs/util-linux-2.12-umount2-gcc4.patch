@@ -1,0 +1,31 @@
+Steve Papacharalambous, stevep@freescale.com, 08 May 2006
+
+This patch should fix the following error when using gcc-4.x toolchains
+
+gcc -c -pipe -O2 -fsigned-char -fomit-frame-pointer -I../lib -Wall
+-Wmissing-prototypes -Wstrict-prototypes -I/usr/include/ncurses -DNCH=0
+-D_FILE_OFFSET_BITS=64 -DSBINDIR=\"/sbin\" -DUSRSBINDIR=\"/usr/sbin\"
+-DLOGDIR=\"/var/log\" -DVARPATH=\"/var\"
+-DLOCALEDIR=\"/home/stevep/work/ltib/rootfs/usr/share/locale\" -O2
+-DHAVE_NFS umount.c
+umount.c:69: error: static declaration of 'umount2' follows non-static
+declaration
+/opt/freescale/usr/local/gcc-4.1.0-glibc-2.4-8/arm-none-linux-gnueabi/lib/gcc/a$
+error: previous declaration of 'umount2' was here
+make[1]: *** [umount.o] Error 1
+make[1]: Leaving directory
+`/home/stevep/work/ltib/rpm/BUILD/util-linux-2.12/mount'
+
+=============================================================================
+diff --exclude CVS -uNr util-linux-2.12/mount/umount.c util-linux-2.12.modified/mount/umount.c
+--- util-linux-2.12/mount/umount.c	2003-07-15 22:19:22.000000000 +0100
++++ util-linux-2.12.modified/mount/umount.c	2006-05-08 08:13:32.000000000 +0100
+@@ -66,7 +66,7 @@
+ #include <linux/unistd.h>
+ #ifdef __NR_umount2
+ 
+-static int umount2(const char *path, int flags);
++int umount2(const char *path, int flags);
+ 
+ _syscall2(int, umount2, const char *, path, int, flags);
+ 

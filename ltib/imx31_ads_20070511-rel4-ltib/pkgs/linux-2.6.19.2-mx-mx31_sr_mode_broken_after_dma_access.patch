@@ -1,0 +1,249 @@
+CR: TLSbo85899
+Patch name: TLSbo85899_SR_mode_not_working_on_MX31_after_a_DMA_access.patch
+Date: Mon Mar 5 16:53:39 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: State Retention mode not working on i.MX31 after a DMA
+access - fixed by adding powr handlers for SDMA on all platforms
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/devices.c linux-2.6.19.2/arch/arm/mach-mx3/devices.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/devices.c	2007-04-25 17:38:18.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/devices.c	2007-04-25 17:38:27.000000000 -0600
+@@ -751,6 +751,19 @@ static inline void mxc_init_hmp4e(void)
+ }
+ #endif
+ 
++static struct platform_device mxc_dma_device = {
++	.name = "mxc_dma",
++	.id = 0,
++	.dev = {
++		.release = mxc_nop_release,
++		},
++};
++
++static inline void mxc_init_dma(void)
++{
++	(void)platform_device_register(&mxc_dma_device);
++}
++
+ static int __init mxc_init_devices(void)
+ {
+ 	mxc_init_wdt();
+@@ -763,6 +776,7 @@ static int __init mxc_init_devices(void)
+ 	mxc_init_owire();
+ 	mxc_init_pcmcia();
+ 	mxc_init_hmp4e();
++	mxc_init_dma();
+ 
+ 	/* SPBA configuration for SSI2 - SDMA and MCU are set */
+ 	spba_take_ownership(SPBA_SSI2, SPBA_MASTER_C | SPBA_MASTER_A);
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/dma_sdma.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/dma_sdma.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/dma_sdma.c	2007-04-25 17:37:45.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/dma_sdma.c	2007-04-25 17:38:27.000000000 -0600
+@@ -24,6 +24,9 @@
+ #include <linux/types.h>
+ #include <linux/mm.h>
+ #include <linux/interrupt.h>
++#include <linux/platform_device.h>
++#include <linux/delay.h>
++#include <linux/clk.h>
+ #include <asm/arch/dma.h>
+ #include <asm/arch/hardware.h>
+ 
+@@ -34,11 +37,22 @@
+ #include <linux/device.h>
+ #include <linux/dma-mapping.h>
+ 
++#include "iapi.h"
++
+ #ifdef CONFIG_MXC_SDMA_API
+ 
+ static mxc_dma_channel_t mxc_sdma_channels[MAX_DMA_CHANNELS];
+ static mxc_dma_channel_private_t mxc_sdma_private[MAX_DMA_CHANNELS];
+ 
++static unsigned long ch0_ptr, ch0_addr, ch0_pri, ch0_evtpnd = 0;
++#define DMA_CHN0_EVPND	0x1
++#define DMA_SLEEP_STATE (0x6 << 12)
++
++/*!
++ * To indicate whether SDMA engine is suspending
++ */
++static int suspend_flag = 0;
++
+ /*!
+  * Tasket to handle processing the channel buffers
+  *
+@@ -105,6 +119,10 @@ int mxc_dma_request(mxc_dma_device_t cha
+ 	mxc_dma_channel_private_t *data_priv;
+ 	int ret = 0, i = 0, channel_num = 0;
+ 
++	if (suspend_flag == 1) {
++		return -EBUSY;
++	}
++
+ 	chnl = mxc_sdma_get_channel_params(channel_id);
+ 	if (chnl == NULL) {
+ 		return -EINVAL;
+@@ -254,6 +272,10 @@ int mxc_dma_config(int channel_num, mxc_
+ 	dma_channel_params chnl_param;
+ 	dma_request_t request_t;
+ 
++	if (suspend_flag == 1) {
++		return -EBUSY;
++	}
++
+ 	if ((channel_num >= MAX_DMA_CHANNELS) || (channel_num < 0)) {
+ 		return -EINVAL;
+ 	}
+@@ -387,6 +409,10 @@ int mxc_dma_sg_config(int channel_num, s
+ 	int ret = 0, i = 0;
+ 	mxc_dma_requestbuf_t *dma_buf;
+ 
++	if (suspend_flag == 1) {
++		return -EBUSY;
++	}
++
+ 	if ((channel_num >= MAX_DMA_CHANNELS) || (channel_num < 0)) {
+ 		return -EINVAL;
+ 	}
+@@ -474,6 +500,10 @@ int mxc_dma_callback_set(int channel_num
+  */
+ int mxc_dma_disable(int channel_num)
+ {
++	if (suspend_flag == 1) {
++		return -EBUSY;
++	}
++
+ 	if ((channel_num >= MAX_DMA_CHANNELS) || (channel_num < 0)) {
+ 		return -EINVAL;
+ 	}
+@@ -498,6 +528,10 @@ int mxc_dma_disable(int channel_num)
+  */
+ int mxc_dma_enable(int channel_num)
+ {
++	if (suspend_flag == 1) {
++		return -EBUSY;
++	}
++
+ 	if ((channel_num >= MAX_DMA_CHANNELS) || (channel_num < 0)) {
+ 		return -EINVAL;
+ 	}
+@@ -511,6 +545,79 @@ int mxc_dma_enable(int channel_num)
+ }
+ 
+ /*!
++ * This function is called to put the SDMA in a low power state.
++ *
++ * @param   pdev  the device structure 
++ * @param   state the power state the device is entering
++ *
++ * @return  The function always returns 0.
++ */
++static int mxc_dma_suspend(struct platform_device *pdev, pm_message_t state)
++{
++	struct clk *ahb_clk, *ipg_clk;
++
++	if ((SDMA_ONCE_STAT & DMA_SLEEP_STATE) == DMA_SLEEP_STATE) {
++		suspend_flag = 1;
++		if (cpu_is_mx31()) {
++			ch0_addr = SDMA_CHN0ADDR;
++			ch0_ptr = SDMA_H_C0PTR;
++			ch0_pri = SDMA_CHNPRI_0;
++			ch0_evtpnd = SDMA_H_EVTPEND;
++			SDMA_H_RESET |= 0x00000001;
++			udelay(10);
++			while (SDMA_H_RESET != 0x0) ;
++		}
++
++		ahb_clk = clk_get(NULL, "sdma_ahb_clk");
++		ipg_clk = clk_get(NULL, "sdma_ipg_clk");
++		clk_disable(ahb_clk);
++		clk_disable(ipg_clk);
++
++		return 0;
++	} else {
++		return -EAGAIN;
++	}
++}
++
++/*!
++ * This function is called to resume the MU from a low power state.
++ *
++ * @param   dev   the device structure 
++ *
++ * @return  The function always returns 0.
++ */
++static int mxc_dma_resume(struct platform_device *pdev)
++{
++	struct clk *ahb_clk, *ipg_clk;
++
++	if (cpu_is_mx31()) {
++		SDMA_CHN0ADDR = ch0_addr;
++		SDMA_H_C0PTR = ch0_ptr;
++		SDMA_CHNPRI_0 = ch0_pri;
++		SDMA_H_EVTPEND = ch0_evtpnd | DMA_CHN0_EVPND;
++	}
++
++	ahb_clk = clk_get(NULL, "sdma_ahb_clk");
++	ipg_clk = clk_get(NULL, "sdma_ipg_clk");
++	clk_enable(ahb_clk);
++	clk_enable(ipg_clk);
++	suspend_flag = 0;
++
++	return 0;
++}
++
++/*!
++ * This structure contains pointers to the power management callback functions.
++ */
++static struct platform_driver mxc_dma_driver = {
++	.driver = {
++		   .name = "mxc_dma",
++		   },
++	.suspend = mxc_dma_suspend,
++	.resume = mxc_dma_resume,
++};
++
++/*!
+  * Initializes dma structure with dma_operations
+  *
+  * @param   dma           dma structure
+@@ -533,6 +640,11 @@ static int __init mxc_dma_init(void)
+ 	 */
+ 	mxc_get_static_channels(mxc_sdma_channels);
+ 
++	if (platform_driver_register(&mxc_dma_driver) != 0) {
++		printk(KERN_ERR "Driver register failed for mxc_dma_driver\n");
++		return -ENODEV;
++	}
++
+ 	return 0;
+ }
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/i2c/busses/mxc_i2c.c linux-2.6.19.2/drivers/i2c/busses/mxc_i2c.c
+--- linux-2.6.19.2.orig/drivers/i2c/busses/mxc_i2c.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/i2c/busses/mxc_i2c.c	2007-04-25 17:38:27.000000000 -0600
+@@ -696,6 +696,7 @@ static int mxci2c_probe(struct platform_
+ 	mxc_i2c->adap.id = id;
+ 	mxc_i2c->adap.algo = &mxc_i2c_algorithm;
+ 	mxc_i2c->adap.timeout = 1;
++	platform_set_drvdata(pdev, mxc_i2c);
+ 	i2c_set_adapdata(&mxc_i2c->adap, mxc_i2c);
+ 	if ((ret = i2c_add_adapter(&mxc_i2c->adap)) < 0) {
+ 		goto err2;
+diff -uNpr linux-2.6.19.2.orig/drivers/mmc/mxc_mmc.c linux-2.6.19.2/drivers/mmc/mxc_mmc.c
+--- linux-2.6.19.2.orig/drivers/mmc/mxc_mmc.c	2007-04-25 17:38:20.000000000 -0600
++++ linux-2.6.19.2/drivers/mmc/mxc_mmc.c	2007-04-25 17:38:27.000000000 -0600
+@@ -1440,12 +1440,12 @@ static int mxcmci_resume(struct platform
+ 	if (!host->mxc_mmc_suspend_flag) {
+ 		return 0;
+ 	}
++	clk_enable(host->clk);
+ 
+ 	if (mmc) {
+ 		ret = mmc_resume_host(mmc);
+ 		host->mxc_mmc_suspend_flag = 0;
+ 	}
+-	clk_enable(host->clk);
+ 	if (host->sdio_set_wake_enable == 1) {
+ 		reg = __raw_readl(host->base + MMC_INT_CNTR);
+ 		reg &= ~INT_CNTR_SDIO_INT_WKP_EN;

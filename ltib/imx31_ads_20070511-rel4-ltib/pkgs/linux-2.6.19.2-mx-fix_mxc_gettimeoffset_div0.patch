@@ -1,0 +1,60 @@
+CR: ENGR00018343
+Patch name: ENGR00018343_fix-div-by-0_in_mxc_gettimeoffset.patch
+Date: Mon Mar 19 14:19:31 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: fix divide-by-zero error in mxc_gettimeoffset().
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/time.c linux-2.6.19.2/arch/arm/mach-mx27/time.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/time.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/time.c	2007-04-25 17:39:42.000000000 -0600
+@@ -93,7 +93,7 @@ static irqreturn_t mxc_timer_interrupt(i
+  */
+ static unsigned long __noinstrument mxc_gettimeoffset(void)
+ {
+-	unsigned long ticks_to_match, elapsed, usec, tick_usec, i;
++	long ticks_to_match, elapsed, usec;
+ 
+ 	/* Get ticks before next timer match */
+ 	ticks_to_match =
+@@ -103,13 +103,7 @@ static unsigned long __noinstrument mxc_
+ 	elapsed = LATCH - ticks_to_match;
+ 
+ 	/* Now convert them to usec */
+-	/* Insure no overflow when calculating the usec below */
+-	for (i = 1, tick_usec = tick_nsec / 1000;; i *= 2) {
+-		tick_usec /= i;
+-		if ((0xFFFFFFFF / tick_usec) > elapsed)
+-			break;
+-	}
+-	usec = (unsigned long)(elapsed * tick_usec) / (LATCH / i);
++	usec = (unsigned long)(elapsed * (tick_nsec / 1000)) / LATCH;
+ 
+ 	return usec;
+ }
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/time.c linux-2.6.19.2/arch/arm/mach-mx3/time.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/time.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/time.c	2007-04-25 17:39:42.000000000 -0600
+@@ -155,7 +155,7 @@ static irqreturn_t mxc_timer_interrupt(i
+  */
+ static unsigned long __noinstrument mxc_gettimeoffset(void)
+ {
+-	unsigned long ticks_to_match, elapsed, usec, tick_usec, i;
++	long ticks_to_match, elapsed, usec;
+ 
+ 	/* Get ticks before next timer match */
+ 	ticks_to_match =
+@@ -165,13 +165,7 @@ static unsigned long __noinstrument mxc_
+ 	elapsed = LATCH - ticks_to_match;
+ 
+ 	/* Now convert them to usec */
+-	/* Insure no overflow when calculating the usec below */
+-	for (i = 1, tick_usec = tick_nsec / 1000;; i *= 2) {
+-		tick_usec /= i;
+-		if ((0xFFFFFFFF / tick_usec) > elapsed)
+-			break;
+-	}
+-	usec = (unsigned long)(elapsed * tick_usec) / (LATCH / i);
++	usec = (unsigned long)(elapsed * (tick_nsec / 1000)) / LATCH;
+ 
+ 	return usec;
+ }

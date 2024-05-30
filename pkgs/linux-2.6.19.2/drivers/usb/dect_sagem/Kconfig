@@ -1,0 +1,13 @@
+#
+# USB_DECT configuration
+#
+menu "DECT sagem"
+	depends on USB
+
+config USB_DECT
+	tristate "DECT USB"
+	depends on USB
+	default y
+	help
+	   Driver dect
+endmenu

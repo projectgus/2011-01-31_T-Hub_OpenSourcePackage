@@ -1,0 +1,18 @@
+CR: TLSbo91807
+Patch name: TLSbo91807_change_MMC_prescaler_calculation.patch
+Date: Sat Mar 3 17:20:59 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: Change MMC prescaler calculation.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mmc/mxc_mmc.c linux-2.6.19.2/drivers/mmc/mxc_mmc.c
+--- linux-2.6.19.2.orig/drivers/mmc/mxc_mmc.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mmc/mxc_mmc.c	2007-04-25 17:38:20.000000000 -0600
+@@ -988,7 +988,7 @@ static void mxcmci_set_ios(struct mmc_ho
+ 
+ 		/* clk_dev =1, CLK_DIV = ipg_perclk/2 */
+ 
+-		while (prescaler <= 16) {
++		while (prescaler <= 0x800) {
+ 			for (clk_dev = 1; clk_dev <= 0xF; clk_dev++) {
+ 				int x;
+ 				if (prescaler != 0) {

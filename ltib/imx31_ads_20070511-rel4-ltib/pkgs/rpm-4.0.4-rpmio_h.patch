@@ -1,0 +1,24 @@
+Tues Oct 10 2006 Stuart Hughes <stuarth@freescale.com>
+
+This is a fix for builds with uclibc:
+
+gcc -DHAVE_CONFIG_H -I. -I. -I.. -I.. -I../build -I../lib -I../beecrypt -I../popt -I../misc -I../intl -g -O2 -D_GNU_SOURCE -D_REENTRANT -Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wno-char-subscripts -c digest.c        -fPIC -DPIC -o digest.lo
+In file included from rpmio_internal.h:9,
+                 from digest.c:6:
+./rpmio.h:36: error: parse error before "_libio_off_t"
+./rpmio.h:36: warning: type defaults to `int' in declaration of `_libio_off_t'
+./rpmio.h:36: warning: data definition has no type or storage class
+
+
+diff --exclude CVS -uNr rpm-4.0.4/rpmio/rpmio.h rpm-4.0.4.modified/rpmio/rpmio.h
+--- rpm-4.0.4/rpmio/rpmio.h	2002-03-19 01:02:28.000000000 +0000
++++ rpm-4.0.4.modified/rpmio/rpmio.h	2006-10-10 13:29:51.000000000 +0100
+@@ -30,7 +30,7 @@
+  * API unchanged.
+  */
+ /*@{*/
+-#if !defined(__LCLINT__) && defined(__GLIBC__) && \
++#if !defined(__UCLIBC__) && !defined(__LCLINT__) && defined(__GLIBC__) && \
+ 	(__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 2))
+ #define USE_COOKIE_SEEK_POINTER 1
+ typedef _IO_off64_t 	_libio_off_t;

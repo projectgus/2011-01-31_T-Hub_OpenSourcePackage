@@ -1,0 +1,77 @@
+CR: ENGR00028767
+Patch name: ENGR00028767_Adding_clocking_changes_HACC.patch
+Date: Thu Mar 15 19:20:16 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: clock is enabled in HAC module.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.c linux-2.6.19.2/drivers/mxc/security/mxc_hacc.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_hacc.c	2007-04-25 17:39:38.000000000 -0600
+@@ -25,6 +25,7 @@
+  */
+ 
+ #include "mxc_hacc.h"
++#include <linux/clk.h>
+ #ifdef CONFIG_MXC_HAC_TEST_DEBUG
+ #include <linux/module.h>
+ #endif				/* CONFIG_MXC_HAC_TEST_DEBUG */
+@@ -63,8 +64,12 @@ static unsigned short hac_suspend_state 
+  */
+ hac_ret hac_hash_data(ulong start_address, ulong blk_len, hac_hash option)
+ {
++	struct clk *clk;
+ 	ulong hac_start, hac_blk_cnt, hac_ctl;
+ 	hac_ret ret_val = HAC_SUCCESS;
++
++	clk = clk_get(NULL, "hac_clk");
++	clk_enable(clk);
+ 	hac_start = __raw_readl(HAC_START_ADDR);
+ 	hac_blk_cnt = __raw_readl(HAC_BLK_CNT);
+ 	hac_ctl = __raw_readl(HAC_CTL);
+@@ -324,11 +329,15 @@ hac_ret hac_stop(void)
+ hac_ret hac_hash_result(hac_hash_rlt * hash_result_reg)
+ {
+ 	ulong hac_hsh4, hac_hsh3, hac_hsh2, hac_hsh1, hac_hsh0;
++	struct clk *clk;
++
++	clk = clk_get(NULL, "hac_clk");
+ 	hac_hsh4 = __raw_readl(HAC_HSH4);
+ 	hac_hsh3 = __raw_readl(HAC_HSH3);
+ 	hac_hsh2 = __raw_readl(HAC_HSH2);
+ 	hac_hsh1 = __raw_readl(HAC_HSH1);
+ 	hac_hsh0 = __raw_readl(HAC_HSH0);
++	clk_disable(clk);
+ 	if (hac_suspend_state == 1) {
+ 		pr_debug("HAC Module: HAC Module is in suspend mode.\n");
+ 		return HAC_FAILURE;
+@@ -463,9 +472,10 @@ hac_ret hac_burst_read(hac_burst_read_co
+ hac_ret hac_suspend(struct platform_device * pdev, pm_message_t state)
+ {
+ 	ulong hac_ctl;
++	struct clk *clk;
+ 
+ 	hac_ctl = __raw_readl(HAC_CTL);
+-
++	clk = clk_get(NULL, "hac_clk");
+ 	hac_suspend_state = 1;
+ 
+ 	pr_debug("HAC Module: In suspend power down.\n");
+@@ -473,6 +483,7 @@ hac_ret hac_suspend(struct platform_devi
+ 	/* Enable stop bits in HAC Control Register. */
+ 	hac_ctl |= HAC_CTL_STOP;
+ 	__raw_writel(hac_ctl, HAC_CTL);
++	clk_disable(clk);
+ 
+ 	return HAC_SUCCESS;
+ }
+@@ -490,7 +501,10 @@ hac_ret hac_suspend(struct platform_devi
+ hac_ret hac_resume(struct platform_device * pdev)
+ {
+ 	ulong hac_ctl;
++	struct clk *clk;
+ 
++	clk = clk_get(NULL, "hac_clk");
++	clk_enable(clk);
+ 	hac_ctl = __raw_readl(HAC_CTL);
+ 
+ 	pr_debug("HAC Module: Resume power on.\n");

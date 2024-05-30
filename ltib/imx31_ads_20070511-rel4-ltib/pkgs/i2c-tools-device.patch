@@ -1,0 +1,29 @@
+diff --exclude CVS -uNr i2c-tools/i2cdetect.c i2c-tools.modified/i2cdetect.c
+--- i2c-tools/i2cdetect.c	2005-01-21 10:09:47.000000000 -0700
++++ i2c-tools.modified/i2cdetect.c	2006-10-06 16:11:15.000000000 -0600
+@@ -60,6 +60,14 @@
+ 		return file;
+ 	}
+ 
++	sprintf(filename, "/dev/i2c%d", i2cbus);
++	file = open(filename, O_RDWR);
++
++	if (file >= 0 || errno != ENOENT) {
++		return file;
++	}
++
++
+ 	sprintf(filename, "/dev/i2c/%d", i2cbus);
+ 	file = open(filename, O_RDWR);
+ 	
+@@ -232,8 +240,8 @@
+   file = open_i2c_dev(i2cbus, filename);
+   if (file < 0) {
+     if (errno == ENOENT) {
+-      fprintf(stderr, "Error: Could not open file `/dev/i2c-%d' or `/dev/i2c/%d': %s\n",
+-              i2cbus, i2cbus, strerror(ENOENT));
++      fprintf(stderr, "Error: Could not open file `/dev/i2c-%d', /dev/i2c%d, or `/dev/i2c/%d': %s\n",
++              i2cbus, i2cbus, i2cbus, strerror(ENOENT));
+     } else {
+       fprintf(stderr, "Error: Could not open file `%s': %s\n",
+               filename, strerror(errno));

@@ -1,0 +1,77 @@
+#
+# .zd1211 - USB2.0 802.11b/g driver for Zydas ZD1211 chipsets
+#
+#
+#
+
+MODULE = zd1211b.ko
+
+INCLUDES=-I$(KERNEL_SOURCE)/include -I.
+
+EXTRA_CFLAGS += -I$(PWD)/src/include
+
+ifndef CONFIG_FRAME_POINTER
+	EXTRA_CFLAGS += -fomit-frame-pointer
+endif
+
+ifdef CONFIG_SMP
+	EXTRA_CFLAGS += -D__SMP__ -DSMP
+endif
+
+
+
+EXTRA_CFLAGS += -O2 -Wall -Wstrict-prototypes -pipe -Wno-unused
+#EXTRA_CFLAGS += -Wa,-a,-ad -g
+EXTRA_CFLAGS += -DZDCONF_WE_STAT_SUPPORT=1
+EXTRA_CFLAGS += -DHOST_IF_USB
+EXTRA_CFLAGS += -DAMAC
+EXTRA_CFLAGS += -DGCCK
+EXTRA_CFLAGS += -DOFDM
+EXTRA_CFLAGS += -DHOSTAPD_SUPPORT
+EXTRA_CFLAGS += -DUSE_EP4_SET_REG
+EXTRA_CFLAGS += -DDOWNLOADFIRMWARE
+EXTRA_CFLAGS += -DfTX_GAIN_OFDM=0
+EXTRA_CFLAGS += -DfNEW_CODE_MAP=1
+EXTRA_CFLAGS += -DfWRITE_WORD_REG=1
+EXTRA_CFLAGS += -DfREAD_MUL_REG=1
+EXTRA_CFLAGS += -DENHANCE_RX=1
+
+EXTRA_CFLAGS += -DZDCONF_MENUDBG
+EXTRA_CFLAGS += -DZDCONF_APDBG
+EXTRA_CFLAGS += -DPRODUCTION
+EXTRA_CFLAGS += -DZDCONF_BANDEDGE_ADJUST
+EXTRA_CFLAGS += -DZDCONF_SES_SUPPORT=1
+#EXTRA_CFLAGS += -DZDCONF_PORTING_BIGENDIAN
+
+
+
+EXTRA_CFLAGS += -DZD1211B
+EXTRA_CFLAGS += -DZDCONF_LP_SUPPORT=1
+
+EXTRA_CFLAGS += $(INCLUDES)
+
+obj-$(CONFIG_USB_OPEN_ZD1211RW) += zd1211b.o
+
+zd1211-objs :=  zd1205.o \
+	zd1211.o\
+    zdasocsvc.o \
+    zdauthreq.o \
+    zdauthrsp.o \
+    zdmmrx.o \
+    zdshared.o \
+    zdhci.o \
+    zdglobal.o \
+    zdencrypt.o \
+    zdpmfilter.o \
+    zdpsmon.o \
+    zdsynch.o \
+    zdbuf.o \
+    zd1205_proc.o \
+    zdhw.o \
+    zddebug.o \
+    zdtkipseed.o \
+    zdmic.o \
+    zdusb.o \
+    zddebug2.o
+zd1211b-objs = $(zd1211-objs)
+

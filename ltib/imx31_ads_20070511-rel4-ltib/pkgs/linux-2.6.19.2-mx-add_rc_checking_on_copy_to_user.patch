@@ -1,0 +1,60 @@
+Adding code to check the return value and make compiler happy.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/vpu/mxc_vpu.c linux-2.6.19.2/drivers/mxc/vpu/mxc_vpu.c
+--- linux-2.6.19.2.orig/drivers/mxc/vpu/mxc_vpu.c	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/vpu/mxc_vpu.c	2007-04-25 17:36:54.000000000 -0600
+@@ -176,8 +176,11 @@ static int vpu_ioctl(struct inode *inode
+ 			if (!rec)
+ 				return -ENOMEM;
+ 
+-			copy_from_user(&(rec->mem), (vpu_mem_desc *) arg,
+-				       sizeof(vpu_mem_desc));
++			if (copy_from_user(&(rec->mem), (vpu_mem_desc *)arg,
++					sizeof(vpu_mem_desc))) {
++				kfree(rec);
++				return -EFAULT;
++			}
+ 			pr_debug("[ALLOC] mem alloc size = 0x%x\n",
+ 				 rec->mem.size);
+ 			rec->mem.cpu_addr = (unsigned long)
+@@ -195,8 +198,11 @@ static int vpu_ioctl(struct inode *inode
+ 				ret = -ENOMEM;
+ 				break;
+ 			}
+-			copy_to_user((void __user *)arg, &(rec->mem),
+-				     sizeof(vpu_mem_desc));
++			if (copy_to_user((void __user *)arg, &(rec->mem),
++				     sizeof(vpu_mem_desc))) {
++				kfree(rec);
++				return -EFAULT;
++			}
+ 
+ 			spin_lock_irqsave(&vpu_lock, flags);
+ 			list_add(&rec->list, &head);
+@@ -209,8 +215,10 @@ static int vpu_ioctl(struct inode *inode
+ 			struct memalloc_record *rec, *n;
+ 			vpu_mem_desc vpu_mem;
+ 
+-			copy_from_user(&vpu_mem, (vpu_mem_desc *) arg,
+-				       sizeof(vpu_mem_desc));
++			if (copy_from_user(&vpu_mem, (vpu_mem_desc *)arg,
++					sizeof(vpu_mem_desc))) {
++				return -EFAULT;
++			}
+ 			pr_debug("[FREE] mem freed cpu_addr = 0x%x\n",
+ 				 vpu_mem.cpu_addr);
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.c linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.c
+--- linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.c	2007-04-25 17:36:54.000000000 -0600
+@@ -2979,7 +2979,9 @@ static int __devinit arcotg_udc_probe(st
+ 	}
+ 
+ 	create_proc_file();
+-	device_add(&udc_controller->gadget.dev);
++	if (device_add(&udc_controller->gadget.dev)) {
++		printk("device_add: Adding device failed\n");
++	}
+ 	VDBG("back from device_add ");
+ 
+ 	return 0;

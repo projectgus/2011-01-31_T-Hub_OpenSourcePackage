@@ -1,0 +1,37 @@
+--- /home/r52096/misc/lib/vpu/vpu_io.c	2007-03-23 19:13:44.000000000 +0800
++++ misc/lib/vpu/vpu_io.c	2007-03-12 15:27:43.000000000 +0800
+@@ -29,6 +29,7 @@
+ #include <fcntl.h>		/* fcntl */
+ #include <sys/mman.h>		/* mmap */
+ #include <sys/ioctl.h>		/* fopen/fread */
++#include <sys/errno.h>		/* fopen/fread */
+ #include <sys/types.h>
+ 
+ #include "vpu_io.h"
+@@ -173,6 +174,9 @@
+ 	IOFreePhyMem(&bit_work_addr);
+ 
+ 	VpuWriteReg(BIT_INT_ENABLE, 0);	/* PIC_RUN irq disable */
++
++	munmap(vpu_reg_base, BIT_REG_MARGIN);
++
+ 	if (vpu_fd >= 0) {
+ 		close(vpu_fd);
+ 		vpu_fd = -1;
+@@ -302,6 +306,7 @@
+ 
+ int IOWaitForInt(int timeout_in_ms)
+ {
++	int ret = 0;
+ 	if (timeout_in_ms < 0) {
+ 		printf("the paramater timeout is not valid.\n");
+ 	}
+@@ -310,5 +315,7 @@
+ 		printf("File Descriptor is not valid.\n");
+ 	}
+ 
+-	return ioctl(vpu_fd, VPU_IOC_WAIT4INT, timeout_in_ms);
++	ret= ioctl(vpu_fd, VPU_IOC_WAIT4INT, timeout_in_ms);
++//	printf("%s: ret= %d errno=%d\n", __FUNCTION__, ret, errno);
++	return ret;
+ }

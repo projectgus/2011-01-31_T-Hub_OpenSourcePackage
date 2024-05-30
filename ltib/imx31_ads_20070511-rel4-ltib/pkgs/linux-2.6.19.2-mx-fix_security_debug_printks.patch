@@ -1,0 +1,1953 @@
+CR: TLSbo90135
+Patch name: TLSbo90135_Fix_for_Invalid_Debugging_printk.patch
+Date: Thu Mar 8 15:29:37 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: Invalid debugging printk's are removed from the security drivers
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/Kconfig linux-2.6.19.2/drivers/mxc/security/Kconfig
+--- linux-2.6.19.2.orig/drivers/mxc/security/Kconfig	2007-04-25 17:38:41.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/Kconfig	2007-04-25 17:38:48.000000000 -0600
+@@ -7,6 +7,12 @@ config MXC_SECURITY_SCC
+ 	---help---
+ 	  This module contains the core API's for accessing the SCC module.
+ 	  If you are unsure about this, say N here.
++config SCC_DEBUG
++        bool "MXC SCC Module debugging"
++        depends on MXC_SECURITY_SCC
++        ---help---
++        This is an option for use by developers; most people should
++        say N here.  This enables HAC module debugging.
+ 
+ config MXC_SECURITY_RNG
+ 	tristate "MXC RNG Driver"
+@@ -27,6 +33,14 @@ config MXC_RNG_TEST_DRIVER
+ 	  into the RNG device registers. Enable this, only for development and
+ 	  testing purposes.
+ 
++config MXC_RNG_DEBUG
++        bool "MXC RNG Module Dubugging"
++        depends on MXC_SECURITY_RNG
++        default n
++        ---help---
++         This is an option for use by developers; most people should
++         say N here. This enables RNG module debugging.
++
+ config MXC_SECURITY_RTIC
+ 	tristate "MXC RTIC Driver"
+ 	depends on ARCH_MXC
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/Makefile linux-2.6.19.2/drivers/mxc/security/Makefile
+--- linux-2.6.19.2.orig/drivers/mxc/security/Makefile	2007-04-25 17:38:41.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/Makefile	2007-04-25 17:38:48.000000000 -0600
+@@ -1,4 +1,17 @@
+ # Makefile for the Linux MXC Security API
++ifeq ($( SCC_DEBUG),y)
++EXTRA_CFLAGS += -DDEBUG
++endif
++ifeq ($(MXC_HAC_TEST_DEBUG),y)
++EXTRA_CFLAGS += -DDEBUG
++endif
++ifeq ($(MXC_RTIC_TEST_DEBUG),y)
++EXTRA_CFLAGS += -DDEBUG
++endif
++
++
++
++
+ obj-$(CONFIG_MXC_SECURITY_SCC) += mxc_scc.o
+ obj-$(CONFIG_MXC_SECURITY_RTIC) += mxc_rtic.o
+ obj-$(CONFIG_MXC_SECURITY_HAC) += mxc_hacc.o
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.c linux-2.6.19.2/drivers/mxc/security/mxc_hacc.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_hacc.c	2007-04-25 17:38:48.000000000 -0600
+@@ -69,18 +69,18 @@ hac_ret hac_hash_data(ulong start_addres
+ 	hac_blk_cnt = __raw_readl(HAC_BLK_CNT);
+ 	hac_ctl = __raw_readl(HAC_CTL);
+ 	if (hac_suspend_state == 1) {
+-		printk("HAC Module: HAC Module is in suspend mode.\n");
++		pr_debug("HAC Module: HAC Module is in suspend mode.\n");
+ 		return -EPERM;
+ 	}
+-	HAC_DEBUG("Function %s. HAC Module: Start address: 0x%08lX, "
+-		  "block length: 0x%08lX, hash option: 0x%08X\n",
+-		  __FUNCTION__, start_address, blk_len, option);
++	pr_debug("Function %s. HAC Module: Start address: 0x%08lX, "
++		 "block length: 0x%08lX, hash option: 0x%08X\n",
++		 __FUNCTION__, start_address, blk_len, option);
+ 	/* Validating the parameters. Checking for start address to be in
+ 	   512 bit boundary(64 byte) and block count value must not to be
+ 	   zero. */
+ 	if ((!start_address) || (blk_len > HAC_MAX_BLOCK_LENGTH) ||
+ 	    (blk_len == 0) || (!((start_address % 64) == 0))) {
+-		HAC_DEBUG("HAC Module: Invalid parameters passed. \n");
++		pr_debug("HAC Module: Invalid parameters passed. \n");
+ 		return HAC_FAILURE;
+ 	}
+ 	if ((hac_ctl & HAC_CTL_BUSY) == 0) {
+@@ -88,12 +88,12 @@ hac_ret hac_hash_data(ulong start_addres
+ 		__raw_writel(hac_start, HAC_START_ADDR);
+ 		hac_blk_cnt = blk_len;
+ 		__raw_writel(hac_blk_cnt, HAC_BLK_CNT);
+-		HAC_DEBUG("HAC Module: Hashing start address 0x%08lX\n ",
+-			  start_address);
+-		HAC_DEBUG("HAC Module: Hashing blk length 0x%08lX\n ", blk_len);
++		pr_debug("HAC Module: Hashing start address 0x%08lX\n ",
++			 start_address);
++		pr_debug("HAC Module: Hashing blk length 0x%08lX\n ", blk_len);
+ 	} else {
+-		HAC_DEBUG("HAC Module: HAC module is busy in Hashing "
+-			  "process.\n");
++		pr_debug("HAC Module: HAC module is busy in Hashing "
++			 "process.\n");
+ 		return HAC_HASH_BUSY;
+ 	}
+ 
+@@ -107,11 +107,11 @@ hac_ret hac_hash_data(ulong start_addres
+ 		 * HAC Control register. If 'DONE' bit and  'ERROR' bit are
+ 		 * set, they are cleared.
+ 		 */
+-		HAC_DEBUG("HAC Module: Starts the hashing process \n");
++		pr_debug("HAC Module: Starts the hashing process \n");
+ 		/* Checking if the Stop bit is been set. */
+ 		if ((hac_ctl & HAC_CTL_STOP) == HAC_CTL_STOP) {
+-			HAC_DEBUG("HAC Module: STOP bit is set while"
+-				  "starting the Hashing\n");
++			pr_debug("HAC Module: STOP bit is set while"
++				 "starting the Hashing\n");
+ 			hac_ctl &= ~HAC_CTL_STOP;
+ 			__raw_writel(hac_ctl, HAC_CTL);
+ 		}
+@@ -119,8 +119,8 @@ hac_ret hac_hash_data(ulong start_addres
+ 		   If they are set write to clear those bits */
+ 		if (((hac_ctl & HAC_CTL_DONE) == HAC_CTL_DONE) ||
+ 		    ((hac_ctl & HAC_CTL_ERROR) == HAC_CTL_ERROR)) {
+-			HAC_DEBUG("HAC Module: DONE and ERROR bit is set"
+-				  "while starting the Hashing\n");
++			pr_debug("HAC Module: DONE and ERROR bit is set"
++				 "while starting the Hashing\n");
+ 			hac_ctl |= HAC_CTL_DONE;
+ 			__raw_writel(hac_ctl, HAC_CTL);
+ 			hac_ctl |= HAC_CTL_ERROR;
+@@ -142,12 +142,12 @@ hac_ret hac_hash_data(ulong start_addres
+ 		 * HAC Control register. If 'DONE' bit and  'ERROR' bit are
+ 		 * set, they are cleared.
+ 		 */
+-		HAC_DEBUG("HAC Module: Starts with last block"
+-			  "the hashing process \n");
++		pr_debug("HAC Module: Starts with last block"
++			 "the hashing process \n");
+ 		/* Checking if the Stop bit is been set. */
+ 		if ((hac_ctl & HAC_CTL_STOP) == HAC_CTL_STOP) {
+-			HAC_DEBUG("HAC Module: STOP bit is set while"
+-				  "starting the Hashing\n");
++			pr_debug("HAC Module: STOP bit is set while"
++				 "starting the Hashing\n");
+ 			hac_ctl &= ~HAC_CTL_STOP;
+ 			__raw_writel(hac_ctl, HAC_CTL);
+ 		}
+@@ -155,8 +155,8 @@ hac_ret hac_hash_data(ulong start_addres
+ 		   If they are set write to clear those bits */
+ 		if (((hac_ctl & HAC_CTL_DONE) == HAC_CTL_DONE) ||
+ 		    ((hac_ctl & HAC_CTL_ERROR) == HAC_CTL_ERROR)) {
+-			HAC_DEBUG(" HAC Module: DONE and ERROR bit is set"
+-				  "while  starting the Hashing\n");
++			pr_debug(" HAC Module: DONE and ERROR bit is set"
++				 "while  starting the Hashing\n");
+ 			hac_ctl |= HAC_CTL_DONE;
+ 			__raw_writel(hac_ctl, HAC_CTL);
+ 			hac_ctl |= HAC_CTL_ERROR;
+@@ -165,8 +165,8 @@ hac_ret hac_hash_data(ulong start_addres
+ 		hac_ctl |= HAC_CTL_START;
+ 		__raw_writel(hac_ctl, HAC_CTL);
+ 		/* Hash for the last block by padding it. */
+-		HAC_DEBUG("HAC Module: Setting the PAD bit while start"
+-			  "Hashing the last block\n");
++		pr_debug("HAC Module: Setting the PAD bit while start"
++			 "Hashing the last block\n");
+ 		hac_ctl |= HAC_CTL_PAD;
+ 		__raw_writel(hac_ctl, HAC_CTL);
+ 		break;
+@@ -184,7 +184,7 @@ hac_ret hac_hash_data(ulong start_addres
+ 		 * register. If 'ERROR' bit is set, then error message is
+ 		 * indicated to the user.
+ 		 */
+-		HAC_DEBUG("HAC Module: Continue hashing process. \n");
++		pr_debug("HAC Module: Continue hashing process. \n");
+ 		/* Checking if the Stop bit is been set. */
+ 		if ((hac_ctl & HAC_CTL_STOP) == HAC_CTL_STOP) {
+ 			hac_ctl &= ~HAC_CTL_STOP;
+@@ -221,7 +221,7 @@ hac_ret hac_hash_data(ulong start_addres
+ 		 * register. If 'ERROR' bit is set, then error message is
+ 		 * indicated to the user.
+ 		 */
+-		HAC_DEBUG("HAC Module: Last block to hash. \n");
++		pr_debug("HAC Module: Last block to hash. \n");
+ 		/* Checking if the Stop bit is been set. */
+ 		if ((hac_ctl & HAC_CTL_STOP) == HAC_CTL_STOP) {
+ 			hac_ctl &= ~HAC_CTL_STOP;
+@@ -269,15 +269,15 @@ hac_hash_status hac_hashing_status(void)
+ 	ulong hac_ctl;
+ 	hac_ctl = __raw_readl(HAC_CTL);
+ 	if ((hac_ctl & HAC_CTL_BUSY) != 0) {
+-		HAC_DEBUG("HAC Module: Hash module is in busy state \n");
++		pr_debug("HAC Module: Hash module is in busy state \n");
+ 		return HAC_BUSY;
+ 	} else if ((hac_ctl & HAC_CTL_DONE) != 0) {
+ 		/* Clearing the done bit of the control register */
+-		HAC_DEBUG("HAC Module: Hashing of data is done \n");
++		pr_debug("HAC Module: Hashing of data is done \n");
+ 		return HAC_DONE;
+ 	} else if ((hac_ctl & HAC_CTL_ERROR) != 0) {
+ 		/* Clearing the error bit of the control register */
+-		HAC_DEBUG("HAC Module: Error has occurred during hashing \n");
++		pr_debug("HAC Module: Error has occurred during hashing \n");
+ 		return HAC_ERR;
+ 	} else {
+ 		return HAC_UNKNOWN;
+@@ -292,8 +292,8 @@ hac_hash_status hac_hashing_status(void)
+ ulong hac_get_status(void)
+ {
+ 	ulong hac_ctl = __raw_readl(HAC_CTL);
+-	HAC_DEBUG("HAC Module: Hashing status register value 0x%08lX\n ",
+-		  hac_ctl);
++	pr_debug("HAC Module: Hashing status register value 0x%08lX\n ",
++		 hac_ctl);
+ 	return hac_ctl;
+ }
+ 
+@@ -305,10 +305,10 @@ hac_ret hac_stop(void)
+ 	ulong hac_ctl;
+ 	hac_ctl = __raw_readl(HAC_CTL);
+ 	if (hac_suspend_state == 1) {
+-		HAC_DEBUG("HAC Module: HAC Module is in suspend mode.\n");
++		pr_debug("HAC Module: HAC Module is in suspend mode.\n");
+ 		return HAC_FAILURE;
+ 	}
+-	HAC_DEBUG("HAC Module: Stop hashing process. \n");
++	pr_debug("HAC Module: Stop hashing process. \n");
+ 	hac_ctl |= HAC_CTL_STOP;
+ 	__raw_writel(hac_ctl, HAC_CTL);
+ 	return HAC_SUCCESS;
+@@ -330,10 +330,10 @@ hac_ret hac_hash_result(hac_hash_rlt * h
+ 	hac_hsh1 = __raw_readl(HAC_HSH1);
+ 	hac_hsh0 = __raw_readl(HAC_HSH0);
+ 	if (hac_suspend_state == 1) {
+-		printk("HAC Module: HAC Module is in suspend mode.\n");
++		pr_debug("HAC Module: HAC Module is in suspend mode.\n");
+ 		return HAC_FAILURE;
+ 	}
+-	HAC_DEBUG("HAC Module: Read hash result \n");
++	pr_debug("HAC Module: Read hash result \n");
+ 	hash_result_reg->hash_result[0] = hac_hsh4;
+ 	hash_result_reg->hash_result[1] = hac_hsh3;
+ 	hash_result_reg->hash_result[2] = hac_hsh2;
+@@ -355,9 +355,9 @@ hac_ret hac_swrst(void)
+ 	ulong hac_ctl;
+ 	ulong hac_ret = HAC_SUCCESS;
+ 	hac_ctl = __raw_readl(HAC_CTL);
+-	HAC_DEBUG("HAC Module: HAC Software reset function. \n");
++	pr_debug("HAC Module: HAC Software reset function. \n");
+ 	if (hac_suspend_state == 1) {
+-		printk("HAC MODULE: HAC Module is in suspend mode.\n");
++		pr_debug("HAC MODULE: HAC Module is in suspend mode.\n");
+ 		return HAC_FAILURE;
+ 	}
+ 	hac_ctl |= HAC_CTL_SWRST;
+@@ -380,9 +380,9 @@ hac_ret hac_burst_mode(hac_burst_mode_co
+ 	ulong hac_ctl;
+ 	ulong hac_ret = HAC_SUCCESS;
+ 	hac_ctl = __raw_readl(HAC_CTL);
+-	HAC_DEBUG("HAC Module: HAC Burst Mode function. \n");
++	pr_debug("HAC Module: HAC Burst Mode function. \n");
+ 	if (hac_suspend_state == 1) {
+-		printk("HAC MODULE: HAC Module is in suspend mode.\n");
++		pr_debug("HAC MODULE: HAC Module is in suspend mode.\n");
+ 		return HAC_FAILURE;
+ 	}
+ 	switch (burst_mode) {
+@@ -414,9 +414,9 @@ hac_ret hac_burst_read(hac_burst_read_co
+ 	ulong hac_ctl;
+ 	ulong hac_ret = HAC_SUCCESS;
+ 	hac_ctl = __raw_readl(HAC_CTL);
+-	HAC_DEBUG("HAC Module: HAC Burst Read function. \n");
++	pr_debug("HAC Module: HAC Burst Read function. \n");
+ 	if (hac_suspend_state == 1) {
+-		printk("HAC MODULE: HAC Module is in suspend mode.\n");
++		pr_debug("HAC MODULE: HAC Module is in suspend mode.\n");
+ 		return HAC_FAILURE;
+ 	}
+ 	switch (burst_read) {
+@@ -468,7 +468,7 @@ hac_ret hac_suspend(struct platform_devi
+ 
+ 	hac_suspend_state = 1;
+ 
+-	printk("HAC Module: In suspend power down.\n");
++	pr_debug("HAC Module: In suspend power down.\n");
+ 
+ 	/* Enable stop bits in HAC Control Register. */
+ 	hac_ctl |= HAC_CTL_STOP;
+@@ -493,7 +493,7 @@ hac_ret hac_resume(struct platform_devic
+ 
+ 	hac_ctl = __raw_readl(HAC_CTL);
+ 
+-	printk("HAC Module: Resume power on.\n");
++	pr_debug("HAC Module: Resume power on.\n");
+ 	/* Disable stop bit in HAC Control register. */
+ 	hac_ctl &= ~HAC_CTL_STOP;
+ 	__raw_writel(hac_ctl, HAC_CTL);
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.h linux-2.6.19.2/drivers/mxc/security/mxc_hacc.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_hacc.h	2007-04-25 17:38:48.000000000 -0600
+@@ -27,12 +27,6 @@
+ #include <asm/hardware.h>
+ #include <asm/errno.h>
+ 
+-#ifdef CONFIG_MXC_HAC_TEST_DEBUG
+-#define HAC_DEBUG(fmt, args...) printk(fmt,## args)
+-#else
+-#define HAC_DEBUG(fmt, args...)
+-#endif				/* CONFIG_MXC_HAC_TEST_DEBUG */
+-
+ /*
+  * HAC Control register
+  */
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_rtic.c linux-2.6.19.2/drivers/mxc/security/mxc_rtic.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_rtic.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_rtic.c	2007-04-25 17:38:48.000000000 -0600
+@@ -78,15 +78,15 @@ rtic_ret rtic_configure_mode(rtic_mode m
+ 	 */
+ 	/* Check for RTIC Busy bit before writing into RTIC Registers. */
+ 	if ((rtic_sts & RTIC_BUSY) != 0) {
+-		RTIC_DEBUG("RTIC Module: RTIC is in BUSY in Hashing\n");
++		pr_debug("RTIC Module: RTIC is in BUSY in Hashing\n");
+ 		return RTIC_FAILURE;
+ 	}
+ 	switch (mode) {
+ 	case RTIC_ONE_TIME:
+ 		switch (mem_blk) {
+ 		case RTIC_A1:
+-			RTIC_DEBUG("RTIC Module:Memory Block A is enabled for"
+-				   "One-Time Hashing.\n");
++			pr_debug("RTIC Module:Memory Block A is enabled for"
++				 "One-Time Hashing.\n");
+ 			rtic_ctrl &= ~HASH_ONCE_MEM_CLR;
+ 			rtic_ctrl |= RTIC_CTL_HASHONCE_MEMA_BLK_EN;
+ 			__raw_writel(rtic_ctrl, RTIC_CONTROL);
+@@ -95,8 +95,8 @@ rtic_ret rtic_configure_mode(rtic_mode m
+ 		case RTIC_B1:
+ 			if ((rtic_ctrl & RTIC_CTL_HASHONCE_MEMA_BLK_EN) ==
+ 			    RTIC_CTL_HASHONCE_MEMA_BLK_EN) {
+-				RTIC_DEBUG("RTIC Module:Memory Block B is "
+-					   "enabled for One_Time Hashing.\n");
++				pr_debug("RTIC Module:Memory Block B is "
++					 "enabled for One_Time Hashing.\n");
+ 				rtic_ctrl &= ~HASH_ONCE_MEM_CLR;
+ 				rtic_ctrl |= RTIC_CTL_HASHONCE_MEMB_BLK_EN |
+ 				    RTIC_CTL_HASHONCE_MEMA_BLK_EN;
+@@ -107,8 +107,8 @@ rtic_ret rtic_configure_mode(rtic_mode m
+ 		case RTIC_C1:
+ 			if ((rtic_ctrl & RTIC_CTL_HASHONCE_MEMB_BLK_EN) ==
+ 			    RTIC_CTL_HASHONCE_MEMB_BLK_EN) {
+-				RTIC_DEBUG("RTIC Module:Memory Block C is "
+-					   "enabled for One_Time Hashing.\n");
++				pr_debug("RTIC Module:Memory Block C is "
++					 "enabled for One_Time Hashing.\n");
+ 				rtic_ctrl &= ~HASH_ONCE_MEM_CLR;
+ 				rtic_ctrl |= RTIC_CTL_HASHONCE_MEMC_BLK_EN |
+ 				    RTIC_CTL_HASHONCE_MEMA_BLK_EN |
+@@ -120,8 +120,8 @@ rtic_ret rtic_configure_mode(rtic_mode m
+ 		case RTIC_D1:
+ 			if ((rtic_ctrl & RTIC_CTL_HASHONCE_MEMC_BLK_EN) ==
+ 			    RTIC_CTL_HASHONCE_MEMC_BLK_EN) {
+-				RTIC_DEBUG("RTIC Module:Memory Block D is "
+-					   "enabled for One_Time Hashing.\n");
++				pr_debug("RTIC Module:Memory Block D is "
++					 "enabled for One_Time Hashing.\n");
+ 				rtic_ctrl &= ~HASH_ONCE_MEM_CLR;
+ 				rtic_ctrl |= RTIC_CTL_HASHONCE_MEMD_BLK_EN |
+ 				    RTIC_CTL_HASHONCE_MEMA_BLK_EN |
+@@ -149,8 +149,8 @@ rtic_ret rtic_configure_mode(rtic_mode m
+ #endif				/* CONFIG_ARCH_MX27 */
+ 		switch (mem_blk) {
+ 		case RTIC_A1:
+-			RTIC_DEBUG("RTIC Module:Memory Block A is enabled for"
+-				   "Run_Time Hashing.\n");
++			pr_debug("RTIC Module:Memory Block A is enabled for"
++				 "Run_Time Hashing.\n");
+ 			rtic_ctrl &= ~RUN_TIME_MEM_CLR;
+ 			rtic_ctrl |= RTIC_CTL_RUNTIME_MEMA_BLK_EN;
+ 			__raw_writel(rtic_ctrl, RTIC_CONTROL);
+@@ -159,8 +159,8 @@ rtic_ret rtic_configure_mode(rtic_mode m
+ 		case RTIC_B1:
+ 			if ((rtic_ctrl & RTIC_CTL_RUNTIME_MEMA_BLK_EN) ==
+ 			    RTIC_CTL_RUNTIME_MEMA_BLK_EN) {
+-				RTIC_DEBUG("RTIC Module:Memory Block B is "
+-					   "enabled for Run_Time Hashing.\n");
++				pr_debug("RTIC Module:Memory Block B is "
++					 "enabled for Run_Time Hashing.\n");
+ 				rtic_ctrl &= ~RUN_TIME_MEM_CLR;
+ 				rtic_ctrl |= RTIC_CTL_RUNTIME_MEMB_BLK_EN |
+ 				    RTIC_CTL_RUNTIME_MEMA_BLK_EN;
+@@ -171,8 +171,8 @@ rtic_ret rtic_configure_mode(rtic_mode m
+ 		case RTIC_C1:
+ 			if ((rtic_ctrl & RTIC_CTL_RUNTIME_MEMB_BLK_EN) ==
+ 			    RTIC_CTL_RUNTIME_MEMB_BLK_EN) {
+-				RTIC_DEBUG("RTIC Module:Memory Block C is "
+-					   "enabled for Run_Time Hashing.\n");
++				pr_debug("RTIC Module:Memory Block C is "
++					 "enabled for Run_Time Hashing.\n");
+ 				rtic_ctrl &= ~RUN_TIME_MEM_CLR;
+ 				rtic_ctrl |= RTIC_CTL_RUNTIME_MEMC_BLK_EN |
+ 				    RTIC_CTL_RUNTIME_MEMA_BLK_EN |
+@@ -184,8 +184,8 @@ rtic_ret rtic_configure_mode(rtic_mode m
+ 		case RTIC_D1:
+ 			if ((rtic_ctrl & RTIC_CTL_RUNTIME_MEMC_BLK_EN) ==
+ 			    RTIC_CTL_RUNTIME_MEMC_BLK_EN) {
+-				RTIC_DEBUG("RTIC Module:Memory Block D is "
+-					   "enabled for Run_Time Hashing.\n");
++				pr_debug("RTIC Module:Memory Block D is "
++					 "enabled for Run_Time Hashing.\n");
+ 				rtic_ctrl &= ~RUN_TIME_MEM_CLR;
+ 				rtic_ctrl |= RTIC_CTL_RUNTIME_MEMD_BLK_EN |
+ 				    RTIC_CTL_RUNTIME_MEMA_BLK_EN |
+@@ -242,79 +242,79 @@ rtic_ret rtic_configure_mem_blk(ulong st
+ 	}
+ 	/* Check for RTIC Busy bit before writing into RTIC Registers. */
+ 	if ((rtic_sts & RTIC_BUSY) != 0) {
+-		RTIC_DEBUG("RTIC Module: RTIC is in BUSY in Hashing\n");
++		pr_debug("RTIC Module: RTIC is in BUSY in Hashing\n");
+ 		return RTIC_FAILURE;
+ 	}
+ 	switch (mem_blk) {
+ 	case RTIC_A1:
+-		RTIC_DEBUG("RTIC Module: Mem Block A1 start address "
+-			   "0x%08lX\n", start_addr);
++		pr_debug("RTIC Module: Mem Block A1 start address "
++			 "0x%08lX\n", start_addr);
+ 		__raw_writel(start_addr, RTIC_MEMAADDR1);
+-		RTIC_DEBUG("RTIC Module: Mem Block A1 block len "
+-			   "0x%08lX\n", blk_len);
++		pr_debug("RTIC Module: Mem Block A1 block len "
++			 "0x%08lX\n", blk_len);
+ 		__raw_writel(blk_len, RTIC_MEMALEN1);
+ 		break;
+ 
+ 	case RTIC_A2:
+-		RTIC_DEBUG("RTIC Module: Mem Block A2 start address"
+-			   "0x%08lX\n", start_addr);
++		pr_debug("RTIC Module: Mem Block A2 start address"
++			 "0x%08lX\n", start_addr);
+ 		__raw_writel(start_addr, RTIC_MEMAADDR2);
+-		RTIC_DEBUG("RTIC Module: Mem Block A2 block len "
+-			   "0x%08lX\n", blk_len);
++		pr_debug("RTIC Module: Mem Block A2 block len "
++			 "0x%08lX\n", blk_len);
+ 		__raw_writel(blk_len, RTIC_MEMALEN2);
+ 		break;
+ 
+ 	case RTIC_B1:
+-		RTIC_DEBUG("RTIC Module: Mem Block B1 start address "
+-			   "0x%08lX\n", start_addr);
++		pr_debug("RTIC Module: Mem Block B1 start address "
++			 "0x%08lX\n", start_addr);
+ 		__raw_writel(start_addr, RTIC_MEMBADDR1);
+-		RTIC_DEBUG("RTIC Module: Mem Block B1 block len "
+-			   "0x%08lX\n", blk_len);
++		pr_debug("RTIC Module: Mem Block B1 block len "
++			 "0x%08lX\n", blk_len);
+ 		__raw_writel(blk_len, RTIC_MEMBLEN1);
+ 		break;
+ 
+ 	case RTIC_B2:
+-		RTIC_DEBUG("RTIC Module: Mem Block B2 start address "
+-			   "0x%08lX\n", start_addr);
++		pr_debug("RTIC Module: Mem Block B2 start address "
++			 "0x%08lX\n", start_addr);
+ 		__raw_writel(start_addr, RTIC_MEMBADDR2);
+-		RTIC_DEBUG("RTIC Module: Mem Block B2 block len "
+-			   "0x%08lX\n", blk_len);
++		pr_debug("RTIC Module: Mem Block B2 block len "
++			 "0x%08lX\n", blk_len);
+ 		__raw_writel(blk_len, RTIC_MEMBLEN2);
+ 		break;
+ 
+ 	case RTIC_C1:
+-		RTIC_DEBUG("RTIC Module: Mem Block C1 start address "
+-			   "0x%08lX\n", start_addr);
++		pr_debug("RTIC Module: Mem Block C1 start address "
++			 "0x%08lX\n", start_addr);
+ 		__raw_writel(start_addr, RTIC_MEMCADDR1);
+-		RTIC_DEBUG("RTIC Module: Mem Block C1 block len "
+-			   "0x%08lX\n", blk_len);
++		pr_debug("RTIC Module: Mem Block C1 block len "
++			 "0x%08lX\n", blk_len);
+ 		__raw_writel(blk_len, RTIC_MEMCLEN1);
+ 		break;
+ 
+ 	case RTIC_C2:
+-		RTIC_DEBUG("RTIC Module: Mem Block C2 start address "
+-			   "0x%08lX\n", start_addr);
++		pr_debug("RTIC Module: Mem Block C2 start address "
++			 "0x%08lX\n", start_addr);
+ 		__raw_writel(start_addr, RTIC_MEMCADDR2);
+-		RTIC_DEBUG("RTIC Module: Mem Block C2 block len "
+-			   "0x%08lX\n", blk_len);
++		pr_debug("RTIC Module: Mem Block C2 block len "
++			 "0x%08lX\n", blk_len);
+ 		__raw_writel(blk_len, RTIC_MEMCLEN2);
+ 		break;
+ 
+ 	case RTIC_D1:
+-		RTIC_DEBUG("RTIC Module: Mem Block D1 start address "
+-			   "0x%08lX\n", start_addr);
++		pr_debug("RTIC Module: Mem Block D1 start address "
++			 "0x%08lX\n", start_addr);
+ 		__raw_writel(start_addr, RTIC_MEMDADDR1);
+-		RTIC_DEBUG("RTIC Module: Mem Block D1 block len "
+-			   "0x%08lX\n", blk_len);
++		pr_debug("RTIC Module: Mem Block D1 block len "
++			 "0x%08lX\n", blk_len);
+ 		__raw_writel(blk_len, RTIC_MEMDLEN1);
+ 		break;
+ 
+ 	case RTIC_D2:
+-		RTIC_DEBUG("RTIC Module: Mem Block D2 start address "
+-			   "0x%08lX\n", start_addr);
++		pr_debug("RTIC Module: Mem Block D2 start address "
++			 "0x%08lX\n", start_addr);
+ 		__raw_writel(start_addr, RTIC_MEMDADDR2);
+-		RTIC_DEBUG("RTIC Module: Mem Block D2 block len "
+-			   "0x%08lX\n", blk_len);
++		pr_debug("RTIC Module: Mem Block D2 block len "
++			 "0x%08lX\n", blk_len);
+ 		__raw_writel(blk_len, RTIC_MEMDLEN2);
+ 		break;
+ 
+@@ -343,21 +343,21 @@ rtic_ret rtic_start_hash(rtic_mode mode)
+ 	rtic_sts = __raw_readl(RTIC_STATUS);
+ 	/* Check for RTIC Busy bit before writing into RTIC Registers. */
+ 	if ((rtic_sts & RTIC_BUSY) != 0) {
+-		RTIC_DEBUG("RTIC Module: RTIC is in BUSY in Hashing\n");
++		pr_debug("RTIC Module: RTIC is in BUSY in Hashing\n");
+ 		return RTIC_FAILURE;
+ 	}
+ 
+ 	switch (mode) {
+ 	case RTIC_ONE_TIME:
+-		RTIC_DEBUG("RTIC Module: Starts the One_time hashing"
+-			   "process \n");
++		pr_debug("RTIC Module: Starts the One_time hashing"
++			 "process \n");
+ 		rtic_cmd |= RTIC_CMD_HASH_ONCE;
+ 		__raw_writel(rtic_cmd, RTIC_COMMAND);
+ 		break;
+ 
+ 	case RTIC_RUN_TIME:
+-		RTIC_DEBUG("RTIC Module: Starts the Run_time hashing"
+-			   "process \n");
++		pr_debug("RTIC Module: Starts the Run_time hashing"
++			 "process \n");
+ #ifndef CONFIG_ARCH_MX27
+ 		/* Check RUN Time Disable bit before starting RUN Time
+ 		   Hashing. */
+@@ -387,8 +387,8 @@ ulong rtic_get_status(void)
+ 	ulong rtic_sts;
+ 	/* Read for RTIC Registers value. */
+ 	rtic_sts = __raw_readl(RTIC_STATUS);
+-	RTIC_DEBUG("RTIC  Module: Hashing status register value 0x%08lX\n ",
+-		   rtic_sts);
++	pr_debug("RTIC  Module: Hashing status register value 0x%08lX\n ",
++		 rtic_sts);
+ 	return rtic_sts;
+ }
+ 
+@@ -402,8 +402,8 @@ ulong rtic_get_control(void)
+ 	ulong rtic_ctrl;
+ 	/* Read for RTIC Registers value. */
+ 	rtic_ctrl = __raw_readl(RTIC_CONTROL);
+-	RTIC_DEBUG("RTIC  Module: Hashing control register value 0x%08lX\n ",
+-		   rtic_ctrl);
++	pr_debug("RTIC  Module: Hashing control register value 0x%08lX\n ",
++		 rtic_ctrl);
+ 	return rtic_ctrl;
+ }
+ 
+@@ -424,12 +424,12 @@ rtic_ret rtic_configure_interrupt(rtic_i
+ 	rtic_sts = __raw_readl(RTIC_STATUS);
+ 	/* Check for RTIC Busy bit before writing into RTIC Registers. */
+ 	if ((rtic_sts & RTIC_BUSY) != 0) {
+-		RTIC_DEBUG("RTIC Module: RTIC is in BUSY in Hashing\n");
++		pr_debug("RTIC Module: RTIC is in BUSY in Hashing\n");
+ 		return RTIC_FAILURE;
+ 	}
+ 	switch (irq_en) {
+ 	case RTIC_INTERRUPT_ENABLE:
+-		RTIC_DEBUG("RTIC Module: RTIC Interrupt enabled.\n");
++		pr_debug("RTIC Module: RTIC Interrupt enabled.\n");
+ 		/* If in interrupt mode then, set the irq enable bit in
+ 		   the RTIC control register */
+ 		rtic_ctrl |= RTIC_CTL_IRQ_EN;
+@@ -437,7 +437,7 @@ rtic_ret rtic_configure_interrupt(rtic_i
+ 		break;
+ 
+ 	case RTIC_INTERRUPT_DISABLE:
+-		RTIC_DEBUG("RTIC  Module: RTIC Interrupt Disabled.\n");
++		pr_debug("RTIC  Module: RTIC Interrupt Disabled.\n");
+ 		/* If in polling mode, then disable the irq enable bit in
+ 		   the RTIC Control register */
+ 		rtic_ctrl &= ~RTIC_CTL_IRQ_EN;
+@@ -461,8 +461,8 @@ ulong rtic_get_faultaddress(void)
+ 	ulong rtic_faultaddr;
+ 	/* Read for RTIC Registers value. */
+ 	rtic_faultaddr = __raw_readl(RTIC_FAULTADDR);
+-	RTIC_DEBUG("RTIC  Module: Hashing fault register value 0x%08lX\n ",
+-		   rtic_faultaddr);
++	pr_debug("RTIC  Module: Hashing fault register value 0x%08lX\n ",
++		 rtic_faultaddr);
+ 	return rtic_faultaddr;
+ }
+ 
+@@ -492,8 +492,8 @@ rtic_hash_result(rtic_memblk mem_blk, rt
+ 		if ((rtic_sts & RTIC_DONE) == RTIC_DONE) {
+ 			switch (mem_blk) {
+ 			case RTIC_A1:
+-				RTIC_DEBUG("RTIC Module: Read mem blk A hash"
+-					   "result\n");
++				pr_debug("RTIC Module: Read mem blk A hash"
++					 "result\n");
+ 				hash_result_reg->hash_result[0] =
+ 				    __raw_readl(RTIC_MEMAHASHRES0);
+ 				hash_result_reg->hash_result[1] =
+@@ -507,8 +507,8 @@ rtic_hash_result(rtic_memblk mem_blk, rt
+ 				break;
+ 
+ 			case RTIC_B1:
+-				RTIC_DEBUG("RTIC Module: Read mem blk B hash"
+-					   "result\n");
++				pr_debug("RTIC Module: Read mem blk B hash"
++					 "result\n");
+ 				hash_result_reg->hash_result[0] =
+ 				    __raw_readl(RTIC_MEMBHASHRES0);
+ 				hash_result_reg->hash_result[1] =
+@@ -522,8 +522,8 @@ rtic_hash_result(rtic_memblk mem_blk, rt
+ 				break;
+ 
+ 			case RTIC_C1:
+-				RTIC_DEBUG("RTIC Module: Read mem blk C hash"
+-					   "result\n");
++				pr_debug("RTIC Module: Read mem blk C hash"
++					 "result\n");
+ 				hash_result_reg->hash_result[0] =
+ 				    __raw_readl(RTIC_MEMCHASHRES0);
+ 				hash_result_reg->hash_result[1] =
+@@ -537,8 +537,8 @@ rtic_hash_result(rtic_memblk mem_blk, rt
+ 				break;
+ 
+ 			case RTIC_D1:
+-				RTIC_DEBUG("RTIC Module: Read mem blk D hash"
+-					   "result\n");
++				pr_debug("RTIC Module: Read mem blk D hash"
++					 "result\n");
+ 				hash_result_reg->hash_result[0] =
+ 				    __raw_readl(RTIC_MEMDHASHRES0);
+ 				hash_result_reg->hash_result[1] =
+@@ -556,8 +556,8 @@ rtic_hash_result(rtic_memblk mem_blk, rt
+ 				break;
+ 			}
+ 		} else {
+-			printk("RTIC Module: Memory blocks are not hashed "
+-			       "for boot authentication.\n");
++			pr_debug("RTIC Module: Memory blocks are not hashed "
++				 "for boot authentication.\n");
+ 			ret_val = RTIC_FAILURE;
+ 		}
+ 		break;
+@@ -565,26 +565,26 @@ rtic_hash_result(rtic_memblk mem_blk, rt
+ 	case RTIC_RUN_TIME:
+ 		switch (mem_blk) {
+ 		case RTIC_A1:
+-			printk("RTIC Module: run-time check doesn't update"
+-			       "Hash result value.\n");
++			pr_debug("RTIC Module: run-time check doesn't update"
++				 "Hash result value.\n");
+ 			ret_val = RTIC_FAILURE;
+ 			break;
+ 
+ 		case RTIC_B1:
+-			printk("RTIC Module: run-time check doesn't update"
+-			       "Hash result value.\n");
++			pr_debug("RTIC Module: run-time check doesn't update"
++				 "Hash result value.\n");
+ 			ret_val = RTIC_FAILURE;
+ 			break;
+ 
+ 		case RTIC_C1:
+-			printk("RTIC Module: run-time check doesn't update"
+-			       "Hash result value.\n");
++			pr_debug("RTIC Module: run-time check doesn't update"
++				 "Hash result value.\n");
+ 			ret_val = RTIC_FAILURE;
+ 			break;
+ 
+ 		case RTIC_D1:
+-			printk("RTIC Module: run-time check doesn't update"
+-			       "Hash result value.\n");
++			pr_debug("RTIC Module: run-time check doesn't update"
++				 "Hash result value.\n");
+ 			ret_val = RTIC_FAILURE;
+ 			break;
+ 
+@@ -615,14 +615,14 @@ rtic_ret rtic_dma_burst_read(rtic_dma_wo
+ 	ulong rtic_ctrl;
+ 	ulong rtic_dma_delay, rtic_sts;
+ 	rtic_ret ret_val = RTIC_SUCCESS;
+-	RTIC_DEBUG("RTIC DMA burst read confirgured.\n");
++	pr_debug("RTIC DMA burst read confirgured.\n");
+ 	/* Read for RTIC Registers value. */
+ 	rtic_ctrl = __raw_readl(RTIC_CONTROL);
+ 	rtic_sts = __raw_readl(RTIC_STATUS);
+ 	rtic_dma_delay = __raw_readl(RTIC_DMA);
+ 	/* Check for RTIC Busy bit before writing into RTIC Registers. */
+ 	if ((rtic_sts & RTIC_BUSY) != 0) {
+-		RTIC_DEBUG("RTIC Module: RTIC is in BUSY in Hashing\n");
++		pr_debug("RTIC Module: RTIC is in BUSY in Hashing\n");
+ 		return RTIC_FAILURE;
+ 	}
+ 	switch (dma_burst) {
+@@ -676,7 +676,7 @@ rtic_ret rtic_hash_once_dma_throttle(voi
+ 	rtic_sts = __raw_readl(RTIC_STATUS);
+ 	/* Check for RTIC Busy bit before writing into RTIC Registers. */
+ 	if ((rtic_sts & RTIC_BUSY) != 0) {
+-		RTIC_DEBUG("RTIC Module: RTIC is in BUSY in Hashing\n");
++		pr_debug("RTIC Module: RTIC is in BUSY in Hashing\n");
+ 		return RTIC_FAILURE;
+ 	}
+ #if defined(CONFIG_ARCH_MX27)
+@@ -710,7 +710,7 @@ rtic_ret rtic_dma_delay(ulong dma_delay)
+ 	rtic_sts = __raw_readl(RTIC_STATUS);
+ 	/* Check for RTIC Busy bit before writing into RTIC Registers. */
+ 	if ((rtic_sts & RTIC_BUSY) != 0) {
+-		RTIC_DEBUG("RTIC Module: RTIC is in BUSY in Hashing\n");
++		pr_debug("RTIC Module: RTIC is in BUSY in Hashing\n");
+ 		return RTIC_FAILURE;
+ 	}
+ 	__raw_writel(dma_delay, RTIC_DMA);
+@@ -734,7 +734,7 @@ rtic_ret rtic_wd_timer(ulong wd_timer)
+ 	rtic_sts = __raw_readl(RTIC_STATUS);
+ 	/* Check for RTIC Busy bit before writing into RTIC Registers. */
+ 	if ((rtic_sts & RTIC_BUSY) != 0) {
+-		RTIC_DEBUG("RTIC Module: RTIC is in BUSY in Hashing\n");
++		pr_debug("RTIC Module: RTIC is in BUSY in Hashing\n");
+ 		return RTIC_FAILURE;
+ 	}
+ 	__raw_writel(wd_timer, RTIC_WDTIMER);
+@@ -758,18 +758,18 @@ rtic_ret rtic_sw_reset(rtic_sw_rst rtic_
+ 	rtic_sts = __raw_readl(RTIC_STATUS);
+ 	/* Check for RTIC Busy bit before writing into RTIC Registers. */
+ 	if ((rtic_sts & RTIC_BUSY) != 0) {
+-		RTIC_DEBUG("RTIC Module: RTIC is in BUSY in Hashing\n");
++		pr_debug("RTIC Module: RTIC is in BUSY in Hashing\n");
+ 		return RTIC_FAILURE;
+ 	}
+ 	switch (rtic_rst) {
+ 	case RTIC_RST_ENABLE:
+-		RTIC_DEBUG("RTIC Module: RTIC SW Reset enabled.\n");
++		pr_debug("RTIC Module: RTIC SW Reset enabled.\n");
+ 		rtic_cmd |= RTIC_CMD_SW_RESET;
+ 		__raw_writel(rtic_cmd, RTIC_COMMAND);
+ 		break;
+ 
+ 	case RTIC_RST_DISABLE:
+-		RTIC_DEBUG("RTIC  Module: RTIC SW Reset Disabled.\n");
++		pr_debug("RTIC  Module: RTIC SW Reset Disabled.\n");
+ 		rtic_cmd &= ~RTIC_CMD_SW_RESET;
+ 		__raw_writel(rtic_cmd, RTIC_COMMAND);
+ 		break;
+@@ -798,18 +798,18 @@ rtic_ret rtic_clr_irq(rtic_clear_irq rti
+ 	rtic_sts = __raw_readl(RTIC_STATUS);
+ 	/* Check for RTIC Busy bit before writing into RTIC Registers. */
+ 	if ((rtic_sts & RTIC_BUSY) != 0) {
+-		RTIC_DEBUG("RTIC Module: RTIC is in BUSY in Hashing\n");
++		pr_debug("RTIC Module: RTIC is in BUSY in Hashing\n");
+ 		return RTIC_FAILURE;
+ 	}
+ 	switch (rtic_irq_clr) {
+ 	case RTIC_CLR_IRQ_ENABLE:
+-		RTIC_DEBUG("RTIC Module: RTIC SW Reset enabled.\n");
++		pr_debug("RTIC Module: RTIC SW Reset enabled.\n");
+ 		rtic_cmd |= RTIC_CMD_CLRIRQ;
+ 		__raw_writel(rtic_cmd, RTIC_COMMAND);
+ 		break;
+ 
+ 	case RTIC_CLR_IRQ_DISABLE:
+-		RTIC_DEBUG("RTIC  Module: RTIC SW Reset Disabled.\n");
++		pr_debug("RTIC  Module: RTIC SW Reset Disabled.\n");
+ 		rtic_cmd &= ~RTIC_CMD_CLRIRQ;
+ 		__raw_writel(rtic_cmd, RTIC_COMMAND);
+ 		break;
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_rtic.h linux-2.6.19.2/drivers/mxc/security/mxc_rtic.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_rtic.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_rtic.h	2007-04-25 17:38:48.000000000 -0600
+@@ -27,12 +27,6 @@
+ #include <asm/arch/hardware.h>
+ #include <asm-generic/errno-base.h>
+ 
+-#ifdef CONFIG_MXC_RTIC_TEST_DEBUG
+-#define RTIC_DEBUG(fmt, args...) printk(fmt,## args)
+-#else
+-#define RTIC_DEBUG(fmt, args...)
+-#endif				/* CONFIG_MXC_RTIC_TEST_DEBUG */
+-
+ /*
+  * RTIC status register
+  */
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_scc.c linux-2.6.19.2/drivers/mxc/security/mxc_scc.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_scc.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_scc.c	2007-04-25 17:38:48.000000000 -0600
+@@ -165,13 +165,9 @@ static uint8_t scc_block_padding[8] =
+  */
+ static int mxc_scc_suspend(struct platform_device *pdev, pm_message_t state)
+ {
+-#ifdef SCC_DEBUG
+-	printk(" MXC SCC driver suspend function\n");
+-#endif
+-
++	pr_debug(" MXC SCC driver suspend function\n");
+ 	/* Turn off clock */
+ 	clk_disable(scc_clk);
+-
+ 	return 0;
+ }
+ 
+@@ -185,10 +181,7 @@ static int mxc_scc_suspend(struct platfo
+  */
+ static int mxc_scc_resume(struct platform_device *pdev)
+ {
+-#ifdef SCC_DEBUG
+-	printk("MXC SCC driver resume function\n");
+-#endif
+-
++	pr_debug("MXC SCC driver resume function\n");
+ 	/* Turn on clock */
+ 	clk_enable(scc_clk);
+ 
+@@ -239,12 +232,8 @@ static int scc_init(void)
+ 	int i;
+ 	int ret;
+ 	int return_value = -EIO;	/* assume error */
+-
+ 	/* Enable the SCC clocks  */
+-#ifdef SCC_DEBUG
+-	printk(KERN_ALERT "SCC: Enabling the SCC CLK ... \n");
+-
+-#endif				/* SCC_DEBUG */
++	pr_debug(KERN_ALERT "SCC: Enabling the SCC CLK ... \n");
+ 	scc_clk = clk_get(NULL, "scc_clk");
+ 	clk_enable(scc_clk);
+ 
+@@ -275,10 +264,8 @@ static int scc_init(void)
+ 
+ 		/* See whether there is an SCC available */
+ 		if (0 && !SCC_ENABLED()) {
+-#ifdef SCC_DEBUG
+-			printk
++			pr_debug
+ 			    ("SCC: Fuse for SCC is set to disabled.  Exiting.\n");
+-#endif
+ 		} else {
+ 			/* Map the SCC (SCM and SMN) memory on the internal bus into
+ 			   kernel address space */
+@@ -286,10 +273,8 @@ static int scc_init(void)
+ 
+ 			/* If that worked, we can try to use the SCC */
+ 			if (scc_base == NULL) {
+-#ifdef SCC_DEBUG
+-				printk
++				pr_debug
+ 				    ("SCC: Register mapping failed.  Exiting.\n");
+-#endif
+ 			} else {
+ 				/* Get SCM into 'clean' condition w/interrupts cleared &
+ 				   disabled */
+@@ -363,8 +348,7 @@ static int scc_init(void)
+ 		}
+ 	}
+ 	/* ! STATUS_INITIAL */
+-#ifdef SCC_DEBUG
+-	printk("SCC: Driver Status is %s\n",
++	pr_debug("SCC: Driver Status is %s\n",
+ 	       (scc_availability == SCC_STATUS_INITIAL) ? "INITIAL" :
+ 	       (scc_availability == SCC_STATUS_CHECKING) ? "CHECKING" :
+ 	       (scc_availability ==
+@@ -373,7 +357,6 @@ static int scc_init(void)
+ 							       SCC_STATUS_OK) ?
+ 	       "OK" : (scc_availability ==
+ 		       SCC_STATUS_FAILED) ? "FAILED" : "UNKNOWN");
+-#endif
+ 
+ 	return return_value;
+ }				/* scc_init */
+@@ -438,9 +421,7 @@ static void scc_cleanup(void)
+ 		free_irq(INT_SCC_SMN, NULL);
+ #endif
+ 	}
+-#ifdef SCC_DEBUG
+-	printk("SCC driver cleaned up.\n");
+-#endif
++	pr_debug("SCC driver cleaned up.\n");
+ 
+ }				/* scc_cleanup */
+ 
+@@ -499,13 +480,11 @@ scc_return_t scc_zeroize_memories(void)
+ 		if (!(status & SCM_ERR_ZEROIZE_FAILED)) {
+ 			return_status = SCC_RET_OK;
+ 		}
+-#ifdef SCC_DEBUG
+ 		else {
+-			printk
++			pr_debug
+ 			    ("SCC: Zeroize failed.  SCM Error Status is 0x%08x\n",
+ 			     status);
+ 		}
+-#endif
+ 
+ 		/* Clear out any status. */
+ 		SCC_WRITE_REGISTER(SCM_INTERRUPT_CTRL,
+@@ -550,9 +529,7 @@ scc_crypt(unsigned long count_in_bytes, 
+ 		count_in_bytes % SCC_BLOCK_SIZE_BYTES() != 0)
+ 	    || (check_mode != SCC_VERIFY_MODE_NONE &&
+ 		check_mode != SCC_VERIFY_MODE_CCITT_CRC)) {
+-#ifdef SCC_DEBUG
+-		printk("SCC: scc_crypt() detected bad argument\n");
+-#endif
++		pr_debug("SCC: scc_crypt() detected bad argument\n");
+ 	} else {
+ 		/* Start settings for write to SCM_CONTROL register  */
+ 		uint32_t scc_control = SCM_CONTROL_START_CIPHER;
+@@ -629,11 +606,9 @@ scc_crypt(unsigned long count_in_bytes, 
+ 				    (int)count_in_bytes - CRC_SIZE_BYTES -
+ 				    SCC_BLOCK_SIZE_BYTES();
+ 				if ((int)*count_out_bytes < possible_size) {
+-#ifdef SCC_DEBUG
+-					printk
++					pr_debug
+ 					    ("SCC: insufficient decrypt space %ld/%d.\n",
+ 					     *count_out_bytes, possible_size);
+-#endif
+ 					return_code =
+ 					    SCC_RET_INSUFFICIENT_SPACE;
+ 				}
+@@ -978,16 +953,12 @@ copy_to_scc(const uint8_t * from, uint32
+ 	uint16_t current_crc = 0;	/* local copy for fast access */
+ 	uint32_t status;
+ 
+-#ifdef SCC_DEBUG
+-	printk("SCC: copying %ld bytes to 0x%0x.\n", count_bytes, to);
+-#endif
++	pr_debug("SCC: copying %ld bytes to 0x%0x.\n", count_bytes, to);
+ 
+ 	status = SCC_READ_REGISTER(SCM_ERROR_STATUS) & SCM_ACCESS_ERRORS;
+ 	if (status != 0) {
+-#ifdef SCC_DEBUG
+-		printk("SCC copy_to_scc(): Error status detected (before copy):"
++		pr_debug("SCC copy_to_scc(): Error status detected (before copy):"
+ 		       " %08x\n", status);
+-#endif
+ 		/* clear out errors left behind by somebody else */
+ 		SCC_WRITE_REGISTER(SCM_ERROR_STATUS, status);
+ 	}
+@@ -1040,10 +1011,8 @@ copy_to_scc(const uint8_t * from, uint32
+ 
+ 	status = SCC_READ_REGISTER(SCM_ERROR_STATUS) & SCM_ACCESS_ERRORS;
+ 	if (status != 0) {
+-#ifdef SCC_DEBUG
+-		printk("SCC copy_to_scc(): Error status detected: %08x\n",
++		pr_debug("SCC copy_to_scc(): Error status detected: %08x\n",
+ 		       status);
+-#endif
+ 		/* Clear any/all bits. */
+ 		SCC_WRITE_REGISTER(SCM_ERROR_STATUS, status);
+ 	}
+@@ -1079,18 +1048,12 @@ copy_from_scc(const uint32_t from, uint8
+ 	uint32_t scm_word;
+ 	uint16_t current_crc = 0;	/* local copy for fast access */
+ 	uint32_t status;
+-
+-#ifdef SCC_DEBUG
+-	printk("SCC: copying %ld bytes from 0x%x.\n", count_bytes, from);
+-#endif
+-
++	pr_debug("SCC: copying %ld bytes from 0x%x.\n", count_bytes, from);
+ 	status = SCC_READ_REGISTER(SCM_ERROR_STATUS) & SCM_ACCESS_ERRORS;
+ 	if (status != 0) {
+-#ifdef SCC_DEBUG
+-		printk
++		pr_debug
+ 		    ("SCC copy_from_scc(): Error status detected (before copy):"
+ 		     " %08x\n", status);
+-#endif
+ 		/* clear out errors left behind by somebody else */
+ 		SCC_WRITE_REGISTER(SCM_ERROR_STATUS, status);
+ 	}
+@@ -1143,10 +1106,8 @@ copy_from_scc(const uint32_t from, uint8
+ 
+ 	status = SCC_READ_REGISTER(SCM_ERROR_STATUS) & SCM_ACCESS_ERRORS;
+ 	if (status != 0) {
+-#ifdef SCC_DEBUG
+-		printk("SCC copy_from_scc(): Error status detected: %08x\n",
++		pr_debug("SCC copy_from_scc(): Error status detected: %08x\n",
+ 		       status);
+-#endif
+ 		/* Clear any/all bits. */
+ 		SCC_WRITE_REGISTER(SCM_ERROR_STATUS, status);
+ 	}
+@@ -1186,10 +1147,8 @@ scc_strip_padding(uint8_t * from, unsign
+ 			return_code = SCC_RET_OK;
+ 			break;
+ 		} else if (*from != 0) {	/* if not marker, check for 0 */
+-#ifdef SCC_DEBUG
+-			printk("SCC: Found non-zero interim pad: 0x%x\n",
++			pr_debug("SCC: Found non-zero interim pad: 0x%x\n",
+ 			       *from);
+-#endif
+ 			break;
+ 		}
+ 	}
+@@ -1249,15 +1208,11 @@ static uint32_t scc_update_state(void)
+ 		} else if (smn_state == SMN_STATE_FAIL) {
+ 			scc_availability = SCC_STATUS_FAILED;	/* uh oh - unhealthy */
+ 			scc_perform_callbacks();
+-#ifdef SCC_DEBUG
+-			printk("SCC: SCC went into FAILED mode\n");
+-#endif
++			pr_debug("SCC: SCC went into FAILED mode\n");
+ 		} else {
+ 			/* START, ZEROIZE RAM, HEALTH CHECK, or unknown */
+ 			scc_availability = SCC_STATUS_UNIMPLEMENTED;	/* unuseable */
+-#ifdef SCC_DEBUG
+-			printk("SCC: SCC declared UNIMPLEMENTED\n");
+-#endif
++			pr_debug("SCC: SCC declared UNIMPLEMENTED\n");
+ 		}
+ 	}
+ 	/* if availability is initial or ok */
+@@ -1327,16 +1282,12 @@ static uint32_t scc_grab_config_values(v
+ 	if (scc_availability != SCC_STATUS_UNIMPLEMENTED) {
+ 		/* access the SCC - these are 'safe' registers */
+ 		config_register = SCC_READ_REGISTER(SCM_CONFIGURATION);
+-#ifdef SCC_DEBUG
+-		printk("SCC Driver: SCM config is 0x%08x\n", config_register);
+-#endif
++		pr_debug("SCC Driver: SCM config is 0x%08x\n", config_register);
+ 
+ 		/* Get SMN status and update scc_availability */
+ 		smn_status_register = scc_update_state();
+-#ifdef SCC_DEBUG
+-		printk("SCC Driver: SMN status is 0x%08x\n",
++		pr_debug("SCC Driver: SMN status is 0x%08x\n",
+ 		       smn_status_register);
+-#endif
+ 
+ 		/* save sizes and versions information for later use */
+ 		scc_configuration.block_size_bytes = (config_register &
+@@ -1408,7 +1359,7 @@ static int setup_interrupt_handling(void
+ 	smn_error_code = request_irq(INT_SCC_SMN, scc_irq, 0,
+ 				     SCC_DRIVER_NAME, NULL);
+ 	if (smn_error_code != 0) {
+-		printk
++		pr_debug
+ 		    ("SCC Driver: Error installing SMN Interrupt Handler: %d\n",
+ 		     smn_error_code);
+ 	} else {
+@@ -1429,11 +1380,11 @@ static int setup_interrupt_handling(void
+ 				     SCC_DRIVER_NAME, NULL);
+ 	if (scm_error_code != 0) {
+ #ifndef MXC
+-		printk
++		pr_debug
+ 		    ("SCC Driver: Error installing SCM Interrupt Handler: %d\n",
+ 		     scm_error_code);
+ #else
+-		printk
++		pr_debug
+ 		    ("SCC Driver: Error installing SCC Interrupt Handler: %d\n",
+ 		     scm_error_code);
+ #endif
+@@ -1492,9 +1443,7 @@ static uint32_t scc_do_crypto(int byte_c
+ 	if (crypto_status != SCM_STATUS_CIPHERING_DONE) {
+ 		/* Replace with error status instead */
+ 		crypto_status = SCC_READ_REGISTER(SCM_ERROR_STATUS);
+-#ifdef SCC_DEBUG
+-		printk("SCM Failure: 0x%x\n", crypto_status);
+-#endif
++		pr_debug("SCM Failure: 0x%x\n", crypto_status);
+ 		if (crypto_status == 0) {
+ 			/* That came up 0.  Turn on arbitrary bit to signal error. */
+ 			crypto_status = SCM_ERR_INTERNAL_ERROR;
+@@ -1503,9 +1452,7 @@ static uint32_t scc_do_crypto(int byte_c
+ 		crypto_status = 0;
+ 	}
+ 
+-#ifdef SCC_DEBUG
+-	printk("SCC: Done waiting.\n");
+-#endif
++	pr_debug("SCC: Done waiting.\n");
+ 
+ 	/* Clear out any status. */
+ 	SCC_WRITE_REGISTER(SCM_INTERRUPT_CTRL,
+@@ -1600,18 +1547,14 @@ scc_encrypt(uint32_t count_in_bytes, uin
+ 		if (output_bytes_copied + bytes_to_process > *count_out_bytes) {
+ 			return_code = SCC_RET_INSUFFICIENT_SPACE;
+ 			scm_error_status = -1;	/* error signal */
+-#ifdef SCC_DEBUG
+-			printk
++			pr_debug
+ 			    ("SCC: too many ciphertext bytes for space available\n");
+-#endif
+ 			break;
+ 		}
+-#ifdef SCC_DEBUG
+-		printk("SCC: Starting encryption. %x for %d bytes (%p/%p)\n",
++		pr_debug("SCC: Starting encryption. %x for %d bytes (%p/%p)\n",
+ 		       scm_control, bytes_to_process,
+ 		       (void *)SCC_READ_REGISTER(SCM_RED_START),
+ 		       (void *)SCC_READ_REGISTER(SCM_BLACK_START));
+-#endif
+ 		scm_error_status = scc_do_crypto(bytes_to_process, scm_control);
+ 		if (scm_error_status != 0) {
+ 			break;
+@@ -1696,10 +1639,8 @@ scc_decrypt(uint32_t count_in_bytes, uin
+ 		copy_to_scc(data_in, scm_location, bytes_to_copy, NULL);
+ 		data_in += bytes_to_copy;	/* move pointer */
+ 
+-#ifdef SCC_DEBUG
+-		printk("SCC: Starting decryption of %d bytes.\n",
++		pr_debug("SCC: Starting decryption of %d bytes.\n",
+ 		       bytes_to_copy);
+-#endif
+ 
+ 		/*  Do the work, wait for completion */
+ 		scm_error_status = scc_do_crypto(bytes_to_copy, scm_control);
+@@ -1734,10 +1675,8 @@ scc_decrypt(uint32_t count_in_bytes, uin
+ 			copy_to_scc(data_in, scm_location, bytes_to_copy, NULL);
+ 			data_in += bytes_to_copy;	/* move pointer */
+ 
+-#ifdef SCC_DEBUG
+-			printk("SCC: Finishing decryption (%d bytes).\n",
++			pr_debug("SCC: Finishing decryption (%d bytes).\n",
+ 			       bytes_to_copy);
+-#endif
+ 
+ 			/*  Do the work, wait for completion */
+ 			scm_error_status =
+@@ -1787,8 +1726,7 @@ scc_decrypt(uint32_t count_in_bytes, uin
+ 						} else {
+ 							return_code =
+ 							    SCC_RET_VERIFICATION_FAILED;
+-#ifdef SCC_DEBUG
+-							printk
++							pr_debug
+ 							    ("SCC:  CRC values are %04x, %02x%02x\n",
+ 							     crc,
+ 							     last_two_blocks
+@@ -1796,7 +1734,6 @@ scc_decrypt(uint32_t count_in_bytes, uin
+ 							     last_two_blocks
+ 							     [bytes_to_copy +
+ 							      1]);
+-#endif
+ 						}
+ 					}	/* if space available */
+ 				} /* if scc_strip_padding... */
+@@ -1836,10 +1773,8 @@ scc_alloc_slot(uint32_t value_size_bytes
+ 	/* ACQUIRE LOCK to prevent others from using SCC crypto */
+ 	spin_lock_irqsave(&scc_crypto_lock, irq_flags);
+ 
+-#ifdef SCC_DEBUG
+-	printk("SCC: Allocating %d-byte slot for 0x%Lx\n", value_size_bytes,
++	pr_debug("SCC: Allocating %d-byte slot for 0x%Lx\n", value_size_bytes,
+ 	       owner_id);
+-#endif
+ 
+ 	if ((value_size_bytes != 0) && (value_size_bytes <= SCC_MAX_KEY_SIZE)) {
+ 		int i;
+@@ -1858,9 +1793,7 @@ scc_alloc_slot(uint32_t value_size_bytes
+ 		if (status != SCC_RET_OK) {
+ 			status = SCC_RET_INSUFFICIENT_SPACE;
+ 		} else {
+-#ifdef SCC_DEBUG
+-			printk("SCC: Allocated slot %d (0x%Lx)\n", i, owner_id);
+-#endif
++			pr_debug("SCC: Allocated slot %d (0x%Lx)\n", i, owner_id);
+ 		}
+ 	}
+ 
+@@ -1881,21 +1814,17 @@ static inline scc_return_t verify_slot_a
+ 	    && (scc_key_info[slot].owner_id == owner_id)
+ 	    && (access_len <= SCC_KEY_SLOT_SIZE)) {
+ 		status = SCC_RET_OK;
+-#ifdef SCC_DEBUG
+-		printk("SCC: Verify on slot %d succeeded\n", slot);
+-#endif
++		pr_debug("SCC: Verify on slot %d succeeded\n", slot);
+ 	} else {
+-#ifdef SCC_DEBUG
+ 		if (slot >= SCC_KEY_SLOTS) {
+-			printk("SCC: Verify on bad slot (%d) failed\n", slot);
++			pr_debug("SCC: Verify on bad slot (%d) failed\n", slot);
+ 		} else if (scc_key_info[slot].status) {
+-			printk("SCC: Verify on slot %d failed (%Lx) \n", slot,
++			pr_debug("SCC: Verify on slot %d failed (%Lx) \n", slot,
+ 			       owner_id);
+ 		} else {
+-			printk("SCC: Verify on slot %d failed: not allocated\n",
++			pr_debug("SCC: Verify on slot %d failed: not allocated\n",
+ 			       slot);
+ 		}
+-#endif
+ 		status = SCC_RET_FAIL;
+ 	}
+ 
+@@ -1927,9 +1856,7 @@ scc_return_t scc_dealloc_slot(uint64_t o
+ 			SCC_WRITE_REGISTER(SCM_BLACK_MEMORY +
+ 					   scc_key_info[slot].offset + i, 0);
+ 		}
+-#ifdef SCC_DEBUG
+-		printk("SCC: Deallocated slot %d\n", slot);
+-#endif
++		pr_debug("SCC: Deallocated slot %d\n", slot);
+ 	}
+ 
+ 	spin_unlock_irqrestore(&scc_crypto_lock, irq_flags);
+@@ -1967,21 +1894,17 @@ scc_load_slot(uint64_t owner_id, uint32_
+ 		status = SCC_RET_FAIL;	/* reset expectations */
+ 
+ 		if (key_length > SCC_KEY_SLOT_SIZE) {
+-#ifdef SCC_DEBUG
+-			printk
++			pr_debug
+ 			    ("SCC: scc_load_slot() rejecting key of %d bytes.\n",
+ 			     key_length);
+-#endif
+ 			status = SCC_RET_INSUFFICIENT_SPACE;
+ 		} else {
+ 			if (copy_to_scc(key_data,
+ 					SCM_RED_MEMORY +
+ 					scc_key_info[slot].offset, key_length,
+ 					NULL)) {
+-#ifdef SCC_DEBUG
+-				printk
++				pr_debug
+ 				    ("SCC: RED copy_to_scc() failed for scc_load_slot()\n");
+-#endif
+ 			} else {
+ 				status = SCC_RET_OK;
+ 			}
+@@ -2035,10 +1958,8 @@ scc_return_t scc_encrypt_slot(uint64_t o
+ 					      SCM_CBC_MODE);
+ 
+ 		if (crypto_status != 0) {
+-#ifdef SCC_DEBUG
+-			printk("SCM encrypt red crypto failure: 0x%x\n",
++			pr_debug("SCM encrypt red crypto failure: 0x%x\n",
+ 			       crypto_status);
+-#endif
+ 		} else {
+ 
+ 			/* Give blob back to caller */
+@@ -2046,9 +1967,7 @@ scc_return_t scc_encrypt_slot(uint64_t o
+ 			    (SCM_BLACK_MEMORY + scc_key_info[slot].offset,
+ 			     black_data, length, NULL)) {
+ 				status = SCC_RET_OK;
+-#ifdef SCC_DEBUG
+-				printk("SCC: Encrypted slot %d\n", slot);
+-#endif
++				pr_debug("SCC: Encrypted slot %d\n", slot);
+ 			}
+ 		}
+ 	}
+@@ -2108,10 +2027,8 @@ scc_return_t scc_decrypt_slot(uint64_t o
+ 					      SCM_DECRYPT_MODE);
+ 
+ 		if (crypto_status != 0) {
+-#ifdef SCC_DEBUG
+-			printk("SCM decrypt black crypto failure: 0x%x\n",
++			pr_debug("SCM decrypt black crypto failure: 0x%x\n",
+ 			       crypto_status);
+-#endif
+ 		} else {
+ 			status = SCC_RET_OK;
+ 		}
+@@ -2180,9 +2097,7 @@ static void scc_wait_completion(void)
+ 		/* kill time if loop not optimized away */
+ 		udelay(1000);
+ 	}
+-#ifdef SCC_DEBUG
+-	printk("SCC: Polled DONE %d times\n", i);
+-#endif
++	pr_debug("SCC: Polled DONE %d times\n", i);
+ }				/* scc_wait_completion() */
+ 
+ /*****************************************************************************/
+@@ -2271,10 +2186,8 @@ check_register_accessible(uint32_t regis
+ 			if (!((register_offset == SMN_STATUS) ||
+ 			      (register_offset == SMN_COMMAND) ||
+ 			      (register_offset == SMN_DEBUG_DETECT_STAT))) {
+-#ifdef SCC_DEBUG
+-				printk
++				pr_debug
+ 				    ("SCC Driver: Note: Security State is in FAIL state.\n");
+-#endif
+ 			} /* register not a safe one */
+ 			else {
+ 				/* SMN is in  FAIL, but register is a safe one */
+@@ -2296,10 +2209,8 @@ check_register_accessible(uint32_t regis
+ 			 (register_offset == SCM_ERROR_STATUS) ||
+ 			 (register_offset == SCM_INTERRUPT_CTRL) ||
+ 			 (register_offset == SCM_CONFIGURATION))) {
+-#ifdef SCC_DEBUG
+-			printk
++			pr_debug
+ 			    ("SCC Driver: Note: Secure Memory is in BUSY state.\n");
+-#endif
+ 		} /* status is busy & register inaccessible */
+ 		else {
+ 			error_code = SCC_RET_OK;
+@@ -2359,7 +2270,7 @@ static uint32_t dbg_scc_read_register(ui
+ #ifndef SCC_RAM_DEBUG		/* print no RAM references */
+ 	if ((offset < SCM_RED_MEMORY) || (offset >= scm_highest_memory_address)) {
+ #endif
+-		printk("SCC RD: 0x%4x : 0x%08x\n", offset, value);
++		pr_debug("SCC RD: 0x%4x : 0x%08x\n", offset, value);
+ #ifndef SCC_RAM_DEBUG
+ 	}
+ #endif
+@@ -2382,7 +2293,7 @@ static void dbg_scc_write_register(uint3
+ #ifndef SCC_RAM_DEBUG		/* print no RAM references */
+ 	if ((offset < SCM_RED_MEMORY) || (offset >= scm_highest_memory_address)) {
+ #endif
+-		printk("SCC WR: 0x%4x : 0x%08x\n", offset, value);
++		pr_debug("SCC WR: 0x%4x : 0x%08x\n", offset, value);
+ #ifndef SCC_RAM_DEBUG
+ 	}
+ #endif
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_scc_internals.h linux-2.6.19.2/drivers/mxc/security/mxc_scc_internals.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_scc_internals.h	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_scc_internals.h	2007-04-25 17:38:48.000000000 -0600
+@@ -61,7 +61,6 @@
+ /*!
+  * Turn on generation of run-time operational, debug, and error messages
+  */
+-//#define SCC_DEBUG
+ 
+ /*!
+  * Turn on generation of run-time logging of access to the SCM and SMN
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_internals.h linux-2.6.19.2/drivers/mxc/security/rng/include/rng_internals.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_internals.h	2007-04-25 17:38:41.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/rng_internals.h	2007-04-25 17:38:48.000000000 -0600
+@@ -97,8 +97,6 @@
+  * This flag is undefined by default.
+  */
+ /* REQ-FSLSHW-DEBUG-001 */
+-#define RNG_DEBUG
+-#undef RNG_DEBUG
+ 
+ /*!
+  * Turn on compilation of run-time logging of access to the RNG registers,
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_internals.h linux-2.6.19.2/drivers/mxc/security/rng/include/shw_internals.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_internals.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/shw_internals.h	2007-04-25 17:38:48.000000000 -0600
+@@ -67,8 +67,6 @@
+  * This flag is undefined by default.
+  */
+ /* REQ-FSLSHW-DEBUG-001 */
+-#define SHW_DEBUG
+-#undef SHW_DEBUG
+ 
+ /*! @} */
+ #endif				/* end DOXYGEN_HACK */
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/Makefile linux-2.6.19.2/drivers/mxc/security/rng/Makefile
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/Makefile	2007-04-25 17:38:41.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/Makefile	2007-04-25 17:38:48.000000000 -0600
+@@ -18,6 +18,10 @@ EXTRA_CFLAGS = -DLINUX_KERNEL $(CFG_RNG)
+ ifeq ($(CONFIG_MXC_RNG_TEST_DRIVER),y)
+ EXTRA_CFLAGS += -DRNG_REGISTER_PEEK_POKE
+ endif
++ifeq ($(CONFIG_RNG_DEBUG),y)
++EXTRA_CFLAGS += -DDEBUG
++endif
++
+ 
+ EXTRA_CFLAGS += -Idrivers/mxc/security/rng/include -Idrivers/mxc/security/sahara2/include
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/rng_driver.c linux-2.6.19.2/drivers/mxc/security/rng/rng_driver.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/rng_driver.c	2007-04-25 17:38:41.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/rng_driver.c	2007-04-25 17:38:48.000000000 -0600
+@@ -176,19 +176,15 @@ OS_DEV_INIT(rng_init)
+ 	rng_work_queue.head = NULL;
+ 	rng_work_queue.tail = NULL;
+ 
+-	os_printk("RNG Driver: Loading\n");
++	printk(KERN_INFO "RNG Driver: Loading\n");
+ 	return_code = rng_map_RNG_memory();
+ 	if (return_code != OS_ERROR_OK_S) {
+ 		rng_availability = RNG_STATUS_UNIMPLEMENTED;
+-#ifdef RNG_DEBUG
+-		os_printk("RNG: Driver failed to map RNG registers. %d\n",
+-			  return_code);
+-#endif
++		pr_debug("RNG: Driver failed to map RNG registers. %d\n",
++			 return_code);
+ 		goto check_err;
+ 	}
+-#ifdef RNG_DEBUG
+-	os_printk("RNG Driver: rng_base is 0x%08x\n", (uint32_t) rng_base);
+-#endif
++	pr_debug("RNG Driver: rng_base is 0x%08x\n", (uint32_t) rng_base);
+ 
+ 	/* Check RNG configuration and status */
+ 	return_code = rng_grab_config_values();
+@@ -202,9 +198,7 @@ OS_DEV_INIT(rng_init)
+ 
+ 	/* Determine status of RNG */
+ 	if (RNG_OSCILLATOR_FAILED()) {
+-#ifdef RNG_DEBUG
+-		os_printk("RNG Driver: RNG Oscillator is dead\n");
+-#endif
++		pr_debug("RNG Driver: RNG Oscillator is dead\n");
+ 		rng_availability = RNG_STATUS_FAILED;
+ 		goto check_err;
+ 	}
+@@ -238,14 +232,11 @@ OS_DEV_INIT(rng_init)
+ 		RNG_SET_HIGH_ASSURANCE();
+ #endif
+ 		if (RNG_GET_HIGH_ASSURANCE()) {
+-#ifdef RNG_DEBUG
+-			os_printk
+-			    ("RNG Driver: RNG is in High Assurance mode\n");
+-#endif
++			pr_debug("RNG Driver: RNG is in High Assurance mode\n");
+ 		} else {
+ #ifndef RNG_NO_FORCE_HIGH_ASSURANCE
+-			os_printk("RNG Driver: RNG could not be put in "
+-				  "High Assurance mode\n");
++			pr_debug("RNG Driver: RNG could not be put in "
++				 "High Assurance mode\n");
+ #endif
+ 			rng_availability = RNG_STATUS_FAILED;
+ 			goto check_err;
+@@ -253,10 +244,8 @@ OS_DEV_INIT(rng_init)
+ 
+ 		/* Check that RNG is OK */
+ 		if (!RNG_WORKING()) {
+-#ifdef RNG_DEBUG
+-			os_printk("RNG determined to be inoperable."
+-				  "  Status %08x\n", RNG_GET_STATUS());
+-#endif
++			pr_debug("RNG determined to be inoperable."
++				 "  Status %08x\n", RNG_GET_STATUS());
+ 			/* Couldn't wake it up or other problem */
+ 			rng_availability = RNG_STATUS_FAILED;
+ 			goto check_err;
+@@ -264,18 +253,14 @@ OS_DEV_INIT(rng_init)
+ 
+ 		rng_queue_lock = os_lock_alloc_init();
+ 		if (rng_queue_lock == NULL) {
+-#ifdef RNG_DEBUG
+-			os_printk("RNG: lock initialization failed\n");
+-#endif
++			pr_debug("RNG: lock initialization failed\n");
+ 			rng_availability = RNG_STATUS_FAILED;
+ 			goto check_err;
+ 		}
+ 
+ 		return_code = os_create_task(rng_entropy_task);
+ 		if (return_code != OS_ERROR_OK_S) {
+-#ifdef RNG_DEBUG
+-			os_printk("RNG: task initialization failed\n");
+-#endif
++			pr_debug("RNG: task initialization failed\n");
+ 			rng_availability = RNG_STATUS_FAILED;
+ 			goto check_err;
+ 		} else {
+@@ -284,11 +269,9 @@ OS_DEV_INIT(rng_init)
+ #if defined(FSL_HAVE_RNGA)
+ 		scc_code = scc_monitor_security_failure(rng_sec_failure);
+ 		if (scc_code != SCC_RET_OK) {
+-#ifdef RNG_DEBUG
+-			os_printk
++			pr_debug
+ 			    ("RNG Driver: Failed to register SCC callback: %d\n",
+ 			     scc_code);
+-#endif
+ #ifndef RNG_NO_FORCE_HIGH_ASSURANCE
+ 			return_code = OS_ERROR_FAIL_S;
+ 			goto check_err;
+@@ -314,10 +297,8 @@ OS_DEV_INIT(rng_init)
+ 		RNG_PUT_RNG_TO_SLEEP();
+ 		rng_availability = RNG_STATUS_OK;	/* RNG & driver are ready */
+ 	} else if (return_code != OS_ERROR_OK_S) {
+-#ifdef RNG_DEBUG
+-		os_printk("RNG: Driver initialization failed. %d\n",
+-			  return_code);
+-#endif
++		pr_debug("RNG: Driver initialization failed. %d\n",
++			 return_code);
+ 		rng_cleanup();
+ 	}
+ 
+@@ -340,9 +321,7 @@ OS_DEV_INIT(rng_init)
+ OS_DEV_SHUTDOWN(rng_shutdown)
+ {
+ 
+-#ifdef RNG_DEBUG
+-	os_printk("RNG: shutdown called\n");
+-#endif
++	pr_debug("RNG: shutdown called\n");
+ 	rng_cleanup();
+ 
+ 	os_driver_remove_registration(rng_reg_handle);
+@@ -389,9 +368,7 @@ static void rng_cleanup(void)
+ 		rng_availability = RNG_STATUS_UNIMPLEMENTED;
+ 	}
+ 
+-#ifdef RNG_DEBUG
+-	os_printk("RNG Driver: Cleaned up\n");
+-#endif
++	pr_debug("RNG Driver: Cleaned up\n");
+ 
+ }				/* rng_cleanup */
+ 
+@@ -622,12 +599,9 @@ inline int rng_check_register_offset(uin
+ 	 */
+ 	if ((offset < RNG_ADDRESS_RANGE) && (offset % sizeof(uint32_t) == 0)) {
+ 		return_code = TRUE;	/* OK */
++	} else {
++		pr_debug("RNG: Denied access to offset %8x\n", offset);
+ 	}
+-#ifdef RNG_DEBUG
+-	else {
+-		os_printk("RNG: Denied access to offset %8x\n", offset);
+-	}
+-#endif
+ 
+ 	return return_code;
+ 
+@@ -690,14 +664,11 @@ static int rng_check_register_accessible
+ #ifdef FSL_HAVE_RNGA
+ 			if (!(offset == RNGA_ENTROPY)) {
+ 				return_code = TRUE;	/* Let all others be read */
+-			}
+-#ifdef RNG_DEBUG
+-			else {
+-				os_printk
++			} else {
++				pr_debug
+ 				    ("RNG: Offset %04x denied read access\n",
+ 				     offset);
+ 			}
+-#endif
+ #else				/* else RNGC */
+ 			/* No registers are write-only */
+ 			return_code = TRUE;
+@@ -720,22 +691,17 @@ static int rng_check_register_accessible
+ #endif
+ 			    ) {
+ 				return_code = TRUE;	/* can be written */
+-			}
+-#ifdef RNG_DEBUG
+-			else {
+-				os_printk
++			} else {
++				pr_debug
+ 				    ("RNG: Offset %04x denied write access\n",
+ 				     offset);
+ 			}
+-#endif
+ 		}		/* write */
+-	}			/* not high assurance and inaccessible register... */
+-#ifdef RNG_DEBUG
++	} /* not high assurance and inaccessible register... */
+ 	else {
+-		os_printk("RNG: Offset %04x denied high-assurance access\n",
+-			  offset);
++		pr_debug("RNG: Offset %04x denied high-assurance access\n",
++			 offset);
+ 	}
+-#endif
+ 
+ 	return return_code;
+ }				/* rng_check_register_accessible */
+@@ -761,9 +727,7 @@ OS_DEV_ISR(rng_irq)
+ {
+ 	int handled = FALSE;	/* assume interrupt isn't from RNG */
+ 
+-#ifdef RNG_DEBUG
+-	os_printk("RNG Driver: Inside the RNG Interrupt Handler\n");
+-#endif
++	pr_debug("RNG Driver: Inside the RNG Interrupt Handler\n");
+ 	if (RNG_SEED_DONE()) {
+ 		complete(&rng_seed_done);
+ 		RNG_CLEAR_ALL_STATUS();
+@@ -807,9 +771,7 @@ static os_error_code rng_map_RNG_memory(
+ 	rng_base = os_map_device(RNG_BASE_ADDR, RNG_ADDRESS_RANGE);
+ 	if (rng_base == NULL) {
+ 		/* failure ! */
+-#ifdef RNG_DEBUG
+-		os_printk("RNG Driver: ioremap failed.\n");
+-#endif
++		pr_debug("RNG Driver: ioremap failed.\n");
+ 	} else {
+ 		error_code = OS_ERROR_OK_S;
+ 	}
+@@ -836,9 +798,7 @@ static os_error_code rng_setup_interrupt
+ 	error_code = os_register_interrupt(RNG_DRIVER_NAME, INT_RNG,
+ 					   OS_DEV_ISR_REF(rng_irq));
+ 	if (error_code != OS_ERROR_OK_S) {
+-#ifdef RNG_DEBUG
+-		os_printk("RNG Driver: Error installing Interrupt Handler\n");
+-#endif
++		pr_debug("RNG Driver: Error installing Interrupt Handler\n");
+ 	} else {
+ 		RNG_UNMASK_ALL_INTERRUPTS();
+ 	}
+@@ -871,14 +831,12 @@ static os_error_code rng_grab_config_val
+ 			ret = OS_ERROR_OK_S;
+ 		}
+ 	}
+-#ifdef RNG_DEBUG
+ 	if (ret != OS_ERROR_OK_S) {
+-		os_printk
++		pr_debug
+ 		    ("RNG: Unknown or unexpected RNG type %d (FIFO size %d)."
+ 		     "  Failing driver initialization\n", type,
+ 		     rng_output_fifo_size);
+ 	}
+-#endif
+ 
+ 	return ret;
+ }
+@@ -907,10 +865,8 @@ static fsl_shw_return_t rng_drain_fifo(u
+ 	int count_for_reseed = 0;
+ 	INIT_COMPLETION(rng_seed_done);
+ #endif
+-#ifdef RNG_DEBUG
+ 	int fifo_empty_count = 0;	/* number of times FIFO was empty */
+ 	int max_sequential = 0;	/* max times 0 seen in a row */
+-#endif
+ #if defined(FSL_HAVE_RNGC)
+ 	if (RNG_RESEED()) {
+ 		do {
+@@ -932,17 +888,13 @@ static fsl_shw_return_t rng_drain_fifo(u
+ 		words_in_rng = RNG_GET_WORDS_IN_FIFO();
+ 		if (words_in_rng == 0) {
+ 			++sequential_count;
+-#ifdef RNG_DEBUG
+ 			fifo_empty_count++;
+ 			if (sequential_count > max_sequential) {
+ 				max_sequential = sequential_count;
+ 			}
+-#endif
+ 			if (sequential_count >= RNG_MAX_TRIES) {
+-#ifdef RNG_DEBUG
+-				os_printk("RNG: FIFO staying empty (%d)\n",
+-					  words_in_rng);
+-#endif
++				pr_debug("RNG: FIFO staying empty (%d)\n",
++					 words_in_rng);
+ 				code = FSL_RETURN_NO_RESOURCE_S;
+ 				break;
+ 			}
+@@ -972,12 +924,10 @@ static fsl_shw_return_t rng_drain_fifo(u
+ 	if (count_words == 0) {
+ 		code = FSL_RETURN_OK_S;
+ 	}
+-#ifdef RNG_DEBUG
+ 	if (fifo_empty_count != 0) {
+-		os_printk("RNG: FIFO empty %d times, max loop count %d\n",
+-			  fifo_empty_count, max_sequential);
++		pr_debug("RNG: FIFO empty %d times, max loop count %d\n",
++			 fifo_empty_count, max_sequential);
+ 	}
+-#endif
+ 
+ 	return code;
+ }				/* rng_drain_fifo */
+@@ -999,23 +949,17 @@ OS_DEV_TASK(rng_entropy_task)
+ 
+ 	os_dev_task_begin();
+ 
+-#ifdef RNG_DEBUG
+-	os_printk("RNG: entropy task starting\n");
+-#endif
++	pr_debug("RNG: entropy task starting\n");
+ 
+ 	while ((work = RNG_GET_WORK_ENTRY()) != NULL) {
+-#ifdef RNG_DEBUG
+-		os_printk("RNG: found %d bytes of work at %p (%p)\n",
+-			  work->length, work, work->data_local);
+-#endif
++		pr_debug("RNG: found %d bytes of work at %p (%p)\n",
++			 work->length, work, work->data_local);
+ 		work->hdr.code = rng_drain_fifo(work->data_local,
+ 						BYTES_TO_WORDS(work->length));
+ 		work->completed = TRUE;
+ 
+ 		if (work->hdr.flags & FSL_UCO_BLOCKING_MODE) {
+-#ifdef RNG_DEBUG
+-			os_printk("RNG: Waking queued processes\n");
+-#endif
++			pr_debug("RNG: Waking queued processes\n");
+ 			os_wake_sleepers(rng_wait_queue);
+ 		} else {
+ 			os_lock_context_t lock_context;
+@@ -1029,19 +973,15 @@ OS_DEV_TASK(rng_entropy_task)
+ 				if (work->hdr.callback != NULL) {
+ 					work->hdr.callback(work->hdr.user_ctx);
+ 				} else {
+-#ifdef RNG_DEBUG
+-					os_printk
++					pr_debug
+ 					    ("RNG: Callback ptr for %p is NULL\n",
+ 					     work);
+-#endif
+ 				}
+ 			}
+ 		}
+ 	}			/* while */
+ 
+-#ifdef RNG_DEBUG
+-	os_printk("RNG: entropy task ending\n");
+-#endif
++	pr_debug("RNG: entropy task ending\n");
+ 
+ 	os_dev_task_return(OS_ERROR_OK_S);
+ }				/* rng_entropy_task */
+@@ -1060,9 +1000,7 @@ OS_DEV_TASK(rng_entropy_task)
+  */
+ static void rng_sec_failure(void)
+ {
+-#ifdef RNG_DEBUG
+-	os_printk("RNG Driver: Security Failure Alarm received.\n");
+-#endif
++	pr_debug("RNG Driver: Security Failure Alarm received.\n");
+ 
+ 	rng_cleanup();
+ 
+@@ -1087,7 +1025,7 @@ static uint32_t dbg_rng_read_register(ui
+ #ifndef RNG_ENTROPY_DEBUG
+ 	if (offset != RNG_OUTPUT_FIFO) {
+ #endif
+-		os_printk("RNG RD: 0x%4x : 0x%08x\n", offset, value);
++		pr_debug("RNG RD: 0x%4x : 0x%08x\n", offset, value);
+ #ifndef RNG_ENTROPY_DEBUG
+ 	}
+ #endif
+@@ -1105,7 +1043,7 @@ static uint32_t dbg_rng_read_register(ui
+  */
+ static void dbg_rng_write_register(uint32_t offset, uint32_t value)
+ {
+-	os_printk("RNG WR: 0x%4x : 0x%08x\n", offset, value);
++	pr_debug("RNG WR: 0x%4x : 0x%08x\n", offset, value);
+ 	os_write32(value, rng_base + offset);
+ 	return;
+ }
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/shw_driver.c linux-2.6.19.2/drivers/mxc/security/rng/shw_driver.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/shw_driver.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/shw_driver.c	2007-04-25 17:38:48.000000000 -0600
+@@ -178,9 +178,7 @@ OS_DEV_INIT(shw_init)
+ {
+ 	os_error_code error_code = OS_ERROR_NO_MEMORY_S;	/* assume failure */
+ 
+-#ifdef SHW_DEBUG
+-	os_printk("SHW Driver: Loading\n");
+-#endif
++	pr_debug("SHW Driver: Loading\n");
+ 
+ 	user_list = NULL;
+ 	shw_queue_lock = os_lock_alloc_init();
+@@ -188,23 +186,16 @@ OS_DEV_INIT(shw_init)
+ 	if (shw_queue_lock != NULL) {
+ 		error_code = shw_setup_user_driver_interaction();
+ 		if (error_code != OS_ERROR_OK_S) {
+-#ifdef SHW_DEBUG
+-			os_printk("SHW Driver: Failed to setup user"
+-				  " i/f: %d\n", error_code);
+-#endif
++			pr_debug("SHW Driver: Failed to setup user"
++				 " i/f: %d\n", error_code);
+ 		}
+ 	}
+ 	/* queue_lock not NULL */
+ 	if (error_code != OS_ERROR_OK_S) {
+-#ifdef SHW_DEBUG
+-		os_printk("SHW: Driver initialization failed. %d\n",
+-			  error_code);
+-#endif
++		pr_debug("SHW: Driver initialization failed. %d\n", error_code);
+ 		shw_cleanup();
+ 	} else {
+-#ifdef SHW_DEBUG
+-		os_printk("SHW: Driver initialization complete.\n");
+-#endif
++		pr_debug("SHW: Driver initialization complete.\n");
+ 	}
+ 
+ 	os_dev_init_return(error_code);
+@@ -225,9 +216,7 @@ OS_DEV_INIT(shw_init)
+ OS_DEV_SHUTDOWN(shw_shutdown)
+ {
+ 
+-#ifdef SHW_DEBUG
+-	os_printk("SHW: shutdown called\n");
+-#endif
++	pr_debug("SHW: shutdown called\n");
+ 	shw_cleanup();
+ 
+ 	os_dev_shutdown_return(OS_ERROR_OK_S);
+@@ -254,9 +243,7 @@ static void shw_cleanup(void)
+ 	if (shw_queue_lock != NULL) {
+ 		os_lock_deallocate(shw_queue_lock);
+ 	}
+-#ifdef SHW_DEBUG
+-	os_printk("SHW Driver: Cleaned up\n");
+-#endif
++	pr_debug("SHW Driver: Cleaned up\n");
+ }				/* shw_cleanup */
+ 
+ /*!***************************************************************************/
+@@ -293,9 +280,7 @@ OS_DEV_IOCTL(shw_ioctl)
+ 
+ 	fsl_shw_uco_t *user_ctx = os_dev_get_user_private();
+ 
+-#ifdef SHW_DEBUG
+-	os_printk("SHW: IOCTL %d received\n", os_dev_get_ioctl_op());
+-#endif
++	pr_debug("SHW: IOCTL %d received\n", os_dev_get_ioctl_op());
+ 	switch (os_dev_get_ioctl_op()) {
+ 
+ 	case SHW_IOCTL_REQUEST + SHW_USER_REQ_REGISTER_USER:
+@@ -331,25 +316,19 @@ OS_DEV_IOCTL(shw_ioctl)
+ 		break;
+ 
+ 	case SHW_IOCTL_REQUEST + SHW_USER_REQ_GET_RANDOM:
+-#ifdef SHW_DEBUG
+-		os_printk("SHW: get_random ioctl received\n");
+-#endif
++		pr_debug("SHW: get_random ioctl received\n");
+ 		code = get_random(user_ctx, (struct get_random_req *)
+ 				  os_dev_get_ioctl_arg());
+ 		break;
+ 
+ 	case SHW_IOCTL_REQUEST + SHW_USER_REQ_ADD_ENTROPY:
+-#ifdef SHW_DEBUG
+-		os_printk("SHW: add_entropy ioctl received\n");
+-#endif
++		pr_debug("SHW: add_entropy ioctl received\n");
+ 		code = add_entropy(user_ctx, (struct add_entropy_req *)
+ 				   os_dev_get_ioctl_arg());
+ 		break;
+ 
+ 	default:
+-#ifdef SHW_DEBUG
+-		os_printk("SHW: Unexpected ioctl %d\n", os_dev_get_ioctl_op());
+-#endif
++		pr_debug("SHW: Unexpected ioctl %d\n", os_dev_get_ioctl_op());
+ 		break;
+ 	}
+ 
+@@ -398,10 +377,7 @@ OS_DEV_CLOSE(shw_release)
+  */
+ static void shw_user_callback(fsl_shw_uco_t * uco)
+ {
+-#ifdef SHW_DEBUG
+-	os_printk("SHW: Signalling callback user process for context %p\n",
+-		  uco);
+-#endif
++	pr_debug("SHW: Signalling callback user process for context %p\n", uco);
+ 	os_send_signal(uco->process, SIGUSR2);
+ }
+ 
+@@ -434,16 +410,12 @@ static os_error_code shw_setup_user_driv
+ 
+ 	if (error_code != OS_ERROR_OK_S) {
+ 		/* failure ! */
+-#ifdef SHW_DEBUG
+-		os_printk("SHW Driver: register device driver failed: %d\n",
+-			  error_code);
+-#endif
++		pr_debug("SHW Driver: register device driver failed: %d\n",
++			 error_code);
+ 	} else {		/* success */
+ 		shw_device_registered = TRUE;
+-#ifdef SHW_DEBUG
+-		os_printk("SHW Driver:  Major node is %d\n",
+-			  os_driver_get_major(reg_handle));
+-#endif
++		pr_debug("SHW Driver:  Major node is %d\n",
++			 os_driver_get_major(reg_handle));
+ 	}
+ 
+ 	return error_code;
+@@ -477,10 +449,8 @@ static os_error_code init_uco(fsl_shw_uc
+ 		user_ctx->callback = shw_user_callback;
+ 		SHW_ADD_USER(user_ctx);
+ 	}
+-#ifdef SHW_DEBUG
+-	os_printk("SHW: init uco returning %d (flags %x)\n", code,
+-		  user_ctx->flags);
+-#endif
++	pr_debug("SHW: init uco returning %d (flags %x)\n", code,
++		 user_ctx->flags);
+ 
+ 	return code;
+ }
+@@ -565,14 +535,12 @@ static os_error_code get_capabilities(fs
+ 	if (code == OS_ERROR_OK_S) {
+ 		void *endcap;
+ 		void *user_bounds;
+-#ifdef SHW_DEBUG
+-		os_printk("SHE: Received get_cap request: 0x%p/%u/0x%x\n",
+-			  req.capabilities, req.size, sizeof(fsl_shw_pco_t));
+-#endif
++		pr_debug("SHE: Received get_cap request: 0x%p/%u/0x%x\n",
++			 req.capabilities, req.size, sizeof(fsl_shw_pco_t));
+ 		endcap = req.capabilities + 1;	/* point to end of structure */
+ 		user_bounds = (void *)req.capabilities + req.size;	/* end of area */
+ 
+-		printk("next: %p, end: %p\n", endcap, user_bounds);	//
++		printk(KERN_INFO "next: %p, end: %p\n", endcap, user_bounds);	//
+ 		/* First verify that request is big enough for the main structure */
+ 		if (endcap >= user_bounds) {
+ 			endcap = NULL;	/* No! */
+@@ -625,9 +593,7 @@ static os_error_code get_capabilities(fs
+ 
+ 	/* code may already be set to an error.  This is another error case.  */
+ 
+-#ifdef SHW_DEBUG
+-	os_printk("SHW: get capabilities returning %d\n", code);
+-#endif
++	pr_debug("SHW: get capabilities returning %d\n", code);
+ 
+ 	return code;
+ }
+@@ -730,17 +696,13 @@ static os_error_code get_random(fsl_shw_
+ 	code = os_copy_from_user(&req, user_mode_get_random_req, sizeof(req));
+ 	if (code == OS_ERROR_OK_S) {
+ 		process_hdr(user_ctx, &req.hdr);
+-#ifdef SHW_DEBUG
+-		os_printk("SHW: get_random() for %d bytes in %sblocking mode\n",
+-			  req.size, (req.hdr.flags & FSL_UCO_BLOCKING_MODE) ?
+-			  "" : "non-");
+-#endif
++		pr_debug("SHW: get_random() for %d bytes in %sblocking mode\n",
++			 req.size, (req.hdr.flags & FSL_UCO_BLOCKING_MODE) ?
++			 "" : "non-");
+ 		req.hdr.code =
+ 		    fsl_shw_get_random(user_ctx, req.size, req.random);
+ 
+-#ifdef SHW_DEBUG
+-		os_printk("SHW: get_random() returning %d\n", req.hdr.code);
+-#endif
++		pr_debug("SHW: get_random() returning %d\n", req.hdr.code);
+ 
+ 		/* Copy FSL function status back to user */
+ 		code = copy_fsl_code(user_mode_get_random_req, req.hdr.code);

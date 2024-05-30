@@ -1,0 +1,15 @@
+# Modules weren't getting autoloaded (based on modules.alias data) when
+# their devices were plugged in.  Fix that by adding a udev rule.
+#
+# Adapted from the patch posted for this bug:
+# http://bugs.openembedded.org/show_bug.cgi?id=793
+#
+--- udev-091/extra/10-mx31.rules~	2007-05-02 15:08:14.000000000 -0600
++++ udev-091/extra/10-mx31.rules	2007-05-02 15:08:52.000000000 -0600
+@@ -47,3 +47,6 @@
+ 
+ KERNEL=="dvfs_dptc",	NAME="dvfs_dptc",	SYMLINK+="dptc dvfs"
+ 
++# When a device is added, load its module 
++ACTION=="add", DEVPATH=="/devices/*", ENV{MODALIAS}=="?*", RUN+="/sbin/modprobe $env{MODALIAS}"
++

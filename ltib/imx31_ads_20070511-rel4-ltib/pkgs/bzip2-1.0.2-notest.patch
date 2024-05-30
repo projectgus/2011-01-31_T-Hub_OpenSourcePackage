@@ -1,0 +1,12 @@
+diff -uNr bzip2-1.0.2.orig/Makefile bzip2-1.0.2/Makefile
+--- bzip2-1.0.2.orig/Makefile	2002-01-25 23:34:53.000000000 +0000
++++ bzip2-1.0.2/Makefile	2004-11-19 16:53:13.000000000 +0000
+@@ -23,7 +23,7 @@
+       decompress.o \
+       bzlib.o
+ 
+-all: libbz2.a bzip2 bzip2recover test
++all: libbz2.a bzip2 bzip2recover
+ 
+ bzip2: libbz2.a bzip2.o
+ 	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2 bzip2.o -L. -lbz2

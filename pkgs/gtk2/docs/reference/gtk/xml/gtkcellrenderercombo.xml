@@ -1,0 +1,85 @@
+<refentry id="gtk-GtkCellRendererCombo">
+<refmeta>
+<refentrytitle>GtkCellRendererCombo</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GTK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>GtkCellRendererCombo</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+#include &lt;gtk/gtk.h&gt;
+
+
+struct      <link linkend="GtkCellRendererCombo">GtkCellRendererCombo</link>;
+<link linkend="GtkCellRenderer">GtkCellRenderer</link>* <link linkend="gtk-cell-renderer-combo-new">gtk_cell_renderer_combo_new</link>
+                                            (void);
+
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GtkCellRendererCombo"/>struct GtkCellRendererCombo</title>
+<indexterm><primary>GtkCellRendererCombo</primary></indexterm><programlisting>struct GtkCellRendererCombo {
+
+  GtkCellRendererText parent;
+
+  GtkTreeModel *model;
+  gint          text_column;
+  gboolean      has_entry;
+  
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="gtk-cell-renderer-combo-new"/>gtk_cell_renderer_combo_new ()</title>
+<indexterm role="2.6"><primary>gtk_cell_renderer_combo_new</primary></indexterm><programlisting><link linkend="GtkCellRenderer">GtkCellRenderer</link>* gtk_cell_renderer_combo_new
+                                            (void);</programlisting>
+<para>
+Creates a new <link linkend="GtkCellRendererCombo"><type>GtkCellRendererCombo</type></link> 
+Adjust how text is drawn using object properties. 
+Object properties can be set globally (with <link linkend="g-object-set"><function>g_object_set()</function></link>). 
+Also, with <link linkend="GtkTreeViewColumn"><type>GtkTreeViewColumn</type></link>, you can bind a property to a value 
+in a <link linkend="GtkTreeModel"><type>GtkTreeModel</type></link>. For example, you can bind the "text" property 
+on the cell renderer to a string value in the model, thus rendering 
+a different string in each row of the <link linkend="GtkTreeView"><type>GtkTreeView</type></link>.</para>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara> the new cell renderer
+
+</simpara></listitem></varlistentry>
+</variablelist><para>Since  2.6
+</para></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

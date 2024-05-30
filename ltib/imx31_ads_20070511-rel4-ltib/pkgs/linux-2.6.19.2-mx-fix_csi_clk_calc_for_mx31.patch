@@ -1,0 +1,156 @@
+CR: ENGR00028333
+Patch name: ENGR00028333_clock_fix_csi_clk_calc_for_mx31.patch
+Date: Thu Mar 8 21:26:30 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: This patch fixes clock calculations for CSI on MX31.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/clock.c linux-2.6.19.2/arch/arm/mach-mx3/clock.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/clock.c	2007-04-25 17:39:06.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/clock.c	2007-04-25 17:39:17.000000000 -0600
+@@ -32,6 +32,38 @@
+ #define NFC_MAX_FREQ        20000000	/* Maximum frequency NFC clock */
+ #define PRE_DIV_MIN_FREQ    10000000	/* Minimum Frequency after Predivider */
+ 
++static void __calc_pre_post_dividers(u32 div, u32 * pre, u32 * post)
++{
++	u32 min_pre, temp_pre, old_err, err;
++
++	if (div >= 512) {
++		*pre = 8;
++		*post = 64;
++	} else if (div >= 64) {
++		min_pre = (div - 1) / 64 + 1;
++		old_err = 8;
++		for (temp_pre = 8; temp_pre >= min_pre; temp_pre--) {
++			err = div % temp_pre;
++			if (err == 0) {
++				*pre = temp_pre;
++				break;
++			}
++			err = temp_pre - err;
++			if (err < old_err) {
++				old_err = err;
++				*pre = temp_pre;
++			}
++		}
++		*post = (div + *pre - 1) / *pre;
++	} else if (div <= 8) {
++		*pre = div;
++		*post = 1;
++	} else {
++		*pre = 1;
++		*post = div;
++	}
++}
++
+ static struct clk mcu_main_clk;
+ static struct clk usb_pll_clk;
+ static struct clk serial_pll_clk;
+@@ -294,39 +326,49 @@ static void _clk_usb_recalc(struct clk *
+ 
+ static void _clk_csi_recalc(struct clk *clk)
+ {
+-	unsigned long csi_pdf;
++	u32 reg;
++	u32 pre, post;
+ 
+-	csi_pdf = PDR0(MXC_CCM_PDR0_CSI_PODF_MASK,
+-		       MXC_CCM_PDR0_CSI_PODF_OFFSET);
+-	clk->rate = clk->parent->rate / (csi_pdf + 1);
++	reg = __raw_readl(MXC_CCM_PDR0);
++	pre = (reg & MXC_CCM_PDR0_CSI_PRDF_MASK) >>
++	    MXC_CCM_PDR0_CSI_PRDF_OFFSET;
++	pre++;
++	post = (reg & MXC_CCM_PDR0_CSI_PODF_MASK) >>
++	    MXC_CCM_PDR0_CSI_PODF_OFFSET;
++	post++;
++	clk->rate = clk->parent->rate / (pre * post);
+ }
+ 
+ static unsigned long _clk_csi_round_rate(struct clk *clk, unsigned long rate)
+ {
++	u32 pre, post;
+ 	u32 div = clk->parent->rate / rate;
+ 	if (clk->parent->rate % rate)
+ 		div++;
+ 
+-	if (div > 512)
+-		div = 512;
+-
+-	return clk->parent->rate / div;
++	__calc_pre_post_dividers(div, &pre, &post);
+ 
++	return clk->parent->rate / (pre * post);
+ }
+ 
+ static int _clk_csi_set_rate(struct clk *clk, unsigned long rate)
+ {
+ 	u32 reg;
+ 	u32 div;
++	u32 pre, post;
+ 
+ 	div = clk->parent->rate / rate;
+ 
+ 	if ((clk->parent->rate / div) != rate)
+ 		return -EINVAL;
+ 
++	__calc_pre_post_dividers(div, &pre, &post);
++
+ 	/* Set CSI clock divider */
+-	reg = __raw_readl(MXC_CCM_PDR0) & ~MXC_CCM_PDR0_CSI_PODF_MASK;
+-	reg |= (div - 1) << MXC_CCM_PDR0_CSI_PODF_OFFSET;
++	reg = __raw_readl(MXC_CCM_PDR0) &
++	    ~(MXC_CCM_PDR0_CSI_PODF_MASK | MXC_CCM_PDR0_CSI_PRDF_MASK);
++	reg |= (post - 1) << MXC_CCM_PDR0_CSI_PODF_OFFSET;
++	reg |= (pre - 1) << MXC_CCM_PDR0_CSI_PRDF_OFFSET;
+ 	__raw_writel(reg, MXC_CCM_PDR0);
+ 
+ 	clk->rate = rate;
+@@ -375,38 +417,6 @@ static void _clk_firi_recalc(struct clk 
+ 	clk->rate = clk->parent->rate / (firi_prepdf + 1) / (firi_pdf + 1);
+ }
+ 
+-static void __calc_pre_post_dividers(u32 div, u32 * pre, u32 * post)
+-{
+-	u32 min_pre, temp_pre, old_err, err;
+-
+-	if (div >= 512) {
+-		*pre = 8;
+-		*post = 64;
+-	} else if (div >= 64) {
+-		min_pre = (div - 1) / 64 + 1;
+-		old_err = 8;
+-		for (temp_pre = 8; temp_pre >= min_pre; temp_pre--) {
+-			err = div % temp_pre;
+-			if (err == 0) {
+-				*pre = temp_pre;
+-				break;
+-			}
+-			err = temp_pre - err;
+-			if (err < old_err) {
+-				old_err = err;
+-				*pre = temp_pre;
+-			}
+-		}
+-		*post = (div + *pre - 1) / *pre;
+-	} else if (div <= 8) {
+-		*pre = div;
+-		*post = 1;
+-	} else {
+-		*pre = 1;
+-		*post = div;
+-	}
+-}
+-
+ static unsigned long _clk_firi_round_rate(struct clk *clk, unsigned long rate)
+ {
+ 	u32 pre, post;
+@@ -666,7 +676,7 @@ static struct clk usb_clk[] = {
+ 
+ static struct clk csi_clk = {
+ 	.name = "csi_clk",
+-	.parent = &usb_pll_clk,
++	.parent = &serial_pll_clk,
+ 	.recalc = _clk_csi_recalc,
+ 	.round_rate = _clk_csi_round_rate,
+ 	.set_rate = _clk_csi_set_rate,

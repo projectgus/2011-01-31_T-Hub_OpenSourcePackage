@@ -1,0 +1,301 @@
+[[TableOfContents]]
+
+= LTIB (Linux Target Image Builder) support for the 8548 =
+
+The 8548 platform will soon be available.  This will need a an operating
+system image available to support it.  The proposal is that the LTIB
+project will provide a BSP abstraction to support this platform.
+
+This document is a work in progress, and will be updated following
+feedback and further details.
+
+
+= LTIB system features =
+
+LTIB is a tool which allows simple configuration, build and deployment
+of operating system images.  This will be used to provide a development
+framework for 8548 development.  This tool will provide the following
+features:
+
+ * Unattended autobuilds for regression
+  * Ability to apply pre-set package profiles against platform defconfigs.
+  This allows building large or small userspace package lists, whilst
+  maintaining default kernel/busybox configurations.
+
+ * Interactive configuration utility (kernel 'menuconfig' style)
+  * Configs use Linux-2.6 lkc grammar
+  * Ability to configure and tailor packages lists for the target image
+  * Ability to change toolchains easily
+  * Capability to support uclibc (if toolchain available)
+  * Ability to configure the kernel/busybox during a build, with the
+  changed configuration being captured.
+  * Ability to easily add packages
+
+ * Build is conducted as normal user (non-root), only 'rpm install' is
+ run as root under the control of 'sudo'.
+
+ * Packages are managed using 'rpm'.
+  * each LTIB instance has it's own private rpm database
+
+ * Any packages need by the host to support builds are built and installed
+ on the host.  These do not pollute the host system (they install into
+ /var/tmp/freescale using a private rpm database)
+
+ * Userspace packages are common (unless overriden)
+
+ * Ability to quickly add new platform abstractions
+
+ * Many development tasks are simplified
+  * Single packages may be operated on (-p option)
+  * Packages can be built in stages (prep, build, install)
+  * Packages can be incrementally deployed.  This allows a developer
+  re-build and re-install a most userspace packages on a running NFS root
+  mounted image, greatly reducing the edit/compile/deploy/test cycle.
+  * Changes to packages can be automatically captured (using --patchmerge)
+  This makes a patch set for the changes, and automatically updates
+  the rpm SPEC file.  All changes can be reviewed before committing.
+
+ * Source code is demand downloaded when packages are built from a 
+ central location.  This source code is stored in a central location
+ per host.  This allows the economic support of many instance of LTIB
+ on a single machine.
+
+ * Binary only distributions are supported.  Packages are only built
+ if there is no binary rpm, or if there is a need to rebuild.
+
+
+= 8548 Packages and features =
+
+== Toolchain ==
+
+While it is understood that the 8548 differs from the 8540/60 with respect
+to having a full double precision FPU (Floating Point Unit), initially
+the BSP will utilize the existing toolchain used for the 8540/60 platforms.
+
+Therefore, the toolchain to be used will be:
+
+mtwk-lnx-powerpc-linux-gnuspe-gcc-3.4.3-e500-glibc-2.3.3-spe-0.28-4.i686.rpm
+
+or a later compatible version (currently a version that integrates
+sanitised kernel headers is being evaluated).
+
+
+== Bootloader ==
+
+Uboot will be used.
+ * Location: http://sourceforge.freescale.net/projects/u-boot/
+ * Version: TBD 
+ * Branch: TBD
+ * Configuration: TBD
+
+
+== Kernel ==
+
+Linux will be used:
+
+ * Location: http://sourceforge.freescale.net/projects/linuxppc/
+ * Version: Linux-2.6.11
+ * Branch: TBD
+ * Configuration: TBD
+
+
+== Default LTIB packages/features ==
+
+By default the following packages will be installed:
+
+|| '''Package'''    || '''Comment''' ||
+|| u-boot-TBD       || Boot loader ||
+|| kernel-2.6-TBD   || Linux kernel ||
+|| skell-1.1        || skelleton directories an files   ||
+|| base_libs-1.0    || base libraries from the toolchain ||
+|| busybox-1.00     || most common userspace utilities  ||
+|| merge-0.1        || optional platform files ||
+
+By default the following features will be provided:
+
+|| '''Features'''   || '''package''' || '''Comment''' ||
+|| basic files/dirs || skell    || skeleton file system ||
+|| bunzip2          || busybox  || decompress bz2 ||
+|| gunzip           || busybox  || decompress gz  ||
+|| gzip             || busybox  || compress zip   ||
+|| tar              || busybox  || file archival  ||
+|| unzip            || busybox  || uncompress zip ||
+|| basename         || busybox  || extract filename from a path ||
+|| cal              || busybox  || monthly calandar ||
+|| cat              || busybox  || concatenate and print files ||
+|| chgrp            || busybox  || change group ownership of files ||
+|| chmod            || busybox  || change access permissions of files ||
+|| chown            || busybox  || change ownerships of files ||
+|| chroot           || busybox  || change root directory ||
+|| cmp              || busybox  || compare two files ||
+|| cp               || busybox  || copy files ||
+|| cut              || busybox  || print selected parts of a line ||
+|| date             || busybox  || set/display date/time ||
+|| dd               || busybox  || low level copy ||
+|| df               || busybox  || report available/used disk space ||
+|| dirname          || busybox  || return the directory part of a path ||
+|| du               || busybox  || report disk space used by specified files ||
+|| echo             || busybox  || print a string to stdout ||
+|| env              || busybox  || set/display environment variables ||
+|| expr             || busybox  || calculate numeric expressions ||
+|| false            || busybox  || returns exit code of 1 (FALSE) ||
+|| head             || busybox  || print the first n lines from files ||
+|| hostid           || busybox  || print the hext id for a host ||
+|| id               || busybox  || display the current user/group ID names ||
+|| install          || busybox  || copy files and set attributes ||
+|| ln               || busybox  || creat hard/soft links between files ||
+|| logname          || busybox  || print the current user's login name ||
+|| ls               || busybox  || list directory contents ||
+|| md5sum           || busybox  || print/check md5sums of files ||
+|| mkdir            || busybox  || create directories ||
+|| mkfifo           || busybox  || create FIFOs (named pipes) ||
+|| mknod            || busybox  || create block/character special files ||
+|| mv               || busybox  || move/rename files ||
+|| od               || busybox  || dump binary files in octal/other formats ||
+|| pwd              || busybox  || print the current working directory ||
+|| realpath         || busybox  || return the canonical absolute path ||
+|| rm               || busybox  || remove files/directories ||
+|| rmdir            || busybox  || remove empty directories ||
+|| sleep            || busybox  || pause for a specified number of seconds ||
+|| sort             || busybox  || sort line of text ||
+|| stty             || busybox  || change and print terminal line settings ||
+|| sync             || busybox  || flush filesystem buffers ||
+|| tail             || busybox  || print the last n lines from files ||
+|| tee              || busybox  || read from stdin and write stdout plus files (logging) ||
+|| test             || busybox  || check file types and compare values ||
+|| touch            || busybox  || create files or change access/modifications times ||
+|| tr               || busybox  || translate characters in the stdin input stream ||
+|| true             || busybox  || return an exit code of 0 (TRUE) ||
+|| tty              || busybox  || print the name of the current terminal ||
+|| uname            || busybox  || print system information (machine, os, hostname) ||
+|| uniq             || busybox  || remove duplicated lines from sorted file output ||
+|| usleep           || busybox  || request pause for a number of microseconds ||
+|| wc               || busybox  || print the number of bytes, works and lines in a file ||
+|| who              || busybox  || show who is logged in ||
+|| whoami           || busybox  || print the username of the current user id ||
+|| yes              || busybox  || repeatedly output a specified string (default 'y') ||
+|| chvt             || busybox  || change virtual terminal ||
+|| clear            || busybox  || clear the screen ||
+|| deallocvt        || busybox  || deallocate unused virtual consoles ||
+|| openvt           || busybox  || start a command on an unused virtual terminal ||
+|| reset            || busybox  || reset the terminal screen when it's messed up ||
+|| mktemp           || busybox  || create a unique temporary file ||
+|| readlink         || busybox  || read a symbolic link and return the name of the file it points to ||
+|| which            || busybox  || find program in your PATH and report it's pathname ||
+|| awk              || busybox  || AWK pattern scanning and processing language ||
+|| patch            || busybox  || Apply a unified diff formatted patch ||
+|| sed              || busybox  || a Stream EDitor (used in scripts to edit files) ||
+|| vi               || busybox  || very common UNIX text editor ||
+|| find             || busybox  || search for specified files ||
+|| grep             || busybox  || search files for a specified pattern ||
+|| xargs            || busybox  || execute a specified common on every item from stdin ||
+|| init             || busybox  || start-up: init is the first program run when the system boots ||
+|| halt             || busybox  || stop all processes and halt the system ||
+|| poweroff         || busybox  || stop all processes and attempt to power off the system ||
+|| reboot           || busybox  || stop all processes and reboot the system ||
+|| crond            || busybox  || run programs in background at a specified time ||
+|| crontab          || busybox  || manipulate the crontab for a user ||
+|| last             || busybox  || display a list of the last users logged into the system ||
+|| hdparm           || busybox  || get/set hard drive parameters (ATA) ||
+|| strings          || busybox  || print printable character sequences in a file ||
+|| time             || busybox  || run a command and print timing statistics ||
+|| insmod           || busybox  || load a kernel module (need to test with 2.6) ||
+|| lsmod            || busybox  || list loaded kernel modules (need to test with 2.6) ||
+|| modprobe         || busybox  || load/unload modules using dependencies (need to test with 2.6) ||
+|| rmmod            || busybox  || unload a specified module (need to test with 2.6) ||
+|| ftpget           || busybox  || retrieve a remote file using FTP protocol ||
+|| ftpput           || busybox  || store a file remotely using FTP protocol ||
+|| hostname         || busybox  || print/set the system's host name ||
+|| ifconfig         || busybox  || configure kernel-resident network interfaces ||
+|| ifupdown         || busybox  || (de)activate specified interfaces ||
+|| ip               || busybox  || set/display network interface parameters (ipaddr, iplink, iproute) ||
+|| nc               || busybox  || read/write data across a network connection (net cat) ||
+|| netstat          || busybox  || print information about the network system ||
+|| ping             || busybox  || network echo request using ICMP network protocol ||
+|| route            || busybox  || display/set kernel IP routing tables ||
+|| telnet           || busybox  || telnet client (login into machines running telnetd) ||
+|| telnetd          || busybox  || telnet server to allow remote login) ||
+|| tftp             || busybox  || get/put files using Trivial File Transfer Protocol ||
+|| traceroute       || busybox  || trace the route of IP packets ||
+|| vconfig          || busybox  || creates, removes, and configures VLAN interfaces ||
+|| wget             || busybox  || download files using HTTP and FTP protocol ||
+|| udhcpd           || busybox  || dhcp server (for embedded systems) ||
+|| udhcpc           || busybox  || dhcp client (get a dynamic IP address from a dhcp server) ||
+|| dumpleases       || busybox  || displays the leases written out by the udhcpd server ||
+|| free             || busybox  || display free and used memory ||
+|| kill             || busybox  || send a signal to the specified process ||
+|| killall          || busybox  || send a single to all processes running a named command ||
+|| pidof            || busybox  || find the process id's of the named program ||
+|| ps               || busybox  || print a listing of the current processes ||
+|| renice           || busybox  || alter the scheduling priority of a process ||
+|| top              || busybox  || dynamic display of the running system ||
+|| uptime           || busybox  || list low long the system has been running ||
+|| sysctl           || busybox  || configure kernel parameters at runtime ||
+|| ash              || busybox  || the shell interpreter (cut-down bash shell) ||
+|| syslogd          || busybox  || log system events ||
+|| klogd            || busybox  || intercept kernel messages and send to the syslogd utility ||
+|| logger           || busybox  || send messages to the system log ||
+|| dmesg            || busybox  || print out the kernels message ring buffer (e.g. boot messages) ||
+|| fbset            || busybox  || show/change the settings of a Linux frame buffer device ||
+|| fdformat         || busybox  || low level format a floppy disk ||
+|| fdisk            || busybox  || low level disk partitioning utility ||
+|| freeramdisk      || busybox  || delete them and completely free all memory that was used a ramdisk ||
+|| hexdump          || busybox  || dump binary files in hex format ||
+|| hwclock          || busybox  || read/set the hardware clock on a system ||
+|| losetup          || busybox  || associate/detach a loop device with a regular file ||
+|| mkswap           || busybox  || configure a file/partition as a Linux swap space ||
+|| more             || busybox  || read text from a file one screen at a time ||
+|| pivot_root       || busybox  || swap the mount point for the root filesystem (booting) ||
+|| rdate            || busybox  || set your date/time from a remote machine ||
+|| swaponoff        || busybox  || swapon/swapoff, enable/disable swap space ||
+|| mount            || busybox  || mount partitions into a filesystem tree ||
+|| umount           || busybox  || unmount partitions ||
+
+
+== Optional LTIB common userspace features ==
+
+The following packages may optionally be installed:
+
+ * tinylogin-1.4-1
+ * modutils-2.4.25-1 or module-init-tools-3.1
+ * bash-2.05b-1
+ * coreutils-5.0-1
+ * zlib-1.1.4-2
+ * lfs-utils-0.3-1
+ * findutils-4.1.20-1
+ * gawk-3.1.3-1
+ * libtermcap-2.0.8-31_1
+ * ncurses-5.3-1
+ * vim-6.2-1
+ * m4-1.4-1
+ * bison-1.875-1
+ * less-381-1
+ * groff-1.18.1-1
+ * sed-4.0.7-1
+ * flex-2.5.4-1
+ * gettext-0.12.1-1
+ * net-tools-1.60-1
+ * inetutils-1.4.2-1
+ * autoconf-2.57-1
+ * automake-1.7.6-1
+ * libtool-1.5-1
+ * bzip2-1.0.2-1
+ * diffutils-2.8.1-1
+ * ed-0.2-1
+ * e2fsprogs-1.34-1
+ * grep-2.5.1-1
+ * man-1.5m2-1
+ * make-3.80-1
+ * patch-2.5.4-1
+ * procinfo-18-1
+ * procps-3.1.11-1
+ * sysklogd-1.4.1-1
+ * tar-1.13.25-1
+ * util-linux-2.12-1
+ * which-2.14-1
+ * fakeroot-0.4.4-1
+ * wget-1.9.1-1
+ * expat-1.95.7-3
+ * freetype-2.1.7-1
+
+----

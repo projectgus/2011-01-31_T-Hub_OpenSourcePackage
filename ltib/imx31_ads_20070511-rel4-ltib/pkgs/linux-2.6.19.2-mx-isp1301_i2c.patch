@@ -1,0 +1,58 @@
+CR: ENGR00028553
+Patch name: ENGR00028553_isp1301_i2c.patch
+Date: Tue Mar 13 09:51:02 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: fixed i2c part of isp1301 usb transceiver code.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/isp1301.h linux-2.6.19.2/include/asm-arm/arch-mxc/isp1301.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/isp1301.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/isp1301.h	2007-04-25 17:39:24.000000000 -0600
+@@ -85,19 +85,9 @@ static struct i2c_client isp1301_i2c_cli
+ 	.driver = &isp1301_i2c_driver,
+ };
+ 
+-/*!
+- * isp1301 I2C attach function
+- *
+- * @param adapter            struct i2c_adapter *
+- * @return  Error code indicating success or failure
+- */
+-static int isp1301_attach(struct i2c_adapter *adapter)
++static int isp1301_detect_client(struct i2c_adapter *adapter, int address,
++				 int kind)
+ {
+-	if (strcmp(adapter->name, MXC_ADAPTER_NAME) != 0) {
+-		printk(KERN_ERR "isp1301_attach: %s\n", adapter->name);
+-		return -1;
+-	}
+-
+ 	isp1301_i2c_client.adapter = adapter;
+ 	if (i2c_attach_client(&isp1301_i2c_client)) {
+ 		isp1301_i2c_client.adapter = NULL;
+@@ -105,9 +95,26 @@ static int isp1301_attach(struct i2c_ada
+ 		return -1;
+ 	}
+ 
++	printk(KERN_INFO "isp1301 Detected\n");
+ 	return 0;
+ }
+ 
++static unsigned short normal_i2c[] = { ISP1301_DEV_ADDR, I2C_CLIENT_END };
++
++/* Magic definition of all other variables and things */
++I2C_CLIENT_INSMOD;
++
++/*!
++ * isp1301 I2C attach function
++ *
++ * @param adapter            struct i2c_adapter *
++ * @return  Error code indicating success or failure
++ */
++static int isp1301_attach(struct i2c_adapter *adap)
++{
++	return i2c_probe(adap, &addr_data, &isp1301_detect_client);
++}
++
+ /*!
+  * isp1301 I2C detach function
+  *

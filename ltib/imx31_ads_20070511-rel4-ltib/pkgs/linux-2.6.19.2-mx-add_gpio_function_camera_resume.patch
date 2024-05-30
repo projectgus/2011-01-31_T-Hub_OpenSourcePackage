@@ -1,0 +1,59 @@
+CR: ENGR00007753
+Patch name: ENGR00007753_add_qpio_function_camera_resume.patch
+Date: Thu Mar 8 14:19:47 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: Added gpio function in camera suspend function to reduce
+drive strength.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_v4l2_capture.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-04-25 17:39:01.000000000 -0600
+@@ -1885,6 +1885,9 @@ static void init_camera_struct(cam_data 
+ 	spin_lock_init(&cam->int_lock);
+ }
+ 
++extern void gpio_sensor_active(void);
++extern void gpio_sensor_inactive(void);
++
+ /*!
+  * camera_power function
+  *    Turn Sensor power On/Off
+@@ -1896,10 +1899,12 @@ static void init_camera_struct(cam_data 
+ static u8 camera_power(bool cameraOn)
+ {
+ 	if (cameraOn == true) {
++		gpio_sensor_active();
+ 		csi_enable_mclk(csi_mclk_flag_backup, true, true);
+ 	} else {
+ 		csi_mclk_flag_backup = csi_read_mclk_flag();
+ 		csi_enable_mclk(csi_mclk_flag_backup, false, false);
++		gpio_sensor_inactive();
+ 	}
+ 	return 0;
+ }
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.c linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.c	2007-04-25 17:39:01.000000000 -0600
+@@ -1683,6 +1683,9 @@ static void init_camera_struct(cam_data 
+ 	spin_lock_init(&cam->int_lock);
+ }
+ 
++extern void gpio_sensor_active(void);
++extern void gpio_sensor_inactive(void);
++
+ /*!
+  * camera_power function
+  *    Turn Sensor power On/Off
+@@ -1694,10 +1697,12 @@ static void init_camera_struct(cam_data 
+ static u8 camera_power(bool cameraOn)
+ {
+ 	if (cameraOn == true) {
++		gpio_sensor_active();
+ 		ipu_csi_enable_mclk(csi_mclk_flag_backup, true, true);
+ 	} else {
+ 		csi_mclk_flag_backup = ipu_csi_read_mclk_flag();
+ 		ipu_csi_enable_mclk(csi_mclk_flag_backup, false, false);
++		gpio_sensor_inactive();
+ 	}
+ 	return 0;
+ }

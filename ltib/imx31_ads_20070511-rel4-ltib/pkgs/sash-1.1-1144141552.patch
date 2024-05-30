@@ -1,0 +1,67 @@
+Tues April 4 2006 Stuart Hughes <stuarth@freescale.com>
+
+This is a tentative patch to make sash build against later kernels
+that don't allow you to directly include kernel header files (linux/autoconf.h)
+
+
+diff --exclude CVS -uNr sash-1.1/cmd_uclinux.c sash-1.1.modified/cmd_uclinux.c
+--- sash-1.1/cmd_uclinux.c	2001-11-22 03:45:30.000000000 +0000
++++ sash-1.1.modified/cmd_uclinux.c	2006-04-04 09:56:09.000000000 +0100
+@@ -1,7 +1,7 @@
+ 
+ #include "sash.h"
+ 
+-#include <linux/autoconf.h>
++//#include <linux/autoconf.h>
+ 
+ #include <fcntl.h>
+ #include <sys/types.h>
+diff --exclude CVS -uNr sash-1.1/df.c sash-1.1.modified/df.c
+--- sash-1.1/df.c	2002-09-16 13:50:35.000000000 +0100
++++ sash-1.1.modified/df.c	2006-04-04 09:57:17.000000000 +0100
+@@ -10,7 +10,7 @@
+ 
+ #include "sash.h"
+ 
+-#include <linux/autoconf.h>
++//#include <linux/autoconf.h>
+ 
+ #include <fcntl.h>
+ #include <sys/types.h>
+Binary files sash-1.1/df.o and sash-1.1.modified/df.o differ
+diff --exclude CVS -uNr sash-1.1/free.c sash-1.1.modified/free.c
+--- sash-1.1/free.c	2000-10-11 03:00:54.000000000 +0100
++++ sash-1.1.modified/free.c	2006-04-04 09:57:31.000000000 +0100
+@@ -10,7 +10,7 @@
+ 
+ #include "sash.h"
+ 
+-#include <linux/autoconf.h>
++//#include <linux/autoconf.h>
+ 
+ #include <fcntl.h>
+ #include <sys/types.h>
+diff --exclude CVS -uNr sash-1.1/reboot.c sash-1.1.modified/reboot.c
+--- sash-1.1/reboot.c	2002-03-04 04:49:24.000000000 +0000
++++ sash-1.1.modified/reboot.c	2006-04-04 09:58:01.000000000 +0100
+@@ -12,7 +12,7 @@
+  * AUG/99 -- added delay option to reboot
+  */
+ 
+-#include <linux/autoconf.h>
++//#include <linux/autoconf.h>
+ 
+ #include <stdlib.h>
+ #include <string.h>
+diff --exclude CVS -uNr sash-1.1/shutdown.c sash-1.1.modified/shutdown.c
+--- sash-1.1/shutdown.c	2002-11-05 06:19:54.000000000 +0000
++++ sash-1.1.modified/shutdown.c	2006-04-04 09:57:49.000000000 +0100
+@@ -10,7 +10,7 @@
+ 
+ #include "sash.h"
+ 
+-#include <linux/autoconf.h>
++//#include <linux/autoconf.h>
+ 
+ 
+ #include <string.h>

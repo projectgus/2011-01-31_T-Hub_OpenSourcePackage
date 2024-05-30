@@ -1,0 +1,78 @@
+CR: TLSbo90151
+Patch name: TLSbo90151_Fix_invalid_debugging_printk_for_VPU.patch
+Date: Tue Feb 27 14:11:37 2007 +0800
+Source: Freescale Semiconductor, Inc.
+Description: fix invalid debugging printk & remove self-defined debug
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/vpu/Kconfig linux-2.6.19.2/drivers/mxc/vpu/Kconfig
+--- linux-2.6.19.2.orig/drivers/mxc/vpu/Kconfig	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/vpu/Kconfig	2007-04-25 17:38:00.000000000 -0600
+@@ -2,18 +2,18 @@
+ # Codec configuration
+ #
+ 
+-menu "H.264 VPU Codec support"
++menu "MXC VPU(Video Processing Unit) support"
+ 
+ config MXC_VPU
+-	tristate "Support for mx27 H.264 VPU codec"
++	tristate "Support for MXC VPU(Video Processing Unit)"
+ 	help
+-	  The VPU codec device provides codec function for h.264/mpeg4/h.263
++	  The VPU codec device provides codec function for H.264/MPEG4/H.263
+ 
+ config MXC_VPU_DEBUG
+ 	bool "MXC VPU debugging"
+ 	depends on MXC_VPU != n
+ 	help
+-	  This is an option for use by developers; most people should
++	  This is an option for the developers; most people should
+ 	  say N here.  This enables MXC VPU driver debugging.
+ 
+ endmenu
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/vpu/Makefile linux-2.6.19.2/drivers/mxc/vpu/Makefile
+--- linux-2.6.19.2.orig/drivers/mxc/vpu/Makefile	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/vpu/Makefile	2007-04-25 17:38:00.000000000 -0600
+@@ -1,7 +1,9 @@
+-# Makefile for the Linux VPU drivers.
+-# 25 May 2006
+-
+-# Each configuration option enables a list of files.
++#
++# Makefile for the VPU drivers.
++#
+ 
+ obj-$(CONFIG_MXC_VPU)                  += mxc_vpu.o
+ 
++ifeq ($(CONFIG_MXC_VPU_DEBUG),y)
++EXTRA_CFLAGS += -DDEBUG
++endif
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/vpu/mxc_vpu.c linux-2.6.19.2/drivers/mxc/vpu/mxc_vpu.c
+--- linux-2.6.19.2.orig/drivers/mxc/vpu/mxc_vpu.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/vpu/mxc_vpu.c	2007-04-25 17:38:00.000000000 -0600
+@@ -19,11 +19,7 @@
+  * @ingroup VPU
+  */
+ 
+-#ifdef	CONFIG_MXC_VPU_DEBUG
+-#define	DEBUG
+ #include <linux/kernel.h>
+-#endif
+-
+ #include <linux/mm.h>
+ #include <linux/interrupt.h>
+ #include <linux/autoconf.h>
+@@ -248,10 +244,11 @@ static int vpu_ioctl(struct inode *inode
+ 			if (!wait_event_interruptible_timeout
+ 			    (vpu_queue, codec_done != 0,
+ 			     msecs_to_jiffies(timeout))) {
+-				printk("VPU blocking: timeout.\n");
++				printk(KERN_WARNING "VPU blocking: timeout.\n");
+ 				ret = -ETIME;
+ 			} else if (signal_pending(current)) {
+-				printk("VPU interrupt received.\n");
++				printk(KERN_WARNING
++				       "VPU interrupt received.\n");
+ 				ret = -ERESTARTSYS;
+ 			}
+ 

@@ -1,0 +1,43 @@
+Fri Jun 9 2006, Stuart Hughes, <stuarth@freescale.com>
+
+We need to user asm/errno.h from the cross compiler, not the absolute path.
+This gets rid of errors like:
+
+gcc -DHAVE_CONFIG_H -I. -I. -I../..     -I../../src/include -g -O2 -Wall -Wshadow -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -c isp.c
+In file included from isp.c:61:
+errnos.inc:126: error: `ENOKEY' undeclared here (not in a function)
+
+
+diff --exclude CVS -uNr linux-atm-2.4.1/src/test/mkerrnos.pl linux-atm-2.4.1.modified/src/test/mkerrnos.pl
+--- linux-atm-2.4.1/src/test/mkerrnos.pl	2001-09-03 19:41:06.000000000 +0100
++++ linux-atm-2.4.1.modified/src/test/mkerrnos.pl	2006-06-09 18:24:20.000000000 +0100
+@@ -1,5 +1,28 @@
+ #!/usr/bin/perl
+-while (<>) {
++
++# Fri Jun 9 2006, Stuart Hughes, <stuarth@freescale.com>
++# we may be using a cross compiler, so we need to use errno.h from that
++open(GCC, "gcc -v -E - 2>&1 </dev/null |") or die  "can't run gcc -v -E -";
++$slurp = 0;
++$inc = "";
++while(<GCC>) {
++    s,\s+,,g;
++    m,^#include<\.\.\.>searchstartshere:,     && do { $slurp=1; next };
++    m,^Endofsearchlist,                       && do { $slurp=0; last }; 
++    push @dirs, $_ if $slurp;
++}
++close GCC;
++
++foreach $dir (@dirs) {
++    if($en = `find $dir -name errno.h | xargs grep -l ECONNREFUSED`) {
++        warn "using $en";
++        chomp $en;
++        last;
++    }
++}
++
++open(ERRNO, $en) or die "open $en: $!\n";
++while (<ERRNO>) {
+     next unless /^#define\s+(E\S+)\s*/;
+     printf("  { \"%s\", %s },\n",$1,$1) || die "print: $!";
+ }

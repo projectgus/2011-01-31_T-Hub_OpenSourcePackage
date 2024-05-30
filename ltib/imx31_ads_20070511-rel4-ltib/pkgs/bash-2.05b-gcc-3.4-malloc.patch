@@ -1,0 +1,95 @@
+From:   Schuh, Markus
+Subject:    "label" compile error in malloc.c compiled with gcc 3.4.0
+Date:   Thu, 22 Apr 2004 12:09:10 +0200
+
+Configuration Information [Automatically generated, do not change]:
+Machine: sparc
+OS: solaris2.8
+Compiler: gcc
+Compilation CFLAGS:  -DPROGRAM='bash' -DCONF_HOSTTYPE='sparc' 
+-DCONF_OSTYPE='solaris2.8' -DCONF_MACHTYPE='sparc-sun-solaris2.8' 
+-DCONF_VENDOR='sun' -DSHELL -DHAVE_CONFIG_H  -I.  -I. -I./include -I./lib  -g 
+-O2
+uname output: SunOS xxxxxxxx 5.8 Generic_108528-16 sun4u sparc SUNW,UltraAX-i2
+Machine Type: sparc-sun-solaris2.8
+
+Bash Version: 2.05b
+Patch Level: 0
+Release Status: release
+
+Description:
+
+make fails when compiled with gcc 3.4.0:
+
+[...]
+make[1]: Entering directory `/usr/src/bash-2.05b/lib/malloc'
+gcc  -I. -I../.. -I../.. -I../../include -I../../lib -DHAVE_CONFIG_H -DSHELL  
+-g -O2 -DRCHECK -Dbotc
+h=programming_error   -c malloc.c
+malloc.c:239: warning: integer constant is too large for "unsigned long" type
+malloc.c: In function `internal_free':
+malloc.c:904: error: label at end of compound statement
+make[1]: *** [malloc.o] Error 1
+make[1]: Leaving directory `/usr/src/work/bash-2.05b/lib/malloc'
+make: *** [lib/malloc/libmalloc.a] Error 1
+
+the problem arise in function
+
+static void internal_free
+[...]
+          /* keeps the tracing and registering code in one place */
+          goto free_return;
+[...]
+free_return:
+[ ... some ifdef-endif-blocks; none is active in my setup ...]
+}
+
+this "label at end of compound statement" was already deprecated and now yields 
+to an arror
+see http://gcc.gnu.org/gcc-3.4/changes.html
+"The undocumented extension that allowed C programs to have a label at the end 
+of a compound statement, which has been deprecated since GCC 3.0, has been 
+removed."
+
+
+
+Repeat-By:
+
+gunzip -c ../dist/bash-2.05b.tar.gz | tar xf -
+cd bash-2.05b
+patch -p0 < ../../dist/bash-2.05b-patches/bash205b-001
+patch -p0 < ../../dist/bash-2.05b-patches/bash205b-002
+patch -p0 < ../../dist/bash-2.05b-patches/bash205b-003
+patch -p0 < ../../dist/bash-2.05b-patches/bash205b-004
+patch -p0 < ../../dist/bash-2.05b-patches/bash205b-005
+patch -p0 < ../../dist/bash-2.05b-patches/bash205b-006
+patch -p0 < ../../dist/bash-2.05b-patches/bash205b-007
+CC=gcc ./configure
+make
+
+Fix:
+
+Fix lib/malloc/malloc.c so a valid default value is returned at end of 
+internal_free.
+A simple "return;" should be the right exit of a function with "static void" 
+value.
+
+
+*** ../bash-2.05b/lib/malloc/malloc.c   Fri Jun 21 21:16:49 2002
+--- lib/malloc/malloc.c Thu Apr 22 10:46:46 2004
+***************
+*** 901,906 ****
+--- 901,908 ----
+    if (_malloc_nwatch > 0)
+      _malloc_ckwatch (mem, file, line, W_FREE, ubytes);
+  #endif
++
++   return;
+  }
+
+  static PTR_T
+
+
+
+
+

@@ -1,0 +1,79 @@
+CR: TLSbo87444
+Patch name: TLSbo87444_unify_light_ioctl.patch
+Date: Tue Mar 6 19:52:45 2007 +0530
+Source: Freescale Semiconductor, Inc.
+
+Description: Modified the light ioctl such that the implementation is
+similar in the case for different PMIC chips.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_light.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_light.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_light.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_light.c	2007-04-25 17:38:30.000000000 -0600
+@@ -2334,8 +2334,7 @@ static int pmic_light_ioctl(struct inode
+ 		CHECK_ERROR_KFREE(pmic_bklit_set_mode(bklit_setting->channel,
+ 						      bklit_setting->mode),
+ 				  (kfree(bklit_setting)));
+-		//CHECK_ERROR(pmic_bklit_set_strobemode(bklit_setting->channel,
+-		//      bklit_setting->strobe));
++
+ 		CHECK_ERROR_KFREE(pmic_bklit_set_current(bklit_setting->channel,
+ 							 bklit_setting->
+ 							 current_level),
+@@ -2347,9 +2346,12 @@ static int pmic_light_ioctl(struct inode
+ 		CHECK_ERROR_KFREE(pmic_bklit_set_cycle_time
+ 				  (bklit_setting->cycle_time),
+ 				  (kfree(bklit_setting)));
+-		pmic_bklit_set_boost_mode(bklit_setting->en_dis);
+-		pmic_bklit_config_boost_mode(bklit_setting->abms,
+-					     bklit_setting->abr);
++		CHECK_ERROR_KFREE(pmic_bklit_set_boost_mode
++				  (bklit_setting->en_dis),
++				  (kfree(bklit_setting)));
++		CHECK_ERROR_KFREE(pmic_bklit_config_boost_mode
++				  (bklit_setting->abms, bklit_setting->abr),
++				  (kfree(bklit_setting)));
+ 		if (bklit_setting->edge_slow != false) {
+ 			CHECK_ERROR_KFREE(pmic_bklit_enable_edge_slow(),
+ 					  (kfree(bklit_setting)));
+@@ -2373,18 +2375,30 @@ static int pmic_light_ioctl(struct inode
+ 			return -EFAULT;
+ 		}
+ 
+-		pmic_bklit_get_current(bklit_setting->channel,
+-				       &bklit_setting->current_level);
+-		pmic_bklit_get_cycle_time(&bklit_setting->cycle_time);
+-		pmic_bklit_get_dutycycle(bklit_setting->channel,
+-					 &bklit_setting->duty_cycle);
++		CHECK_ERROR_KFREE(pmic_bklit_get_current(bklit_setting->channel,
++							 &bklit_setting->
++							 current_level),
++				  (kfree(bklit_setting)));
++		CHECK_ERROR_KFREE(pmic_bklit_get_cycle_time
++				  (&bklit_setting->cycle_time),
++				  (kfree(bklit_setting)));
++		CHECK_ERROR_KFREE(pmic_bklit_get_dutycycle
++				  (bklit_setting->channel,
++				   &bklit_setting->duty_cycle),
++				  (kfree(bklit_setting)));
+ 		bklit_setting->strobe = BACKLIGHT_STROBE_NONE;
+-		pmic_bklit_get_mode(bklit_setting->channel,
+-				    &bklit_setting->mode);
+-		pmic_bklit_get_edge_slow(&bklit_setting->edge_slow);
+-		pmic_bklit_get_boost_mode(&bklit_setting->en_dis);
+-		pmic_bklit_gets_boost_mode(&bklit_setting->abms,
+-					   &bklit_setting->abr);
++		CHECK_ERROR_KFREE(pmic_bklit_get_mode(bklit_setting->channel,
++						      &bklit_setting->mode),
++				  (kfree(bklit_setting)));
++		CHECK_ERROR_KFREE(pmic_bklit_get_edge_slow
++				  (&bklit_setting->edge_slow),
++				  (kfree(bklit_setting)));
++		CHECK_ERROR_KFREE(pmic_bklit_get_boost_mode
++				  (&bklit_setting->en_dis),
++				  (kfree(bklit_setting)));
++		CHECK_ERROR_KFREE(pmic_bklit_gets_boost_mode
++				  (&bklit_setting->abms, &bklit_setting->abr),
++				  (kfree(bklit_setting)));
+ 
+ 		if (copy_to_user((t_bklit_setting_param *) arg, bklit_setting,
+ 				 sizeof(t_bklit_setting_param))) {

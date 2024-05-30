@@ -1,0 +1,469 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkTable</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkStreamableContent.html" title="AtkStreamableContent"><link rel="next" href="AtkText.html" title="AtkText"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkStreamableContent.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkText.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkTable"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkTable</h2><p>AtkTable &#8212; The ATK interface implemented for UI components which contain tabular or
+row/column information.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id298182"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkTable.html#AtkTable-struct">AtkTable</a>;
+<a href="AtkObject.html" title="AtkObject">AtkObject</a>*  <a href="AtkTable.html#atk-table-ref-at">atk_table_ref_at</a>                (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             gint column);
+gint        <a href="AtkTable.html#atk-table-get-index-at">atk_table_get_index_at</a>          (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             gint column);
+gint        <a href="AtkTable.html#atk-table-get-column-at-index">atk_table_get_column_at_index</a>   (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint index_);
+gint        <a href="AtkTable.html#atk-table-get-row-at-index">atk_table_get_row_at_index</a>      (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint index_);
+gint        <a href="AtkTable.html#atk-table-get-n-columns">atk_table_get_n_columns</a>         (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table);
+gint        <a href="AtkTable.html#atk-table-get-n-rows">atk_table_get_n_rows</a>            (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table);
+gint        <a href="AtkTable.html#atk-table-get-column-extent-at">atk_table_get_column_extent_at</a>  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             gint column);
+gint        <a href="AtkTable.html#atk-table-get-row-extent-at">atk_table_get_row_extent_at</a>     (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             gint column);
+<a href="AtkObject.html" title="AtkObject">AtkObject</a>*  <a href="AtkTable.html#atk-table-get-caption">atk_table_get_caption</a>           (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table);
+G_CONST_RETURN gchar* <a href="AtkTable.html#atk-table-get-column-description">atk_table_get_column_description</a>
+                                            (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column);
+G_CONST_RETURN gchar* <a href="AtkTable.html#atk-table-get-row-description">atk_table_get_row_description</a>
+                                            (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row);
+<a href="AtkObject.html" title="AtkObject">AtkObject</a>*  <a href="AtkTable.html#atk-table-get-column-header">atk_table_get_column_header</a>     (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column);
+<a href="AtkObject.html" title="AtkObject">AtkObject</a>*  <a href="AtkTable.html#atk-table-get-row-header">atk_table_get_row_header</a>        (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row);
+<a href="AtkObject.html" title="AtkObject">AtkObject</a>*  <a href="AtkTable.html#atk-table-get-summary">atk_table_get_summary</a>           (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table);
+void        <a href="AtkTable.html#atk-table-set-caption">atk_table_set_caption</a>           (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             <a href="AtkObject.html" title="AtkObject">AtkObject</a> *caption);
+void        <a href="AtkTable.html#atk-table-set-row-description">atk_table_set_row_description</a>   (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             const gchar *description);
+void        <a href="AtkTable.html#atk-table-set-column-description">atk_table_set_column_description</a>
+                                            (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column,
+                                             const gchar *description);
+void        <a href="AtkTable.html#atk-table-set-row-header">atk_table_set_row_header</a>        (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             <a href="AtkObject.html" title="AtkObject">AtkObject</a> *header);
+void        <a href="AtkTable.html#atk-table-set-column-header">atk_table_set_column_header</a>     (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column,
+                                             <a href="AtkObject.html" title="AtkObject">AtkObject</a> *header);
+void        <a href="AtkTable.html#atk-table-set-summary">atk_table_set_summary</a>           (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             <a href="AtkObject.html" title="AtkObject">AtkObject</a> *accessible);
+gint        <a href="AtkTable.html#atk-table-get-selected-columns">atk_table_get_selected_columns</a>  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint **selected);
+gint        <a href="AtkTable.html#atk-table-get-selected-rows">atk_table_get_selected_rows</a>     (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint **selected);
+gboolean    <a href="AtkTable.html#atk-table-is-column-selected">atk_table_is_column_selected</a>    (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column);
+gboolean    <a href="AtkTable.html#atk-table-is-row-selected">atk_table_is_row_selected</a>       (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row);
+gboolean    <a href="AtkTable.html#atk-table-is-selected">atk_table_is_selected</a>           (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             gint column);
+gboolean    <a href="AtkTable.html#atk-table-add-column-selection">atk_table_add_column_selection</a>  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column);
+gboolean    <a href="AtkTable.html#atk-table-add-row-selection">atk_table_add_row_selection</a>     (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row);
+gboolean    <a href="AtkTable.html#atk-table-remove-column-selection">atk_table_remove_column_selection</a>
+                                            (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column);
+gboolean    <a href="AtkTable.html#atk-table-remove-row-selection">atk_table_remove_row_selection</a>  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GInterface
+   +----AtkTable
+</pre></div><div class="refsect1"><h2>Known Implementations</h2><p>
+AtkTable is implemented by
+ <a href="AtkNoOpObject.html" title="AtkNoOpObject">AtkNoOpObject</a>.</p></div><div class="refsect1"><h2>Signal Prototypes</h2><pre class="synopsis">
+
+"<a href="AtkTable.html#AtkTable-column-deleted">column-deleted</a>"
+            void        user_function      (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gint arg1,
+                                            gint arg2,
+                                            gpointer user_data);
+"<a href="AtkTable.html#AtkTable-column-inserted">column-inserted</a>"
+            void        user_function      (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gint arg1,
+                                            gint arg2,
+                                            gpointer user_data);
+"<a href="AtkTable.html#AtkTable-column-reordered">column-reordered</a>"
+            void        user_function      (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gpointer user_data);
+"<a href="AtkTable.html#AtkTable-model-changed">model-changed</a>"
+            void        user_function      (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gpointer user_data);
+"<a href="AtkTable.html#AtkTable-row-deleted">row-deleted</a>"
+            void        user_function      (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gint arg1,
+                                            gint arg2,
+                                            gpointer user_data);
+"<a href="AtkTable.html#AtkTable-row-inserted">row-inserted</a>"
+            void        user_function      (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gint arg1,
+                                            gint arg2,
+                                            gpointer user_data);
+"<a href="AtkTable.html#AtkTable-row-reordered">row-reordered</a>"
+            void        user_function      (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gpointer user_data);
+</pre></div><div class="refsect1"><h2>Description</h2><p>
+<a href="AtkTable.html" title="AtkTable">AtkTable</a> should be implemented by components which present elements
+ordered via rows and columns.  It may also be used to present
+tree-structured information if the nodes of the trees can be said to
+contain multiple "columns".  Individual elements of an <a href="AtkTable.html" title="AtkTable">AtkTable</a> are
+typically referred to as "cells", and these cells are exposed by
+<a href="AtkTable.html" title="AtkTable">AtkTable</a> as child AtkObjects of the <a href="AtkTable.html" title="AtkTable">AtkTable</a>.  Both row/column and
+child-index-based access to these children is provided.
+</p><p>
+Children of <a href="AtkTable.html" title="AtkTable">AtkTable</a> are frequently "lightweight" objects, that is,
+they may not have backing widgets in the host UI toolkit.  They are
+therefore often transient.
+</p><p>
+Since tables are often very complex, <a href="AtkTable.html" title="AtkTable">AtkTable</a> includes provision for
+offering simplified summary information, as well as row and column
+headers and captions.  Headers and captions are AtkObjects which may
+implement other interfaces (<a href="AtkText.html" title="AtkText">AtkText</a>, <a href="AtkImage.html" title="AtkImage">AtkImage</a>, etc.) as appropriate.
+<a href="AtkTable.html" title="AtkTable">AtkTable</a> summaries may themselves be (simplified) AtkTables, etc.
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkTable-struct"></a>struct AtkTable</h3><a class="indexterm" name="id301559"></a><pre class="programlisting">struct AtkTable;</pre><p>
+The AtkTable structure does not contain any fields.
+
+</p></div><hr><div class="refsect2"><h3><a name="atk-table-ref-at"></a>atk_table_ref_at ()</h3><a class="indexterm" name="id301583"></a><pre class="programlisting"><a href="AtkObject.html" title="AtkObject">AtkObject</a>*  atk_table_ref_at                (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             gint column);</pre><p>
+Get a reference to the table cell at <i><tt>row</tt></i>, <i><tt>column</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a AtkObject* representing the referred to accessible
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-index-at"></a>atk_table_get_index_at ()</h3><a class="indexterm" name="id301772"></a><pre class="programlisting">gint        atk_table_get_index_at          (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             gint column);</pre><p>
+Gets a gint representing the index at the specified <i><tt>row</tt></i> and <i><tt>column</tt></i>.
+The value -1 is returned if the object at row,column is not a child
+of table or table does not implement this interface.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gint representing the index at specified position 
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-column-at-index"></a>atk_table_get_column_at_index ()</h3><a class="indexterm" name="id301933"></a><pre class="programlisting">gint        atk_table_get_column_at_index   (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint index_);</pre><p>
+Gets a gint representing the column at the specified <i><tt>index_</tt></i>, or -1
+if the table does not implement this interface</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableInterface
+</td></tr><tr><td><span class="term"><i><tt>index_</tt></i> :</span></td><td> a gint representing an index in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gint representing the column at the specified index.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-row-at-index"></a>atk_table_get_row_at_index ()</h3><a class="indexterm" name="id302064"></a><pre class="programlisting">gint        atk_table_get_row_at_index      (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint index_);</pre><p>
+Gets a gint representing the row at the specified <i><tt>index_</tt></i>, or -1
+if the table does not implement this interface</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableInterface
+</td></tr><tr><td><span class="term"><i><tt>index_</tt></i> :</span></td><td> a gint representing an index in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gint representing the row at the specified index.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-n-columns"></a>atk_table_get_n_columns ()</h3><a class="indexterm" name="id302178"></a><pre class="programlisting">gint        atk_table_get_n_columns         (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table);</pre><p>
+Gets the number of columns in the table.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gint representing the number of columns, or 0
+if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-n-rows"></a>atk_table_get_n_rows ()</h3><a class="indexterm" name="id302282"></a><pre class="programlisting">gint        atk_table_get_n_rows            (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table);</pre><p>
+Gets the number of rows in the table.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gint representing the number of rows, or 0
+if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-column-extent-at"></a>atk_table_get_column_extent_at ()</h3><a class="indexterm" name="id302370"></a><pre class="programlisting">gint        atk_table_get_column_extent_at  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             gint column);</pre><p>
+Gets the number of columns occupied by the accessible object
+at the specified <i><tt>row</tt></i> and <i><tt>column</tt></i> in the <i><tt>table</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gint representing the column extent at specified position, or 0
+if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-row-extent-at"></a>atk_table_get_row_extent_at ()</h3><a class="indexterm" name="id302549"></a><pre class="programlisting">gint        atk_table_get_row_extent_at     (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             gint column);</pre><p>
+Gets the number of rows occupied by the accessible object
+at a specified <i><tt>row</tt></i> and <i><tt>column</tt></i> in the <i><tt>table</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gint representing the row extent at specified position, or 0
+if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-caption"></a>atk_table_get_caption ()</h3><a class="indexterm" name="id302720"></a><pre class="programlisting"><a href="AtkObject.html" title="AtkObject">AtkObject</a>*  atk_table_get_caption           (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table);</pre><p>
+Gets the caption for the <i><tt>table</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableInterface
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a AtkObject* representing the table caption, or <tt>NULL</tt>
+if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-column-description"></a>atk_table_get_column_description ()</h3><a class="indexterm" name="id302803"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_table_get_column_description
+                                            (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column);</pre><p>
+Gets the description text of the specified <i><tt>column</tt></i> in the table</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gchar* representing the column description, or <tt>NULL</tt>
+if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-row-description"></a>atk_table_get_row_description ()</h3><a class="indexterm" name="id302919"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_table_get_row_description
+                                            (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row);</pre><p>
+Gets the description text of the specified row in the table</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gchar* representing the row description, or <tt>NULL</tt>
+if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-column-header"></a>atk_table_get_column_header ()</h3><a class="indexterm" name="id303030"></a><pre class="programlisting"><a href="AtkObject.html" title="AtkObject">AtkObject</a>*  atk_table_get_column_header     (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column);</pre><p>
+Gets the column header of a specified column in an accessible table.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in the table
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a AtkObject* representing the specified column header, or
+<tt>NULL</tt> if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-row-header"></a>atk_table_get_row_header ()</h3><a class="indexterm" name="id303149"></a><pre class="programlisting"><a href="AtkObject.html" title="AtkObject">AtkObject</a>*  atk_table_get_row_header        (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row);</pre><p>
+Gets the row header of a specified row in an accessible table.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in the table
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a AtkObject* representing the specified row header, or
+<tt>NULL</tt> if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-summary"></a>atk_table_get_summary ()</h3><a class="indexterm" name="id303278"></a><pre class="programlisting"><a href="AtkObject.html" title="AtkObject">AtkObject</a>*  atk_table_get_summary           (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table);</pre><p>
+Gets the summary description of the table.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a AtkObject* representing a summary description of the table,
+or zero if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-set-caption"></a>atk_table_set_caption ()</h3><a class="indexterm" name="id303349"></a><pre class="programlisting">void        atk_table_set_caption           (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             <a href="AtkObject.html" title="AtkObject">AtkObject</a> *caption);</pre><p>
+Sets the caption for the table.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>caption</tt></i> :</span></td><td> a <a href="AtkObject.html" title="AtkObject">AtkObject</a> representing the caption to set for <i><tt>table</tt></i>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-set-row-description"></a>atk_table_set_row_description ()</h3><a class="indexterm" name="id303473"></a><pre class="programlisting">void        atk_table_set_row_description   (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             const gchar *description);</pre><p>
+Sets the description text for the specified <i><tt>row</tt></i> of <i><tt>table</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><i><tt>description</tt></i> :</span></td><td> a gchar representing the description text
+to set for the specified <i><tt>row</tt></i> of <i><tt>table</tt></i>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-set-column-description"></a>atk_table_set_column_description ()</h3><a class="indexterm" name="id303635"></a><pre class="programlisting">void        atk_table_set_column_description
+                                            (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column,
+                                             const gchar *description);</pre><p>
+Sets the description text for the specified <i><tt>column</tt></i> of the <i><tt>table</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><i><tt>description</tt></i> :</span></td><td> a gchar representing the description text
+to set for the specified <i><tt>column</tt></i> of the <i><tt>table</tt></i>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-set-row-header"></a>atk_table_set_row_header ()</h3><a class="indexterm" name="id303779"></a><pre class="programlisting">void        atk_table_set_row_header        (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             <a href="AtkObject.html" title="AtkObject">AtkObject</a> *header);</pre><p>
+Sets the specified row header to <i><tt>header</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><i><tt>header</tt></i> :</span></td><td> an <a href="AtkTable.html" title="AtkTable">AtkTable</a> 
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-set-column-header"></a>atk_table_set_column_header ()</h3><a class="indexterm" name="id303987"></a><pre class="programlisting">void        atk_table_set_column_header     (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column,
+                                             <a href="AtkObject.html" title="AtkObject">AtkObject</a> *header);</pre><p>
+Sets the specified column header to <i><tt>header</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><i><tt>header</tt></i> :</span></td><td> an <a href="AtkTable.html" title="AtkTable">AtkTable</a>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-set-summary"></a>atk_table_set_summary ()</h3><a class="indexterm" name="id304109"></a><pre class="programlisting">void        atk_table_set_summary           (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             <a href="AtkObject.html" title="AtkObject">AtkObject</a> *accessible);</pre><p>
+Sets the summary description of the table.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>accessible</tt></i> :</span></td><td> an <a href="AtkObject.html" title="AtkObject">AtkObject</a> representing the summary description
+to set for <i><tt>table</tt></i>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-selected-columns"></a>atk_table_get_selected_columns ()</h3><a class="indexterm" name="id304199"></a><pre class="programlisting">gint        atk_table_get_selected_columns  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint **selected);</pre><p>
+Gets the selected columns of the table by initializing **selected with 
+the selected column numbers. This array should be freed by the caller.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>selected</tt></i> :</span></td><td> a gint** that is to contain the selected columns numbers
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gint representing the number of selected columns,
+or <tt>0</tt> if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-get-selected-rows"></a>atk_table_get_selected_rows ()</h3><a class="indexterm" name="id304346"></a><pre class="programlisting">gint        atk_table_get_selected_rows     (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint **selected);</pre><p>
+Gets the selected rows of the table by initializing **selected with 
+the selected row numbers. This array should be freed by the caller.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>selected</tt></i> :</span></td><td> a gint** that is to contain the selected row numbers
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gint representing the number of selected rows,
+or zero if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-is-column-selected"></a>atk_table_is_column_selected ()</h3><a class="indexterm" name="id304446"></a><pre class="programlisting">gboolean    atk_table_is_column_selected    (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column);</pre><p>
+Gets a boolean value indicating whether the specified <i><tt>column</tt></i>
+is selected</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gboolean representing if the column is selected, or 0
+if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-is-row-selected"></a>atk_table_is_row_selected ()</h3><a class="indexterm" name="id304554"></a><pre class="programlisting">gboolean    atk_table_is_row_selected       (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row);</pre><p>
+Gets a boolean value indicating whether the specified <i><tt>row</tt></i>
+is selected</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gboolean representing if the row is selected, or 0
+if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-is-selected"></a>atk_table_is_selected ()</h3><a class="indexterm" name="id304696"></a><pre class="programlisting">gboolean    atk_table_is_selected           (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row,
+                                             gint column);</pre><p>
+Gets a boolean value indicating whether the accessible object
+at the specified <i><tt>row</tt></i> and <i><tt>column</tt></i> is selected</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gboolean representing if the cell is selected, or 0
+if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-add-column-selection"></a>atk_table_add_column_selection ()</h3><a class="indexterm" name="id304862"></a><pre class="programlisting">gboolean    atk_table_add_column_selection  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column);</pre><p>
+Adds the specified <i><tt>column</tt></i> to the selection.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gboolean representing if the column was successfully added to 
+the selection, or 0 if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-add-row-selection"></a>atk_table_add_row_selection ()</h3><a class="indexterm" name="id304971"></a><pre class="programlisting">gboolean    atk_table_add_row_selection     (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row);</pre><p>
+Adds the specified <i><tt>row</tt></i> to the selection.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gboolean representing if row was successfully added to selection,
+or 0 if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-remove-column-selection"></a>atk_table_remove_column_selection ()</h3><a class="indexterm" name="id305108"></a><pre class="programlisting">gboolean    atk_table_remove_column_selection
+                                            (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint column);</pre><p>
+Adds the specified <i><tt>column</tt></i> to the selection.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>column</tt></i> :</span></td><td> a gint representing a column in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gboolean representing if the column was successfully removed from
+the selection, or 0 if value does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-table-remove-row-selection"></a>atk_table_remove_row_selection ()</h3><a class="indexterm" name="id305237"></a><pre class="programlisting">gboolean    atk_table_remove_row_selection  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *table,
+                                             gint row);</pre><p>
+Removes the specified <i><tt>row</tt></i> from the selection.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>table</tt></i> :</span></td><td> a GObject instance that implements AtkTableIface
+</td></tr><tr><td><span class="term"><i><tt>row</tt></i> :</span></td><td> a gint representing a row in <i><tt>table</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gboolean representing if the row was successfully removed from
+the selection, or 0 if value does not implement this interface.
+</td></tr></tbody></table></div></div></div><div class="refsect1"><h2>Signals</h2><div class="refsect2"><h3><a name="AtkTable-column-deleted"></a>The "column-deleted" signal</h3><pre class="programlisting">void        user_function                  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gint arg1,
+                                            gint arg2,
+                                            gpointer user_data);</pre><p>
+The "column-deleted" signal is emitted by an object which implements the 
+AtkTable interface when a column is deleted.
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>atktable</tt></i> :</span></td><td>the object which received the signal.
+</td></tr><tr><td><span class="term"><i><tt>arg1</tt></i> :</span></td><td>The index of the first column deleted.
+</td></tr><tr><td><span class="term"><i><tt>arg2</tt></i> :</span></td><td>The number of columns deleted.
+
+</td></tr><tr><td><span class="term"><i><tt>user_data</tt></i> :</span></td><td>user data set when the signal handler was connected.</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkTable-column-inserted"></a>The "column-inserted" signal</h3><pre class="programlisting">void        user_function                  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gint arg1,
+                                            gint arg2,
+                                            gpointer user_data);</pre><p>
+The "column-inserted" signal is emitted by an object which implements the 
+AtkTable interface when a column is inserted.
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>atktable</tt></i> :</span></td><td>the object which received the signal.
+</td></tr><tr><td><span class="term"><i><tt>arg1</tt></i> :</span></td><td>The index of the column inserted.
+</td></tr><tr><td><span class="term"><i><tt>arg2</tt></i> :</span></td><td>The number of colums inserted.
+
+</td></tr><tr><td><span class="term"><i><tt>user_data</tt></i> :</span></td><td>user data set when the signal handler was connected.</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkTable-column-reordered"></a>The "column-reordered" signal</h3><pre class="programlisting">void        user_function                  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gpointer user_data);</pre><p>
+The "column-reordered" signal is emitted by an object which implements the 
+AtkTable interface when the columns are reordered.
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>atktable</tt></i> :</span></td><td>the object which received the signal.
+
+</td></tr><tr><td><span class="term"><i><tt>user_data</tt></i> :</span></td><td>user data set when the signal handler was connected.</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkTable-model-changed"></a>The "model-changed" signal</h3><pre class="programlisting">void        user_function                  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gpointer user_data);</pre><p>
+The "model-changed" signal is emitted by an object which implements the 
+AtkTable interface when the model displayed by the table changes.
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>atktable</tt></i> :</span></td><td>the object which received the signal.
+
+</td></tr><tr><td><span class="term"><i><tt>user_data</tt></i> :</span></td><td>user data set when the signal handler was connected.</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkTable-row-deleted"></a>The "row-deleted" signal</h3><pre class="programlisting">void        user_function                  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gint arg1,
+                                            gint arg2,
+                                            gpointer user_data);</pre><p>
+The "row-deleted" signal is emitted by an object which implements the 
+AtkTable interface when a column is inserted.
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>atktable</tt></i> :</span></td><td>the object which received the signal.
+</td></tr><tr><td><span class="term"><i><tt>arg1</tt></i> :</span></td><td>The index of the first row deleted.
+</td></tr><tr><td><span class="term"><i><tt>arg2</tt></i> :</span></td><td>The number of rows deleted.
+
+</td></tr><tr><td><span class="term"><i><tt>user_data</tt></i> :</span></td><td>user data set when the signal handler was connected.</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkTable-row-inserted"></a>The "row-inserted" signal</h3><pre class="programlisting">void        user_function                  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gint arg1,
+                                            gint arg2,
+                                            gpointer user_data);</pre><p>
+The "row-inserted" signal is emitted by an object which implements the 
+AtkTable interface when a column is inserted.
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>atktable</tt></i> :</span></td><td>the object which received the signal.
+</td></tr><tr><td><span class="term"><i><tt>arg1</tt></i> :</span></td><td>The index of the first row deleted.
+</td></tr><tr><td><span class="term"><i><tt>arg2</tt></i> :</span></td><td>The number of rows deleted.
+
+</td></tr><tr><td><span class="term"><i><tt>user_data</tt></i> :</span></td><td>user data set when the signal handler was connected.</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="AtkTable-row-reordered"></a>The "row-reordered" signal</h3><pre class="programlisting">void        user_function                  (<a href="AtkTable.html" title="AtkTable">AtkTable</a> *atktable,
+                                            gpointer user_data);</pre><p>
+The "row-reordered" signal is emitted by an object which implements the 
+AtkTable interface when the columns are reordered.
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>atktable</tt></i> :</span></td><td>the object which received the signal.
+
+</td></tr><tr><td><span class="term"><i><tt>user_data</tt></i> :</span></td><td>user data set when the signal handler was connected.</td></tr></tbody></table></div></div></div><div class="refsect1"><h2>See Also</h2><p>
+<a href="AtkObject.html" title="AtkObject">AtkObject</a>, ATK_STATE_TRANSIENT
+</p></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkStreamableContent.html"><b>&lt;&lt; AtkStreamableContent</b></a></td><td align="right"><a accesskey="n" href="AtkText.html"><b>AtkText &gt;&gt;</b></a></td></tr></table></body></html>

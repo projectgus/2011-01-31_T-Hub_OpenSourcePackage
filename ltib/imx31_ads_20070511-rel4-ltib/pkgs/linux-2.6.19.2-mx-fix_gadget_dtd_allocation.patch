@@ -1,0 +1,1875 @@
+CR: TLSbo89463
+Patch name: TLSbo89463_fix_gadget_dtd_allocation.patch
+Date: Fri Mar 9 17:25:30 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: fixed dtd allocation with gadget pcd driver.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.c linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.c
+--- linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.c	2007-04-25 17:39:20.000000000 -0600
+@@ -41,20 +41,18 @@
+ #include <linux/interrupt.h>
+ #include <linux/proc_fs.h>
+ #include <linux/mm.h>
+-#include <linux/moduleparam.h>
+ #include <linux/platform_device.h>
+ #include <linux/usb_ch9.h>
+ #include <linux/usb_gadget.h>
+ #include <linux/usb/otg.h>
+ #include <linux/dma-mapping.h>
++#include <linux/dmapool.h>
+ 
+ #include <asm/byteorder.h>
+ #include <asm/io.h>
+ #include <asm/irq.h>
+ #include <asm/system.h>
+-#include <asm/unaligned.h>
+ #include <asm/dma.h>
+-#include <asm/cacheflush.h>
+ 
+ #include "arcotg_udc.h"
+ #include <asm/arch/arc_otg.h>
+@@ -78,13 +76,10 @@ static int timeout;
+ static const char driver_name[] = "arc_udc";
+ static const char driver_desc[] = DRIVER_DESC;
+ 
+-volatile static struct usb_dr_device *usb_slave_regs = NULL;
++volatile static struct usb_dr_device *usb_slave_regs;
+ 
+ /* it is initialized in probe()  */
+-static struct arcotg_udc *udc_controller = NULL;
+-
+-/* ep_qh_base store the base address before 2K align */
+-static struct ep_queue_head *ep_qh_base = NULL;
++static struct arcotg_udc *udc_controller;
+ 
+ /*ep name is important in gadget, it should obey the convention of ep_match()*/
+ /* even numbered EPs are OUT or setup, odd are IN/INTERRUPT */
+@@ -129,36 +124,25 @@ static void dump_ep_queue(struct arcotg_
+ 	struct arcotg_req *req;
+ 	struct ep_td_struct *dtd;
+ 
+-	VDBG("ep=0x%p  index=%d", ep, ep_index);
++	pr_debug("udc: ep=0x%p  index=%d\n", ep, ep_index);
+ 
+ 	if (list_empty(&ep->queue)) {
+-		VDBG("empty");
++		pr_debug("udc: empty\n");
+ 		return;
+ 	}
+ 
+ 	list_for_each_entry(req, &ep->queue, queue) {
+-		VDBG("   req=0x%p  dTD count=%d", req, req->dtd_count);
+-		VDBG("      dTD head=0x%p  tail=0x%p", req->head, req->tail);
++		pr_debug("udc: req=0x%p  dTD count=%d\n", req, req->dtd_count);
++		pr_debug("udc: dTD head=0x%p  tail=0x%p\n", req->head,
++			 req->tail);
+ 
+ 		dtd = req->head;
+-		/* printk("dtd=0x%p\n", dtd); */
+ 
+ 		while (dtd) {
+-			consistent_sync(dtd, sizeof(struct ep_td_struct),
+-					DMA_FROM_DEVICE);
+-
+-			VDBG("           dTD 0x%p: active=%d  "
+-			     "size_ioc_sts=0x%x",
+-			     dtd,
+-			     (dtd->size_ioc_sts & DTD_STATUS_ACTIVE) ==
+-			     DTD_STATUS_ACTIVE, dtd->size_ioc_sts);
+-
+ 			if (le32_to_cpu(dtd->next_td_ptr) & DTD_NEXT_TERMINATE)
+ 				break;	/* end of dTD list */
+ 
+-			dtd = (struct ep_td_struct *)
+-			    phys_to_virt(le32_to_cpu(dtd->next_td_ptr) &
+-					 DTD_ADDR_MASK);
++			dtd = dtd->next_td_virt;
+ 		}
+ 	}
+ }
+@@ -182,6 +166,13 @@ static void done(struct arcotg_ep *ep, s
+ 	unsigned char stopped = ep->stopped;
+ 
+ 	udc = (struct arcotg_udc *)ep->udc;
++
++	pr_debug("udc: req=0x%p\n", req);
++	if (req->head) {
++		pr_debug("udc: freeing head=0x%p\n", req->head);
++		dma_pool_free(udc->dtd_pool, req->head, req->head->td_dma);
++	}
++
+ 	/* the req->queue pointer is used by ep_queue() func, in which
+ 	 * the request will be added into a udc_ep->queue 'd tail
+ 	 * so here the req will be dropped from the ep->queue
+@@ -194,13 +185,13 @@ static void done(struct arcotg_ep *ep, s
+ 	else
+ 		status = req->req.status;
+ 
+-	VDBG("req=0x%p  mapped=%x", req, req->mapped);
++	pr_debug("udc: req=0x%p  mapped=%x\n", req, req->mapped);
+ 
+ 	if (req->mapped) {
+-		VDBG("calling dma_unmap_single(buf,%s)  req=0x%p  "
+-		     "a=0x%x  len=%d",
+-		     ep_is_in(ep) ? "to_dvc" : "from_dvc",
+-		     req, req->req.dma, req->req.length);
++		pr_debug("udc: calling dma_unmap_single(buf,%s)  req=0x%p  "
++			 "a=0x%x  len=%d\n",
++			 ep_is_in(ep) ? "to_dvc" : "from_dvc",
++			 req, req->req.dma, req->req.length);
+ 
+ 		dma_unmap_single(ep->udc->gadget.dev.parent,
+ 				 req->req.dma, req->req.length,
+@@ -209,14 +200,14 @@ static void done(struct arcotg_ep *ep, s
+ 
+ 		req->req.dma = DMA_ADDR_INVALID;
+ 		req->mapped = 0;
+-		VDBG("req=0x%p   set req.dma=0x%x", req, req->req.dma);
++		pr_debug("udc: req=0x%p set req.dma=0x%x\n", req, req->req.dma);
+ 	} else {
+ 		if ((req->req.length != 0)
+ 		    && (req->req.dma != DMA_ADDR_INVALID)) {
+-			VDBG("calling dma_sync_single_for_cpu(buf,%s) "
+-			     "req=0x%p  dma=0x%x  len=%d",
+-			     ep_is_in(ep) ? "to_dvc" : "from_dvc", req,
+-			     req->req.dma, req->req.length);
++			pr_debug("udc: calling dma_sync_single_for_cpu(buf,%s) "
++				 "req=0x%p  dma=0x%x  len=%d\n",
++				 ep_is_in(ep) ? "to_dvc" : "from_dvc", req,
++				 req->req.dma, req->req.length);
+ 
+ 			dma_sync_single_for_cpu(ep->udc->gadget.dev.parent,
+ 						req->req.dma, req->req.length,
+@@ -226,9 +217,9 @@ static void done(struct arcotg_ep *ep, s
+ 	}
+ 
+ 	if (status && (status != -ESHUTDOWN)) {
+-		VDBG("complete %s req 0c%p stat %d len %u/%u",
+-		     ep->ep.name, &req->req, status,
+-		     req->req.actual, req->req.length);
++		pr_debug("udc: complete %s req 0c%p stat %d len %u/%u\n",
++			 ep->ep.name, &req->req, status,
++			 req->req.actual, req->req.length);
+ 	}
+ 
+ 	/* don't modify queue heads during completion callback */
+@@ -239,9 +230,9 @@ static void done(struct arcotg_ep *ep, s
+ 	/* this complete() should a func implemented by gadget layer,
+ 	 * eg fsg->bulk_in_complete() */
+ 	if (req->req.complete) {
+-		VDBG("calling gadget's complete()  req=0x%p", req);
++		pr_debug("udc: calling gadget's complete()  req=0x%p\n", req);
+ 		req->req.complete(&ep->ep, &req->req);
+-		VDBG("back from gadget's complete()");
++		pr_debug("udc: back from gadget's complete()\n");
+ 	}
+ 
+ 	spin_lock(&ep->udc->lock);
+@@ -257,7 +248,7 @@ static void done(struct arcotg_ep *ep, s
+  */
+ static void nuke(struct arcotg_ep *ep, int status)
+ {
+-	VDBG("");
++	pr_debug("udc: ep=0x%p\n", ep);
+ 	ep->stopped = 1;
+ 
+ 	/* Whether this eq has request linked */
+@@ -280,14 +271,13 @@ static void nuke(struct arcotg_ep *ep, i
+  * @param  qh_addr the aligned virt addr of ep QH addr
+  * @param  dev     device controller pointer
+  */
+-static int dr_controller_setup(void *qh_addr, struct device *dev)
++static int dr_controller_setup(struct arcotg_udc *udc)
+ {
+ 	unsigned int tmp = 0, portctrl = 0;
+-	struct arc_usb_config *config;
++	void *qh_addr = udc->ep_qh;
++	struct device *dev __attribute((unused)) = udc->gadget.dev.parent;
+ 
+-	config = udc_controller->config;
+-
+-	DBG("dev=0x%p  config=0x%p", dev, config);
++	pr_debug("udc: dev=0x%p\n", dev);
+ 
+ 	/* before here, make sure usb_slave_regs has been initialized */
+ 	if (!qh_addr)
+@@ -323,25 +313,26 @@ static int dr_controller_setup(void *qh_
+ 	/* Clear the setup status */
+ 	usb_slave_regs->usbsts = 0;
+ 
+-	tmp = virt_to_phys(qh_addr);
++	tmp = udc->ep_qh_dma;
+ 	tmp &= USB_EP_LIST_ADDRESS_MASK;
+ 	usb_slave_regs->endpointlistaddr = cpu_to_le32(tmp);
+ 
+-	VDBG("vir[qh_base]=0x%p   phy[qh_base]=0x%8x   epla_reg=0x%8x",
+-	     qh_addr, (int)tmp, le32_to_cpu(usb_slave_regs->endpointlistaddr));
++	pr_debug("udc: vir[qh_base]=0x%p phy[qh_base]=0x%8x epla_reg=0x%8x\n",
++		 qh_addr, (int)tmp,
++		 le32_to_cpu(usb_slave_regs->endpointlistaddr));
+ 
+ 	portctrl = le32_to_cpu(usb_slave_regs->portsc1);
+ 	portctrl &= ~PORTSCX_PHY_TYPE_SEL;
+ 
+-	portctrl |= udc_controller->xcvr_type;
++	portctrl |= udc->xcvr_type;
+ 
+ #ifdef DEBUG_FORCE_FS
+ 	portctrl |= 0x1000000;
+ #endif
+ 	usb_slave_regs->portsc1 = cpu_to_le32(portctrl);
+ 
+-	if (config->set_vbus_power)
+-		config->set_vbus_power(0);
++	if (udc->config->set_vbus_power)
++		udc->config->set_vbus_power(0);
+ 
+ 	return 0;
+ }
+@@ -355,7 +346,7 @@ static void dr_controller_run(struct arc
+ {
+ 	u32 tmp;
+ 
+-	DBG();
++	pr_debug("%s\n", __FUNCTION__);
+ 
+ 	/*Enable DR irq reg */
+ 	tmp = USB_INTR_INT_EN | USB_INTR_ERR_INT_EN |
+@@ -388,7 +379,7 @@ static void dr_controller_stop(struct ar
+ {
+ 	unsigned int tmp;
+ 
+-	DBG();
++	pr_debug("%s\n", __FUNCTION__);
+ 
+ 	/* if we're in OTG mode, and the Host is currently using the port,
+ 	 * stop now and don't rip the controller out from under the
+@@ -396,7 +387,7 @@ static void dr_controller_stop(struct ar
+ 	 */
+ 	if (udc->gadget.is_otg) {
+ 		if (!(usb_slave_regs->otgsc & OTGSC_STS_USB_ID)) {
+-			DBG("Leaving early");
++			pr_debug("udc: Leaving early\n");
+ 			return;
+ 		}
+ 	}
+@@ -518,20 +509,11 @@ static void struct_ep_qh_setup(void *han
+ 			tmp |= EP_QUEUE_HEAD_ZLT_SEL;
+ 		break;
+ 	default:
+-		VDBG("error ep type is %d", ep_type);
++		pr_debug("udc: error ep type is %d\n", ep_type);
+ 		return;
+ 	}
+ 	p_QH->max_pkt_length = le32_to_cpu(tmp);
+ 
+-#ifdef CONFIG_ARM
+-	VDBG("doing consistent_sync(QH=0x%p, l=%d)",
+-	     p_QH, sizeof(struct ep_queue_head));
+-	consistent_sync(p_QH, sizeof(struct ep_queue_head), DMA_TO_DEVICE);
+-#else
+-	flush_dcache_range((unsigned long)p_QH, (unsigned long)p_QH +
+-			   sizeof(struct ep_queue_head));
+-#endif
+-
+ 	return;
+ }
+ 
+@@ -584,7 +566,7 @@ static int arcotg_ep_enable(struct usb_e
+ 
+ 	ep = container_of(_ep, struct arcotg_ep, ep);
+ 
+-	VDBG("%s ep.name=%s", __FUNCTION__, ep->ep.name);
++	pr_debug("udc: %s ep.name=%s\n", __FUNCTION__, ep->ep.name);
+ 	/* catch various bogus parameters */
+ 	if (!_ep || !desc || ep->desc || _ep->name == ep_name[0] ||
+ 	    (desc->bDescriptorType != USB_DT_ENDPOINT))
+@@ -747,9 +729,10 @@ static int arcotg_ep_enable(struct usb_e
+ 		break;
+ 	}
+ 
+-	VDBG("enabled %s (ep%d%s-%s) maxpacket %d", ep->ep.name,
+-	     ep->desc->bEndpointAddress & 0x0f,
+-	     (desc->bEndpointAddress & USB_DIR_IN) ? "in" : "out", val, max);
++	pr_debug("udc: enabled %s (ep%d%s-%s) maxpacket %d\n", ep->ep.name,
++		 ep->desc->bEndpointAddress & 0x0f,
++		 (desc->bEndpointAddress & USB_DIR_IN) ? "in" : "out",
++		 val, max);
+       en_done:
+ 	return retval;
+ }
+@@ -768,7 +751,7 @@ static int arcotg_ep_disable(struct usb_
+ 
+ 	ep = container_of(_ep, struct arcotg_ep, ep);
+ 	if (!_ep || !ep->desc) {
+-		VDBG("%s not enabled", _ep ? ep->ep.name : NULL);
++		pr_debug("udc: %s not enabled\n", _ep ? ep->ep.name : NULL);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -783,7 +766,7 @@ static int arcotg_ep_disable(struct usb_
+ 	ep->stopped = 1;
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+ 
+-	VDBG("disabled %s OK", _ep->name);
++	pr_debug("udc: disabled %s OK\n", _ep->name);
+ 	return 0;
+ }
+ 
+@@ -805,7 +788,7 @@ static struct usb_request *arcotg_alloc_
+ 
+ 	memset(req, 0, sizeof *req);
+ 	req->req.dma = DMA_ADDR_INVALID;
+-	VDBG("req=0x%p   set req.dma=0x%x", req, req->req.dma);
++	pr_debug("udc: req=0x%p   set req.dma=0x%x\n", req, req->req.dma);
+ 	INIT_LIST_HEAD(&req->queue);
+ 
+ 	return &req->req;
+@@ -821,7 +804,7 @@ static void arcotg_free_request(struct u
+ 	struct arcotg_req *req;
+ 
+ 	req = container_of(_req, struct arcotg_req, req);
+-	VDBG("req=0x%p", req);
++	pr_debug("udc: req=0x%p\n", req);
+ 
+ 	if (_req)
+ 		kfree(req);
+@@ -849,8 +832,8 @@ static void *arcotg_alloc_buffer(struct 
+ 	if (retval)
+ 		*dma = virt_to_phys(retval);
+ 
+-	VDBG("ep=%s  buffer=0x%p  dma=0x%x  len=%d",
+-	     _ep->name, retval, *dma, bytes);
++	pr_debug("udc: ep=%s  buffer=0x%p  dma=0x%x  len=%d\n",
++		 _ep->name, retval, *dma, bytes);
+ 
+ 	return retval;
+ }
+@@ -865,7 +848,7 @@ static void *arcotg_alloc_buffer(struct 
+ static void arcotg_free_buffer(struct usb_ep *_ep, void *buf,
+ 			       dma_addr_t dma, unsigned bytes)
+ {
+-	VDBG("buf=0x%p  dma=0x%x", buf, dma);
++	pr_debug("udc: buf=0x%p  dma=0x%x\n", buf, dma);
+ 	if (buf)
+ 		kfree(buf);
+ }
+@@ -884,10 +867,7 @@ static int arcotg_queue_td(struct arcotg
+ 	u32 temp, bitmask, tmp_stat;
+ 	struct ep_queue_head *dQH = &ep->udc->ep_qh[i];
+ 
+-	/* VDBG("QH addr Register 0x%8x", usb_slave_regs->endpointlistaddr); */
+-	/* VDBG("ep_qh[%d] addr is 0x%8x", i, (u32)&(ep->udc->ep_qh[i])); */
+-
+-	VDBG("queue req=0x%p to ep index %d", req, i);
++	pr_debug("udc: queue req=0x%p to ep index %d\n", req, i);
+ 	bitmask = (ep_is_in(ep)) ? (1 << (ep_index(ep) + 16)) :
+ 	    (1 << (ep_index(ep)));
+ 
+@@ -897,26 +877,15 @@ static int arcotg_queue_td(struct arcotg
+ 		struct arcotg_req *lastreq;
+ 		lastreq = list_entry(ep->queue.prev, struct arcotg_req, queue);
+ 
+-		/* about to write to dtd, make sure we have latest copy */
+-		VDBG("doing consistent_sync(dtd=0x%p, l=%d)",
+-		     lastreq->tail, sizeof(struct ep_td_struct));
+-		consistent_sync(lastreq->tail, sizeof(struct ep_td_struct),
+-				DMA_FROM_DEVICE);
+-
+-		lastreq->tail->next_td_ptr =
+-		    cpu_to_le32(virt_to_phys(req->head) & DTD_ADDR_MASK);
+-
+-		VDBG("ep's queue not empty.  lastreq=0x%p", lastreq);
+-
+-		/* make sure h/w sees our change */
+-		VDBG("doing consistent_sync(dtd=0x%p, l=%d)",
+-		     lastreq->tail, sizeof(struct ep_td_struct));
+-		consistent_sync(lastreq->tail, sizeof(struct ep_td_struct),
+-				DMA_TO_DEVICE);
++		WARN_ON(req->head->td_dma & 31);
++		lastreq->tail->next_td_ptr = req->head->td_dma;
++		lastreq->tail->next_td_virt = req->head;
++
++		pr_debug("udc: ep's queue not empty.  lastreq=0x%p\n", lastreq);
+ 
+ 		/* Read prime bit, if 1 goto done */
+ 		if (usb_slave_regs->endpointprime & cpu_to_le32(bitmask)) {
+-			VDBG("ep's already primed");
++			pr_debug("udc: ep's already primed\n");
+ 			goto out;
+ 		}
+ 
+@@ -947,29 +916,20 @@ static int arcotg_queue_td(struct arcotg
+ 	}
+ 
+ 	/* Write dQH next pointer and terminate bit to 0 */
+-	temp =
+-	    virt_to_phys((void *)req->head) & EP_QUEUE_HEAD_NEXT_POINTER_MASK;
+-	dQH->next_dtd_ptr = cpu_to_le32(temp);
++	WARN_ON(req->head->td_dma & 31);
++	dQH->next_dtd_ptr = cpu_to_le32(req->head->td_dma);
+ 
+ 	/* Clear active and halt bit */
+ 	temp = cpu_to_le32(~(EP_QUEUE_HEAD_STATUS_ACTIVE |
+ 			     EP_QUEUE_HEAD_STATUS_HALT));
+ 	dQH->size_ioc_int_sts &= temp;
+ 
+-#ifdef CONFIG_ARM
+-	VDBG("doing consistent_sync(QH=0x%p, l=%d, to_dvc)",
+-	     dQH, sizeof(struct ep_queue_head));
+-	consistent_sync(dQH, sizeof(struct ep_queue_head), DMA_TO_DEVICE);
+-#else
+-	flush_dcache_range((unsigned long)dQH, (unsigned long)dQH +
+-			   sizeof(struct ep_queue_head));
+-#endif
+-
+ 	/* Prime endpoint by writing 1 to ENDPTPRIME */
+ 	temp = (ep_is_in(ep)) ? (1 << (ep_index(ep) + 16)) :
+ 	    (1 << (ep_index(ep)));
+ 
+-	VDBG("setting endpointprime.  temp=0x%x (bitmask=0x%x)", temp, bitmask);
++	pr_debug("udc: setting endpointprime. temp=0x%x (bitmask=0x%x)\n",
++		 temp, bitmask);
+ 	usb_slave_regs->endpointprime |= cpu_to_le32(temp);
+ 
+       out:
+@@ -977,23 +937,26 @@ static int arcotg_queue_td(struct arcotg
+ }
+ 
+ static int arcotg_build_dtd(struct arcotg_req *req, unsigned max,
+-			    struct ep_td_struct **address)
++			    struct ep_td_struct **address,
++			    struct arcotg_udc *udc)
+ {
+ 	unsigned length;
+ 	u32 swap_temp;
+ 	struct ep_td_struct *dtd;
++	dma_addr_t handle;
+ 
+ 	/* how big will this packet be? */
+ 	length = min(req->req.length - req->req.actual, max);
+ 
+-	/* Assume CACHELINE alignment guarantees 32-byte alignment */
+-	dtd = kmalloc(sizeof(struct ep_td_struct), GFP_KERNEL | GFP_DMA);
++	dtd = dma_pool_alloc(udc->dtd_pool, GFP_KERNEL, &handle);
++	pr_debug("udc: dma_pool_alloc() ep(0x%p)=%s  virt=0x%p  dma=0x%x\n",
++		 req->ep, req->ep->name, dtd, handle);
+ 
+ 	/* check alignment - must be 32 byte aligned (bits 4:0 == 0) */
+-	if ((u32) dtd & ~DTD_ADDR_MASK)
+-		panic("Can not allocate aligned memory for dtd");
++	BUG_ON((u32) dtd & 31);
+ 
+ 	memset(dtd, 0, sizeof(struct ep_td_struct));
++	dtd->td_dma = handle;
+ 
+ 	/* Fill in the transfer size; set interrupt on every dtd;
+ 	   set active bit */
+@@ -1007,10 +970,10 @@ static int arcotg_build_dtd(struct arcot
+ 	swap_temp &= ~DTD_RESERVED_FIELDS;
+ 	dtd->size_ioc_sts = cpu_to_le32(swap_temp);
+ 
+-	VDBG("req=0x%p  dtd=0x%p  req.dma=0x%x  req.length=%d  "
+-	     "length=%d  size_ioc_sts=0x%x",
+-	     req, dtd, req->req.dma, req->req.length,
+-	     length, dtd->size_ioc_sts);
++	pr_debug("udc: req=0x%p  dtd=0x%p  req.dma=0x%x  req.length=%d  "
++		 "length=%d  size_ioc_sts=0x%x\n",
++		 req, dtd, req->req.dma, req->req.length,
++		 length, dtd->size_ioc_sts);
+ 
+ 	/* Init all of buffer page pointers */
+ 	swap_temp = (u32) (req->req.dma + req->req.actual);
+@@ -1032,7 +995,7 @@ static int arcotg_build_dtd(struct arcot
+  * @param dev  device pointer
+  * @return Returns zero on success , or a negative error code 
+  */
+-static int arcotg_req_to_dtd(struct arcotg_req *req, struct device *dev)
++static int arcotg_req_to_dtd(struct arcotg_req *req, struct arcotg_udc *udc)
+ {
+ 	unsigned max;
+ 	unsigned count;
+@@ -1040,11 +1003,11 @@ static int arcotg_req_to_dtd(struct arco
+ 	int is_first = 1;
+ 	struct ep_td_struct *last_addr = NULL, *addr;
+ 
+-	VDBG("req=0x%p", req);
++	pr_debug("udc: req=0x%p\n", req);
+ 
+ 	max = EP_MAX_LENGTH_TRANSFER;
+ 	do {
+-		count = arcotg_build_dtd(req, max, &addr);
++		count = arcotg_build_dtd(req, max, &addr, udc);
+ 
+ 		if (is_first) {
+ 			is_first = 0;
+@@ -1054,21 +1017,11 @@ static int arcotg_req_to_dtd(struct arco
+ 				/* FIXME last_addr not set.  iso only
+ 				 * case, which we don't do yet
+ 				 */
+-				VDBG("*** wiping out something at 0!!");
++				pr_debug("udc: wiping out something at 0!!\n");
+ 			}
+ 
+-			last_addr->next_td_ptr =
+-			    cpu_to_le32(virt_to_phys(addr));
+-#ifdef CONFIG_ARM
+-			VDBG("1 doing consistent_sync(dtd=0x%p, l=%d)",
+-			     last_addr, sizeof(struct ep_td_struct));
+-			consistent_sync(last_addr, sizeof(struct ep_td_struct),
+-					DMA_TO_DEVICE);
+-#else
+-			flush_dcache_range((unsigned long)last_addr,
+-					   (unsigned long)last_addr +
+-					   sizeof(struct ep_td_struct));
+-#endif
++			last_addr->next_td_ptr = cpu_to_le32(addr->td_dma);
++			last_addr->next_td_virt = addr;
+ 			last_addr = addr;
+ 		}
+ 
+@@ -1085,16 +1038,7 @@ static int arcotg_req_to_dtd(struct arco
+ 	} while (!is_last);
+ 
+ 	addr->next_td_ptr = cpu_to_le32(DTD_NEXT_TERMINATE);
+-
+-#ifdef CONFIG_ARM
+-	VDBG("2 doing consistent_sync(last dtd=0x%p, l=%d)",
+-	     addr, sizeof(struct ep_td_struct));
+-	consistent_sync(addr, sizeof(struct ep_td_struct), DMA_TO_DEVICE);
+-#else
+-	flush_dcache_range((unsigned long)addr, (unsigned long)addr +
+-			   sizeof(struct ep_td_struct));
+-#endif
+-
++	addr->next_td_virt = NULL;
+ 	req->tail = addr;
+ 
+ 	return 0;
+@@ -1116,16 +1060,16 @@ static int arcotg_ep_queue(struct usb_ep
+ 	unsigned long flags;
+ 	int is_iso = 0;
+ 
+-	VDBG("_req=0x%p  len=%d", _req, _req->length);
++	pr_debug("udc: _req=0x%p  len=%d\n", _req, _req->length);
+ 
+ 	/* catch various bogus parameters */
+ 	if (!_req || !req->req.complete || !req->req.buf
+ 	    || !list_empty(&req->queue)) {
+-		VDBG("%s, bad params", __FUNCTION__);
++		pr_debug("udc: %s, bad params\n", __FUNCTION__);
+ 		return -EINVAL;
+ 	}
+ 	if (!_ep || (!ep->desc && ep_index(ep))) {
+-		VDBG("%s, bad ep", __FUNCTION__);
++		pr_debug("udc: %s, bad ep\n", __FUNCTION__);
+ 		return -EINVAL;
+ 	}
+ 	if (ep->desc->bmAttributes == USB_ENDPOINT_XFER_ISOC) {
+@@ -1148,11 +1092,11 @@ static int arcotg_ep_queue(struct usb_ep
+ 					      ? DMA_TO_DEVICE :
+ 					      DMA_FROM_DEVICE);
+ 		req->mapped = 1;
+-		VDBG("called dma_map_single(buffer,%s)  req=0x%p  "
+-		     "buf=0x%p  dma=0x%x  len=%d",
+-		     ep_is_in(ep) ? "to_dvc" : "from_dvc",
+-		     req, req->req.buf, req->req.dma, req->req.length);
+-		VDBG("req=0x%p   set req.dma=0x%x", req, req->req.dma);
++		pr_debug("udc: called dma_map_single(buffer,%s)  req=0x%p  "
++			 "buf=0x%p  dma=0x%x  len=%d\n",
++			 ep_is_in(ep) ? "to_dvc" : "from_dvc",
++			 req, req->req.buf, req->req.dma, req->req.length);
++		pr_debug("udc: req=0x%p set req.dma=0x%x\n", req, req->req.dma);
+ 	} else {
+ 		dma_sync_single_for_device(ep->udc->gadget.dev.parent,
+ 					   req->req.dma, req->req.length,
+@@ -1160,10 +1104,10 @@ static int arcotg_ep_queue(struct usb_ep
+ 					   DMA_FROM_DEVICE);
+ 
+ 		req->mapped = 0;
+-		VDBG("called dma_sync_single_for_device(buffer,%s)   "
+-		     "req=0x%p  buf=0x%p  dma=0x%x  len=%d",
+-		     ep_is_in(ep) ? "to_dvc" : "from_dvc",
+-		     req, req->req.buf, req->req.dma, req->req.length);
++		pr_debug("udc: called dma_sync_single_for_device(buffer,%s)  "
++			 "req=0x%p  buf=0x%p  dma=0x%x  len=%d\n",
++			 ep_is_in(ep) ? "to_dvc" : "from_dvc",
++			 req, req->req.buf, req->req.dma, req->req.length);
+ 	}
+ 
+ 	req->req.status = -EINPROGRESS;
+@@ -1173,13 +1117,15 @@ static int arcotg_ep_queue(struct usb_ep
+ 	spin_lock_irqsave(&udc->lock, flags);
+ 
+ 	/* push the dtds to device queue */
+-	if (!arcotg_req_to_dtd(req, udc->gadget.dev.parent))
++	if (!arcotg_req_to_dtd(req, udc))
+ 		arcotg_queue_td(ep, req);
++	else
++		return -ENOMEM;
+ 
+ 	/* EP0 */
+ 	if ((ep_index(ep) == 0)) {
+ 		udc->ep0_state = DATA_STATE_XMIT;
+-		VDBG("ep0_state now DATA_STATE_XMIT");
++		pr_debug("udc: ep0_state now DATA_STATE_XMIT\n");
+ 	}
+ 
+ 	/* put this req at the end of the ep's queue */
+@@ -1205,7 +1151,7 @@ static int arcotg_ep_dequeue(struct usb_
+ 	struct arcotg_req *req;
+ 	unsigned long flags;
+ 
+-	VDBG("");
++	pr_debug("%s\n", __FUNCTION__);
+ 	if (!_ep || !_req)
+ 		return -EINVAL;
+ 
+@@ -1220,7 +1166,7 @@ static int arcotg_ep_dequeue(struct usb_
+ 		spin_unlock_irqrestore(&ep->udc->lock, flags);
+ 		return -EINVAL;
+ 	}
+-	VDBG("req=0x%p", req);
++	pr_debug("udc: req=0x%p\n", req);
+ 
+ 	done(ep, req, -ECONNRESET);
+ 
+@@ -1274,11 +1220,12 @@ static int _arcotg_ep_set_halt(struct us
+ 
+ 	if (ep_index(ep) == 0) {
+ 		udc->ep0_state = WAIT_FOR_SETUP;
+-		VDBG("ep0_state now WAIT_FOR_SETUP");
++		pr_debug("udc: ep0_state now WAIT_FOR_SETUP\n");
+ 		udc->ep0_dir = 0;
+ 	}
+       out:
+-	VDBG(" %s %s halt rc=%d", ep->ep.name, value ? "set" : "clear", status);
++	pr_debug("udc:  %s %s halt rc=%d\n",
++		 ep->ep.name, value ? "set" : "clear", status);
+ 
+ 	return status;
+ }
+@@ -1314,7 +1261,7 @@ static int arcotg_fifo_status(struct usb
+ 		size = (d_qh->size_ioc_int_sts & DTD_PACKET_SIZE)
+ 		    >> DTD_LENGTH_BIT_POS;
+ 
+-	VDBG(ep->dev, "%s %u\n", __FUNCTION__, size);
++	pr_debug(ep->dev, "%s %u\n", __FUNCTION__, size);
+ 	return size;
+ }
+ 
+@@ -1398,7 +1345,7 @@ static int arcotg_get_frame(struct usb_g
+  -----------------------------------------------------------------------*/
+ static int arcotg_wakeup(struct usb_gadget *gadget)
+ {
+-	DBG();
++	pr_debug("%s\n", __FUNCTION__);
+ 	return -ENOTSUPP;
+ }
+ 
+@@ -1413,7 +1360,7 @@ static int arcotg_wakeup(struct usb_gadg
+  */
+ static int arcotg_set_selfpowered(struct usb_gadget *gadget, int is_selfpowered)
+ {
+-	DBG();
++	pr_debug("%s\n", __FUNCTION__);
+ 	return -ENOTSUPP;
+ }
+ 
+@@ -1434,12 +1381,12 @@ static int arcotg_vbus_session(struct us
+ 	struct arcotg_udc *udc;
+ 	unsigned long flags;
+ 
+-	DBG();
++	pr_debug("%s\n", __FUNCTION__);
+ 
+ 	udc = container_of(gadget, struct arcotg_udc, gadget);
+ 	spin_lock_irqsave(&udc->lock, flags);
+ 
+-	DBG("VBUS %s\n", is_active ? "on" : "off");
++	pr_debug("udc: VBUS %s\n", is_active ? "on" : "off");
+ 	udc->vbus_active = (is_active != 0);
+ 
+ #if 0				/* FIXME manipulate pullups?? check other platforms. */
+@@ -1467,7 +1414,7 @@ static int arcotg_vbus_draw(struct usb_g
+ {
+ 	struct arcotg_udc *udc;
+ 
+-	DBG();
++	pr_debug("%s\n", __FUNCTION__);
+ 
+ 	udc = container_of(gadget, struct arcotg_udc, gadget);
+ 
+@@ -1488,7 +1435,7 @@ static int arcotg_pullup(struct usb_gadg
+ {
+ 	struct arcotg_udc *udc;
+ 
+-	DBG();
++	pr_debug("%s\n", __FUNCTION__);
+ 
+ 	udc = container_of(gadget, struct arcotg_udc, gadget);
+ 	udc->softconnect = (is_on != 0);
+@@ -1513,13 +1460,13 @@ static void Ep0Stall(struct arcotg_udc *
+ {
+ 	u32 tmp;
+ 
+-	VDBG("");
++	pr_debug("%s\n", __FUNCTION__);
+ 	/* a protocol stall */
+ 	tmp = le32_to_cpu(usb_slave_regs->endptctrl[0]);
+ 	tmp |= EPCTRL_TX_EP_STALL | EPCTRL_RX_EP_STALL;
+ 	usb_slave_regs->endptctrl[0] = cpu_to_le32(tmp);
+ 	udc->ep0_state = WAIT_FOR_SETUP;
+-	VDBG("ep0_state now WAIT_FOR_SETUP");
++	pr_debug("udc: ep0_state now WAIT_FOR_SETUP\n");
+ 	udc->ep0_dir = 0;
+ }
+ 
+@@ -1538,7 +1485,7 @@ static int ep0_prime_status(struct arcot
+ 	int status = 0;
+ 	unsigned long flags;
+ 
+-	VDBG("");
++	pr_debug("%s\n", __FUNCTION__);
+ 	if (direction == EP_DIR_IN)
+ 		udc->ep0_dir = USB_DIR_IN;
+ 	else
+@@ -1546,7 +1493,7 @@ static int ep0_prime_status(struct arcot
+ 
+ 	ep = &udc->eps[0];
+ 	udc->ep0_state = WAIT_FOR_OUT_STATUS;
+-	VDBG("ep0_state now WAIT_FOR_OUT_STATUS");
++	pr_debug("udc: ep0_state now WAIT_FOR_OUT_STATUS\n");
+ 
+ 	req->ep = ep;
+ 	req->req.length = 0;
+@@ -1557,8 +1504,11 @@ static int ep0_prime_status(struct arcot
+ 
+ 	spin_lock_irqsave(&udc->lock, flags);
+ 
+-	if ((arcotg_req_to_dtd(req, udc->gadget.dev.parent) == 0))
++	if ((arcotg_req_to_dtd(req, udc) == 0))
+ 		status = arcotg_queue_td(ep, req);
++	else
++		return -ENOMEM;
++
+ 	if (status)
+ 		printk(KERN_ERR "Can't get control status request \n");
+ 
+@@ -1574,7 +1524,7 @@ static int udc_reset_ep_queue(struct arc
+ {
+ 	struct arcotg_ep *ep = get_ep_by_pipe(udc, pipe);
+ 
+-	VDBG("");
++	pr_debug("%s\n", __FUNCTION__);
+ 	/* FIXME: collect completed requests? */
+ 	if (!ep->name)
+ 		return 0;
+@@ -1586,7 +1536,7 @@ static int udc_reset_ep_queue(struct arc
+ static void ch9SetAddress(struct arcotg_udc *udc, u16 value, u16 index,
+ 			  u16 length)
+ {
+-	VDBG("new address=%d", value);
++	pr_debug("udc: new address=%d\n", value);
+ 
+ 	/* Save the new address to device struct */
+ 	udc->device_address = (u8) value;
+@@ -1609,7 +1559,7 @@ static void ch9GetStatus(struct arcotg_u
+ 	int status = 0;
+ 	unsigned long flags;
+ 
+-	VDBG("");
++	pr_debug("%s\n", __FUNCTION__);
+ 	ep = &udc->eps[0];
+ 
+ 	req = container_of(arcotg_alloc_request(&ep->ep, GFP_KERNEL),
+@@ -1622,33 +1572,39 @@ static void ch9GetStatus(struct arcotg_u
+ 	spin_lock_irqsave(&udc->lock, flags);
+ 
+ 	/* data phase */
+-	if ((arcotg_req_to_dtd(req, udc->gadget.dev.parent) == 0))
++	if ((arcotg_req_to_dtd(req, udc) == 0))
+ 		status = arcotg_queue_td(ep, req);
++	else			/* no mem */
++		goto stall;
++
+ 	if (status) {
+ 		printk(KERN_ERR "Can't respond to getstatus request \n");
+ 		Ep0Stall(udc);
+ 	} else {
+ 		udc->ep0_state = DATA_STATE_XMIT;
+-		VDBG("ep0_state now DATA_STATE_XMIT");
++		pr_debug("udc: ep0_state now DATA_STATE_XMIT\n");
+ 	}
+ 
+ 	list_add_tail(&req->queue, &ep->queue);
+ 	dump_ep_queue(ep);
+ 
+ 	spin_unlock_irqrestore(&udc->lock, flags);
++	return;
+ 
++      stall:
++	Ep0Stall(udc);
+ }
+ 
+ static void ch9SetConfig(struct arcotg_udc *udc, u16 value, u16 index,
+ 			 u16 length)
+ {
+-	VDBG("1 calling gadget driver->setup");
++	pr_debug("udc: 1 calling gadget driver->setup\n");
+ 	udc->ep0_dir = USB_DIR_IN;
+ 	if (udc->driver->setup(&udc->gadget, &udc->local_setup_buff) >= 0) {
+ 		/* gadget layer deal with the status phase */
+ 		udc->usb_state = USB_STATE_CONFIGURED;
+ 		udc->ep0_state = WAIT_FOR_OUT_STATUS;
+-		VDBG("ep0_state now WAIT_FOR_OUT_STATUS");
++		pr_debug("udc: ep0_state now WAIT_FOR_OUT_STATUS\n");
+ 	}
+ }
+ 
+@@ -1659,7 +1615,7 @@ static void setup_received_irq(struct ar
+ 	int handled = 1;	/* set to zero if we do not handle the message, */
+ 	/* and should pass it to the gadget driver */
+ 
+-	VDBG("request=0x%x", setup->bRequest);
++	pr_debug("udc: request=0x%x\n", setup->bRequest);
+ 	/* Fix Endian (udc->local_setup_buff is cpu Endian now) */
+ 	setup->wValue = le16_to_cpu(setup->wValue);
+ 	setup->wIndex = le16_to_cpu(setup->wIndex);
+@@ -1682,7 +1638,7 @@ static void setup_received_irq(struct ar
+ 			if (udc->driver->setup(&udc->gadget,
+ 					       &udc->local_setup_buff) >= 0) {
+ 				udc->ep0_state = WAIT_FOR_SETUP;
+-				VDBG("ep0_state now WAIT_FOR_SETUP");
++				pr_debug("udc: ep0_state now WAIT_FOR_SETUP\n");
+ 			}
+ 			break;
+ 
+@@ -1756,11 +1712,13 @@ static void setup_received_irq(struct ar
+ 
+ 					if (setup->bRequest ==
+ 					    USB_REQ_SET_FEATURE) {
+-						VDBG("SET_FEATURE doing set_halt");
++						pr_debug("udc: udc: SET_FEATURE"
++							 " doing set_halt\n");
+ 						rc = _arcotg_ep_set_halt(&ep->
+ 									 ep, 1);
+ 					} else {
+-						VDBG("CLEAR_FEATURE doing clear_halt");
++						pr_debug("udc: CLEAR_FEATURE"
++							 " doing clear_halt\n");
+ 						rc = _arcotg_ep_set_halt(&ep->
+ 									 ep, 0);
+ 					}
+@@ -1808,30 +1766,31 @@ static void setup_received_irq(struct ar
+ 			Ep0Stall(udc);
+ 		} else if (setup->bRequestType & USB_DIR_IN) {
+ 			udc->ep0_state = DATA_STATE_XMIT;
+-			VDBG("ep0_state now DATA_STATE_XMIT");
++			pr_debug("udc: ep0_state now DATA_STATE_XMIT\n");
+ 		} else {
+ 			udc->ep0_state = DATA_STATE_RECV;
+-			VDBG("ep0_state now DATA_STATE_RECV");
++			pr_debug("udc: ep0_state now DATA_STATE_RECV\n");
+ 		}
+ 	}
+ 
+ 	if (ptc) {
+ 		usb_slave_regs->portsc1 |= ptc << 16;
+-		VDBG("switch to test mode.\n");
++		pr_debug("udc: switch to test mode.\n");
+ 	}
+ }
+ 
+ static void ep0_req_complete(struct arcotg_udc *udc, struct arcotg_ep *ep0,
+ 			     struct arcotg_req *req)
+ {
+-	VDBG("req=0x%p  ep0_state=0x%x", req, udc->ep0_state);
++	pr_debug("udc: req=0x%p  ep0_state=0x%x\n", req, udc->ep0_state);
+ 	if (udc->usb_state == USB_STATE_ADDRESS) {
+ 		/* Set the new address */
+ 		u32 new_address = (u32) udc->device_address;
+ 		usb_slave_regs->deviceaddr = cpu_to_le32(new_address <<
+ 							 USB_DEVICE_ADDRESS_BIT_POS);
+-		VDBG("set deviceaddr to %d",
+-		     usb_slave_regs->deviceaddr >> USB_DEVICE_ADDRESS_BIT_POS);
++		pr_debug("udc: set deviceaddr to %d\n",
++			 usb_slave_regs->
++			 deviceaddr >> USB_DEVICE_ADDRESS_BIT_POS);
+ 	}
+ 
+ 	switch (udc->ep0_state) {
+@@ -1854,11 +1813,11 @@ static void ep0_req_complete(struct arco
+ 	case WAIT_FOR_OUT_STATUS:
+ 		done(ep0, req, 0);
+ 		udc->ep0_state = WAIT_FOR_SETUP;
+-		VDBG("ep0_state now WAIT_FOR_SETUP");
++		pr_debug("udc: ep0_state now WAIT_FOR_SETUP\n");
+ 		break;
+ 
+ 	case WAIT_FOR_SETUP:
+-		VDBG("Unexpected interrupt");
++		pr_debug("udc: Unexpected interrupt\n");
+ 		break;
+ 
+ 	default:
+@@ -1874,11 +1833,6 @@ static void tripwire_handler(struct arco
+ 
+ 	qh = &udc->ep_qh[ep_num * 2 + EP_DIR_OUT];
+ 
+-	VDBG("doing consistent_sync(QH=0x%p, l=%d)",
+-	     qh, sizeof(struct ep_queue_head));
+-
+-	consistent_sync(qh, sizeof(struct ep_queue_head), DMA_FROM_DEVICE);
+-
+ 	/* Clear bit in ENDPTSETUPSTAT */
+ 	temp = cpu_to_le32(1 << ep_num);
+ 	usb_slave_regs->endptsetupstat |= temp;
+@@ -1890,8 +1844,8 @@ static void tripwire_handler(struct arco
+ 		usb_slave_regs->usbcmd |= temp;
+ 
+ 		/* Copy the setup packet to local buffer */
+-		VDBG("qh=0x%p  copy setup buffer from 0x%p to 0x%p",
+-		     qh, qh->setup_buffer, buffer_ptr);
++		pr_debug("udc: qh=0x%p  copy setup buffer from 0x%p to 0x%p\n",
++			 qh, qh->setup_buffer, buffer_ptr);
+ 		memcpy(buffer_ptr, (u8 *) qh->setup_buffer, 8);
+ 	} while (!(le32_to_cpu(usb_slave_regs->usbcmd) & USB_CMD_SUTW));
+ 
+@@ -1931,17 +1885,8 @@ static int process_ep_req(struct arcotg_
+ 	td_complete = 0;
+ 	actual = curr_req->req.length;
+ 
+-	/* must sync the cache with the device, to get the real data */
+-
+-	VDBG("doing consistent_sync(dtd=0x%p, l=%d)",
+-	     curr_td, sizeof(struct ep_td_struct));
+-	consistent_sync(curr_td, sizeof(struct ep_td_struct), DMA_FROM_DEVICE);
+-
+-	VDBG("doing consistent_sync(QH=0x%p, l=%d)",
+-	     curr_qh, sizeof(struct ep_queue_head));
+-	consistent_sync(curr_qh, sizeof(struct ep_queue_head), DMA_FROM_DEVICE);
+-
+-	VDBG("curr_req=0x%p  curr_td=0x%p  actual=%d  size_ioc_sts=0x%x ",
++	pr_debug
++	    ("udc: curr_req=0x%p  curr_td=0x%p  actual=%d  size_ioc_sts=0x%x\n",
+ 	     curr_req, curr_td, actual, curr_td->size_ioc_sts);
+ 
+ 	for (j = 0; j < curr_req->dtd_count; j++) {
+@@ -1964,11 +1909,11 @@ static int process_ep_req(struct arcotg_
+ 				break;
+ 			}
+ 			if (errors & DTD_STATUS_DATA_BUFF_ERR) {
+-				VDBG("Transfer overflow");
++				pr_debug("udc: Transfer overflow\n");
+ 				status = -EPROTO;
+ 				break;
+ 			} else if (errors & DTD_STATUS_TRANSACTION_ERR) {
+-				VDBG("ISO error");
++				pr_debug("udc: ISO error\n");
+ 				status = -EILSEQ;
+ 				break;
+ 			} else
+@@ -1978,13 +1923,15 @@ static int process_ep_req(struct arcotg_
+ 
+ 		} else if (le32_to_cpu(curr_td->size_ioc_sts) &
+ 			   DTD_STATUS_ACTIVE) {
+-			VDBG("Request not wholly complete dtd=0x%p", curr_td);
++			pr_debug("udc: Request not wholly complete dtd=0x%p\n",
++				 curr_td);
+ 			status = REQ_UNCOMPLETE;
+ 			return status;
+ 		} else if (remaining_length)
+ 			if (direction) {
+-				VDBG("Transmit dTD remaining length not zero  "
+-				     "(rl=%d)", remaining_length);
++				pr_debug
++				    ("udc: Transmit dTD remaining length not zero "
++				     "(rl=%d)\n", remaining_length);
+ 				status = -EPROTO;
+ 				break;
+ 			} else {
+@@ -1992,14 +1939,11 @@ static int process_ep_req(struct arcotg_
+ 				break;
+ 		} else {
+ 			td_complete += 1;
+-			VDBG("dTD transmitted successful ");
++			pr_debug("udc: dTD transmitted successful\n");
+ 		}
+ 
+ 		if (j != curr_req->dtd_count - 1)
+-			curr_td = (struct ep_td_struct *)
+-			    phys_to_virt(le32_to_cpu(curr_td->next_td_ptr)
+-					 & DTD_ADDR_MASK);
+-
++			curr_td = curr_td->next_td_virt;
+ 	}
+ 
+ 	if (status)
+@@ -2012,15 +1956,13 @@ static int process_ep_req(struct arcotg_
+ 	for (j = 0; j < curr_req->dtd_count; j++) {
+ 		tmp_td = curr_td;
+ 		if (j != curr_req->dtd_count - 1)
+-			curr_td = (struct ep_td_struct *)
+-			    phys_to_virt(le32_to_cpu(curr_td->next_td_ptr)
+-					 & DTD_ADDR_MASK);
+-		VDBG("freeing dtd 0x%p", tmp_td);
+-		kfree(tmp_td);
++			curr_td = curr_td->next_td_virt;
++		pr_debug("udc: freeing dtd 0x%p  curr_req=0x%p\n", tmp_td,
++			 curr_req);
++		dma_pool_free(udc->dtd_pool, tmp_td, tmp_td->td_dma);
+ 	}
+ 
+ 	return status;
+-
+ }
+ 
+ static void dtd_complete_irq(struct arcotg_udc *udc)
+@@ -2030,7 +1972,7 @@ static void dtd_complete_irq(struct arco
+ 	struct arcotg_ep *curr_ep;
+ 	struct arcotg_req *curr_req, *temp_req;
+ 
+-	VDBG("");
++	pr_debug("%s\n", __FUNCTION__);
+ 	/* Clear the bits in the register */
+ 	bit_pos = usb_slave_regs->endptcomplete;
+ 	usb_slave_regs->endptcomplete = bit_pos;
+@@ -2052,7 +1994,7 @@ static void dtd_complete_irq(struct arco
+ 
+ 		/* If the ep is configured */
+ 		if (curr_ep->name == NULL) {
+-			WARN("Invalid EP?");
++			printk(KERN_WARNING "Invalid EP?\n");
+ 			continue;
+ 		}
+ 
+@@ -2063,7 +2005,8 @@ static void dtd_complete_irq(struct arco
+ 					 queue) {
+ 			status = process_ep_req(udc, i, curr_req);
+ 			if (status == REQ_UNCOMPLETE) {
+-				VDBG("Not all tds are completed in the req");
++				pr_debug
++				    ("udc: Not all tds are completed in the req\n");
+ 				break;
+ 			}
+ 
+@@ -2106,7 +2049,7 @@ static void port_change_irq(struct arcot
+ 			break;
+ 		}
+ 	}
+-	DBG("speed now %d", udc->gadget.speed);
++	pr_debug("udc: speed now %d\n", udc->gadget.speed);
+ 
+ 	/* Update USB state */
+ 	if (!udc->resume_state)
+@@ -2115,7 +2058,7 @@ static void port_change_irq(struct arcot
+ 
+ static void suspend_irq(struct arcotg_udc *udc)
+ {
+-	DBG();
++	pr_debug("%s\n", __FUNCTION__);
+ 
+ 	udc->resume_state = udc->usb_state;
+ 	udc->usb_state = USB_STATE_SUSPENDED;
+@@ -2127,7 +2070,7 @@ static void suspend_irq(struct arcotg_ud
+ 
+ static void resume_irq(struct arcotg_udc *udc)
+ {
+-	DBG();
++	pr_debug("%s\n", __FUNCTION__);
+ 
+ 	udc->usb_state = udc->resume_state;
+ 	udc->resume_state = 0;
+@@ -2142,7 +2085,7 @@ static int reset_queues(struct arcotg_ud
+ {
+ 	u8 pipe;
+ 
+-	DBG("disconnect");
++	pr_debug("udc: disconnect\n");
+ 	for (pipe = 0; pipe < udc->max_pipes; pipe++)
+ 		udc_reset_ep_queue(udc, pipe);
+ 
+@@ -2160,8 +2103,8 @@ static void reset_irq(struct arcotg_udc 
+ 	temp = le32_to_cpu(usb_slave_regs->deviceaddr);
+ 	temp &= ~USB_DEVICE_ADDRESS_MASK;
+ 	usb_slave_regs->deviceaddr = cpu_to_le32(temp);
+-	VDBG("set deviceaddr to %d",
+-	     usb_slave_regs->deviceaddr >> USB_DEVICE_ADDRESS_BIT_POS);
++	pr_debug("udc: set deviceaddr to %d\n",
++		 usb_slave_regs->deviceaddr >> USB_DEVICE_ADDRESS_BIT_POS);
+ 	udc->device_address = 0;
+ 
+ 	/* Clear usb state */
+@@ -2188,20 +2131,20 @@ static void reset_irq(struct arcotg_udc 
+ 	usb_slave_regs->endptflush = 0xFFFFFFFF;
+ 
+ 	if (le32_to_cpu(usb_slave_regs->portsc1) & PORTSCX_PORT_RESET) {
+-		VDBG("Bus RESET");
++		pr_debug("udc: Bus RESET\n");
+ 		/* Bus is reseting */
+ 		udc->bus_reset = TRUE;
+ 		udc->ep0_state = WAIT_FOR_SETUP;
+-		VDBG("ep0_state now WAIT_FOR_SETUP");
++		pr_debug("udc: ep0_state now WAIT_FOR_SETUP\n");
+ 		udc->ep0_dir = 0;
+ 		/* Reset all the queues, include XD, dTD, EP queue
+ 		 * head and TR Queue */
+ 		reset_queues(udc);
+ 	} else {
+-		VDBG("Controller reset");
++		pr_debug("udc: Controller reset\n");
+ 		/* initialize usb hw reg except for regs for EP, not
+ 		 * touch usbintr reg */
+-		dr_controller_setup(udc->ep_qh, udc->gadget.dev.parent);
++		dr_controller_setup(udc);
+ 
+ 		/* FIXME: Reset all internal used Queues */
+ 		reset_queues(udc);
+@@ -2212,7 +2155,7 @@ static void reset_irq(struct arcotg_udc 
+ 		dr_controller_run(udc);
+ 		udc->usb_state = USB_STATE_ATTACHED;
+ 		udc->ep0_state = WAIT_FOR_SETUP;
+-		VDBG("ep0_state now WAIT_FOR_SETUP");
++		pr_debug("udc: ep0_state now WAIT_FOR_SETUP\n");
+ 		udc->ep0_dir = 0;
+ 	}
+ }
+@@ -2233,14 +2176,14 @@ static irqreturn_t arcotg_udc_irq(int ir
+ 	usb_slave_regs->usbsts &= irq_src;
+ 
+ 	irq_src = le32_to_cpu(irq_src);
+-	VDBG("irq_src [0x%08x]", irq_src);
++	pr_debug("udc: irq_src [0x%08x]\n", irq_src);
+ 
+ 	/* USB Interrupt */
+ 	if (irq_src & USB_STS_INT) {
+ 		/* Setup packet, we only support ep0 as control ep */
+-		VDBG("endptsetupstat=0x%x  endptcomplete=0x%x",
+-		     usb_slave_regs->endptsetupstat,
+-		     usb_slave_regs->endptcomplete);
++		pr_debug("udc: endptsetupstat=0x%x  endptcomplete=0x%x\n",
++			 usb_slave_regs->endptsetupstat,
++			 usb_slave_regs->endptcomplete);
+ 		if (usb_slave_regs->
+ 		    endptsetupstat & cpu_to_le32(EP_SETUP_STATUS_EP0)) {
+ 			tripwire_handler(udc, 0,
+@@ -2283,18 +2226,18 @@ static irqreturn_t arcotg_udc_irq(int ir
+ 	}
+ 
+ 	if (irq_src & (USB_STS_ERR | USB_STS_SYS_ERR)) {
+-		VDBG("Error IRQ %x ", irq_src);
++		pr_debug("udc: Error IRQ %x\n", irq_src);
+ 		status = IRQ_HANDLED;
+ 	}
+ 
+ 	if (status != IRQ_HANDLED) {
+-		VDBG("not handled  irq_src=0x%x", irq_src);
++		pr_debug("udc: not handled  irq_src=0x%x\n", irq_src);
+ 	}
+ 
+-	VDBG("irq_src [0x%08x] done.  regs now=0x%08x", irq_src,
+-	     usb_slave_regs->usbsts & usb_slave_regs->usbintr);
+-	VDBG("-");
+-	VDBG("-");
++	pr_debug("udc: irq_src [0x%08x] done.  regs now=0x%08x\n", irq_src,
++		 usb_slave_regs->usbsts & usb_slave_regs->usbintr);
++	pr_debug("-\n");
++	pr_debug("-\n");
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+ 
+ 	return status;
+@@ -2310,11 +2253,12 @@ int usb_gadget_register_driver(struct us
+ {
+ 	int retval = -ENODEV;
+ 	unsigned long flags = 0;
++	struct arcotg_udc *udc = udc_controller;
+ 
+-	DBG("udc_controller=0x%p", udc_controller);
++	pr_debug("udc: udc=0x%p\n", udc);
+ 
+ 	/* standard operations */
+-	if (!udc_controller)
++	if (!udc)
+ 		return -ENODEV;
+ 
+ 	if (!driver || (driver->speed != USB_SPEED_FULL
+@@ -2323,58 +2267,57 @@ int usb_gadget_register_driver(struct us
+ 	    !driver->disconnect || !driver->setup)
+ 		return -EINVAL;
+ 
+-	if (udc_controller->driver)
++	if (udc->driver)
+ 		return -EBUSY;
+ 
+ 	/* lock is needed but whether should use this lock or another */
+-	spin_lock_irqsave(&udc_controller->lock, flags);
++	spin_lock_irqsave(&udc->lock, flags);
+ 
+ 	driver->driver.bus = 0;
+ 	/* hook up the driver */
+-	udc_controller->driver = driver;
+-	udc_controller->gadget.dev.driver = &driver->driver;
+-	spin_unlock_irqrestore(&udc_controller->lock, flags);
++	udc->driver = driver;
++	udc->gadget.dev.driver = &driver->driver;
++	spin_unlock_irqrestore(&udc->lock, flags);
+ 
+-	retval = driver->bind(&udc_controller->gadget);
++	retval = driver->bind(&udc->gadget);
+ 	if (retval) {
+-		VDBG("bind to %s --> %d", driver->driver.name, retval);
+-		udc_controller->gadget.dev.driver = 0;
+-		udc_controller->driver = 0;
++		pr_debug("bind to %s --> %d\n", driver->driver.name, retval);
++		udc->gadget.dev.driver = 0;
++		udc->driver = 0;
+ 		goto out;
+ 	}
+ 
+-	if (udc_controller->transceiver) {
++	if (udc->transceiver) {
+ 		pm_message_t state = { 0 };
+ 
+ 		/* Suspend the controller until OTG enables it */
+-		arcotg_udc_suspend((struct device *)NULL, state);
+-		DBG("suspend udc for OTG auto detect \n");
++		arcotg_udc_suspend(&udc->gadget.dev, state);
++		pr_debug("udc: suspend udc for OTG auto detect \n");
+ 
+ 		/* export udc suspend/resume call to OTG */
+-		udc_controller->gadget.dev.driver->suspend = arcotg_udc_suspend;
+-		udc_controller->gadget.dev.driver->resume = arcotg_udc_resume;
++		udc->gadget.dev.driver->suspend = arcotg_udc_suspend;
++		udc->gadget.dev.driver->resume = arcotg_udc_resume;
+ 
+ 		/* connect to bus through transceiver */
+-		retval = otg_set_peripheral(udc_controller->transceiver,
+-					    &udc_controller->gadget);
++		retval = otg_set_peripheral(udc->transceiver, &udc->gadget);
+ 		if (retval < 0) {
+-			ERR("can't bind to transceiver\n");
+-			driver->unbind(&udc_controller->gadget);
+-			udc_controller->gadget.dev.driver = 0;
+-			udc_controller->driver = 0;
++			pr_debug("udc: can't bind to transceiver\n");
++			driver->unbind(&udc->gadget);
++			udc->gadget.dev.driver = 0;
++			udc->driver = 0;
+ 			return retval;
+ 		}
+ 	} else {
+ 		/* Enable DR IRQ reg and Set usbcmd reg  Run bit */
+-		dr_controller_run(udc_controller);
+-		udc_controller->usb_state = USB_STATE_ATTACHED;
+-		udc_controller->ep0_state = WAIT_FOR_SETUP;
+-		VDBG("ep0_state now WAIT_FOR_SETUP");
+-		udc_controller->ep0_dir = 0;
++		dr_controller_run(udc);
++		udc->usb_state = USB_STATE_ATTACHED;
++		udc->ep0_state = WAIT_FOR_SETUP;
++		pr_debug("udc: ep0_state now WAIT_FOR_SETUP\n");
++		udc->ep0_dir = 0;
+ 	}
+ 
+ 	printk(KERN_INFO "arcotg_udc: gadget %s bound to driver %s\n",
+-	       udc_controller->gadget.name, driver->driver.name);
++	       udc->gadget.name, driver->driver.name);
+ 
+       out:
+ 	return retval;
+@@ -2386,16 +2329,17 @@ int usb_gadget_unregister_driver(struct 
+ {
+ 	struct arcotg_ep *loop_ep;
+ 	unsigned long flags;
++	struct arcotg_udc *udc = udc_controller;
+ 
+-	if (!udc_controller)
++	if (!udc)
+ 		return -ENODEV;
+ 
+-	if (!driver || driver != udc_controller->driver)
++	if (!driver || driver != udc->driver)
+ 		return -EINVAL;
+ 
+-	if (udc_controller->transceiver) {
+-		(void)otg_set_peripheral(udc_controller->transceiver, 0);
+-		DBG("set peripheral=NULL");
++	if (udc->transceiver) {
++		(void)otg_set_peripheral(udc->transceiver, 0);
++		pr_debug("udc: set peripheral=NULL\n");
+ 	} else {
+ 		/* FIXME
+ 		   pullup_disable(udc);
+@@ -2403,31 +2347,30 @@ int usb_gadget_unregister_driver(struct 
+ 	}
+ 
+ 	/* stop DR, disable intr */
+-	dr_controller_stop(udc_controller);
++	dr_controller_stop(udc);
+ 
+ 	/* in fact, no needed */
+-	udc_controller->usb_state = USB_STATE_ATTACHED;
+-	udc_controller->ep0_state = WAIT_FOR_SETUP;
+-	VDBG("ep0_state now WAIT_FOR_SETUP");
+-	udc_controller->ep0_dir = 0;
++	udc->usb_state = USB_STATE_ATTACHED;
++	udc->ep0_state = WAIT_FOR_SETUP;
++	pr_debug("udc: ep0_state now WAIT_FOR_SETUP\n");
++	udc->ep0_dir = 0;
+ 
+ 	/* stand operation */
+-	spin_lock_irqsave(&udc_controller->lock, flags);
+-	udc_controller->gadget.speed = USB_SPEED_UNKNOWN;
+-	nuke(&udc_controller->eps[0], -ESHUTDOWN);
+-	list_for_each_entry(loop_ep, &udc_controller->gadget.ep_list,
+-			    ep.ep_list)
++	spin_lock_irqsave(&udc->lock, flags);
++	udc->gadget.speed = USB_SPEED_UNKNOWN;
++	nuke(&udc->eps[0], -ESHUTDOWN);
++	list_for_each_entry(loop_ep, &udc->gadget.ep_list, ep.ep_list)
+ 	    nuke(loop_ep, -ESHUTDOWN);
+ 
+ 	/* report disconnect to free up endpoints */
+-	driver->disconnect(&udc_controller->gadget);
++	driver->disconnect(&udc->gadget);
+ 
+-	spin_unlock_irqrestore(&udc_controller->lock, flags);
++	spin_unlock_irqrestore(&udc->lock, flags);
+ 
+ 	/* unbind gadget and unhook driver. */
+-	driver->unbind(&udc_controller->gadget);
+-	udc_controller->gadget.dev.driver = 0;
+-	udc_controller->driver = 0;
++	driver->unbind(&udc->gadget);
++	udc->gadget.dev.driver = 0;
++	udc->driver = 0;
+ 
+ 	printk(KERN_INFO "unregistered gadget driver '%s'\r\n",
+ 	       driver->driver.name);
+@@ -2708,11 +2651,13 @@ s = "Host Controller"; break; default:
+  */
+ static void arcotg_udc_release(struct device *dev)
+ {
+-	complete(udc_controller->done);
+-	kfree(ep_qh_base);
+-	ep_qh_base = NULL;
+-	kfree(udc_controller);
+-	udc_controller = NULL;
++	struct arcotg_udc *udc = udc_controller;
++
++	complete(udc->done);
++	dma_free_coherent(dev, udc->ep_qh_size, udc->ep_qh, udc->ep_qh_dma);
++	udc->ep_qh = NULL;
++	kfree(udc);
++	udc = NULL;
+ }
+ 
+ /******************************************************************
+@@ -2726,11 +2671,10 @@ static void arcotg_udc_release(struct de
+ static void *struct_udc_setup(struct platform_device *pdev)
+ {
+ 	struct arcotg_udc *udc = NULL;
+-	unsigned int tmp_sz = 0;
+ 
+ 	udc = (struct arcotg_udc *)
+ 	    kmalloc(sizeof(struct arcotg_udc), GFP_KERNEL);
+-	VDBG("kmalloc(ucd)=0x%p", udc);
++	pr_debug("udc: kmalloc(ucd)=0x%p\n", udc);
+ 	if (udc == NULL) {
+ 		printk(KERN_ERR "malloc udc failed\n");
+ 		goto cleanup;
+@@ -2740,18 +2684,31 @@ static void *struct_udc_setup(struct pla
+ 	memset(udc, 0, sizeof(struct arcotg_udc));
+ 
+ 	/* initialized QHs, take care the 2K align */
+-	tmp_sz = USB_MAX_PIPES * sizeof(struct ep_queue_head);
++	udc->ep_qh_size = USB_MAX_PIPES * sizeof(struct ep_queue_head);
+ 
+-	udc->ep_qh =
+-	    (struct ep_queue_head *)KMALLOC_ALIGN(tmp_sz, GFP_KERNEL | GFP_DMA,
+-						  2 * 1024,
+-						  (void **)&ep_qh_base);
++	/* Arc OTG IP-core requires 2K alignment of queuehead
++	 * this if fullfilled by per page allocation
++	 * by dma_alloc_coherent(...)
++	 */
++	udc->ep_qh = (struct ep_queue_head *)
++	    dma_alloc_coherent(&pdev->dev, udc->ep_qh_size,
++			       &udc->ep_qh_dma, GFP_KERNEL);
++	if (udc->ep_qh != NULL)
++		memset(udc->ep_qh, 0, udc->ep_qh_size);
+ 
+ 	if (!udc->ep_qh) {
+ 		printk(KERN_ERR "malloc QHs for udc failed\n");
+ 		goto cleanup;
+ 	}
+-	VDBG("udc->ep_qh=0x%p  ep_qh_base=0x%p", udc->ep_qh, ep_qh_base);
++	pr_debug("udc: udc->ep_qh=0x%p\n", udc->ep_qh);
++
++	/* need 32 byte alignment, don't cross 4K boundary */
++	udc->dtd_pool = dma_pool_create("arcotg_dtd", &pdev->dev,
++					sizeof(struct ep_td_struct), 32, 4096);
++	if (!udc->dtd_pool) {
++		printk(KERN_ERR "dtd_pool alloc failed\n");
++		goto cleanup;
++	}
+ 
+ 	/* Initialize ep0 status request structure */
+ 	/* FIXME: arcotg_alloc_request() ignores ep argument */
+@@ -2763,10 +2720,10 @@ static void *struct_udc_setup(struct pla
+ 	udc->status_req->req.buf = kmalloc(8, GFP_KERNEL);
+ 	udc->status_req->req.dma = virt_to_phys(udc->status_req->req.buf);
+ 
+-	VDBG("status_req=0x%p  status_req->req.buf=0x%p  "
+-	     "status_req->req.dma=0x%x",
+-	     udc->status_req, udc->status_req->req.buf,
+-	     udc->status_req->req.dma);
++	pr_debug("udc: status_req=0x%p  status_req->req.buf=0x%p  "
++		 "status_req->req.dma=0x%x",
++		 udc->status_req, udc->status_req->req.buf,
++		 udc->status_req->req.dma);
+ 
+ 	udc->resume_state = USB_STATE_NOTATTACHED;
+ 	udc->usb_state = USB_STATE_POWERED;
+@@ -2786,13 +2743,12 @@ static void *struct_udc_setup(struct pla
+  * ep0out isnot used so do nothing here
+  * ep0in should be taken care
+  * It also link this arcotg_ep->ep to gadget->ep_list
+- * @param handle   device controller pointer 
++ * @param udc   device controller pointer 
+  * @param pipe_num pipe number
+  * @return Returns zero on success , or a negative error code
+  */
+-static int struct_ep_setup(void *handle, unsigned char pipe_num)
++static int struct_ep_setup(struct arcotg_udc *udc, unsigned char pipe_num)
+ {
+-	struct arcotg_udc *udc = (struct arcotg_udc *)handle;
+ 	struct arcotg_ep *ep = get_ep_by_pipe(udc, pipe_num);
+ 
+ 	/*
+@@ -2839,7 +2795,7 @@ static int board_init(struct device *dev
+ 	struct arc_usb_config *config;
+ 	config = (struct arc_usb_config *)dev->platform_data;
+ 
+-	DBG("dev=0x%p  config=0x%p", dev, config);
++	pr_debug("udc: dev=0x%p  config=0x%p\n", dev, config);
+ 
+ 	/*
+ 	 * do platform specific init: check the clock, grab/config pins, etc.
+@@ -2861,35 +2817,39 @@ static int __devinit arcotg_udc_probe(st
+ {
+ 	/* FIXME: add platform_data */
+ 	struct arc_usb_config *config = pdev->dev.platform_data;
++	struct arcotg_udc *udc = NULL;
+ 	unsigned int tmp_status = -ENODEV;
+ 	unsigned int i;
+ 	u32 id;
+ 	u64 rsrc_start, rsrc_len;
++	struct device *dev = &pdev->dev;
+ 
+ 	if (strcmp(pdev->name, "arc_udc")) {
+-		VDBG("Wrong device");
++		pr_debug("udc: Wrong device\n");
+ 		return -ENODEV;
+ 	}
+ 
+-	DBG("pdev=0x%p  config=0x%p", pdev, config);
++	pr_debug("udc: pdev=0x%p  config=0x%p\n", pdev, config);
+ 
+ 	if (board_init(&pdev->dev) != 0)
+ 		return -EINVAL;
+ 
+ 	/* Initialize the udc structure including QH member and other member */
+-	udc_controller = (struct arcotg_udc *)struct_udc_setup(pdev);
+-	if (!udc_controller) {
+-		VDBG("udc_controller is NULL");
++	udc = (struct arcotg_udc *)struct_udc_setup(pdev);
++	udc_controller = udc;
++
++	if (!udc) {
++		pr_debug("udc: udc is NULL\n");
+ 		return -ENOMEM;
+ 	}
+-	VDBG("udc_controller=0x%p", udc_controller);
++	dev_set_drvdata(dev, udc);
+ 
+-	udc_controller->config = config;
+-	udc_controller->xcvr_type = config->xcvr_type;
++	udc->config = config;
++	udc->xcvr_type = config->xcvr_type;
+ 
+ #ifdef CONFIG_USB_OTG
+-	udc_controller->transceiver = otg_get_transceiver();
+-	DBG("otg_get_transceiver returns 0x%p", udc_controller->transceiver);
++	udc->transceiver = otg_get_transceiver();
++	pr_debug("udc: otg_get_transceiver returns 0x%p", udc->transceiver);
+ #endif
+ 
+ 	if (pdev->resource[1].flags != IORESOURCE_IRQ) {
+@@ -2899,13 +2859,13 @@ static int __devinit arcotg_udc_probe(st
+ 	rsrc_start = pdev->resource[0].start;
+ 	rsrc_len = pdev->resource[0].end - pdev->resource[0].start + 1;
+ 
+-	VDBG("     start=0x%lx   end=0x%lx\n",
+-	     pdev->resource[0].start, pdev->resource[0].end);
+-	VDBG("rsrc_start=0x%llx  rsrc_len=0x%llx\n", rsrc_start, rsrc_len);
++	pr_debug("     start=0x%lx   end=0x%lx\n",
++		 pdev->resource[0].start, pdev->resource[0].end);
++	pr_debug("rsrc_start=0x%llx  rsrc_len=0x%llx\n", rsrc_start, rsrc_len);
+ 
+ #if 0				/* DDD */
+-	DBG("doing request_mem_region(start=0x%llx, len=0x%llx)",
+-	    rsrc_start, rsrc_len);
++	pr_debug("doing request_mem_region(start=0x%llx, len=0x%llx)\n",
++		 rsrc_start, rsrc_len);
+ 	if (!request_mem_region(rsrc_start, rsrc_len, driver_name)) {
+ 		printk(KERN_ERR "request_mem_region failed\n");
+ 		return -EBUSY;
+@@ -2913,9 +2873,9 @@ static int __devinit arcotg_udc_probe(st
+ #endif
+ 	usb_slave_regs = (struct usb_dr_device *)(int)IO_ADDRESS(rsrc_start);
+ 
+-	DBG("usb_slave_regs = 0x%p", usb_slave_regs);
+-	VDBG("hci_version=0x%x", usb_slave_regs->hciversion);
+-	VDBG("otgsc at 0x%p", &usb_slave_regs->otgsc);
++	pr_debug("udc: usb_slave_regs = 0x%p\n", usb_slave_regs);
++	pr_debug("udc: hci_version=0x%x\n", usb_slave_regs->hciversion);
++	pr_debug("udc: otgsc at 0x%p\n", &usb_slave_regs->otgsc);
+ 
+ 	id = usb_slave_regs->id;
+ 	printk(KERN_INFO "ARC USBOTG h/w ID=0x%x  revision=0x%x\n",
+@@ -2923,7 +2883,7 @@ static int __devinit arcotg_udc_probe(st
+ 
+ 	/* request irq and disable DR  */
+ 	tmp_status = request_irq(pdev->resource[1].start, arcotg_udc_irq,
+-				 SA_SHIRQ, driver_name, udc_controller);
++				 SA_SHIRQ, driver_name, udc);
+ 	if (tmp_status != 0) {
+ 		printk(KERN_ERR "cannot request irq %d err %d \n",
+ 		       (int)pdev->resource[1].start, tmp_status);
+@@ -2931,42 +2891,42 @@ static int __devinit arcotg_udc_probe(st
+ 		return tmp_status;
+ 	}
+ 
+-	if (!udc_controller->transceiver) {
++	if (!udc->transceiver) {
+ 		/* initialize usb hw reg except for regs for EP,
+ 		 * leave usbintr reg untouched*/
+-		dr_controller_setup(udc_controller->ep_qh, &pdev->dev);
++		dr_controller_setup(udc);
+ 	}
+ 
+ 	/* here comes the stand operations for probe
+ 	 * set the arcotg_udc->gadget.xxx
+ 	 */
+-	udc_controller->gadget.ops = &arcotg_gadget_ops;
+-	udc_controller->gadget.is_dualspeed = 1;
++	udc->gadget.ops = &arcotg_gadget_ops;
++	udc->gadget.is_dualspeed = 1;
+ 
+ 	/* gadget.ep0 is a pointer */
+-	udc_controller->gadget.ep0 = &udc_controller->eps[0].ep;
++	udc->gadget.ep0 = &udc->eps[0].ep;
+ 
+-	INIT_LIST_HEAD(&udc_controller->gadget.ep_list);
++	INIT_LIST_HEAD(&udc->gadget.ep_list);
+ 
+-	udc_controller->gadget.speed = USB_SPEED_UNKNOWN;
++	udc->gadget.speed = USB_SPEED_UNKNOWN;
+ 
+ 	/* name: Identifies the controller hardware type. */
+-	udc_controller->gadget.name = driver_name;
++	udc->gadget.name = driver_name;
+ 
+-	device_initialize(&udc_controller->gadget.dev);
++	device_initialize(&udc->gadget.dev);
+ 
+-	strcpy(udc_controller->gadget.dev.bus_id, "gadget");
++	strcpy(udc->gadget.dev.bus_id, "gadget");
+ 
+-	udc_controller->gadget.dev.release = arcotg_udc_release;
+-	udc_controller->gadget.dev.parent = &pdev->dev;
++	udc->gadget.dev.release = arcotg_udc_release;
++	udc->gadget.dev.parent = &pdev->dev;
+ 
+-	if (udc_controller->transceiver) {
+-		udc_controller->gadget.is_otg = 1;
++	if (udc->transceiver) {
++		udc->gadget.is_otg = 1;
+ 	}
+ 
+ 	/* for an EP, the intialization includes: fields in QH, Regs,
+ 	 * arcotg_ep struct */
+-	ep0_dr_and_qh_setup(udc_controller);
++	ep0_dr_and_qh_setup(udc);
+ 	for (i = 0; i < USB_MAX_PIPES; i++) {
+ 		/* because the ep type is not decide here so
+ 		 * struct_ep_qh_setup() and dr_ep_setup()
+@@ -2975,14 +2935,14 @@ static int __devinit arcotg_udc_probe(st
+ 		if (ep_name[i] != NULL)
+ 			/* setup the arcotg_ep struct and link ep.ep.list
+ 			 * into gadget.ep_list */
+-			struct_ep_setup(udc_controller, i);
++			struct_ep_setup(udc, i);
+ 	}
+ 
+ 	create_proc_file();
+-	if (device_add(&udc_controller->gadget.dev)) {
++	if (device_add(&udc->gadget.dev)) {
+ 		printk("device_add: Adding device failed\n");
+ 	}
+-	VDBG("back from device_add ");
++	pr_debug("udc: back from device_add ");
+ 
+ 	return 0;
+ }
+@@ -2996,20 +2956,22 @@ static int __devinit arcotg_udc_probe(st
+  */
+ static int __devexit arcotg_udc_remove(struct platform_device *pdev)
+ {
++	struct device *dev = &pdev->dev;
++	struct arcotg_udc *udc = (struct arcotg_udc *)dev_get_drvdata(dev);
+ 	struct arc_usb_config *config;
+ 
+ 	DECLARE_COMPLETION(done);
+ 
+ 	config = (struct arc_usb_config *)pdev->dev.platform_data;
+ 
+-	if (!udc_controller)
++	if (!udc)
+ 		return -ENODEV;
+ 
+-	udc_controller->done = &done;
++	udc->done = &done;
+ 
+-	if (udc_controller->transceiver) {
+-		put_device(udc_controller->transceiver->dev);
+-		udc_controller->transceiver = 0;
++	if (udc->transceiver) {
++		put_device(udc->transceiver->dev);
++		udc->transceiver = 0;
+ 	}
+ 
+ 	/* DR has been stopped in usb_gadget_unregister_driver() */
+@@ -3018,16 +2980,27 @@ static int __devexit arcotg_udc_remove(s
+ 	remove_proc_file();
+ 
+ 	/* free irq */
+-	free_irq(pdev->resource[1].start, udc_controller);
++	free_irq(pdev->resource[1].start, udc);
+ 
+ 	/* deinitialize all ep: strcut */
+ 	/* deinitialize ep0: reg and QH */
+ 
+ 	/* Free allocated memory */
+-	kfree(udc_controller->status_req->req.buf);
+-	kfree(udc_controller->status_req);
++	pr_debug("status_req->head = 0x%p\n", udc->status_req->head);
++	if (udc->status_req->head) {
++		pr_debug("freeing head=0x%p\n", udc->status_req->head);
++		dma_pool_free(udc->dtd_pool,
++			      udc->status_req->head,
++			      udc->status_req->head->td_dma);
++	}
++
++	kfree(udc->status_req->req.buf);
++	kfree(udc->status_req);
++
++	if (udc->dtd_pool)
++		dma_pool_destroy(udc->dtd_pool);
+ 
+-	device_unregister(&udc_controller->gadget.dev);
++	device_unregister(&udc->gadget.dev);
+ 	/* free udc --wait for the release() finished */
+ 	wait_for_completion(&done);
+ 
+@@ -3055,8 +3028,9 @@ static int __devexit arcotg_udc_remove(s
+  */
+ static int arcotg_udc_suspend(struct device *dev, pm_message_t state)
+ {
+-	DBG("Suspend.  event=%d", state.event);
+-	udc_controller->stopped = 1;
++	struct arcotg_udc *udc = udc_controller;
++	pr_debug("udc: Suspend.  state=%d\n", state);
++	udc->stopped = 1;
+ 	return 0;
+ }
+ 
+@@ -3064,22 +3038,21 @@ static int arcotg_udc_suspend(struct dev
+  * Invoked on USB resume. May be called in_interrupt.
+  * Here we start the DR controller and enable the irq
+  * @param dev device controller pointer
+- * @param level power level
+  * @return The function returns 0 on success or -1 if failed
+  */
+ static int arcotg_udc_resume(struct device *dev)
+ {
+-	DBG("Resume.  dev=0x%p", dev);
++	struct arcotg_udc *udc = udc_controller;
++	pr_debug("udc: Resume dev=0x%p\n", dev);
+ 
+ 	/*Enable DR irq reg and set controller Run */
+-	if (udc_controller->stopped) {
+-		dr_controller_setup(udc_controller->ep_qh,
+-				    &udc_controller->gadget.dev);
+-		dr_controller_run(udc_controller);
+-	}
+-	udc_controller->usb_state = USB_STATE_ATTACHED;
+-	udc_controller->ep0_state = WAIT_FOR_SETUP;
+-	udc_controller->ep0_dir = 0;
++	if (udc->stopped) {
++		dr_controller_setup(udc);
++		dr_controller_run(udc);
++	}
++	udc->usb_state = USB_STATE_ATTACHED;
++	udc->ep0_state = WAIT_FOR_SETUP;
++	udc->ep0_dir = 0;
+ 	return 0;
+ }
+ 
+@@ -3100,7 +3073,7 @@ static int __init udc_init(void)
+ 
+ 	printk(KERN_INFO "%s version %s init \n", driver_desc, DRIVER_VERSION);
+ 	rc = platform_driver_register(&udc_driver);
+-	VDBG("%s() driver_register returns %d", __FUNCTION__, rc);
++	pr_debug("udc: %s() driver_register returns %d\n", __FUNCTION__, rc);
+ 	return rc;
+ }
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.h linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.h
+--- linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.h	2007-04-25 17:39:20.000000000 -0600
+@@ -369,13 +369,13 @@ struct ep_queue_head {
+ #define  EP_QUEUE_HEAD_STATUS_HALT	      (0x00000040)
+ #define  EP_QUEUE_HEAD_STATUS_ACTIVE          (0x00000080)
+ #define  EP_QUEUE_CURRENT_OFFSET_MASK         (0x00000FFF)
+-#define  EP_QUEUE_HEAD_NEXT_POINTER_MASK      (0xFFFFFFE0)
+ #define  EP_QUEUE_FRINDEX_MASK                (0x000007FF)
+ #define  EP_MAX_LENGTH_TRANSFER               (0x4000)
+ 
+ /*! 
+  * Endpoint Transfer Descriptor data struct 
+  *  Rem: all the variables of td are LittleEndian Mode 
++ *       must be 32-byte aligned
+  */
+ struct ep_td_struct {
+ 	/*!
+@@ -414,9 +414,19 @@ struct ep_td_struct {
+ 	u32 buff_ptr4;
+ 
+ 	/*!
+-	 *  make it an even 8 words 
+-	 */
+-	u32 res;
++	 * dma address of this td
++	 * */
++	dma_addr_t td_dma;
++
++	/*!
++	 * virtual address of next td
++	 * */
++	struct ep_td_struct *next_td_virt;
++
++	/*!
++	 * make it an even 16 words
++	 * */
++	u32 res[7];
+ };
+ 
+ /*! 
+@@ -429,7 +439,6 @@ struct ep_td_struct {
+ #define  DTD_STATUS_DATA_BUFF_ERR             (0x00000020)
+ #define  DTD_STATUS_TRANSACTION_ERR           (0x00000008)
+ #define  DTD_RESERVED_FIELDS                  (0x80007300)
+-#define  DTD_ADDR_MASK                        (0xFFFFFFE0)
+ #define  DTD_PACKET_SIZE                      (0x7FFF0000)
+ #define  DTD_LENGTH_BIT_POS                   (16)
+ #define  DTD_ERROR_MASK                       (DTD_STATUS_HALTED | \
+@@ -510,6 +519,7 @@ struct arcotg_udc {
+ 	unsigned stopped:1;
+ 
+ 	struct ep_queue_head *ep_qh;	/* Endpoints Queue-Head */
++	int ep_qh_size;		/* Endpoints Queue-Head */
+ 	struct arcotg_req *status_req;	/* ep0 status request */
+ 
+ 	u32 max_pipes;		/* Device max pipes */
+@@ -523,25 +533,13 @@ struct arcotg_udc {
+ 				   USB_DIR_IN or USB_DIR_OUT */
+ 	u32 usb_sof_count;	/* SOF count */
+ 	u32 errors;		/* USB ERRORs count */
++	dma_addr_t ep_qh_dma;	/* DMA address of ep_qh */
++	struct dma_pool *dtd_pool;
+ 	u8 device_address;	/* Device USB address */
+ 
+ 	struct completion *done;	/* to make sure release() is done */
+ };
+ 
+-/*-------------------------------------------------------------------------*/
+-
+-#ifdef DEBUG
+-#  if 0				/* jiffie-timestamped version */
+-#     define DBG(fmt, args...) \
+-	printk("j=%lu  [%s]  " fmt "\n", jiffies, __FUNCTION__, ## args)
+-#  else
+-#     define DBG(fmt, args...) \
+-	printk("[%s]  " fmt "\n", __FUNCTION__, ## args)
+-#  endif
+-#else
+-#define DBG(fmt, args...)	do {} while (0)
+-#endif
+-
+ #if 0
+ static void dump_msg(const char *label, const u8 * buf, unsigned int length)
+ {
+@@ -550,7 +548,7 @@ static void dump_msg(const char *label, 
+ 
+ 	if (length >= 512)
+ 		return;
+-	DBG("%s, length %u:\n", label, length);
++	pr_debug("udc: %s, length %u:\n", label, length);
+ 	start = 0;
+ 	while (length > 0) {
+ 		num = min(length, 16u);
+@@ -570,16 +568,6 @@ static void dump_msg(const char *label, 
+ }
+ #endif
+ 
+-#ifdef VERBOSE
+-#define VDBG		DBG
+-#else
+-#define VDBG(stuff...)	do{}while(0)
+-#endif
+-
+-#define ERR(stuff...)		printk(KERN_ERR "udc: " stuff)
+-#define WARN(stuff...)		printk(KERN_WARNING "udc: " stuff)
+-#define INFO(stuff...)		printk(KERN_INFO "udc: " stuff)
+-
+ /*-------------------------------------------------------------------------*/
+ 
+ /* ### Add board specific defines here
+@@ -603,23 +591,6 @@ static void dump_msg(const char *label, 
+ 
+ #define get_ep_by_pipe(udc, pipe)	((pipe == 1)? &udc->eps[0]: \
+ 					&udc->eps[pipe])
+-/*
+- * memory kmalloc with alignning size and zero the content
+- * @base :output parameter. It store the base address before align.
+- * Return value it the address after align
+- *
+- */
+-static void *KMALLOC_ALIGN(size_t size, int flags, unsigned int align,
+-			   void **base)
+-{
+-/* #define MY_ALIGN(n)   ((n)+(-(n) & (align - 1)))  */
+-
+-	*base = kmalloc(size + align, flags);
+-	if (*base == NULL)
+-		return NULL;
+-	memset(*base, 0, (size + align));
+-	return (void *)ALIGN((unsigned int)(*base), align);
+-}
+ 
+ /* Bulk only class request */
+ #define USB_BULK_RESET_REQUEST          0xff

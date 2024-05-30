@@ -1,0 +1,231 @@
+%Build
+if [ -n "%{buildsubdir}" ]
+then
+    rm -f $RPM_BUILD_DIR/linux
+    ln -s %{buildsubdir} $RPM_BUILD_DIR/linux
+fi
+KSRC_DIR=${PKG_KERNEL_PATH_PRECONFIG:-%{_builddir}/%{buildsubdir}}
+: ${LINTARCH:?must be set to the kernel architecture name}
+: ${BUILDCC:?must be set to the token for your build machines compiler}
+: ${PKG_KERNEL_PRECONFIG:?must be set to the name of your .config file}
+: ${PLATFORM_PATH:?must be set to your ltib platform path}
+: ${KSRC_DIR:?cannot find source directory (PKG_KERNEL_PATH_PRECONFIG)}
+cd $KSRC_DIR
+KBOUT="$(eval echo $PKG_KERNEL_KBUILD_PRECONFIG)"
+KBOUT=${KBOUT:-"."}
+if [ "$KBOUT" != '.' ]
+then
+    export KBUILD_OUTPUT="$KBOUT"
+fi
+test -d $KBOUT || mkdir -p $KBOUT
+
+case $LINTARCH in
+    m68k*)
+        KTARG=vmlinux
+        ;;
+    ppc*)
+        KTARG=uImage
+        ;;
+    powerpc*)
+        KTARG=uImage
+        ;;
+    *)
+        KTARG=zImage
+        ;;
+esac
+SYSCFG_KTARG=${SYSCFG_KTARG:-$KTARG}
+
+#
+# This section makes sure there is a .config in the kernel build directory
+#
+for CFG in "$PLATFORM_PATH/${PKG_KERNEL_PRECONFIG}.dev" "$PLATFORM_PATH/$PKG_KERNEL_PRECONFIG" "$KSRC_DIR/arch/$LINTARCH/configs/${PLATFORM}_defconfig" notfound
+do
+   if [ -f $CFG ]
+   then
+       cp $CFG $KBOUT/.config
+       break
+   fi
+done
+if [ ! -f $KBOUT/.config ]
+then
+   echo "Cannot find a config file for the kernel"
+   exit 1
+fi
+
+if grep -q 'CONFIG_PPCMERGE=y' $KBOUT/.config
+then
+    LINTARCH=powerpc
+fi
+if grep -q 'CONFIG_PPC_MERGE=y' $KBOUT/.config
+then
+    LINTARCH=powerpc
+fi
+
+#
+# Bring the Logo
+#
+CUSTOM_LOGO_FILE=${DEV_IMAGE}/boot/logo_custom_clut224.ppm
+if [ -e ${CUSTOM_LOGO_FILE} ]; then
+   echo "Customize the splash screen image: " ${CUSTOM_LOGO_FILE}
+   cp ${CUSTOM_LOGO_FILE} drivers/video/logo/
+   grep CONFIG_LOGO_CUSTOM_CLUT224 .config || ( 
+         echo -e "\e[1;31mATTENTION: configured logo is not LOGO_CUSTOM_CLUT224 !\e[0m" )
+fi 
+
+#
+# configure 
+#
+if [ -n "$PKG_KERNEL_WANT_CF" -o -n "$SCB_WANT_CF" ]
+then
+    make ARCH=$LINTARCH CROSS_COMPILE= HOSTCC="$BUILDCC" menuconfig 
+else
+    yes "" | make ARCH=$LINTARCH CROSS_COMPILE= HOSTCC="$BUILDCC" silentoldconfig
+fi
+cp $KBOUT/.config $PLATFORM_PATH/${PKG_KERNEL_PRECONFIG}.dev
+
+# The first time conf builds, a spurious .config gets made in 
+# the source directory, this gets rid of it otherwise the kernel
+# will not build complaining that the source tree is not clean
+if [ "$KBOUT" != '.' ]
+then
+    rm -f .config
+fi
+
+#
+# Make dep only needs to be done for 2.4 kernels
+#
+if [ "%{kernel_series}" = "2.4" ]
+then
+    make ARCH=$LINTARCH CROSS_COMPILE= HOSTCC="${BUILDCC}" dep
+fi
+#
+# build the kernel and optionally the modules
+#
+fast_compile=`grep processor /proc/cpuinfo | wc -l | xargs expr 2 \* `
+make -j $fast_compile ARCH=$LINTARCH CROSS_COMPILE= HOSTCC="$BUILDCC" $SYSCFG_KTARG
+if grep -q '^CONFIG_MODULES=' $KBOUT/.config
+then
+    make ARCH=$LINTARCH CROSS_COMPILE= HOSTCC="$BUILDCC" modules
+fi
+
+%Install
+KSRC_DIR=${PKG_KERNEL_PATH_PRECONFIG:-%{_builddir}/%{buildsubdir}}
+cd $KSRC_DIR
+KSRC_DIR="`pwd`"
+KBOUT="$(eval echo $PKG_KERNEL_KBUILD_PRECONFIG)"
+KBOUT=${KBOUT:-"."}
+if [ "$KBOUT" != '.' ]
+then
+    export KBUILD_OUTPUT="$KBOUT"
+fi
+
+if grep -q 'CONFIG_PPC_MERGE=y' $KBOUT/.config
+then
+    LINTARCH=powerpc
+fi
+case $LINTARCH in
+    m68k*)
+        BOOT_KERNEL=vmlinux
+        ;;
+    ppc)
+        BOOT_KERNEL=arch/$LINTARCH/boot/images/uImage
+        ;;
+    powerpc)
+        BOOT_KERNEL=arch/$LINTARCH/boot/uImage
+        ;;
+    *)
+        BOOT_KERNEL=arch/$LINTARCH/boot/zImage
+        ;;
+esac
+if grep -q 'CONFIG_PPCMERGE=y' $KBOUT/.config
+then
+    LINTARCH=powerpc
+fi
+
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT/%{pfx}/boot
+
+cd $KBOUT
+
+SYSCFG_BOOT_KERNEL=${SYSCFG_BOOT_KERNEL:-$BOOT_KERNEL}
+if [ -n "$PKG_KERNEL_WANT_OBJCOPY" ]
+then
+    objcopy -O binary $SYSCFG_BOOT_KERNEL ${SYSCFG_BOOT_KERNEL}.bin
+    SYSCFG_BOOT_KERNEL=${SYSCFG_BOOT_KERNEL}.bin
+fi
+
+for i in vmlinux System.map $SYSCFG_BOOT_KERNEL
+do
+    cp $i $RPM_BUILD_ROOT/%{pfx}/boot/
+done
+ln -s `basename $SYSCFG_BOOT_KERNEL` $RPM_BUILD_ROOT/%{pfx}/boot/bootable_kernel
+cp .config $RPM_BUILD_ROOT/%{pfx}/boot/linux.config
+
+if grep -q '^CONFIG_MODULES=' .config
+then
+    make ARCH=$LINTARCH CROSS_COMPILE= HOSTCC="$BUILDCC" DEPMOD=/bin/true INSTALL_MOD_PATH=$RPM_BUILD_ROOT/%{pfx} modules_install
+    KERNEL_VER=`ls $RPM_BUILD_ROOT/%{pfx}/lib/modules`
+    for i in build source
+    do
+        rm -f $RPM_BUILD_ROOT/%{pfx}/lib/modules/$KERNEL_VER/$i
+        ln -s /usr/src/linux $RPM_BUILD_ROOT/%{pfx}/lib/modules/$KERNEL_VER/$i
+    done
+fi
+
+# handle the Flat Device Tree build
+DTC_PATH=arch/$LINTARCH/boot/dts
+if [ "$LINTARCH" = "powerpc" -a -d "$KSRC_DIR/$DTC_PATH" ]
+then
+   DTC_NAME=$PLATFORM
+   DTC_LOAD_ADDR=${SYSCFG_DTU_LOAD_ADDR:-0x300000}
+
+   if [ "%dtc_name" != "%%dtc_name" ]
+   then
+       DTC_NAME=%dtc_name
+   fi
+   cd $KSRC_DIR/$DTC_PATH
+   dtc -f -V 0x10 -I dts -O dtb ${DTC_NAME}.dts > $RPM_BUILD_ROOT/%{pfx}/boot/${DTC_NAME}.dtb
+   cd -
+   if [ -f "$RPM_BUILD_ROOT/%{pfx}/boot/uImage" ]
+   then
+       mkimage -A ppc -O Linux -T flat_dt -C none -a $DTC_LOAD_ADDR -e 0 -d $RPM_BUILD_ROOT/%{pfx}/boot/${DTC_NAME}.dtb $RPM_BUILD_ROOT/%{pfx}/boot/${DTC_NAME}.dtu
+   fi
+fi
+if [ -n "$PKG_KERNEL_WANT_HEADERS" ]
+then
+    mkdir -p $RPM_BUILD_ROOT/%{pfx}/usr/src/linux/include
+    for i in asm-${LINTARCH} asm-generic config linux math-emu media mtd net pcmcia rxrpc scsi sound video ulog
+    do
+        if [ -d $KSRC_DIR/include/$i ]
+        then
+            cp -a $KSRC_DIR/include/$i $RPM_BUILD_ROOT/%{pfx}/usr/src/linux/include/
+        fi
+    done
+
+    for i in asm config linux
+    do
+        if [ -d $KBOUT/include/$i ]
+        then
+            cp -a $KBOUT/include/$i $RPM_BUILD_ROOT/%{pfx}/usr/src/linux/include/
+        fi
+    done
+
+    if [ "${LINTARCH}" = "arm" ]
+    then
+        mkdir -p $RPM_BUILD_ROOT/%{pfx}/usr/src/linux/include/asm/arch
+        cp -a $KBOUT/include/asm/arch/* $RPM_BUILD_ROOT/%{pfx}/usr/src/linux/include/asm/arch/
+    fi
+fi
+
+
+%Clean
+rm -rf $RPM_BUILD_ROOT
+if [ -z "$PKG_KERNEL_LEAVESRC" ]
+then
+   echo "KERNEL_LEAVESRC forced by Sagem. (file: kernel-common.tmpl)"
+   # rm -f $RPM_BUILD_DIR/linux
+fi
+
+%Files
+%defattr(-,root,root)
+%{pfx}/*

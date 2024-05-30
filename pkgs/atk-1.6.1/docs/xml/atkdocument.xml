@@ -1,0 +1,99 @@
+<refentry id="AtkDocument">
+<refmeta>
+<refentrytitle>AtkDocument</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>ATK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AtkDocument</refname><refpurpose>The ATK interface which allows access to a DOM associated with on object.</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+struct      <link linkend="AtkDocument-struct">AtkDocument</link>;
+G_CONST_RETURN <link linkend="gchar">gchar</link>* <link linkend="atk-document-get-document-type">atk_document_get_document_type</link>
+                                            (<link linkend="AtkDocument">AtkDocument</link> *document);
+<link linkend="gpointer">gpointer</link>    <link linkend="atk-document-get-document">atk_document_get_document</link>       (<link linkend="AtkDocument">AtkDocument</link> *document);
+
+</synopsis>
+</refsynopsisdiv>
+
+<refsect1>
+<title>Object Hierarchy</title>
+<synopsis>
+
+  <link linkend="GInterface">GInterface</link>
+   +----AtkDocument
+</synopsis>
+
+</refsect1>
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+The AtkDocument interface should be supported by any object that has an
+associated document object model (DOM). This interface provides the
+standard mechanism allowing an assistive technology access to the DOM.
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AtkDocument-struct"/>struct AtkDocument</title>
+<indexterm><primary>AtkDocument</primary></indexterm><programlisting>struct AtkDocument;</programlisting>
+<para>
+The AtkDocument structure does not contain any fields.
+
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="atk-document-get-document-type"/>atk_document_get_document_type ()</title>
+<indexterm><primary>atk_document_get_document_type</primary></indexterm><programlisting>G_CONST_RETURN <link linkend="gchar">gchar</link>* atk_document_get_document_type
+                                            (<link linkend="AtkDocument">AtkDocument</link> *document);</programlisting>
+<para>
+Gets a string indicating the document type.</para>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>document</parameter>&nbsp;:</term>
+<listitem><simpara> a <link linkend="GObject"><type>GObject</type></link> instance that implements AtkDocumentIface
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara> a string indicating the document type
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="atk-document-get-document"/>atk_document_get_document ()</title>
+<indexterm><primary>atk_document_get_document</primary></indexterm><programlisting><link linkend="gpointer">gpointer</link>    atk_document_get_document       (<link linkend="AtkDocument">AtkDocument</link> *document);</programlisting>
+<para>
+Gets a <literal>gpointer</literal> that points to an instance of the DOM.  It is
+up to the caller to check atk_document_get_type to determine
+how to cast this pointer.</para>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>document</parameter>&nbsp;:</term>
+<listitem><simpara> a <link linkend="GObject"><type>GObject</type></link> instance that implements AtkDocumentIface
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara> a <literal>gpointer</literal> that points to an instance of the DOM.
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

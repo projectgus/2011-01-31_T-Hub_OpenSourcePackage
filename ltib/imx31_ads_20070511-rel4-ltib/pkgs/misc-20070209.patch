@@ -1,0 +1,592 @@
+diff -Nupr misc.orig/module_test/Makefile misc/module_test/Makefile
+--- misc.orig/module_test/Makefile	2007-02-08 10:37:42.000000000 +0800
++++ misc/module_test/Makefile	2007-02-09 10:08:17.365477368 +0800
+@@ -7,14 +7,13 @@ SAHARA_TEST_SOURCE=../test/mxc_sahara_te
+ # below to the 'module_list +=...' list for each platform that needs it.
+ module_list= 	mxc_rtic_test.o \
+  		mxc_spi_testmod.o \
+-		mxc_wdog_tm.o \
+ 		mxc_pmic_power_testmod.o
+ temp_list = mxc_rtic_test.o
+ 
+ ifeq "$(CONFIG_MACH_MX27ADS)" "y"
+ CFLAGS += -DCONFIG_ARCH_MX27
+-module_list += mxc_udma_testdriver.o scc_test_driver.o mxc_pm_test.o
+-module_list += sahara_test_driver.o
++module_list += mxc_udma_testdriver.o scc_test_driver.o mxc_pm_test.o mxc_i2c_testmod.o
++module_list += sahara_test_driver.o mxc_i2c_client.o
+ EXTRA_MODULES_BUILD= $(MAKE) -C $(CURDIR)/pmic_convity_test
+ sahara_test_driver-objs := km_test.o $(SAHARA_TEST_SOURCE)run_tests.o \
+                            $(SAHARA_TEST_SOURCE)results.o \
+diff -Nupr misc.orig/module_test/mxc_i2c_client.c misc/module_test/mxc_i2c_client.c
+--- misc.orig/module_test/mxc_i2c_client.c	1970-01-01 08:00:00.000000000 +0800
++++ misc/module_test/mxc_i2c_client.c	2007-02-09 10:06:14.007230672 +0800
+@@ -0,0 +1,191 @@
++/*
++ * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ */
++
++/*
++ * The code contained herein is licensed under the GNU General Public
++ * License. You may obtain a copy of the GNU General Public License
++ * Version 2 or later at the following locations:
++ *
++ * http://www.opensource.org/licenses/gpl-license.html
++ * http://www.gnu.org/copyleft/gpl.html
++ */
++
++/*!
++ * @file mxc_i2c_client.c
++ *
++ * @brief I2C Chip Driver for the Freescale Semiconductor MXC platform.
++ *
++ * @ingroup MXCI2C
++ */
++
++/*
++ * Include Files
++ */
++#include <linux/kernel.h>
++#include <linux/init.h>
++#include <linux/i2c.h>
++#include <asm/arch/mxc_i2c.h>
++
++/*!
++ * Array that holds pointers to MXC I2C Bus adapter structures.
++ */
++static struct i2c_adapter *adap_list[I2C_NR];
++
++/*!
++ * Calls the adapters transfer method to exchange data with the i2c device.
++ *
++ * @param   bus_id       the MXC I2C bus that the slave device is connected to
++ *                       (0 based)
++ * @param   addr         slave address of the device we wish to exchange data with
++ * @param   *reg         register in the device we wish to access
++ * @param   reg_len      number of bytes in the register address
++ * @param   *buf         data buffer
++ * @param   num          number of data bytes to transfer
++ * @param   tran_flag    transfer flag
++ *
++ * @return  Function returns the number of messages sent to the device
++ *          or a negative number on failure
++ */
++static int mxc_i2c_client_xfer(int bus_id, unsigned int addr, char *reg,
++			       int reg_len, char *buf, int num, int tran_flag)
++{
++	struct i2c_msg msg[2];
++	int ret;
++
++	msg[0].addr = addr;
++	msg[0].len = reg_len;
++	msg[0].buf = reg;
++	msg[0].flags = tran_flag;
++	msg[0].flags &= ~I2C_M_RD;
++
++	msg[1].addr = addr;
++	msg[1].len = num;
++	msg[1].buf = buf;
++
++	msg[1].flags = tran_flag;
++	if (tran_flag & MXC_I2C_FLAG_READ) {
++		msg[1].flags |= I2C_M_RD;
++	} else {
++		msg[1].flags &= ~I2C_M_RD;
++	}
++
++	ret = i2c_transfer(adap_list[bus_id], msg, 2);
++	return ret;
++}
++
++/*!
++ * Function used to read the register of the i2c slave device. This function
++ * is a kernel level API that can be called by other device drivers.
++ *
++ * @param   bus_id       the MXC I2C bus that the slave device is connected to
++ *                       (0 based)
++ * @param   addr         slave address of the device we wish to read data from
++ * @param   *reg         register in the device we wish to access
++ * @param   reg_len      number of bytes in the register address
++ * @param   *buf         data buffer
++ * @param   num          number of data bytes to transfer
++ *
++ * @return  Function returns the number of messages transferred to/from the device or
++ *          a negative number on failure
++ */
++int mxc_i2c_read(int bus_id, unsigned int addr, char *reg, int reg_len,
++		 char *buf, int num)
++{
++	return mxc_i2c_client_xfer(bus_id, addr, reg, reg_len, buf, num,
++				   MXC_I2C_FLAG_READ);
++}
++
++/*!
++ * Function used to write to the register of the i2c slave device. This function
++ * is a kernel level API that can be called by other device drivers.
++ *
++ * @param   bus_id       the MXC I2C bus that the slave device is connected to
++ *                       (0 based)
++ * @param   addr         slave address of the device we wish to write data to
++ * @param   *reg         register in the device we wish to access
++ * @param   reg_len      number of bytes in the register address
++ * @param   *buf         data buffer
++ * @param   num          number of data bytes to transfer
++ *
++ * @return  Function returns the number of messages transferred to/from the device or
++ *          a negative number on failure
++ */
++int mxc_i2c_write(int bus_id, unsigned int addr, char *reg, int reg_len,
++		  char *buf, int num)
++{
++	return mxc_i2c_client_xfer(bus_id, addr, reg, reg_len, buf, num, 0);
++}
++
++int mxc_i2c_polling_read(int bus_id, unsigned int addr, char *reg, int reg_len,
++			 char *buf, int num)
++{
++	return mxc_i2c_client_xfer(bus_id, addr, reg, reg_len, buf, num,
++				   MXC_I2C_FLAG_READ | MXC_I2C_FLAG_POLLING);
++}
++
++int mxc_i2c_polling_write(int bus_id, unsigned int addr, char *reg,
++			  int reg_len, char *buf, int num)
++{
++	return mxc_i2c_client_xfer(bus_id, addr, reg, reg_len, buf, num,
++				   MXC_I2C_FLAG_POLLING);
++}
++
++/*!
++ * This callback function is called by the i2c core when an i2c bus driver is
++ * loaded. This function checks to see if any of its i2c device are on this
++ * bus.
++ *
++ * @param  adapter the i2c adapter structure of the bus driver
++ *
++ * @return The function returns 0 on success and a non-zero value of failure
++ */
++static int mxc_i2c_client_attach(struct i2c_adapter *adapter)
++{
++	if (strcmp(adapter->name, MXC_ADAPTER_NAME) != 0) {
++		return -1;
++	}
++	adap_list[adapter->id] = adapter;
++	return 0;
++}
++
++/*!
++ * This structure is used to hold the attach callback function name.
++ */
++static struct i2c_driver mxc_i2c_client_driver = {
++	.driver = {
++		.name	= "MXC I2C Client",
++	},
++	.attach_adapter	= mxc_i2c_client_attach,
++};
++
++/*!
++ * This function registers the i2c_driver structure with the i2c core.
++ *
++ * @return The function returns 0 on success and a non-zero value of failure
++ */
++static int __init mxc_i2c_client_init(void)
++{
++	return i2c_add_driver(&mxc_i2c_client_driver);
++}
++
++/*!
++ * This function unregisters the chip driver from the i2c core.
++ */
++static void __exit mxc_i2c_client_exit(void)
++{
++	i2c_del_driver(&mxc_i2c_client_driver);
++}
++
++subsys_initcall(mxc_i2c_client_init);
++module_exit(mxc_i2c_client_exit);
++
++EXPORT_SYMBOL(mxc_i2c_read);
++EXPORT_SYMBOL(mxc_i2c_write);
++
++EXPORT_SYMBOL(mxc_i2c_polling_read);
++EXPORT_SYMBOL(mxc_i2c_polling_write);
++
++MODULE_AUTHOR("Freescale Semiconductor, Inc.");
++MODULE_DESCRIPTION("MXC I2C Client driver");
++MODULE_LICENSE("GPL");
+diff -Nupr misc.orig/module_test/mxc_i2c.h misc/module_test/mxc_i2c.h
+--- misc.orig/module_test/mxc_i2c.h	1970-01-01 08:00:00.000000000 +0800
++++ misc/module_test/mxc_i2c.h	2007-02-09 10:06:38.979434320 +0800
+@@ -0,0 +1,111 @@
++/*
++ * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ */
++
++/*
++ * The code contained herein is licensed under the GNU General Public
++ * License. You may obtain a copy of the GNU General Public License
++ * Version 2 or later at the following locations:
++ *
++ * http://www.opensource.org/licenses/gpl-license.html
++ * http://www.gnu.org/copyleft/gpl.html
++ */
++#ifndef __ASM_ARCH_MXC_I2C_H__
++#define __ASM_ARCH_MXC_I2C_H__
++
++/*!
++ * @defgroup MXCI2C Inter-IC (I2C) Driver
++ */
++
++/*!
++ * @file mxc_i2c.h
++ *
++ * @brief This file contains the I2C chip level configuration details.
++ *
++ * It also contains the API function that other drivers can use to read/write
++ * to the I2C device registers.
++ *
++ * @ingroup MXCI2C
++ */
++
++/*!
++ * This defines the string used to identify MXC I2C Bus drivers
++ */
++#define MXC_ADAPTER_NAME        "MXC I2C Adapter"
++
++#define MXC_I2C_FLAG_READ	0x01	/* if set, is read; else is write */
++#define MXC_I2C_FLAG_POLLING	0x02	/* if set, is polling mode; else is interrupt mode */
++
++/*!
++ * Function used to read the register of the i2c slave device. This function
++ * is a kernel level API that can be called by other device drivers.
++ *
++ * @param   bus_id       the MXC I2C bus that the slave device is connected to
++ *                       (0 based)
++ * @param   addr         slave address of the device we wish to read data from
++ * @param   *reg         register in the device we wish to access
++ * @param   reg_len      number of bytes in the register address
++ * @param   *buf         data buffer
++ * @param   num          number of data bytes to transfer
++ *
++ * @return  Function returns the number of messages transferred to/from the device
++ *          or a negative number on failure
++ */
++int mxc_i2c_read(int bus_id, unsigned int addr, char *reg, int reg_len,
++		 char *buf, int num);
++
++/*!
++ * Function used to write to the register of the i2c slave device. This function
++ * is a kernel level API that can be called by other device drivers.
++ *
++ * @param   bus_id       the MXC I2C bus that the slave device is connected to
++ *                       (0 based)
++ * @param   addr         slave address of the device we wish to write data to
++ * @param   *reg         register in the device we wish to access
++ * @param   reg_len      number of bytes in the register address
++ * @param   *buf         data buffer
++ * @param   num          number of data bytes to transfer
++ *
++ * @return  Function returns the number of messages transferred to/from the device
++ *          or a negative number on failure
++ */
++int mxc_i2c_write(int bus_id, unsigned int addr, char *reg, int reg_len,
++		  char *buf, int num);
++
++/*!
++ * Function used to read the register of the i2c slave device. This function
++ * is a kernel level API that can be called by other device drivers.
++ *
++ * @param   bus_id       the MXC I2C bus that the slave device is connected to
++ *                       (0 based)
++ * @param   addr         slave address of the device we wish to read data from
++ * @param   *reg         register in the device we wish to access
++ * @param   reg_len      number of bytes in the register address
++ * @param   *buf         data buffer
++ * @param   num          number of data bytes to transfer
++ *
++ * @return  Function returns the number of messages transferred to/from the
++ *          device or a negative number on failure *
++ */
++int mxc_i2c_polling_read(int bus_id, unsigned int addr, char *reg, int reg_len,
++			 char *buf, int num);
++
++/*!
++ * Function used to write to the register of the i2c slave device. This function
++ * is a kernel level API that can be called by other device drivers.
++ *
++ * @param   bus_id       the MXC I2C bus that the slave device is connected to
++ *                       (0 based)
++ * @param   addr         slave address of the device we wish to write data to
++ * @param   *reg         register in the device we wish to access
++ * @param   reg_len      number of bytes in the register address
++ * @param   *buf         data buffer
++ * @param   num          number of data bytes to transfer
++ *
++ * @return  Function returns the number of messages transferred to/from the
++ *          device or a negative number on failure
++ */
++int mxc_i2c_polling_write(int bus_id, unsigned int addr, char *reg, int reg_len,
++			  char *buf, int num);
++
++#endif				/* __ASM_ARCH_MXC_I2C_H__ */
+diff -Nupr misc.orig/module_test/mxc_i2c_testmod.c misc/module_test/mxc_i2c_testmod.c
+--- misc.orig/module_test/mxc_i2c_testmod.c	1970-01-01 08:00:00.000000000 +0800
++++ misc/module_test/mxc_i2c_testmod.c	2007-02-09 10:06:22.756900520 +0800
+@@ -0,0 +1,201 @@
++/*
++ * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ */
++
++/*
++ * The code contained herein is licensed under the GNU General Public
++ * License. You may obtain a copy of the GNU General Public License
++ * Version 2 or later at the following locations:
++ *
++ * http://www.opensource.org/licenses/gpl-license.html
++ * http://www.gnu.org/copyleft/gpl.html
++ */
++
++#include <linux/gfp.h>
++#include <linux/init.h>
++#include <linux/types.h>
++#include <asm/page.h>		/* kmalloc_sizes.h needs PAGE_SIZE */
++#include <asm/cache.h>		/* kmalloc_sizes.h needs L1_CACHE_BYTES */
++#include <linux/module.h>
++
++#include <linux/types.h>
++#include <linux/delay.h>
++
++#include <asm/arch/hardware.h>
++#include <asm/io.h>
++#include <asm/arch/gpio.h>
++#include <asm/arch/clock.h>
++#include "mxc_i2c.h"
++
++extern int printk(const char *fmt, ...);
++void gpio_sensor_active(void);
++void gpio_sensor_inactive(void);
++//im8012 i2c addr
++#define SENSOR_I2C_ADDR 0x48
++
++#define CSI_CTL0 (1<<9)
++#define CSI_CTL1 (1<<10)
++#define CSI_CTL2 (1<<11)
++
++/*control register bit definitions*/
++#define I2CR_ENABLE	0x80
++#define I2CR_INTEN	0x40
++#define I2CR_MASTER	0x20
++#define I2CR_TRANSMIT	0x10
++#define I2CR_NOACK	0x08
++#define I2CR_REPSTART	0x04
++
++/*status register bit definitions*/
++#define I2SR_DATAREADY	0x80
++#define I2SR_ADDRASSLA	0x40
++#define I2SR_BUSBUSY	0x20
++#define I2SR_LOSTARB	0x10
++#define I2SR_SLATRANS	0x04
++#define I2SR_INTPEND	0x02
++#define I2SR_ACKRCVD	0x01
++#define MX2_I2C_TIMEOUT HZ	/*timeout for an I2C transfer */
++
++
++//generate default mclk to drive sensor
++static void csihw_open(void)
++{
++#if defined(CONFIG_ARCH_MX21) || defined (CONFIG_ARCH_MX27)
++	unsigned int val;
++	unsigned int mclkdiv = 4;	//default set to perclk4/4 => 22MHz
++#endif	
++	unsigned int perclk4div = 3;	//default set to fclk/3 => 88MHz
++
++	//reset values
++#define CSICR1_RESET_VAL	0x40000800
++#define CSICR2_RESET_VAL	0x0
++#define CSICR3_RESET_VAL	0x0
++#define SHIFT_MCLKDIV		12
++
++#define BIT_MCLKEN		(0x1 << 9)
++
++#define CSI_CSICR1	0x00	/*  32bit csi control 1 reg */
++#define CSI_CSICR2	0x04	/*  32bit csi control 2 reg */
++#define CSI_CSICR3	0x1C	/*  32bit csi control 3 reg */
++
++	mxc_clks_enable(CSI_BAUD);
++	//set default perclk4 for mclk
++	//if(g_csi_ver == 2)
++	mxc_set_clocks_div(CSI_BAUD, perclk4div);
++#ifdef CONFIG_ARCH_MX27
++	//__raw_writelIO_ADDRESS(CSI_BASE_ADDR)CSI_CSICR1 = CSICR1_RESET_VAL;
++	__raw_writel(CSICR2_RESET_VAL, IO_ADDRESS(CSI_BASE_ADDR) + CSI_CSICR2);
++	__raw_writel(CSICR3_RESET_VAL, IO_ADDRESS(CSI_BASE_ADDR) + CSI_CSICR3);
++
++	//enable default mclk clock
++	val = CSICR1_RESET_VAL;
++	val |= ((mclkdiv / 2) - 1) << SHIFT_MCLKDIV;
++	val |= BIT_MCLKEN;
++	__raw_writel(val, IO_ADDRESS(CSI_BASE_ADDR) + CSI_CSICR1);
++#endif
++	return;
++}
++
++//set reset pin level
++static void im8012_hard_reset(void)
++{
++#ifdef CONFIG_ARCH_MX27
++	unsigned short data;
++#endif
++	printk("resetting 8012!\n");
++	//assert reset pulse
++#ifdef CONFIG_ARCH_MX27
++	data = __raw_readl(PBC_BCTRL2_SET_REG);
++	data |= CSI_CTL1;
++	__raw_writel(data, PBC_BCTRL2_SET_REG);
++	udelay(300);
++
++	data = __raw_readl(PBC_BCTRL2_CLEAR_REG);
++	data &= ~CSI_CTL1;
++	__raw_writel(data, PBC_BCTRL2_CLEAR_REG);
++#endif
++	udelay(100);
++}
++
++//i2c channel read/write test
++static int im8012_i2c_test(void)
++{
++	int i;
++	unsigned short temp_val;
++	u8 reg = 1;
++	u16 val;
++	unsigned long flags;
++	im8012_hard_reset();
++	i = cpu_to_be16(4);
++	mxc_i2c_write(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & i, 2);
++
++	reg = 4;
++
++	printk("interrupt mode 1\n");
++	for (i = 0; i < 3; i++) {
++		val = cpu_to_be16(i);
++		mxc_i2c_write(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & val, 2);
++		mxc_i2c_read(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & temp_val, 2);
++		temp_val = be16_to_cpu(temp_val);
++		printk(" write value is %d,read is %d\n", i, temp_val);
++
++	}
++	printk("\n polling mode 1\n");
++
++	local_irq_save(flags);	/* Disable interrupts */
++	for (i = 0; i < 3; i++) {
++		val = cpu_to_be16(i);
++		mxc_i2c_polling_write(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & val,
++				      2);
++
++		mxc_i2c_polling_read(0, SENSOR_I2C_ADDR, &reg, 1,
++				     (u8 *) & temp_val, 2);
++		temp_val = be16_to_cpu(temp_val);
++
++		printk(" write value is %d,read is %d\n", i, temp_val);
++	}
++	local_irq_restore(flags);
++
++	printk("interrupt mode 2\n");
++	for (i = 0; i < 3; i++) {
++		val = cpu_to_be16(i);
++		mxc_i2c_write(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & val, 2);
++
++		mxc_i2c_read(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & temp_val, 2);
++		temp_val = be16_to_cpu(temp_val);
++		printk(" write value is %d,read is %d\n", i, temp_val);
++	}
++
++	printk("\n polling mode 2\n");
++	local_irq_save(flags);	/* Disable interrupts */
++	for (i = 0; i < 3; i++) {
++		val = cpu_to_be16(i);
++		mxc_i2c_polling_write(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & val,
++				      2);
++		mxc_i2c_polling_read(0, SENSOR_I2C_ADDR, &reg, 1,
++				     (u8 *) & temp_val, 2);
++		temp_val = be16_to_cpu(temp_val);
++		printk(" write value is %d,read is %d\n", i, temp_val);
++	}
++	local_irq_restore(flags);
++
++	im8012_hard_reset();
++	return 0;
++}
++
++int init_module(void)
++{
++	printk("i2c test start \n");
++
++	csihw_open();
++	im8012_i2c_test();
++	return 0;
++}
++
++void cleanup_module(void)
++{
++	printk("i2c test end\n");
++
++}
++
++MODULE_LICENSE("GPL");
++
+diff -Nupr misc.orig/module_test/scc_test_driver.c misc/module_test/scc_test_driver.c
+--- misc.orig/module_test/scc_test_driver.c	2007-02-08 10:37:42.000000000 +0800
++++ misc/module_test/scc_test_driver.c	2007-02-08 18:31:25.000000000 +0800
+@@ -137,11 +137,14 @@ static int scc_test_init (void)
+             }
+         }
+         else {
++		printk("SCC TEST: cannot set up driver\n");
++		return error_code;
+         }
+     }
+     else {
+         printk("SCC TEST: Could not read SMN_STATUS register: %d\n",
+                error_code);
++	return error_code;
+     }
+ 
+     scc_monitor_security_failure(scc_test_report_failure);
+@@ -437,7 +440,7 @@ scc_test_get_configuration(unsigned long
+ 
+ 
+ /***********************************************************************
+- * scc_read_register()                                                 *
++ * scc_test_read_register()                                            *
+  **********************************************************************/
+ /**
+  * Read a register value from the SCC.
+diff -Nupr misc.orig/test/mxc_keyb_test/mxc_keyb_test.c misc/test/mxc_keyb_test/mxc_keyb_test.c
+--- misc.orig/test/mxc_keyb_test/mxc_keyb_test.c	2007-02-08 10:37:42.000000000 +0800
++++ misc/test/mxc_keyb_test/mxc_keyb_test.c	2007-02-08 10:50:33.000000000 +0800
+@@ -83,11 +83,14 @@ int main(int ac, char **av)
+         unsigned char buf[20];
+         int gfinished;
+         int i;
+-        char *defdev="/dev/input/event0";
++	char defdev[30];
+ 	struct input_event *ev;
+ 
+         gfinished = 0;
+         printf("========> Testing MXC Keypad driver <========\n");
++	printf("====> Input the device name: /dev/input/eventx, where x is 0 or 1\n");
++	printf("====> Device: ");
++	scanf("%s", defdev);
+         printf("====> Opening %s\n", defdev);
+         fd = open(defdev, O_RDONLY);
+         if(fd < 0){
+diff -Nupr misc.orig/test/mxc_pmic_test/pmic_testapp_power/Makefile misc/test/mxc_pmic_test/pmic_testapp_power/Makefile
+--- misc.orig/test/mxc_pmic_test/pmic_testapp_power/Makefile	2007-02-08 10:37:42.000000000 +0800
++++ misc/test/mxc_pmic_test/pmic_testapp_power/Makefile	2007-02-08 10:42:59.000000000 +0800
+@@ -16,6 +16,7 @@ all : $(TARGET)
+         
+ $(TARGET): $(OBJS)
+ 	$(CC) $(OBJS) $(LOADLIBES) -o $@
++	cp -f mc13783_power.cfg $(OBJDIR)
+ 
+ $(OBJS2) : $(SRCS)
+ 

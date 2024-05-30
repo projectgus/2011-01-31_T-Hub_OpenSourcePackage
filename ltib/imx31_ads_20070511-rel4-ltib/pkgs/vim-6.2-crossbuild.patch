@@ -1,0 +1,740 @@
+--- vim62.orig/src/auto/configure	2003-06-01 14:42:39.000000000 +0100
++++ vim62/src/auto/configure	2004-11-18 11:38:22.000000000 +0000
+@@ -1137,10 +1137,10 @@
+   fi
+ fi
+ 
+-if test "$cross_compiling" = yes; then
+-  { echo "configure: error: cannot compile a simple program, check CC and CFLAGS
+-  (cross compiling doesn't work)" 1>&2; exit 1; }
+-fi
++#if test "$cross_compiling" = yes; then
++#  { echo "configure: error: cannot compile a simple program, check CC and CFLAGS
++#  (cross compiling doesn't work)" 1>&2; exit 1; }
++#fi
+ 
+ test "$GCC" = yes && CPP_MM=M; 
+ 
+@@ -4856,31 +4856,31 @@
+ fi
+ 
+ 
+-echo $ac_n "checking quality of toupper""... $ac_c" 1>&6
+-echo "configure:4861: checking quality of toupper" >&5
+-if test "$cross_compiling" = yes; then
+-  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
+-else
+-  cat > conftest.$ac_ext <<EOF
+-#line 4866 "configure"
+-#include "confdefs.h"
+-#include <ctype.h>
+-main() { exit(toupper('A') == 'A' && tolower('z') == 'z'); }
+-EOF
+-if { (eval echo configure:4871: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+-then
+-  cat >> confdefs.h <<\EOF
+-#define BROKEN_TOUPPER 1
+-EOF
+- echo "$ac_t""bad" 1>&6
+-else
+-  echo "configure: failed program was:" >&5
+-  cat conftest.$ac_ext >&5
+-  rm -fr conftest*
+-  echo "$ac_t""good" 1>&6
+-fi
+-rm -fr conftest*
+-fi
++#echo $ac_n "checking quality of toupper""... $ac_c" 1>&6
++#echo "configure:4861: checking quality of toupper" >&5
++#if test "$cross_compiling" = yes; then
++#  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
++#else
++#  cat > conftest.$ac_ext <<EOF
++##line 4866 "configure"
++##include "confdefs.h"
++##include <ctype.h>
++#main() { exit(toupper('A') == 'A' && tolower('z') == 'z'); }
++#EOF
++#if { (eval echo configure:4871: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
++#then
++#  cat >> confdefs.h <<\EOF
++##define BROKEN_TOUPPER 1
++#EOF
++# echo "$ac_t""bad" 1>&6
++#else
++#  echo "configure: failed program was:" >&5
++#  cat conftest.$ac_ext >&5
++#  rm -fr conftest*
++#  echo "$ac_t""good" 1>&6
++#fi
++#rm -fr conftest*
++#fi
+ 
+ 
+ echo $ac_n "checking whether __DATE__ and __TIME__ work""... $ac_c" 1>&6
+@@ -5976,70 +5976,72 @@
+ if test "x$olibs" != "x$LIBS"; then
+   echo $ac_n "checking whether we talk terminfo""... $ac_c" 1>&6
+ echo "configure:5979: checking whether we talk terminfo" >&5
+-  if test "$cross_compiling" = yes; then
+-  { echo "configure: error: failed to compile test program." 1>&2; exit 1; }
+-else
+-  cat > conftest.$ac_ext <<EOF
+-#line 5984 "configure"
+-#include "confdefs.h"
+-
+-#ifdef HAVE_TERMCAP_H
+-# include <termcap.h>
+-#endif
+-main()
+-{char *s; s=(char *)tgoto("%p1%d", 0, 1); exit(!strcmp(s==0 ? "" : s, "1")); }
+-EOF
+-if { (eval echo configure:5993: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+-then
+-  echo "$ac_t""no -- we are in termcap land" 1>&6
+-else
+-  echo "configure: failed program was:" >&5
+-  cat conftest.$ac_ext >&5
+-  rm -fr conftest*
+-  echo "$ac_t""yes -- terminfo spoken here" 1>&6; cat >> confdefs.h <<\EOF
++#  if test "$cross_compiling" = yes; then
++#  { echo "configure: error: failed to compile test program." 1>&2; exit 1; }
++#else
++#  cat > conftest.$ac_ext <<EOF
++##line 5984 "configure"
++##include "confdefs.h"
++#
++##ifdef HAVE_TERMCAP_H
++## include <termcap.h>
++##endif
++#main()
++#{char *s; s=(char *)tgoto("%p1%d", 0, 1); exit(!strcmp(s==0 ? "" : s, "1")); }
++#EOF
++#if { (eval echo configure:5993: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
++#then
++#  echo "$ac_t""no -- we are in termcap land" 1>&6
++#else
++#  echo "configure: failed program was:" >&5
++#  cat conftest.$ac_ext >&5
++#  rm -fr conftest*
++#  echo "$ac_t""yes -- terminfo spoken here" 1>&6; cat >> confdefs.h <<\EOF
++##define TERMINFO 1
++#EOF
++#
++#fi
++#rm -fr conftest*
++#fi
++cat >> confdefs.h <<\EOF
+ #define TERMINFO 1
+ EOF
+-
+-fi
+-rm -fr conftest*
+-fi
+-
+ else
+   echo "$ac_t""none found" 1>&6
+ fi
+ 
+-if test "x$olibs" != "x$LIBS"; then
+-  echo $ac_n "checking what tgetent() returns for an unknown terminal""... $ac_c" 1>&6
+-echo "configure:6014: checking what tgetent() returns for an unknown terminal" >&5
+-  if test "$cross_compiling" = yes; then
+-  { echo "configure: error: failed to compile test program." 1>&2; exit 1; }
+-else
+-  cat > conftest.$ac_ext <<EOF
+-#line 6019 "configure"
+-#include "confdefs.h"
+-
+-#ifdef HAVE_TERMCAP_H
+-# include <termcap.h>
+-#endif
+-main()
+-{char s[10000]; int res = tgetent(s, "thisterminaldoesnotexist"); exit(res != 0); }
+-EOF
+-if { (eval echo configure:6028: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+-then
+-  echo "$ac_t""zero" 1>&6; cat >> confdefs.h <<\EOF
+-#define TGETENT_ZERO_ERR 0
+-EOF
+-
+-else
+-  echo "configure: failed program was:" >&5
+-  cat conftest.$ac_ext >&5
+-  rm -fr conftest*
+-  echo "$ac_t""non-zero" 1>&6
+-fi
+-rm -fr conftest*
+-fi
+-
+-fi
++#if test "x$olibs" != "x$LIBS"; then
++#  echo $ac_n "checking what tgetent() returns for an unknown terminal""... $ac_c" 1>&6
++#echo "configure:6014: checking what tgetent() returns for an unknown terminal" >&5
++#  if test "$cross_compiling" = yes; then
++#  { echo "configure: error: failed to compile test program." 1>&2; exit 1; }
++#else
++#  cat > conftest.$ac_ext <<EOF
++##line 6019 "configure"
++##include "confdefs.h"
++#
++##ifdef HAVE_TERMCAP_H
++## include <termcap.h>
++##endif
++#main()
++#{char s[10000]; int res = tgetent(s, "thisterminaldoesnotexist"); exit(res != 0); }
++#EOF
++#if { (eval echo configure:6028: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
++#then
++#  echo "$ac_t""zero" 1>&6; cat >> confdefs.h <<\EOF
++##define TGETENT_ZERO_ERR 0
++#EOF
++#
++#else
++#  echo "configure: failed program was:" >&5
++#  cat conftest.$ac_ext >&5
++#  rm -fr conftest*
++#  echo "$ac_t""non-zero" 1>&6
++#fi
++#rm -fr conftest*
++#fi
++#
++#fi
+ 
+ echo $ac_n "checking whether termcap.h contains ospeed""... $ac_c" 1>&6
+ echo "configure:6046: checking whether termcap.h contains ospeed" >&5
+@@ -6293,73 +6295,73 @@
+   echo "$ac_t""don't know" 1>&6
+ fi
+ 
+-echo $ac_n "checking default tty permissions/group""... $ac_c" 1>&6
+-echo "configure:6298: checking default tty permissions/group" >&5
+-rm -f conftest_grp
+-if test "$cross_compiling" = yes; then
+-  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
+-else
+-  cat > conftest.$ac_ext <<EOF
+-#line 6304 "configure"
+-#include "confdefs.h"
+-
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <stdio.h>
+-main()
+-{
+-  struct stat sb;
+-  char *x,*ttyname();
+-  int om, m;
+-  FILE *fp;
+-
+-  if (!(x = ttyname(0))) exit(1);
+-  if (stat(x, &sb)) exit(1);
+-  om = sb.st_mode;
+-  if (om & 002) exit(0);
+-  m = system("mesg y");
+-  if (m == -1 || m == 127) exit(1);
+-  if (stat(x, &sb)) exit(1);
+-  m = sb.st_mode;
+-  if (chmod(x, om)) exit(1);
+-  if (m & 002) exit(0);
+-  if (sb.st_gid == getgid()) exit(1);
+-  if (!(fp=fopen("conftest_grp", "w")))
+-    exit(1);
+-  fprintf(fp, "%d\n", sb.st_gid);
+-  fclose(fp);
+-  exit(0);
+-}
+-
+-EOF
+-if { (eval echo configure:6336: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+-then
+-  
+-    if test -f conftest_grp; then
+-	ptygrp=`cat conftest_grp`
+-	echo "$ac_t""pty mode: 0620, group: $ptygrp" 1>&6
+-	cat >> confdefs.h <<\EOF
+-#define PTYMODE 0620
+-EOF
+-
+-	cat >> confdefs.h <<EOF
+-#define PTYGROUP $ptygrp
+-EOF
+-
+-    else
+-	echo "$ac_t""ptys are world accessable" 1>&6
+-    fi
+-
+-else
+-  echo "configure: failed program was:" >&5
+-  cat conftest.$ac_ext >&5
+-  rm -fr conftest*
+-  echo "$ac_t""can't determine - assume ptys are world accessable" 1>&6
+-fi
+-rm -fr conftest*
+-fi
+-
+-rm -f conftest_grp
++#echo $ac_n "checking default tty permissions/group""... $ac_c" 1>&6
++#echo "configure:6298: checking default tty permissions/group" >&5
++#rm -f conftest_grp
++#if test "$cross_compiling" = yes; then
++#  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
++#else
++#  cat > conftest.$ac_ext <<EOF
++##line 6304 "configure"
++##include "confdefs.h"
++#
++##include <sys/types.h>
++##include <sys/stat.h>
++##include <stdio.h>
++#main()
++#{
++#  struct stat sb;
++#  char *x,*ttyname();
++#  int om, m;
++#  FILE *fp;
++#
++#  if (!(x = ttyname(0))) exit(1);
++#  if (stat(x, &sb)) exit(1);
++#  om = sb.st_mode;
++#  if (om & 002) exit(0);
++#  m = system("mesg y");
++#  if (m == -1 || m == 127) exit(1);
++#  if (stat(x, &sb)) exit(1);
++#  m = sb.st_mode;
++#  if (chmod(x, om)) exit(1);
++#  if (m & 002) exit(0);
++#  if (sb.st_gid == getgid()) exit(1);
++#  if (!(fp=fopen("conftest_grp", "w")))
++#    exit(1);
++#  fprintf(fp, "%d\n", sb.st_gid);
++#  fclose(fp);
++#  exit(0);
++#}
++#
++#EOF
++#if { (eval echo configure:6336: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
++#then
++#  
++#    if test -f conftest_grp; then
++#	ptygrp=`cat conftest_grp`
++#	echo "$ac_t""pty mode: 0620, group: $ptygrp" 1>&6
++#	cat >> confdefs.h <<\EOF
++##define PTYMODE 0620
++#EOF
++#
++#	cat >> confdefs.h <<EOF
++##define PTYGROUP $ptygrp
++#EOF
++#
++#    else
++#	echo "$ac_t""ptys are world accessable" 1>&6
++#    fi
++#
++#else
++#  echo "configure: failed program was:" >&5
++#  cat conftest.$ac_ext >&5
++#  rm -fr conftest*
++#  echo "$ac_t""can't determine - assume ptys are world accessable" 1>&6
++#fi
++#rm -fr conftest*
++#fi
++#
++#rm -f conftest_grp
+ 
+ 
+ echo $ac_n "checking return type of signal handlers""... $ac_c" 1>&6
+@@ -6448,39 +6450,39 @@
+ fi
+ rm -f conftest*
+ 
+-echo $ac_n "checking getcwd implementation""... $ac_c" 1>&6
+-echo "configure:6453: checking getcwd implementation" >&5
+-if test "$cross_compiling" = yes; then
+-  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
+-else
+-  cat > conftest.$ac_ext <<EOF
+-#line 6458 "configure"
+-#include "confdefs.h"
+-
+-char *dagger[] = { "IFS=pwd", 0 };
+-main()
+-{
+-  char buffer[500];
+-  extern char **environ;
+-  environ = dagger;
+-  return getcwd(buffer, 500) ? 0 : 1;
+-}
+-EOF
+-if { (eval echo configure:6470: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+-then
+-  echo "$ac_t""it is usable" 1>&6
+-else
+-  echo "configure: failed program was:" >&5
+-  cat conftest.$ac_ext >&5
+-  rm -fr conftest*
+-  echo "$ac_t""it stinks" 1>&6
+-		cat >> confdefs.h <<\EOF
+-#define BAD_GETCWD 1
+-EOF
+-
+-fi
+-rm -fr conftest*
+-fi
++#echo $ac_n "checking getcwd implementation""... $ac_c" 1>&6
++#echo "configure:6453: checking getcwd implementation" >&5
++#if test "$cross_compiling" = yes; then
++#  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
++#else
++#  cat > conftest.$ac_ext <<EOF
++##line 6458 "configure"
++##include "confdefs.h"
++#
++#char *dagger[] = { "IFS=pwd", 0 };
++#main()
++#{
++#  char buffer[500];
++#  extern char **environ;
++#  environ = dagger;
++#  return getcwd(buffer, 500) ? 0 : 1;
++#}
++#EOF
++#if { (eval echo configure:6470: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
++#then
++#  echo "$ac_t""it is usable" 1>&6
++#else
++#  echo "configure: failed program was:" >&5
++#  cat conftest.$ac_ext >&5
++#  rm -fr conftest*
++#  echo "$ac_t""it stinks" 1>&6
++#		cat >> confdefs.h <<\EOF
++##define BAD_GETCWD 1
++#EOF
++#
++#fi
++#rm -fr conftest*
++#fi
+ 
+ 
+ for ac_func in bcmp fchdir fchown fseeko fsync ftello getcwd getpseudotty \
+@@ -6573,32 +6575,32 @@
+ fi
+ rm -f conftest*
+ 
+-echo $ac_n "checking whether stat() ignores a trailing slash""... $ac_c" 1>&6
+-echo "configure:6578: checking whether stat() ignores a trailing slash" >&5
+-if test "$cross_compiling" = yes; then
+-  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
+-else
+-  cat > conftest.$ac_ext <<EOF
+-#line 6583 "configure"
+-#include "confdefs.h"
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-main() {struct stat st;  exit(stat("configure/", &st) != 0); }
+-EOF
+-if { (eval echo configure:6589: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+-then
+-  echo "$ac_t""yes" 1>&6; cat >> confdefs.h <<\EOF
+-#define STAT_IGNORES_SLASH 1
+-EOF
+-
+-else
+-  echo "configure: failed program was:" >&5
+-  cat conftest.$ac_ext >&5
+-  rm -fr conftest*
+-  echo "$ac_t""no" 1>&6
+-fi
+-rm -fr conftest*
+-fi
++#echo $ac_n "checking whether stat() ignores a trailing slash""... $ac_c" 1>&6
++#echo "configure:6578: checking whether stat() ignores a trailing slash" >&5
++#if test "$cross_compiling" = yes; then
++#  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
++#else
++#  cat > conftest.$ac_ext <<EOF
++##line 6583 "configure"
++##include "confdefs.h"
++##include <sys/types.h>
++##include <sys/stat.h>
++#main() {struct stat st;  exit(stat("configure/", &st) != 0); }
++#EOF
++#if { (eval echo configure:6589: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
++#then
++#  echo "$ac_t""yes" 1>&6; cat >> confdefs.h <<\EOF
++##define STAT_IGNORES_SLASH 1
++#EOF
++#
++#else
++#  echo "configure: failed program was:" >&5
++#  cat conftest.$ac_ext >&5
++#  rm -fr conftest*
++#  echo "$ac_t""no" 1>&6
++#fi
++#rm -fr conftest*
++#fi
+ 
+ 
+ echo $ac_n "checking for iconv_open()""... $ac_c" 1>&6
+@@ -6975,45 +6977,49 @@
+ 
+ echo $ac_n "checking for vsnprintf()""... $ac_c" 1>&6
+ echo "configure:6978: checking for vsnprintf()" >&5
+-if test "$cross_compiling" = yes; then
+-  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
+-else
+-  cat > conftest.$ac_ext <<EOF
+-#line 6983 "configure"
+-#include "confdefs.h"
+-
+-#include <stdio.h>
+-#include <stdarg.h>
+-	/* Check use of vsnprintf() */
+-	void warn(char *fmt, ...);
+-	void warn(char *fmt, ...)
+-	{
+-	  va_list ap; char buf[20];
+-	  va_start(ap, fmt);
+-	  vsnprintf(buf, 20, fmt, ap);
+-	  va_end(ap);
+-	}
+-	main()
+-	{
+-	warn("testing %s\n", "a very long string that won't fit");
+-	exit(0);
+-	}
+-	    
+-EOF
+-if { (eval echo configure:7004: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+-then
+-  cat >> confdefs.h <<\EOF
++cat >> confdefs.h <<\EOF
+ #define HAVE_VSNPRINTF 1
+ EOF
+- echo "$ac_t""yes" 1>&6
+-else
+-  echo "configure: failed program was:" >&5
+-  cat conftest.$ac_ext >&5
+-  rm -fr conftest*
+-  echo "$ac_t""no" 1>&6
+-fi
+-rm -fr conftest*
+-fi
++
++#if test "$cross_compiling" = yes; then
++#  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
++#else
++#  cat > conftest.$ac_ext <<EOF
++##line 6983 "configure"
++##include "confdefs.h"
++#
++##include <stdio.h>
++##include <stdarg.h>
++#	/* Check use of vsnprintf() */
++#	void warn(char *fmt, ...);
++#	void warn(char *fmt, ...)
++#	{
++#	  va_list ap; char buf[20];
++#	  va_start(ap, fmt);
++#	  vsnprintf(buf, 20, fmt, ap);
++#	  va_end(ap);
++#	}
++#	main()
++#	{
++#	warn("testing %s\n", "a very long string that won't fit");
++#	exit(0);
++#	}
++#	    
++#EOF
++#if { (eval echo configure:7004: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
++#then
++#  cat >> confdefs.h <<\EOF
++##define HAVE_VSNPRINTF 1
++#EOF
++# echo "$ac_t""yes" 1>&6
++#else
++#  echo "configure: failed program was:" >&5
++#  cat conftest.$ac_ext >&5
++#  rm -fr conftest*
++#  echo "$ac_t""no" 1>&6
++#fi
++#rm -fr conftest*
++#fi
+ 
+ 
+ 
+@@ -7169,90 +7175,93 @@
+ #define SIZEOF_INT $ac_cv_sizeof_int
+ EOF
+ 
+-
+-echo $ac_n "checking whether memmove/bcopy/memcpy handle overlaps""... $ac_c" 1>&6
+-echo "configure:7175: checking whether memmove/bcopy/memcpy handle overlaps" >&5
+-bcopy_test_prog='
+-main() {
+-  char buf[10];
+-  strcpy(buf, "abcdefghi");
+-  mch_memmove(buf, buf + 2, 3);
+-  if (strncmp(buf, "ababcf", 6))
+-    exit(1);
+-  strcpy(buf, "abcdefghi");
+-  mch_memmove(buf + 2, buf, 3);
+-  if (strncmp(buf, "cdedef", 6))
+-    exit(1);
+-  exit(0); /* libc version works properly.  */
+-}'
+-
+-
+-if test "$cross_compiling" = yes; then
+-  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
+-else
+-  cat > conftest.$ac_ext <<EOF
+-#line 7195 "configure"
+-#include "confdefs.h"
+-#define mch_memmove(s,d,l) memmove(d,s,l) $bcopy_test_prog
+-EOF
+-if { (eval echo configure:7199: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+-then
+-  cat >> confdefs.h <<\EOF
++cat >> confdefs.h <<\EOF
+ #define USEMEMMOVE 1
+ EOF
+- echo "$ac_t""memmove does" 1>&6
+-else
+-  echo "configure: failed program was:" >&5
+-  cat conftest.$ac_ext >&5
+-  rm -fr conftest*
+-  if test "$cross_compiling" = yes; then
+-  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
+-else
+-  cat > conftest.$ac_ext <<EOF
+-#line 7213 "configure"
+-#include "confdefs.h"
+-#define mch_memmove(s,d,l) bcopy(d,s,l) $bcopy_test_prog
+-EOF
+-if { (eval echo configure:7217: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+-then
+-  cat >> confdefs.h <<\EOF
+-#define USEBCOPY 1
+-EOF
+- echo "$ac_t""bcopy does" 1>&6
+-else
+-  echo "configure: failed program was:" >&5
+-  cat conftest.$ac_ext >&5
+-  rm -fr conftest*
+-  if test "$cross_compiling" = yes; then
+-  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
+-else
+-  cat > conftest.$ac_ext <<EOF
+-#line 7231 "configure"
+-#include "confdefs.h"
+-#define mch_memmove(s,d,l) memcpy(d,s,l) $bcopy_test_prog
+-EOF
+-if { (eval echo configure:7235: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+-then
+-  cat >> confdefs.h <<\EOF
+-#define USEMEMCPY 1
+-EOF
+- echo "$ac_t""memcpy does" 1>&6
+-else
+-  echo "configure: failed program was:" >&5
+-  cat conftest.$ac_ext >&5
+-  rm -fr conftest*
+-  echo "$ac_t""no" 1>&6
+-fi
+-rm -fr conftest*
+-fi
+ 
+-fi
+-rm -fr conftest*
+-fi
+-
+-fi
+-rm -fr conftest*
+-fi
++#echo $ac_n "checking whether memmove/bcopy/memcpy handle overlaps""... $ac_c" 1>&6
++#echo "configure:7175: checking whether memmove/bcopy/memcpy handle overlaps" >&5
++#bcopy_test_prog='
++#main() {
++#  char buf[10];
++#  strcpy(buf, "abcdefghi");
++#  mch_memmove(buf, buf + 2, 3);
++#  if (strncmp(buf, "ababcf", 6))
++#    exit(1);
++#  strcpy(buf, "abcdefghi");
++#  mch_memmove(buf + 2, buf, 3);
++#  if (strncmp(buf, "cdedef", 6))
++#    exit(1);
++#  exit(0); /* libc version works properly.  */
++#}'
++#
++#
++#if test "$cross_compiling" = yes; then
++#  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
++#else
++#  cat > conftest.$ac_ext <<EOF
++##line 7195 "configure"
++##include "confdefs.h"
++##define mch_memmove(s,d,l) memmove(d,s,l) $bcopy_test_prog
++#EOF
++#if { (eval echo configure:7199: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
++#then
++#  cat >> confdefs.h <<\EOF
++##define USEMEMMOVE 1
++#EOF
++# echo "$ac_t""memmove does" 1>&6
++#else
++#  echo "configure: failed program was:" >&5
++#  cat conftest.$ac_ext >&5
++#  rm -fr conftest*
++#  if test "$cross_compiling" = yes; then
++#  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
++#else
++#  cat > conftest.$ac_ext <<EOF
++##line 7213 "configure"
++##include "confdefs.h"
++##define mch_memmove(s,d,l) bcopy(d,s,l) $bcopy_test_prog
++#EOF
++#if { (eval echo configure:7217: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
++#then
++#  cat >> confdefs.h <<\EOF
++##define USEBCOPY 1
++#EOF
++# echo "$ac_t""bcopy does" 1>&6
++#else
++#  echo "configure: failed program was:" >&5
++#  cat conftest.$ac_ext >&5
++#  rm -fr conftest*
++#  if test "$cross_compiling" = yes; then
++#  { echo "configure: error: failed to compile test program" 1>&2; exit 1; }
++#else
++#  cat > conftest.$ac_ext <<EOF
++##line 7231 "configure"
++##include "confdefs.h"
++##define mch_memmove(s,d,l) memcpy(d,s,l) $bcopy_test_prog
++#EOF
++#if { (eval echo configure:7235: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
++#then
++#  cat >> confdefs.h <<\EOF
++##define USEMEMCPY 1
++#EOF
++# echo "$ac_t""memcpy does" 1>&6
++#else
++#  echo "configure: failed program was:" >&5
++#  cat conftest.$ac_ext >&5
++#  rm -fr conftest*
++#  echo "$ac_t""no" 1>&6
++#fi
++#rm -fr conftest*
++#fi
++#
++#fi
++#rm -fr conftest*
++#fi
++#
++#fi
++#rm -fr conftest*
++#fi
+ 
+ 
+ 

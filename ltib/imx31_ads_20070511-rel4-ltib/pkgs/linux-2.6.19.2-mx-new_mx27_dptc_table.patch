@@ -1,0 +1,79 @@
+TLSbo85732_add_new_dptc_table_for_mx27.patch
+
+New DPTC table added for MX27
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dptc_mx27.c linux-2.6.19.2/drivers/mxc/pm/dptc_mx27.c
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dptc_mx27.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dptc_mx27.c	2007-04-25 17:37:03.000000000 -0600
+@@ -185,7 +185,7 @@ static void dptc_unmask_dptc_int(void)
+  */
+ static void dptc_clear_dcr(void)
+ {
+-	mx27_pmcr_modify_reg(MX27_PMCR_DCR_MASK, 0 << MX27_PMCR_DCR_OFFSET);
++	mx27_pmcr_modify_reg(MX27_PMCR_DCR_MASK, (0 << MX27_PMCR_DCR_OFFSET));
+ }
+ 
+ /*!
+@@ -415,15 +415,15 @@ static void dptc_workqueue_handler(void 
+ 	if (dptc_intr_status & 0x4) {
+ 		/* Chip working point has increased dramatically, 
+ 		 * raise working point to maximum */
+-		set_dptc_wp(dptc_params.dvfs_dptc_tables_ptr->curr_wp - 1);
++		set_dptc_wp(dptc_params.dvfs_dptc_tables_ptr->curr_wp - 2);
+ 	} else if (dptc_intr_status & 0x2) {
+ 		/* Chip working point has increased, raise working point 
+ 		 * by one */
+-		set_dptc_wp(dptc_params.dvfs_dptc_tables_ptr->curr_wp - 1);
++		set_dptc_wp(dptc_params.dvfs_dptc_tables_ptr->curr_wp + 1);
+ 	} else {
+ 		/* Chip working point has decreased, lower working point 
+ 		 * by one */
+-		set_dptc_wp(dptc_params.dvfs_dptc_tables_ptr->curr_wp + 1);
++		set_dptc_wp(dptc_params.dvfs_dptc_tables_ptr->curr_wp - 1);
+ 	}
+ 
+ 	/*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx27.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx27.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx27.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx27.h	2007-04-25 17:37:03.000000000 -0600
+@@ -47,23 +47,23 @@ WP 0xe\n\
+ WP 0xd\n\
+ WP 0xc\n\
+ \n\
+-DCVR 0xffc00000 0x9162a838 0xffc00000 0xdcb41c5c \n\
+-DCVR 0xffc00000 0x8ee2081c 0xffc00000 0xd8f34c2c \n\
+-DCVR 0xffc00000 0x8c617800 0xffc00000 0xd5728bfc \n\
+-DCVR 0xffc00000 0x89e0e7d0 0xffc00000 0xd171bbb4 \n\
+-DCVR 0xffc00000 0x87a057a4 0xffc00000 0xcd70fb6c \n\
+-DCVR 0xffc00000 0x841fb78c 0xffc00000 0xc8300b48 \n\
+-DCVR 0xffc00000 0x80df2774 0xffc00000 0xc2ef1b24 \n\
+-DCVR 0xffc00000 0x7ede174c 0xffc00000 0xbfed9ae8 \n\
+-DCVR 0xffc00000 0x7cdd0728 0xffc00000 0xbcec2ab0 \n\
+-DCVR 0xffc00000 0x79dc9700 0xffc00000 0xb82b3a74 \n\
+-DCVR 0xffc00000 0x771c26d8 0xffc00000 0xb3aa4a38 \n\
+-DCVR 0xffc00000 0x739b76b0 0xffc00000 0xade949f8 \n\
+-DCVR 0xffc00000 0x701ad688 0xffc00000 0xa86849b8 \n\
+-DCVR 0xffc00000 0x6d9a365c 0xffc00000 0xa4673970 \n\
+-DCVR 0xffc00000 0x6b19a62c 0xffc00000 0xa0663928 \n\
+-DCVR 0xffc00000 0x67d8c600 0xffc00000 0x9b24f8e8 \n\
+-DCVR 0xffc00000 0x6497f5d8 0xffc00000 0x9623c8a8 \n\
++DCVR 0xffe00000 0x18e2e85b 0xffe00000 0x25c4688a \n\
++DCVR 0xffe00000 0x18e2e85b 0xffe00000 0x25c4688a \n\
++DCVR 0xffe00000 0x1902e85b 0xffe00000 0x25e4688a \n\
++DCVR 0xffe00000 0x1922e85b 0xffe00000 0x25e4688a \n\
++DCVR 0xffe00000 0x1942ec5b 0xffe00000 0x2604688a \n\
++DCVR 0xffe00000 0x1942ec5b 0xffe00000 0x26646c8a \n\
++DCVR 0xffe00000 0x1962ec5b 0xffe00000 0x26c4708b \n\
++DCVR 0xffe00000 0x1962ec5b 0xffe00000 0x26e4708b \n\
++DCVR 0xffe00000 0x1982f05c 0xffe00000 0x2704748b \n\
++DCVR 0xffe00000 0x19c2f05c 0xffe00000 0x2744748b \n\
++DCVR 0xffe00000 0x1a02f45c 0xffe00000 0x2784788b \n\
++DCVR 0xffe00000 0x1a42f45c 0xffe00000 0x27c47c8b \n\
++DCVR 0xffe00000 0x1a82f85c 0xffe00000 0x2824808c \n\
++DCVR 0xffe00000 0x1aa2f85c 0xffe00000 0x2884848c \n\
++DCVR 0xffe00000 0x1ac2fc5c 0xffe00000 0x28e4888c \n\
++DCVR 0xffe00000 0x1ae2fc5c 0xffe00000 0x2924888c \n\
++DCVR 0xffe00000 0x1b23005d 0xffe00000 0x29648c8c \n\
+ ";
+ 
+ #endif

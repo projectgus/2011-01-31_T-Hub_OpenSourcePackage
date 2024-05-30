@@ -1,0 +1,397 @@
+TLSbo88348_V4L2_Fix_Tearing_Issue.patch
+
+Fix tearing issue in i.MX27 V4L2 output driver
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/output/Kconfig linux-2.6.19.2/drivers/media/video/mxc/output/Kconfig
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/output/Kconfig	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/output/Kconfig	2007-04-25 17:37:21.000000000 -0600
+@@ -11,3 +11,11 @@ config VIDEO_MXC_EMMA_OUTPUT
+ 	default y
+ 	---help---
+ 	  This is the video4linux2 driver for EMMA post processing video output.
++
++config VIDEO_MXC_OUTPUT_FBSYNC
++	bool "Synchronize the output with LCDC refresh"
++	depends on VIDEO_MXC_EMMA_OUTPUT
++	default y
++	---help---
++	  Synchronize the post-processing with LCDC EOF (End of Frame) to
++	  prevent tearing issue. If unsure, say Y.
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/output/mx27_v4l2_output.c linux-2.6.19.2/drivers/media/video/mxc/output/mx27_v4l2_output.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/output/mx27_v4l2_output.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/output/mx27_v4l2_output.c	2007-04-25 17:37:21.000000000 -0600
+@@ -59,6 +59,66 @@ uint32_t g_buf_output_cnt;
+ uint32_t g_buf_q_cnt;
+ uint32_t g_buf_dq_cnt;
+ 
++#ifdef CONFIG_VIDEO_MXC_OUTPUT_FBSYNC
++static uint32_t g_output_fb = -1;
++static uint32_t g_fb_enabled = 0;
++static uint32_t g_pp_ready = 0;
++
++static int fb_event_notify(struct notifier_block *self,
++			   unsigned long action, void *data)
++{
++	struct fb_event *event = data;
++	struct fb_info *info = event->info;
++	unsigned long lock_flags;
++	int blank, i;
++
++	for (i = 0; i < num_registered_fb; i++)
++		if (registered_fb[i] == info)
++			break;
++
++	/*
++	 * Check if the event is sent by the framebuffer in which
++	 * the video is displayed.
++	 */
++	if (i != g_output_fb)
++		return 0;
++
++	switch (action) {
++	case FB_EVENT_BLANK:
++		blank = *(int *)event->data;
++		spin_lock_irqsave(&g_lock, lock_flags);
++		g_fb_enabled = !blank;
++		if (blank && g_pp_ready) {
++			if (pp_enable(1))
++				pr_debug("unable to enable PP\n");
++			g_pp_ready = 0;
++		}
++		spin_unlock_irqrestore(&g_lock, lock_flags);
++		break;
++	case FB_EVENT_MXC_EOF:
++		spin_lock_irqsave(&g_lock, lock_flags);
++		g_fb_enabled = 1;
++		if (g_pp_ready) {
++			if (pp_enable(1))
++				pr_debug("unable to enable PP\n");
++			g_pp_ready = 0;
++		}
++		spin_unlock_irqrestore(&g_lock, lock_flags);
++		break;
++	}
++
++	return 0;
++}
++
++static struct notifier_block fb_event_notifier = {
++	.notifier_call = fb_event_notify,
++};
++
++static struct notifier_block mx2fb_event_notifier = {
++	.notifier_call = fb_event_notify,
++};
++#endif
++
+ #define QUEUE_SIZE (MAX_FRAME_NUM + 1)
+ static __inline int queue_size(v4l_queue * q)
+ {
+@@ -227,10 +287,19 @@ static void mxc_v4l2out_timer_handler(un
+ 		pr_debug("unable to update buffer\n");
+ 		goto exit0;
+ 	}
++#ifdef CONFIG_VIDEO_MXC_OUTPUT_FBSYNC
++	if (g_fb_enabled && (vout->v4l2_fb.flags != V4L2_FBUF_FLAG_OVERLAY))
++		g_pp_ready = 1;
++	else if (pp_enable(1)) {
++		pr_debug("unable to enable PP\n");
++		goto exit0;
++	}
++#else
+ 	if (pp_enable(1)) {
+ 		pr_debug("unable to enable PP\n");
+ 		goto exit0;
+ 	}
++#endif
+ 	pr_debug("enabled index %d\n", index);
+ 
+ 	/* Setup timer for next buffer */
+@@ -385,7 +454,13 @@ static int mxc_v4l2out_streamon(vout_dat
+ 		pr_debug("failed to config PP.\n");
+ 		return -EINVAL;
+ 	}
+-
++#ifdef CONFIG_VIDEO_MXC_OUTPUT_FBSYNC
++	g_output_fb = vout->output_fb_num[vout->cur_disp_output];
++	g_fb_enabled = 0;
++	g_pp_ready = 0;
++	fb_register_client(&fb_event_notifier);
++	mx2fb_register_client(&mx2fb_event_notifier);
++#endif
+ 	vout->frame_count = 0;
+ 	vout->state = STATE_STREAM_ON;
+ 	index = peek_next_buf(&vout->ready_q);
+@@ -456,6 +531,13 @@ static int mxc_v4l2out_streamoff(vout_da
+ 		gwinfo.enabled = 0;
+ 		mx2_gw_set(&gwinfo);
+ 	}
++#ifdef CONFIG_VIDEO_MXC_OUTPUT_FBSYNC
++	g_output_fb = -1;
++	g_fb_enabled = 0;
++	g_pp_ready = 0;
++	fb_unregister_client(&fb_event_notifier);
++	mx2fb_unregister_client(&mx2fb_event_notifier);
++#endif
+ 
+ 	mxc_free_buffers(vout->display_bufs, vout->display_bufs_vaddr,
+ 			 2, vout->sdc_fg_buf_size);
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.c linux-2.6.19.2/drivers/video/mxc/mx2fb.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mx2fb.c	2007-04-25 17:37:21.000000000 -0600
+@@ -32,6 +32,7 @@
+ #include <linux/init.h>
+ #include <linux/dma-mapping.h>
+ #include <linux/platform_device.h>
++#include <linux/interrupt.h>
+ #include <asm/uaccess.h>
+ #include <asm/arch/clock.h>
+ #include <asm/arch/mxcfb.h>
+@@ -49,6 +50,7 @@ static char *fb_mode = 0;
+ static int fb_enabled = 0;
+ static unsigned long default_bpp = 16;
+ static unsigned char brightness = 255;
++static ATOMIC_NOTIFIER_HEAD(mx2fb_notifier_list);
+ 
+ /*!
+  * @brief Structure containing the MX2 specific framebuffer information.
+@@ -95,6 +97,8 @@ static void _enable_graphic_window(struc
+ static void _disable_graphic_window(struct fb_info *info);
+ static void _update_lcdc(struct fb_info *info);
+ static void _set_brightness(unsigned char level);
++static void _request_irq(void);
++static void _free_irq(void);
+ 
+ #ifdef CONFIG_PM
+ static int mx2fb_suspend(struct platform_device *pdev, pm_message_t state);
+@@ -1092,6 +1096,135 @@ static void _set_brightness(unsigned cha
+ 	__raw_writel(0x00A90300 | level, LCDC_REG(LCDC_LPCCR));
+ }
+ 
++/*
++ * @brief LCDC interrupt handler
++ */
++static irqreturn_t mx2fb_isr(int irq, void *dev_id, struct pt_regs *regs)
++{
++	struct fb_event event;
++	unsigned long status = __raw_readl(LCDC_REG(LCDC_LISR));
++
++	if (status & MX2FB_INT_EOF) {
++		event.info = &mx2fb_info[0];
++		atomic_notifier_call_chain(&mx2fb_notifier_list,
++					   FB_EVENT_MXC_EOF, &event);
++	}
++#ifdef CONFIG_FB_MXC_OVERLAY
++	if (status & MX2FB_INT_GW_EOF) {
++		event.info = &mx2fb_info[1];
++		atomic_notifier_call_chain(&mx2fb_notifier_list,
++					   FB_EVENT_MXC_EOF, &event);
++	}
++#endif
++
++	return IRQ_HANDLED;
++}
++
++/*!
++ * @brief Config and request LCDC interrupt
++ */
++static void _request_irq(void)
++{
++	unsigned long status;
++	unsigned long flags;
++
++	/* Read to clear the status */
++	status = __raw_readl(LCDC_REG(LCDC_LISR));
++
++	if (request_irq(INT_LCDC, mx2fb_isr, 0, "LCDC", 0))
++		pr_info("Request LCDC IRQ failed.\n");
++	else {
++		spin_lock_irqsave(&mx2fb_notifier_list.lock, flags);
++
++		/* Enable interrupt in case client has registered */
++		if (mx2fb_notifier_list.head != NULL) {
++			unsigned long status;
++			unsigned long ints = MX2FB_INT_EOF;
++#ifdef CONFIG_FB_MXC_OVERLAY
++			ints |= MX2FB_INT_GW_EOF;
++#endif
++			/* Read to clear the status */
++			status = __raw_readl(LCDC_REG(LCDC_LISR));
++
++			/* Configure interrupt condition for EOF */
++			__raw_writel(0x0, LCDC_REG(LCDC_LICR));
++
++			/* Enable EOF and graphic window EOF interrupt */
++			__raw_writel(ints, LCDC_REG(LCDC_LIER));
++		}
++
++		spin_unlock_irqrestore(&mx2fb_notifier_list.lock, flags);
++	}
++}
++
++/*!
++ * @brief Free LCDC interrupt handler
++ */
++static void _free_irq(void)
++{
++	/* Disable all LCDC interrupt */
++	__raw_writel(0x0, LCDC_REG(LCDC_LIER));
++
++	free_irq(INT_LCDC, 0);
++}
++
++/*!
++ * @brief Register a client notifier
++ * @param nb	notifier block to callback on events
++ */
++int mx2fb_register_client(struct notifier_block *nb)
++{
++	unsigned long flags;
++	int ret;
++
++	ret = atomic_notifier_chain_register(&mx2fb_notifier_list, nb);
++
++	spin_lock_irqsave(&mx2fb_notifier_list.lock, flags);
++
++	/* Enable interrupt in case client has registered */
++	if (mx2fb_notifier_list.head != NULL) {
++		unsigned long status;
++		unsigned long ints = MX2FB_INT_EOF;
++#ifdef CONFIG_FB_MXC_OVERLAY
++		ints |= MX2FB_INT_GW_EOF;
++#endif
++		/* Read to clear the status */
++		status = __raw_readl(LCDC_REG(LCDC_LISR));
++
++		/* Configure interrupt condition for EOF */
++		__raw_writel(0x0, LCDC_REG(LCDC_LICR));
++
++		/* Enable EOF and graphic window EOF interrupt */
++		__raw_writel(ints, LCDC_REG(LCDC_LIER));
++	}
++
++	spin_unlock_irqrestore(&mx2fb_notifier_list.lock, flags);
++
++	return ret;
++}
++
++/*!
++ * @brief Unregister a client notifier
++ * @param nb	notifier block to callback on events
++ */
++int mx2fb_unregister_client(struct notifier_block *nb)
++{
++	unsigned long flags;
++	int ret;
++
++	ret = atomic_notifier_chain_unregister(&mx2fb_notifier_list, nb);
++
++	spin_lock_irqsave(&mx2fb_notifier_list.lock, flags);
++
++	/* Mask interrupt in case no client registered */
++	if (mx2fb_notifier_list.head == NULL)
++		__raw_writel(0x0, LCDC_REG(LCDC_LIER));
++
++	spin_unlock_irqrestore(&mx2fb_notifier_list.lock, flags);
++
++	return ret;
++}
++
+ #ifdef CONFIG_PM
+ /*
+  * Power management hooks. Note that we won't be called from IRQ context,
+@@ -1139,6 +1272,7 @@ static int mx2fb_probe(struct platform_d
+ 			return ret;
+ 		}
+ 	}
++	_request_irq();
+ 
+ 	return 0;
+ }
+@@ -1170,6 +1304,7 @@ void __exit mx2fb_exit(void)
+ {
+ 	int i;
+ 
++	_free_irq();
+ 	for (i = sizeof(mx2fb_info) / sizeof(struct fb_info); i > 0; i--)
+ 		_uninstall_fb(&mx2fb_info[i - 1]);
+ 
+@@ -1208,6 +1343,8 @@ module_init(mx2fb_init);
+ module_exit(mx2fb_exit);
+ 
+ EXPORT_SYMBOL(mx2_gw_set);
++EXPORT_SYMBOL(mx2fb_register_client);
++EXPORT_SYMBOL(mx2fb_unregister_client);
+ 
+ MODULE_AUTHOR("Freescale Semiconductor, Inc.");
+ MODULE_DESCRIPTION("MX2 framebuffer driver");
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.h linux-2.6.19.2/drivers/video/mxc/mx2fb.h
+--- linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mx2fb.h	2007-04-25 17:37:21.000000000 -0600
+@@ -68,6 +68,27 @@ struct fb_gwinfo {
+ 	__u32 xres_virtual;	/* Virtual x resolution */
+ };
+ 
++/* 0x46E0-0x46FF are reserved for MX27 */
++#define FBIOGET_GWINFO		0x46E0	/*!< Get graphic window information */
++#define FBIOPUT_GWINFO		0x46E1	/*!< Set graphic window information */
++
++struct mx2fb_gbl_alpha {
++	int enable;
++	int alpha;
++};
++
++struct mx2fb_color_key {
++	int enable;
++	__u32 color_key;
++};
++
++#define MX2FB_SET_GBL_ALPHA	_IOW('M', 0, struct mx2fb_gbl_alpha)
++#define MX2FB_SET_CLR_KEY	_IOW('M', 1, struct mx2fb_color_key)
++#define MX2FB_WAIT_FOR_VSYNC	_IOW('F', 0x20, u_int32_t)
++#define MX2FB_SET_BRIGHTNESS	_IOW('M', 3, __u8)
++
++#ifdef __KERNEL__
++
+ /*
+  * LCDC register definitions
+  */
+@@ -100,25 +121,22 @@ struct fb_gwinfo {
+ 
+ #define LCDC_REG(reg)		(IO_ADDRESS(LCDC_BASE_ADDR) + reg)
+ 
+-/* 0x46E0-0x46FF are reserved for MX27 */
+-#define FBIOGET_GWINFO		0x46E0	/*!< Get graphic window information */
+-#define FBIOPUT_GWINFO		0x46E1	/*!< Set graphic window information */
+-
+-struct mx2fb_gbl_alpha {
+-	int enable;
+-	int alpha;
+-};
++#define MX2FB_INT_BOF		0x0001	/* Beginning of Frame */
++#define MX2FB_INT_EOF		0x0002	/* End of Frame */
++#define MX2FB_INT_ERR_RES	0x0004	/* Error Response */
++#define MX2FB_INT_UDR_ERR	0x0008	/* Under Run Error */
++#define MX2FB_INT_GW_BOF	0x0010	/* Graphic Window BOF */
++#define MX2FB_INT_GW_EOF	0x0020	/* Graphic Window EOF */
++#define MX2FB_INT_GW_ERR_RES	0x0040	/* Graphic Window ERR_RES */
++#define MX2FB_INT_GW_UDR_ERR	0x0080	/* Graphic Window UDR_ERR */
+ 
+-struct mx2fb_color_key {
+-	int enable;
+-	__u32 color_key;
+-};
++#define FB_EVENT_MXC_EOF	0x8001	/* End of Frame event */
+ 
+-#define MX2FB_SET_GBL_ALPHA	_IOW('M', 0, struct mx2fb_gbl_alpha)
+-#define MX2FB_SET_CLR_KEY	_IOW('M', 1, struct mx2fb_color_key)
+-#define MX2FB_WAIT_FOR_VSYNC	_IOW('F', 0x20, u_int32_t)
+-#define MX2FB_SET_BRIGHTNESS	_IOW('M', 3, __u8)
++int mx2fb_register_client(struct notifier_block *nb);
++int mx2fb_unregister_client(struct notifier_block *nb);
+ 
+ void mx2_gw_set(struct fb_gwinfo *gwinfo);
+ 
++#endif				/* __KERNEL__ */
++
+ #endif				/* __MX2FB_H__ */

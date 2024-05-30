@@ -1,0 +1,26 @@
+Tue Nov 21 2006 Stuart Hughes <stuarth@freescale.com>
+
+This fixes a subtle bug whereby if you have a real directory in
+the filesystem you are using as input and you also have that
+directory specified in the device_table file, it would fail to
+detect that it had already made this directory and so lose any 
+contents under that directory.  This showed up for /dev/net/tun.
+Also for /dev/input and some others.  This resulted in non-booting
+systems.
+
+This fix makes sure that if a file has previously been added to the
+jffs2 image, it will be correctly found when searched for.
+
+
+diff --exclude CVS -uNr mtd/util/mkfs.jffs2.c mtd.modified/util/mkfs.jffs2.c
+--- mtd/util/mkfs.jffs2.c	2006-01-12 01:02:07.000000000 +0000
++++ mtd.modified/util/mkfs.jffs2.c	2006-11-21 16:02:08.000000000 +0000
+@@ -242,7 +242,7 @@
+ 	}
+ 	while (e) {
+ 		/* Only bother to do the expensive strcmp on matching file types */
+-		if (type == (e->sb.st_mode & S_IFMT)) {
++		if ((type & S_IFMT) == (e->sb.st_mode & S_IFMT)) {
+ 			if (S_ISDIR(e->sb.st_mode)) {
+ 				int len = strlen(e->fullname);
+ 

@@ -1,0 +1,85 @@
+Ryan.Oliver at pha.com.au Ryan.Oliver at pha.com.au
+Wed Oct 22 00:50:33 MDT 2003
+
+    * Previous message: glibc bugging out on --enable-kernel=2.6.0
+    * Next message: [PATCH] e2fsprogs-1.34 - define SCSI_DISK_MAJOR if not defined
+    * Messages sorted by: [ date ] [ thread ] [ subject ] [ author ]
+
+
+
+Greetings again all,
+
+This one for e2fsprogs.
+
+SCSI_DISK_MAJOR is no longer defined in <linux/major.h> in the 2.6 headers.
+This causes e2fsprogs-1.34/misc/util.c to b0rk during the build.
+
+Quick fix, added a new header ( misc/scsi-disk-major.h ) which gets
+included if HAVE_LINUX_MAJOR_H is defined and, after including
+<linux/major.h>, if SCSI_DISK_MAJOR isn't.
+
+Seems a lot nicer than hacking the code back into linux/major.h (as I've
+previously been doing)
+
+Have a play with it, if it seems OK to you guys will send it upstream (and
+generate one for the patches list)...
+
+Teemu, I've bcc'd this to you just in case you aren't on the lfs-hackers
+list yet...
+
+Best regards
+Ryan
+
+
+diff -uNr e2fsprogs-1.34-orig/misc/scsi-disk-major.h e2fsprogs-1.34/misc/scsi-disk-major.h
+--- e2fsprogs-1.34-orig/misc/scsi-disk-major.h	1970-01-01 10:00:00.000000000 +1000
++++ e2fsprogs-1.34/misc/scsi-disk-major.h	2003-10-21 23:56:19.752367072 +1000
+@@ -0,0 +1,27 @@
++#ifndef _SCSI_DISK_MAJOR_H
++#define _SCSI_DISK_MAJOR_H	1
++
++/*
++ * scsi-disk-major.h -- header file defining SCSI_DISK_MAJOR
++ * this is no longer defined in linux/major.h in 2.6.x kernels
++ *
++ * Ryan Oliver <ryan@linuxfromscratch.org> 20031019
++ */ 
++
++/*
++ * Tests for SCSI devices.
++ */
++
++#define SCSI_DISK_MAJOR(M) ((M) == SCSI_DISK0_MAJOR || \
++  ((M) >= SCSI_DISK1_MAJOR && (M) <= SCSI_DISK7_MAJOR) || \
++  ((M) >= SCSI_DISK8_MAJOR && (M) <= SCSI_DISK15_MAJOR))
++                                                                                
++#define SCSI_BLK_MAJOR(M) \
++  (SCSI_DISK_MAJOR(M)   \
++   || (M) == SCSI_CDROM_MAJOR)
++                                                                                
++static __inline__ int scsi_blk_major(int m) {
++        return SCSI_BLK_MAJOR(m);
++}
++
++#endif
+diff -uNr e2fsprogs-1.34-orig/misc/util.c e2fsprogs-1.34/misc/util.c
+--- e2fsprogs-1.34-orig/misc/util.c	2003-05-04 08:46:47.000000000 +1000
++++ e2fsprogs-1.34/misc/util.c	2003-10-21 23:57:52.094328960 +1000
+@@ -17,9 +17,17 @@
+ #ifdef HAVE_ERRNO_H
+ #include <errno.h>
+ #endif
++
+ #ifdef HAVE_LINUX_MAJOR_H
+ #include <linux/major.h>
++/* 
++ * SCSI_DISK_MAJOR is no longer defined in linux/major.h for 2.6 kernels.
++ */
++#ifndef SCSI_DISK_MAJOR
++#include "scsi-disk-major.h"
+ #endif
++#endif
++
+ #ifdef HAVE_SYS_STAT_H
+ #include <sys/stat.h>
+ #endif

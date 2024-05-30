@@ -1,0 +1,10 @@
+diff -Naur udev-091.orig/extra/links.conf udev-091/extra/links.conf
+--- udev-091.orig/extra/links.conf	2006-06-29 17:17:13.000000000 -0600
++++ udev-091/extra/links.conf	2006-06-29 17:18:52.000000000 -0600
+@@ -22,3 +22,6 @@
+ D net
+ M net/tun	c  10 200
+ 
++D input
++M input/event0	c  13 64
++

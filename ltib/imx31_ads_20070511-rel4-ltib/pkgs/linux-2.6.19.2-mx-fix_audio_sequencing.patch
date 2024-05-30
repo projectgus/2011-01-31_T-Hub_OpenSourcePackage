@@ -1,0 +1,164 @@
+TLSbo86993_fix_audio_config_sequence.patch
+
+Modified the sequence in which the DAC and CODEC are configured
+in the audio driver according to the recommended SPI sequence
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_audio.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_audio.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_audio.c	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_audio.c	2007-04-25 17:37:11.000000000 -0600
+@@ -928,6 +928,7 @@ PMIC_STATUS pmic_audio_open(PMIC_AUDIO_H
+ 	/* Check the current device handle state and acquire the handle if
+ 	 * it is available.
+ 	 */
++
+ 	if ((device == STEREO_DAC) && (stDAC.handleState == HANDLE_FREE)) {
+ 		stDAC.handle = (PMIC_AUDIO_HANDLE) (&stDAC);
+ 		stDAC.handleState = HANDLE_IN_USE;
+@@ -1307,17 +1308,7 @@ PMIC_STATUS pmic_audio_enable(const PMIC
+ 		return PMIC_SYSTEM_ERROR_EINTR;
+ 
+ 	if ((handle == stDAC.handle) && (stDAC.handleState == HANDLE_IN_USE)) {
+-		/* Must first set the audio bias bit to power up the audio circuits. */
+-		pmic_write_reg(REG_AUDIO_RX_0, AUDIO_BIAS_ENABLE,
+-			       AUDIO_BIAS_ENABLE);
+-		reg_mask = SET_BITS(regAUDIO_RX_0, HSDETEN, 1) |
+-		    SET_BITS(regAUDIO_RX_0, HSDETAUTOB, 1);
+-		reg_write = SET_BITS(regAUDIO_RX_0, HSDETEN, 1) |
+-		    SET_BITS(regAUDIO_RX_0, HSDETAUTOB, 1);
+-		rc = pmic_write_reg(REG_AUDIO_RX_0, reg_write, reg_mask);
+-		if (rc == PMIC_SUCCESS) {
+-		}
+-		/* Then we can enable the Stereo DAC. */
++		/* We can enable the Stereo DAC. */
+ 		rc = pmic_write_reg(REG_AUDIO_STEREO_DAC,
+ 				    STDAC_ENABLE, STDAC_ENABLE);
+ 		/*pmic_read_reg(REG_AUDIO_STEREO_DAC, &reg_value); */
+@@ -1636,7 +1627,7 @@ PMIC_STATUS pmic_audio_antipop_enable(co
+ 				      rampSpeed)
+ {
+ 	PMIC_STATUS rc = PMIC_ERROR;
+-	unsigned int reg_value;
++	unsigned int reg_value = 0;
+ 	const unsigned int reg_mask = SET_BITS(regAUDIO_RX_0, BIASEN, 1) |
+ 	    SET_BITS(regAUDIO_RX_0, BIASSPEED, 1);
+ 
+@@ -1649,8 +1640,8 @@ PMIC_STATUS pmic_audio_antipop_enable(co
+ 	 * BIASSPEED .
+ 	 * BIASEN is just to make sure that BIAS is enabled
+ 	 */
+-	reg_value = SET_BITS(regAUDIO_RX_0, BIASEN, 1) |
+-	    SET_BITS(regAUDIO_RX_0, BIASSPEED, 1);
++	reg_value = SET_BITS(regAUDIO_RX_0, BIASEN, 1)
++	    | SET_BITS(regAUDIO_RX_0, BIASSPEED, 0);
+ 	rc = pmic_write_reg(REG_AUDIO_RX_0, reg_value, reg_mask);
+ 	return rc;
+ }
+@@ -4455,10 +4446,8 @@ PMIC_STATUS pmic_audio_output_set_pgaGai
+ 			reg_write = SET_BITS(regAUDIO_RX_1, PGARX, reg_gain);
+ 		} else if ((handle == stDAC.handle) &&
+ 			   (stDAC.handleState == HANDLE_IN_USE)) {
+-			reg_mask = SET_BITS(regAUDIO_RX_1, PGAST, 15) |
+-			    SET_BITS(regAUDIO_RX_1, PGASTEN, 1);
+-			reg_write = SET_BITS(regAUDIO_RX_1, PGAST, reg_gain) |
+-			    SET_BITS(regAUDIO_RX_1, PGASTEN, 1);
++			reg_mask = SET_BITS(regAUDIO_RX_1, PGAST, 15);
++			reg_write = SET_BITS(regAUDIO_RX_1, PGAST, reg_gain);
+ 		}
+ 
+ 		if (reg_mask == 0) {
+diff -uNpr linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.c linux-2.6.19.2/sound/arm/mxc-alsa-pmic.c
+--- linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.c	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/sound/arm/mxc-alsa-pmic.c	2007-04-25 17:37:11.000000000 -0600
+@@ -89,7 +89,6 @@
+  */
+ #define MXC_SOUND_PLAYBACK_CHAIN_DMA_EN 1
+ #define MXC_SOUND_CAPTURE_CHAIN_DMA_EN 1
+-
+ /*!
+   * ID for this card
+   */
+@@ -1277,7 +1276,6 @@ void configure_codec(snd_pcm_substream_t
+ 
+ 	ssi_bus = (pmic->ssi == SSI1) ? AUDIO_DATA_BUS_1 : AUDIO_DATA_BUS_2;
+ 
+-	pmic_audio_output_enable_phantom_ground(handle);
+ 	pmic_audio_vcodec_set_rxtx_timeslot(handle, USE_TS0);
+ 	pmic_audio_vcodec_enable_mixer(handle, USE_TS1, VCODEC_NO_MIX,
+ 				       VCODEC_MIX_OUT_0DB);
+@@ -1289,7 +1287,9 @@ void configure_codec(snd_pcm_substream_t
+ 				    pmic->sample_rate, NO_INVERT);
+ 	msleep(20);
+ 	pmic_audio_vcodec_set_config(handle, VCODEC_MASTER_CLOCK_OUTPUTS);
++	pmic_audio_enable(handle);
+ 	pmic_audio_digital_filter_reset(handle);
++	pmic_audio_output_enable_phantom_ground(handle);
+ 	msleep(15);
+ 	if (stream_id == 2) {
+ 		pmic_audio_output_enable_mixer(handle);
+@@ -1301,7 +1301,6 @@ void configure_codec(snd_pcm_substream_t
+ 		set_mixer_input_device(handle, IP_NODEV, 1);
+ 		set_mixer_input_gain(handle, audio_mixer_control.input_volume);
+ 	}
+-	pmic_audio_enable(handle);
+ }
+ 
+ /*!
+@@ -1333,27 +1332,27 @@ void configure_stereodac(snd_pcm_substre
+ 
+ 	ssi_bus = (pmic->ssi == SSI1) ? AUDIO_DATA_BUS_1 : AUDIO_DATA_BUS_2;
+ 
+-	pmic_audio_output_enable_phantom_ground(handle);
+ 	pmic_audio_stdac_set_rxtx_timeslot(handle, USE_TS0_TS1);
+ 	pmic_audio_stdac_enable_mixer(handle, USE_TS2_TS3, STDAC_NO_MIX,
+ 				      STDAC_MIX_OUT_0DB);
+-	pmic_audio_digital_filter_reset(handle);
+-	msleep(10);
+ 	pmic_audio_set_protocol(handle, ssi_bus, pmic->protocol, pmic->mode,
+ 				USE_2_TIMESLOTS);
+ 	pmic_audio_stdac_set_clock(handle, pmic->pll, pmic->pll_rate,
+ 				   pmic->sample_rate, NO_INVERT);
++
+ 	pmic_audio_stdac_set_config(handle, STDAC_MASTER_CLOCK_OUTPUTS);
++	pmic_audio_enable(handle);
+ 	pmic_audio_output_enable_mixer(handle);
+ 	audio_mixer_control.stdac_out_to_mixer = 1;
++	pmic_audio_digital_filter_reset(handle);
++	msleep(10);
++	pmic_audio_output_enable_phantom_ground(handle);
++	set_mixer_output_volume(handle, audio_mixer_control.master_volume_out,
++				OP_HEADSET);
+ 	pmic_audio_output_enable_mono_adder(handle,
+ 					    audio_mixer_control.
+ 					    mixer_mono_adder);
+ 	set_mixer_output_device(handle, MIXER_OUT, OP_NODEV, 1);
+-	set_mixer_output_volume(handle, audio_mixer_control.master_volume_out,
+-				OP_HEADSET);
+-	pmic_audio_enable(handle);
+-
+ }
+ 
+ /*!
+@@ -1935,7 +1934,6 @@ static void audio_playback_dma_callback(
+ 	 */
+ 	if (s->active)
+ 		snd_pcm_period_elapsed(s->stream);
+-
+ 	spin_lock(&s->dma_lock);
+ 
+ 	/*
+@@ -2181,7 +2179,6 @@ static int snd_mxc_audio_playback_prepar
+ 
+ 	if (configure_pmic_playback(substream, stream_id) == -1)
+ 		pr_debug(KERN_ERR "MXC: PMIC Playback Config FAILED\n");
+-
+ 	ssi_interrupt_enable(ssi, ssi_tx_fifo_0_empty);
+ 	/*
+ 	   ssi_transmit_enable(ssi, true);
+@@ -2360,6 +2357,7 @@ static int snd_card_mxc_audio_playback_o
+ 	}
+ 
+ 	pmic_audio_antipop_enable(ANTI_POP_RAMP_SLOW);
++	msleep(250);
+ 
+ 	chip->s[stream_id].stream = substream;
+ 

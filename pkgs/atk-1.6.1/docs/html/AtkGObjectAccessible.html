@@ -1,0 +1,67 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkGObjectAccessible</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkEditableText.html" title="AtkEditableText"><link rel="next" href="AtkHyperlink.html" title="AtkHyperlink"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkEditableText.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkHyperlink.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkGObjectAccessible"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkGObjectAccessible</h2><p>AtkGObjectAccessible &#8212; This object class is derived from AtkObject and can be used as a basis 
+implementing accessible objects.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id255428"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkGObjectAccessible.html#AtkGObjectAccessible-struct">AtkGObjectAccessible</a>;
+<a href="AtkObject.html" title="AtkObject">AtkObject</a>*  <a href="AtkGObjectAccessible.html#atk-gobject-accessible-for-object">atk_gobject_accessible_for_object</a>
+                                            (GObject *obj);
+GObject*    <a href="AtkGObjectAccessible.html#atk-gobject-accessible-get-object">atk_gobject_accessible_get_object</a>
+                                            (<a href="AtkGObjectAccessible.html" title="AtkGObjectAccessible">AtkGObjectAccessible</a> *obj);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GObject
+   +----<a href="AtkObject.html" title="AtkObject">AtkObject</a>
+         +----AtkGObjectAccessible
+</pre></div><div class="refsect1"><h2>Description</h2><p>
+This object class is derived from AtkObject. It can be used as a basis for
+implementing accessible objects for GObjects which are not derived from
+GtkWidget. One example of its use is in providing an accessible object
+for GnomeCanvasItem in the GAIL library.
+
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkGObjectAccessible-struct"></a>struct AtkGObjectAccessible</h3><a class="indexterm" name="id256847"></a><pre class="programlisting">struct AtkGObjectAccessible;</pre><p>
+The AtkGObjectAccessible structure should not be accessed directly.
+</p></div><hr><div class="refsect2"><h3><a name="atk-gobject-accessible-for-object"></a>atk_gobject_accessible_for_object ()</h3><a class="indexterm" name="id256873"></a><pre class="programlisting"><a href="AtkObject.html" title="AtkObject">AtkObject</a>*  atk_gobject_accessible_for_object
+                                            (GObject *obj);</pre><p>
+Gets the accessible object for the specified <i><tt>obj</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>obj</tt></i> :</span></td><td> a GObject
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a <a href="AtkObject.html" title="AtkObject">AtkObject</a> which is the accessible object for the <i><tt>obj</tt></i>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-gobject-accessible-get-object"></a>atk_gobject_accessible_get_object ()</h3><a class="indexterm" name="id256968"></a><pre class="programlisting">GObject*    atk_gobject_accessible_get_object
+                                            (<a href="AtkGObjectAccessible.html" title="AtkGObjectAccessible">AtkGObjectAccessible</a> *obj);</pre><p>
+Gets the GObject for which <i><tt>obj</tt></i> is the accessible object.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>obj</tt></i> :</span></td><td> a <a href="AtkObject.html" title="AtkObject">AtkObject</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a GObject which is the object for which <i><tt>obj</tt></i> is the accessible objedct
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkEditableText.html"><b>&lt;&lt; AtkEditableText</b></a></td><td align="right"><a accesskey="n" href="AtkHyperlink.html"><b>AtkHyperlink &gt;&gt;</b></a></td></tr></table></body></html>

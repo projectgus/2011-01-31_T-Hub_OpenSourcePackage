@@ -1,0 +1,71 @@
+Path: g2news1.google.com!news3.google.com!news4.google.com!news2.volia.net!newsfeed01.sul.t-online.de!newsfeed00.sul.t-online.de!t-online.de!213.92.8.5.MISMATCH!vlad-tepes.bofh.it!bofh.it!news.nic.it!robomod
+From: Martin Michlmayr <t...@cyrius.com>
+Newsgroups: linux.debian.bugs.dist
+Subject: Bug#356248: FTBFS with G++ 4.1: extra qualification
+Date: Fri, 10 Mar 2006 17:20:14 +0100
+Message-ID: <5OSvA-6GB-25@gated-at.bofh.it>
+References: <5OSvA-6GB-27@gated-at.bofh.it>
+X-Original-To: sub...@bugs.debian.org
+Old-Return-Path: <debb...@bugs.debian.org>
+Reply-To: Martin Michlmayr <t...@cyrius.com>, 356...@bugs.debian.org
+Resent-To: debian-bugs-d...@lists.debian.org
+Resent-Cc: Colin Watson <cjwat...@debian.org>
+X-Debian-Pr-Message: report 356248
+X-Debian-Pr-Package: groff
+X-Debian-Pr-Keywords: patch
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.5.11+cvs20060126
+X-Rc-Virus: 2005-11-10_01
+X-Rc-Spam: 2006-02-24_01
+X-Mailing-List: <debian-bugs-dist@lists.debian.org> 
+List-ID: <debian-bugs-dist.lists.debian.org>
+Approved: robo...@news.nic.it
+Lines: 40
+Organization: linux.* mail to news gateway
+Sender: robo...@news.nic.it
+X-Original-Date: Fri, 10 Mar 2006 16:14:07 +0000
+X-Original-Message-ID: <20060310161407.GP11756@deprecation.cyrius.com>
+X-Original-References: <E1FHbC5-0001sY...@bigsur.cyrius.com>
+
+Package: groff
+Version: 1.18.1.1-11
+Severity: important
+Tags: patch
+
+Your package fails to build with G++ 4.1.  I'm filing this bug as
+important for now, but when 4.1 will be the default compiler in
+unstable (probably in a few weeks) I'll upgrade this to serious.
+
+A patch is below.
+
+
+> Automatic build of groff_1.18.1.1-11 on bigsur by sbuild/mips 1.80
+...
+> make[3]: Entering directory `/build/tbm/groff-1.18.1.1/src/devices/grohtml'
+> g++ -I. -I/build/tbm/groff-1.18.1.1/src/devices/grohtml -I/build/tbm/groff-1.18.1.1/src/include -I/build/tbm/groff-1.18.1.1/src/include -DHAVE_CONFIG_H -O2 -g -Wall  -c post-html.cc
+> post-html.cc:264: error: extra qualification 'char_block::' on member 'char_block'
+> make[3]: *** [post-html.o] Error 1
+
+
+--- ./src/devices/grohtml/post-html.cc~	2006-03-10 16:11:34.000000000 +0000
++++ ./src/devices/grohtml/post-html.cc	2006-03-10 16:12:11.000000000 +0000
+@@ -261,7 +261,7 @@
+   char_block   *next;
+ 
+   char_block();
+-  char_block::char_block(int length);
++  char_block(int length);
+ };
+ 
+ char_block::char_block()
+
+-- 
+Martin Michlmayr
+http://www.cyrius.com/
+
+
+-- 
+To UNSUBSCRIBE, email to debian-bugs-dist-REQU...@lists.debian.org
+with a subject of "unsubscribe". Trouble? Contact listmas...@lists.debian.org

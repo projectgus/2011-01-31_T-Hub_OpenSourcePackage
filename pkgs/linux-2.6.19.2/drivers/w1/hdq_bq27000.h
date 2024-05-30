@@ -1,0 +1,86 @@
+/*
+ *	hdq_bq27000.h - hdq bq27000 driver
+ */
+
+/* REGISTERS OF THE BQ27000 BATTERY FUEL GAUGE */
+
+/* RAM Registers */
+
+#define DEVICE_CONTROL_REGISTER               0x00
+#define DEVICE_MODE_REGISTER                  0x01
+#define AT_RATE_REGISTER                      0x02
+#define AT_RATE_LOW                           0x02
+#define AT_RATE_HIGH                          0x03
+#define AT_RATE_TIME_TO_EMPTY_REGISTER        0x04
+#define AT_RATE_TIME_TO_EMPTY_LOW             0x04
+#define AT_RATE_TIME_TO_EMPTY_HIGH            0x05
+#define REPORTED_TEMPERATURE_REGISTER         0x06
+#define REPORTED_TEMPERATURE_LOW              0x06
+#define REPORTED_TEMPERTAURE_HIGH             0x07
+#define REPORTED_VOLTAGE_REGISTER             0x08
+#define REPORTED_VOLTAGE_LOW                  0x08
+#define REPORTED_VOLTAGE_HIGH                 0x09
+#define STATUS_FLAGS_REGISTER                 0x0A
+#define RELATIVE_STATE_OF_CHARGE_REGISTER     0x0B
+#define NOMINAL_AVAILABLE_CAPACITY_REGISTER   0X0C    
+#define NOMINAL_AVAILABLE_CAPACITY_LOW        0X0C       
+#define NOMINAL_AVAILABLE_CAPACITY_HIGH       0X0D
+#define DISCHARGE_COMPENSATED_NAC_REGISTER    0X0E
+#define DISCHARGE_COMPENSATED_NAC_LOW         0X0E
+#define DISCHARGE_COMPENSATED_NAC_HIGH        0X0F
+#define TEMPERATURE_COMPENSATED_REGISTER      0X10
+#define TEMPERATURE_COMPENSATED_LOW           0X10
+#define TEMPERATURE_COMPENSATED_HIGH          0X11
+#define LAST_MEASURED_DISCHARGE_REGISTER      0X12
+#define LAST_MEASURED_DISCHARGE_LOW           0X12
+#define LAST_MEASURED_DISCHARGE_HIGH          0X13
+#define AVERAGE_CURRENT_REGISTER              0X14
+#define AVERAGE_CURRENT_LOW                   0X14
+#define AVERAGE_CURRENT_HIGH                  0X15
+#define TIME_TO_EMPTY_REGISTER                0X16
+#define TIME_TO_EMPTY_LOW                     0X16
+#define TIME_TO_EMPTY_HIGH                    0X17
+#define TIME_TO_FULL_REGISTER                 0X18
+#define TIME_TO_FULL_LOW                      0X18
+#define TIME_TO_FULL_HIGH                     0X19
+#define STANDBY_CURRENT_REGISTER              0X1A
+#define STANDBY_CURRENT_LOW                   0X1A
+#define STANDBY_CURRENT_HIGH                  0X1B
+#define STANDBY_TIME_TO_EMPTY_REGISTER        0X1C
+#define STANDBY_TIME_TO_EMPTY_LOW             0X1C
+#define STANDBY_TIME_TO_EMPTY_HIGH            0X1D
+#define MAX_LOAD_CURRENT_REGISTER             0X1E
+#define MAX_LOAD_CURRENT_LOW                  0X1E
+#define MAX_LOAD_CURRENT_HIGH                 0X1F
+#define MAX_LOAD_TIME_TO_EMPTY_REGISTER       0X20
+#define MAX_LOAD_TIME_TO_EMPTY_LOW            0X20
+#define MAX_LOAD_TIME_TO_EMPTY_HIGH           0X21
+#define AVAILABLE_ENERGY_REGISTER             0X22
+#define AVAILABLE_ENERGY_LOW                  0X22
+#define AVAILABLE_ENERGY_HIGH                 0X23
+#define AVERAGE_POWER_REGISTER                0X24
+#define AVERAGE_POWER_LOW                     0X24
+#define AVERAGE_POWER_HIGH                    0X25
+#define TIME_TO_EMPTY_AT_CONSTANT_POWER_REGISTER   0X26
+#define TIME_TO_EMPTY_AT_CONSTANT_POWER_LOW   0X26
+#define TIME_TO_EMPTY_AT_CONSTANT_POWER_HIGH  0X27
+#define CYCLE_COUNT_SINCE_LEARNING_CYCLE_REGISTER  0X28
+#define CYCLE_COUNT_SINCE_LEARNING_CYCLE_LOW       0X28
+#define CYCLE_COUNT_SINCE_LEARNING_CYCLE_HIGH      0X29
+#define CYCLE_COUNT_TOTAL_REGISTER            0X2A
+#define CYCLE_COUNT_TOTAL_LOW                 0X2A
+#define CYCLE_COUNT_TOTAL_HIGH                0X2B
+#define COMPENSATED_STATE_OF_CHARGE_REGISTER  0X2C
+
+/* EEPROM registers */
+
+#define INITIAL_LAST_MEASURED_DISCHARGE_REGISTER       0X76
+#define SCALED_EDVF_THRESHOLD_REGISTER                 0X77
+#define SCALED_EDV1_THRESHOLD_REGISTER                 0X78
+#define INITIAL_STANDBY_LOAD_CURRENT_REGISTER          0X79
+#define DIGITAL_MAGNITUDE_FILTER_REGISTER              0X7A
+#define AGING_ESTIMATE_ENABLE_REGISTER                 0X7B
+#define PACK_CONFIGURATION_REGISTER                    0X7C
+#define INITIAL_MAX_LOAD_CURRENT_REGISTER              0X7D
+#define SAGEM_1_REGISTER                               0X7E
+#define SAGEM_2_REGISTER                               0X7F

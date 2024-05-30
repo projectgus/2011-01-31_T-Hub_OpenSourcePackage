@@ -1,0 +1,26 @@
+Steve Papacharalambous <stevep@freescale.com> 23 October 2006
+
+cross compilation patch for pidentd-3.0.19 ported from patch already in
+ltib: pidentd-3.1a25-crossbuild.patch
+
+by Steve Papacharalambous.
+
+diff --exclude CVS -uNr pidentd-3.0.19/src/Makefile.in pidentd-3.0.19.modified/src/Makefile.in
+--- pidentd-3.0.19/src/Makefile.in	Fri Jan 14 22:46:31 2000
++++ pidentd-3.0.19.modified/src/Makefile.in	Mon Oct 23 08:37:17 2006
+@@ -49,12 +49,10 @@
+ ikeygen: ikeygen.o version.o
+ 	$(CC) $(CFLAGS) -o ikeygen ikeygen.o version.o $(LDFLAGS)
+ 
+-
+-c_osinfo.o:	gen_osinfo.o support.o safeio.o
+-	$(CC) $(CFLAGS) -o gen_osinfo gen_osinfo.o support.o safeio.o $(LDFLAGS)
+-	./gen_osinfo > c_osinfo.c
++c_osinfo.o:
++	echo char osinfo_build[] = \"$$(uname -s -r)\"\; > c_osinfo.c
+ 	$(CC) $(CFLAGS) -c -o c_osinfo.o c_osinfo.c
+-	rm -f c_osinfo.c gen_osinfo
++	rm -f c_osinfo.c
+ 
+ 
+ # Installing

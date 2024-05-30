@@ -1,0 +1,21 @@
+#
+# Simple Power management
+#
+
+menu "Simple Power Management devices"
+
+config MX27_PWRMNGT
+	bool "Simple Power Management"
+	depends on DPM && ARCH_MX27 && MXC_PMIC_MC13783
+	help
+	  Enable Simple Power Management, if implemented for your platform.
+	  Simple Power Management is command by state (Normal,Doze,Stand By,
+	  Deep Sleep, Power off). Each state call the platform implementation.
+	  The implementation contains the basic drivers call corresponding to
+	  the implementation. Depends on DPM in order use the dynamic change
+	  CPU speed. 
+
+	  If in doubt, say N.
+
+endmenu
+

@@ -1,0 +1,25 @@
+Stuart Hughes stuarth@freescale.com 22mar05
+Allow to be built as non-root.  This is needed for rpm without fakeroot
+
+diff --exclude CVS -uNr portmap_5beta/Makefile portmap_5beta.modified/Makefile
+--- portmap_5beta/Makefile	2005-03-22 05:44:27.000000000 -0600
++++ portmap_5beta.modified/Makefile	2005-03-22 05:43:46.000000000 -0600
+@@ -140,12 +140,12 @@
+ 	cc $(CFLAGS) -DTEST -o $@ get_myaddress.c $(LIBS)
+ 
+ install: all
+-	install -o root -g root -m 0755 -s portmap ${BASEDIR}/sbin
+-	install -o root -g root -m 0755 -s pmap_dump ${BASEDIR}/usr/sbin
+-	install -o root -g root -m 0755 -s pmap_set ${BASEDIR}/usr/sbin
+-	install -o root -g root -m 0644 portmap.8 ${BASEDIR}/usr/share/man/man8
+-	install -o root -g root -m 0644 pmap_dump.8 ${BASEDIR}/usr/share/man/man8
+-	install -o root -g root -m 0644 pmap_set.8 ${BASEDIR}/usr/share/man/man8
++	install -m 0755 -s portmap ${BASEDIR}/sbin
++	install -m 0755 -s pmap_dump ${BASEDIR}/usr/sbin
++	install -m 0755 -s pmap_set ${BASEDIR}/usr/sbin
++	install -m 0644 portmap.8 ${BASEDIR}/usr/share/man/man8
++	install -m 0644 pmap_dump.8 ${BASEDIR}/usr/share/man/man8
++	install -m 0644 pmap_set.8 ${BASEDIR}/usr/share/man/man8
+ #	cat README BLURB >${BASEDIR}/usr/share/doc/portmap/portmapper.txt
+ #	gzip -9f ${BASEDIR}/usr/share/doc/portmap/portmapper.txt
+ 

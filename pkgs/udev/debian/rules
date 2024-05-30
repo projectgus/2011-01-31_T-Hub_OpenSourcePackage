@@ -1,0 +1,200 @@
+#!/usr/bin/make -f
+SHELL+= -e
+
+BUILD_UDEB := 1
+# BUILD_KLIBC := 1
+
+
+
+include debian/scripts/vars
+
+BUILD_DIR := $(SOURCE_DIR)/$(TAR_DIR)
+B  := $(BUILD_DIR)
+BU := $(BUILD_DIR)/udev-udeb
+KU := $(BUILD_DIR)/udev-klibc
+D  := $(CURDIR)/debian/udev
+DU := $(CURDIR)/debian/udev-udeb
+KU := $(CURDIR)/debian/udev-klibc
+DL := $(CURDIR)/debian/libvolume-id0
+DD := $(CURDIR)/debian/libvolume-id-dev
+
+UEX := $D/usr/share/doc/udev/examples
+
+DOCS := FAQ README RELEASE-NOTES TODO docs/writing_udev_rules/
+
+MAKE_EXTRAS := extras/ata_id/ extras/cdrom_id/ extras/edd_id extras/path_id \
+	extras/run_directory/ extras/scsi_id/ extras/usb_id/ extras/volume_id/
+
+DEB_BUILD_ARCH := $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+ifeq ($(DEB_BUILD_ARCH),s390)
+MAKE_EXTRAS += extras/dasd_id
+endif
+
+MAKE_VARIABLES := V=true EXTRAS=\"$(MAKE_EXTRAS)\"
+
+ifndef BUILD_UDEB
+NO_PACKAGE := --no-package=udev-udeb
+endif
+
+all: build
+
+unpack: $(STAMP_DIR)/unpack
+$(STAMP_DIR)/unpack:
+	$(MAKE) -f debian/sys-build.mk source.make
+	rm -rf $B/test/
+	touch $@
+
+unpack2: $(STAMP_DIR)/unpack2
+$(STAMP_DIR)/unpack2: $(STAMP_DIR)/unpack
+ifdef BUILD_UDEB
+	cd $B && if [ ! -d udev-udeb/ ]; then \
+		mkdir udev-udeb/ && cd udev-udeb/ && \
+		sh $(CURDIR)/extra/lndir.sh ..; \
+	fi
+endif
+ifdef BUILD_KLIBC
+	cd $B && if [ ! -d udev-klibc/ ]; then \
+		mkdir udev-klibc/ && cd udev-klibc/ && \
+		sh $(CURDIR)/extra/lndir.sh ..; \
+	fi
+endif
+	touch $@
+
+# FIXME uglyness to get clean diffs
+extra-clean:
+	rm -r $B.orig/test/
+
+# used by the maintainer
+unpack.nopatch: 
+	$(MAKE) -f debian/sys-build.mk source.build
+
+# used by the maintainer
+diff:
+	$(MAKE) -f debian/sys-build.mk make-diff
+
+clean:
+	$(MAKE) -f debian/sys-build.mk source.clean
+	dh_clean
+
+build: $(STAMP_DIR)/build
+$(STAMP_DIR)/build: $(STAMP_DIR)/unpack2
+	dh_testdir
+	NOISY=1 \
+	$(MAKE) -f debian/sys-build.mk source.command SOURCE_CMD=" \
+		$(MAKE) all $(MAKE_VARIABLES) USE_SELINUX=true \
+	"
+ifdef BUILD_UDEB
+	$(MAKE) -f debian/sys-build.mk source.command SOURCE_CMD=" \
+		cd udev-udeb/ && \
+		$(MAKE) all $(MAKE_VARIABLES) VOLUME_ID_STATIC=true \
+		OPTFLAGS='-Os -fomit-frame-pointer' \
+	"
+endif
+ifdef BUILD_KLIBC
+	$(MAKE) -f debian/sys-build.mk source.command SOURCE_CMD=" \
+		cd udev-udeb/ && \
+		$(MAKE) all $(MAKE_VARIABLES) USE_SELINUX=true \
+			OPTFLAGS=-O2 USE_KLIBC=true \
+			KERNEL_DIR=/usr/src/linux-headers-2.6.10-2-386/ \
+	"
+endif
+	touch $@
+
+binary-arch: $(STAMP_DIR)/build checkroot
+	dh_testdir
+	dh_clean -k
+	dh_installdirs
+
+	$(MAKE) -f debian/sys-build.mk source.command SOURCE_CMD=" \
+		$(MAKE) install $(MAKE_VARIABLES) DESTDIR=$D \
+	"
+
+	dh_movefiles --sourcedir=debian/udev
+	rmdir $D/dev/ $D/usr/lib/pkgconfig/ $D/usr/include/
+
+	install --mode=755 extra/*-devfs.sh \
+		hotplug/*.agent hotplug/modalias_* hotplug/scsi-re-add \
+		$B/udevsynthesize \
+		extra/write_*_rules $D/lib/udev/
+	install --mode=755 $B/udevsend extra/udevsynthesize $D/sbin/
+
+	cp extra/*.rules extra/links.conf $D/etc/udev/
+	printf "# maximum size of the /dev tmpfs\ntmpfs_size=\"10M\"\n\n" \
+		>> $D/etc/udev/udev.conf
+	sed -e 's/^#\([^ ]\)/\1/' < extra/compat.rules > \
+		$D/etc/udev/compat-full.rules
+
+	install --mode=644 hotplug/hotplug.functions $D/lib/udev/
+	install --mode=644 hotplug/modprobe.d/* $D/etc/modprobe.d/
+
+	cp extra/reportbug.presubj $D/usr/share/bug/udev/presubj
+	install --mode=755 extra/reportbug.script $D/usr/share/bug/udev/script
+
+	install --mode=755 extra/initramfs.hook \
+		$D/usr/share/initramfs-tools/hooks/udev
+	install --mode=755 extra/initramfs.premount \
+		$D/usr/share/initramfs-tools/scripts/init-premount/udev
+	install --mode=755 extra/initramfs.bottom \
+		$D/usr/share/initramfs-tools/scripts/init-bottom/udev
+
+ifdef BUILD_UDEB
+	$(MAKE) -f debian/sys-build.mk source.command SOURCE_CMD=" \
+		cd udev-udeb/ && \
+		$(MAKE) install-bin $(MAKE_VARIABLES) DESTDIR=$(DU) \
+	"
+
+	cd $(DU) && rm -r dev/ lib/udev/udev_run_* lib/libvolume_id.* \
+		sbin/scsi_id sbin/udevcontrol usr/
+	install --mode=755 extra/udevsynthesize $(DU)/sbin/
+	install --mode=755 $(BU)/udevsynthesize $(DU)/lib/udev/
+
+	grep '^[[:alnum:]]' extra/links.conf > $(DU)/etc/udev/links.conf
+	grep '^[[:alnum:]]' $B/etc/udev/udev.conf > $(DU)/etc/udev/udev.conf
+	cp extra/devfs.rules extra/run.rules $D/etc/udev/compat-full.rules \
+		extra/cd-aliases.rules $(DU)/etc/udev/rules.d/
+	cp extra/hotplug.rules $(DU)/etc/udev/rules.d/z55_hotplug.rules
+	cp extra/persistent.rules $(DU)/etc/udev/rules.d/z20_persistent.rules
+
+	install --mode=755 hotplug/firmware.agent hotplug/ide.agent \
+		hotplug/vio.agent extra/*-devfs.sh $(DU)/lib/udev/
+	install --mode=644 hotplug/hotplug.functions $(DU)/lib/udev/
+	install --mode=644 hotplug/modprobe.d/* $(DU)/etc/modprobe.d/
+	install --mode=755 extra/udev.startup \
+		$(DU)/lib/debian-installer-startup.d/S02udev
+endif
+ifdef BUILD_KLIBC
+	# FIXME: s/$B/$(BK)/g
+endif
+
+	dh_installchangelogs $B/ChangeLog
+	dh_installdocs $(addprefix $B/,$(DOCS))
+	cp $B/extras/volume_id/README $D/usr/share/doc/udev/README.vol_id
+	dh_installexamples \
+		extra/udev.vim extra/udevtest-all
+	cp $B/etc/udev/gentoo/udev.rules $(UEX)/gentoo.rules
+	cp -a $B/etc/udev/suse/ $B/etc/udev/redhat/ $(UEX)/
+	dh_installman $B/udevsend.8
+	dh_installinit --no-start --update-rcd-params='start 03 S .'
+	dh_installinit --no-start --update-rcd-params='start 36 S .' \
+		--name=udev-mtab 
+
+	# remove duplicate changelogs
+	rm -rf $(DD)/usr/share/doc/libvolume-id-dev/
+	cd $(DD)/usr/share/doc/ && ln -s libvolume-id0 libvolume-id-dev
+
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_makeshlibs
+	dh_shlibdeps
+	dh_installdeb
+	dh_gencontrol $(NO_PACKAGE)
+	dh_builddeb $(NO_PACKAGE)
+
+
+binary:	binary-arch
+
+checkroot:
+	test root = "`whoami`"
+
+.PHONY: binary binary-arch binary-indep unpack configure build clean checkroot

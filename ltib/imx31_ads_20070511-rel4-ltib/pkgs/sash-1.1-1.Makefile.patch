@@ -1,0 +1,49 @@
+diff -ruN sash-1.1.orig/Makefile sash-1.1/Makefile
+--- sash-1.1.orig/Makefile	2005-07-04 17:15:20.000000000 -0700
++++ sash-1.1/Makefile	2005-09-29 12:13:11.837425328 -0700
+@@ -1,29 +1,18 @@
+-
+-ifdef CONFIG_USER_SASH_SH
+ SH = sh
+ SHOBJS = sash.o cmds.o cmd_uclinux.o ls.o hexdump.o df.o free.o \
+ 	hostname.o date.o
+-endif
+ 
+-ifdef CONFIG_USER_SASH_SHUTDOWN
+ SHUTDOWN = shutdown
+ SHUTDOWNOBJS = shutdown.o
+-endif
+ 
+-ifdef CONFIG_USER_SASH_REBOOT
+ REBOOT = reboot
+ REBOOTOBJS = reboot.o
+-endif
+ 
+-ifdef CONFIG_USER_SASH_PS
+ SHOBJS += ps.o
+-endif
+ 
+ LIBSASH = libsash/libsash.a
+ 
+-ifdef CONFIG_USER_SASH_HISTORY
+ CFLAGS += -DCOMMAND_HISTORY
+-endif
+ 
+ all: $(SH) $(SHUTDOWN) $(REBOOT)
+ 
+@@ -36,11 +25,10 @@
+ $(REBOOT): $(REBOOTOBJS) $(LIBSASH)
+ 	$(CC) $(LDFLAGS) -o $@ $(REBOOTOBJS) $(LIBSASH) $(LDLIBS$(LDLIBS_$@))
+ 
+-romfs:
+-	$(ROMFSINST) -e CONFIG_USER_SASH_SH       /bin/sh
+-	$(ROMFSINST) -e CONFIG_USER_SASH_REBOOT /bin/reboot
+-	$(ROMFSINST) -e CONFIG_USER_SASH_REBOOT_SNAPGEAR reboot-snapgear.sh /bin/reboot
+-	$(ROMFSINST) -e CONFIG_USER_SASH_SHUTDOWN /bin/shutdown
++install:
++	install sh		$(DESTDIR)/bin/sh
++	install reboot		$(DESTDIR)/bin/reboot
++	install shutdown	$(DESTDIR)/bin/shutdown
+ 
+ dummy_target:
+ 

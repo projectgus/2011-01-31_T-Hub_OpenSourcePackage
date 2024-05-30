@@ -1,0 +1,48 @@
+Sanitization of kernel source following import of GSO L2618-2 patches.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/hmp4e/mxc_hmp4e.c linux-2.6.19.2/drivers/mxc/hmp4e/mxc_hmp4e.c
+--- linux-2.6.19.2.orig/drivers/mxc/hmp4e/mxc_hmp4e.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/hmp4e/mxc_hmp4e.c	2007-04-25 17:40:00.000000000 -0600
+@@ -99,7 +99,7 @@ u32 io_regs[64];
+ static s32 hmp4e_map_buffer(struct file *filp, struct vm_area_struct *vma);
+ static s32 hmp4e_map_hwregs(struct file *filp, struct vm_area_struct *vma);
+ static void hmp4e_reset(hmp4e_t * dev);
+-irqreturn_t hmp4e_isr(s32 irq, void *dev_id, struct pt_regs *regs);
++irqreturn_t hmp4e_isr(s32 irq, void *dev_id);
+ 
+ /*!
+  * This funtion is called to write h/w register. 
+@@ -483,7 +483,7 @@ static s32 hmp4e_map_hwregs(struct file 
+  * @return  The return value is IRQ_HANDLED.
+  *
+  */
+-irqreturn_t hmp4e_isr(s32 irq, void *dev_id, struct pt_regs * regs)
++irqreturn_t hmp4e_isr(s32 irq, void *dev_id)
+ {
+ 	hmp4e_t *dev = (hmp4e_t *) dev_id;
+ 	u32 offset = dev->intr_offset;
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.c linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.c
+--- linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.c	2007-04-25 17:39:20.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.c	2007-04-25 17:40:00.000000000 -0600
+@@ -1261,7 +1261,7 @@ static int arcotg_fifo_status(struct usb
+ 		size = (d_qh->size_ioc_int_sts & DTD_PACKET_SIZE)
+ 		    >> DTD_LENGTH_BIT_POS;
+ 
+-	pr_debug(ep->dev, "%s %u\n", __FUNCTION__, size);
++	pr_debug("%s %u\n", __FUNCTION__, size);
+ 	return size;
+ }
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/w1/masters/mxc_w1.c linux-2.6.19.2/drivers/w1/masters/mxc_w1.c
+--- linux-2.6.19.2.orig/drivers/w1/masters/mxc_w1.c	2007-04-25 17:39:40.000000000 -0600
++++ linux-2.6.19.2/drivers/w1/masters/mxc_w1.c	2007-04-25 17:40:00.000000000 -0600
+@@ -185,8 +185,7 @@ static u8 mxc_w1_read_byte(void *data)
+ 	reg_val = __raw_readb((dev->base_address + MXC_W1_TXRX));
+ 	return reg_val;
+ }
+-static irqreturn_t w1_interrupt_handler(int irq, void *data,
+-					struct pt_regs *regs)
++static irqreturn_t w1_interrupt_handler(int irq, void *data)
+ {
+ 	u8 reg_val;
+ 	irqreturn_t ret = IRQ_NONE;

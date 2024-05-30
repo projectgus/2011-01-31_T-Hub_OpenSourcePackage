@@ -1,0 +1,223 @@
+Touchscreen fix: TLSbo87799.
+
+cvs diff -puN -r1.1 -r1.2 drivers/mxc/pmic/mc13783/pmic_adc.c
+Index: drivers/mxc/pmic/mc13783/pmic_adc.c
+===================================================================
+RCS file: drivers/mxc/pmic/mc13783/pmic_adc.c,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -p -u -r1.1 -r1.2
+--- linux-2.6.19.2-mx/drivers/mxc/pmic/mc13783/pmic_adc.c	15 Jan 2007 05:44:50 -0000	1.1
++++ linux-2.6.19.2-mx/drivers/mxc/pmic/mc13783/pmic_adc.c	16 Jan 2007 22:55:17 -0000	1.2
+@@ -78,10 +78,9 @@ EXPORT_SYMBOL(pmic_adc_get_battery_curre
+ EXPORT_SYMBOL(pmic_adc_active_comparator);
+ EXPORT_SYMBOL(pmic_adc_deactive_comparator);
+ 
+-static DECLARE_WAIT_QUEUE_HEAD(adcdone_it);
+-static DECLARE_WAIT_QUEUE_HEAD(adcbisdone_it);
+-static DECLARE_WAIT_QUEUE_HEAD(adc_tsi);
+-
++static DECLARE_COMPLETION(adcdone_it);
++static DECLARE_COMPLETION(adcbisdone_it);
++static DECLARE_COMPLETION(adc_tsi);
+ static pmic_event_callback_t tsi_event;
+ static pmic_event_callback_t event_adc;
+ static pmic_event_callback_t event_adc_bis;
+@@ -138,7 +137,6 @@ static unsigned channel_num[] = {
+ static int pmic_adc_suspend(struct platform_device *pdev, pm_message_t state)
+ {
+ 	unsigned int reg_value = 0;
+-
+ 	suspend_flag = 1;
+ 	CHECK_ERROR(pmic_write_reg(REG_ADC_0, DEF_ADC_0, PMIC_ALL_BITS));
+ 	CHECK_ERROR(pmic_write_reg(REG_ADC_1, reg_value, PMIC_ALL_BITS));
+@@ -180,7 +178,8 @@ static void callback_tsi(void *unused)
+ {
+ 	pr_debug("*** TSI IT mc13783 PMIC_ADC_GET_TOUCH_SAMPLE ***\n");
+ 	if (wait_ts) {
+-		wake_up(&adc_tsi);
++		complete(&adc_tsi);
++		pmic_event_mask(EVENT_TSI);
+ 	}
+ }
+ 
+@@ -189,9 +188,8 @@ static void callback_tsi(void *unused)
+  */
+ static void callback_adcdone(void *unused)
+ {
+-	pr_debug("* adcdone it callback *\n");
+ 	if (data_ready_adc_1) {
+-		wake_up(&adcdone_it);
++		complete(&adcdone_it);
+ 	}
+ }
+ 
+@@ -202,7 +200,7 @@ static void callback_adcbisdone(void *un
+ {
+ 	pr_debug("* adcdone bis it callback *\n");
+ 	if (data_ready_adc_2) {
+-		wake_up(&adcbisdone_it);
++		complete(&adcbisdone_it);
+ 	}
+ }
+ 
+@@ -545,8 +543,6 @@ PMIC_STATUS mc13783_adc_convert(t_adc_pa
+ 	    0, i = 0;
+ 	unsigned int result = 0, temp = 0;
+ 	pmic_version_t mc13783_ver;
+-	DEFINE_WAIT(wait);
+-
+ 	pr_debug("mc13783 ADC - mc13783_adc_convert ....\n");
+ 	if (suspend_flag == 1) {
+ 		return -EBUSY;
+@@ -555,18 +551,18 @@ PMIC_STATUS mc13783_adc_convert(t_adc_pa
+ 	if (adc_param->wait_tsi) {
+ 		/* we need to set ADCEN 1 for TSI interrupt on mc13783 1.x */
+ 		/* configure adc to wait tsi interrupt */
++		INIT_COMPLETION(adc_tsi);
+ 		pr_debug("mc13783 ADC - pmic_write_reg ....\n");
+ 		adc_0_reg = 0x001c00 | (ADC_BIS * use_bis);
++		pmic_event_unmask(EVENT_TSI);
+ 		CHECK_ERROR(pmic_write_reg
+ 			    (REG_ADC_0, adc_0_reg, PMIC_ALL_BITS));
+-		adc_1_reg = 0x300001 | (ADC_BIS * adc_ts);
++		adc_1_reg = 0x200001 | (ADC_BIS * adc_ts);
+ 		CHECK_ERROR(pmic_write_reg
+ 			    (REG_ADC_1, adc_1_reg, PMIC_ALL_BITS));
+ 		pr_debug("wait tsi ....\n");
+ 		wait_ts = true;
+-		prepare_to_wait(&adc_tsi, &wait, TASK_UNINTERRUPTIBLE);
+-		schedule();
+-		finish_wait(&adc_tsi, &wait);
++		wait_for_completion(&adc_tsi);
+ 		wait_ts = false;
+ 	}
+ 	use_bis = mc13783_adc_request();
+@@ -632,7 +628,7 @@ PMIC_STATUS mc13783_adc_convert(t_adc_pa
+ 	} else {
+ 		/* configure and start convert to read x and y position */
+ 		/* configure to read 2 value in channel selection 1 & 2 */
+-		adc_1_reg = 0x000409 | (ADC_BIS * use_bis) | ADC_NO_ADTRIG;
++		adc_1_reg = 0x100409 | (ADC_BIS * use_bis) | ADC_NO_ADTRIG;
+ 	}
+ 	reg_1 = adc_1_reg;
+ 	if (use_bis == 0) {
+@@ -640,21 +636,20 @@ PMIC_STATUS mc13783_adc_convert(t_adc_pa
+ 		adc_1_reg |= ASC_ADC;
+ 		data_ready_adc_1 = true;
+ 		pr_debug("Write Reg %i = %x\n", REG_ADC_1, adc_1_reg);
++		INIT_COMPLETION(adcdone_it);
+ 		CHECK_ERROR(pmic_write_reg(REG_ADC_1, adc_1_reg,
+ 					   ADC_SGL_CH | ADC_ATO | ADC_ADSEL
+ 					   | ADC_CH_0_MASK | ADC_CH_1_MASK |
+ 					   ADC_NO_ADTRIG | ADC_EN |
+ 					   ADC_DELAY_MASK | ASC_ADC | ADC_BIS));
+-		pr_debug("wait adc done\n");
+-		prepare_to_wait(&adcdone_it, &wait, TASK_UNINTERRUPTIBLE);
+-		schedule_timeout(50);
+-		finish_wait(&adcdone_it, &wait);
+-		pr_debug("IT adc done\n");
++		pr_debug("wait adc done \n");
++		wait_for_completion(&adcdone_it);
+ 		data_ready_adc_1 = false;
+ 	} else {
+ 		data_ready_adc_2 = false;
+ 		adc_1_reg |= ASC_ADC;
+ 		data_ready_adc_2 = true;
++		INIT_COMPLETION(adcbisdone_it);
+ 		CHECK_ERROR(pmic_write_reg(REG_ADC_1, adc_1_reg, 0xFFFFFF));
+ 		temp = 0x800000;
+ 		CHECK_ERROR(pmic_write_reg(REG_ADC_3, temp, 0xFFFFFF));
+@@ -662,9 +657,7 @@ PMIC_STATUS mc13783_adc_convert(t_adc_pa
+ 		pmic_write_reg(REG_ARBITRATION_PERIPHERAL_AUDIO, temp,
+ 			       0xFFFFFF);
+ 		pr_debug("wait adc done bis\n");
+-		prepare_to_wait(&adcbisdone_it, &wait, TASK_UNINTERRUPTIBLE);
+-		schedule_timeout(50);
+-		finish_wait(&adcbisdone_it, &wait);
++		wait_for_completion(&adcbisdone_it);
+ 		data_ready_adc_2 = false;
+ 	}
+ 	/* read result and store in adc_param */
+@@ -676,6 +669,7 @@ PMIC_STATUS mc13783_adc_convert(t_adc_pa
+ 	}
+ 	CHECK_ERROR(pmic_write_reg(REG_ADC_1, 4 << ADC_CH_1_POS,
+ 				   ADC_CH_0_MASK | ADC_CH_1_MASK));
++
+ 	for (i = 0; i <= 3; i++) {
+ 		CHECK_ERROR(pmic_read_reg(result_reg, &result, PMIC_ALL_BITS));
+ 		pr_debug("result %i = %x\n", result_reg, result);
+@@ -694,6 +688,7 @@ PMIC_STATUS mc13783_adc_convert(t_adc_pa
+ 		adc_param->ts_value.contact_resistance = adc_param->value[6];
+ 
+ 	}
++
+ 	/*if (adc_param->read_ts) {
+ 	   adc_param->ts_value.x_position = adc_param->value[2];
+ 	   adc_param->ts_value.y_position = adc_param->value[5];
+@@ -940,7 +935,8 @@ PMIC_STATUS pmic_adc_get_touch_mode(t_to
+ PMIC_STATUS pmic_adc_get_touch_sample(t_touch_screen * touch_sample, int wait)
+ {
+ 	mc13783_adc_read_ts(touch_sample, wait);
+-	return pmic_adc_filter(touch_sample);
++	pmic_adc_filter(touch_sample);
++	return PMIC_SUCCESS;
+ }
+ 
+ /*!
+@@ -963,7 +959,6 @@ PMIC_STATUS mc13783_adc_read_ts(t_touch_
+ 		return PMIC_ERROR;
+ 	}
+ 	mc13783_adc_init_param(&param);
+-	pr_debug("Read TS\n");
+ 	param.wait_tsi = wait_tsi;
+ 	param.read_ts = true;
+ 	mc13783_adc_convert(&param);
+@@ -1422,14 +1417,14 @@ static int pmic_adc_module_probe(struct 
+ 	pmic_adc_major = register_chrdev(0, "pmic_adc", &mc13783_adc_fops);
+ 
+ 	if (pmic_adc_major < 0) {
+-		printk(KERN_ERR "Unable to get a major for pmic_adc\n");
++		pr_debug(KERN_ERR "Unable to get a major for pmic_adc\n");
+ 		return pmic_adc_major;
+ 	}
+ 	init_waitqueue_head(&suspendq);
+ 
+ 	pmic_adc_class = class_create(THIS_MODULE, "pmic_adc");
+ 	if (IS_ERR(pmic_adc_class)) {
+-		printk(KERN_ERR "Error creating pmic_adc class.\n");
++		pr_debug(KERN_ERR "Error creating pmic_adc class.\n");
+ 		ret = PTR_ERR(pmic_adc_class);
+ 		goto err_out1;
+ 	}
+@@ -1438,18 +1433,18 @@ static int pmic_adc_module_probe(struct 
+ 					 MKDEV(pmic_adc_major, 0),
+ 					 NULL, "pmic_adc");
+ 	if (IS_ERR(temp_class)) {
+-		printk(KERN_ERR "Error creating pmic_adc class device.\n");
++		pr_debug(KERN_ERR "Error creating pmic_adc class device.\n");
+ 		ret = PTR_ERR(temp_class);
+ 		goto err_out2;
+ 	}
+ 
+ 	ret = pmic_adc_init();
+ 	if (ret != PMIC_SUCCESS) {
+-		printk(KERN_ERR "Error in pmic_adc_init.\n");
++		pr_debug(KERN_ERR "Error in pmic_adc_init.\n");
+ 		goto err_out4;
+ 	}
+ 
+-	printk(KERN_INFO "PMIC ADC successfully probed\n");
++	pr_debug(KERN_INFO "PMIC ADC successfully probed\n");
+ 	return ret;
+ 
+       err_out4:
+@@ -1467,7 +1462,7 @@ static int pmic_adc_module_remove(struct
+ 	class_device_destroy(pmic_adc_class, MKDEV(pmic_adc_major, 0));
+ 	class_destroy(pmic_adc_class);
+ 	unregister_chrdev(pmic_adc_major, "pmic_adc");
+-	printk(KERN_INFO "PMIC ADC successfully removed\n");
++	pr_debug(KERN_INFO "PMIC ADC successfully removed\n");
+ 	return 0;
+ }
+ 

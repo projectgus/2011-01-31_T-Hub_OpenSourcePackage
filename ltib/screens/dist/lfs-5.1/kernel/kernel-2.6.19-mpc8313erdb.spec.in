@@ -1,0 +1,44 @@
+# Template = kernel-common.tmpl
+
+%define pfx /opt/freescale/rootfs/%{_target_cpu}
+%define dversion 2.6.19
+%define pkg_name linux
+
+Summary         : Linux kernel (core of the Linux operating system)
+Name            : kernel
+Version         : 2.6.19
+Release         : 2
+License         : GPL
+Vendor          : kernel.org
+Packager        : Stuart Hughes
+Group           : System Environment/Kernel
+Source          : %{pkg_name}-%{dversion}-rc6.tgz
+Patch0          : linux-2.6.19-mpc8313erdb-general-1.patch
+Patch1          : linux-2.6.19-mpc8313erdb-elbc-nand.patch
+Patch2          : linux-2.6.19-mpc8313erdb-usb-host.patch
+Patch3          : linux-2.6.19-mpc8313erdb-vitesse7385.patch
+Patch4          : linux-2.6.19-mpc8313erdb-CodeTEST.patch
+Patch5          : linux-2.6.19-mpc8313erdb-CodeWarrior.patch
+BuildRoot       : %{_tmppath}/%{name}
+Prefix          : %{pfx}
+
+%Description
+This linux-2.6.19-rc6 kernel source tree from Paulus`s powerpc tree
+
+This source is unmodified, available via GIT from this URL: 
+http://www.kernel.org/pub/scm/linux/kernel/git/paulus/powerpc.git
+using the tree with sha1 value 63d7a41f47dbb56315c8e69f513869f4aebc0c85
+
+%{summary}
+
+From kernel.org
+All patches from Freescale
+
+%Prep
+%setup -n %{pkg_name}-%{dversion}
+%patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1

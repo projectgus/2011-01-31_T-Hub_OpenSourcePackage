@@ -1,0 +1,32 @@
+--- expat-1.95.4/Makefile.in.orig	Mon Jun  3 20:16:07 2002
++++ expat-1.95.4/Makefile.in	Mon Jul  8 23:44:12 2002
+@@ -30,7 +30,7 @@
+ bindir = @bindir@
+ libdir = @libdir@
+ includedir = @includedir@
+-mandir = ${prefix}/man/man1
++mandir = @mandir@/man1
+ 
+ top_builddir = .
+ 
+@@ -68,14 +68,14 @@
+ 	tests/runtests
+ 
+ install: xmlwf/xmlwf installlib
+-	$(mkinstalldirs) $(bindir) $(mandir)
+-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) xmlwf/xmlwf $(bindir)/xmlwf
+-	$(INSTALL_DATA) $(MANFILE) $(mandir)
++	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)
++	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) xmlwf/xmlwf $(DESTDIR)$(bindir)/xmlwf
++	$(INSTALL_DATA) $(MANFILE) $(DESTDIR)$(mandir)
+ 
+ installlib: $(LIBRARY) $(APIHEADER)
+-	$(mkinstalldirs) $(libdir) $(includedir)
+-	$(LIBTOOL) --mode=install $(INSTALL) $(LIBRARY) $(libdir)/$(LIBRARY)
+-	$(INSTALL_DATA) $(APIHEADER) $(includedir)
++	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(includedir)
++	$(LIBTOOL) --mode=install $(INSTALL) $(LIBRARY) $(DESTDIR)$(libdir)/$(LIBRARY)
++	$(INSTALL_DATA) $(APIHEADER) $(DESTDIR)$(includedir)
+ 
+ uninstall: uninstalllib
+ 	$(LIBTOOL) --mode=uninstall rm -f $(bindir)/xmlwf

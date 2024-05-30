@@ -1,0 +1,32 @@
+diff -ruN microwindows-0.90.orig/src/chess.sh microwindows-0.90/src/chess.sh
+--- microwindows-0.90.orig/src/chess.sh	2002-11-20 17:44:19.000000000 -0700
++++ microwindows-0.90/src/chess.sh	2005-06-10 11:02:30.511890749 -0600
+@@ -1,3 +1,3 @@
+ 
+ # Nano-X applications, press <BREAK> key to exit
+-bin/nano-X & bin/nanowm & bin/tuxchess & bin/nxroach
++bin/nano-X & bin/nanowm & bin/tuxchess
+diff -ruN microwindows-0.90.orig/src/demos/nanox/launcher.cnf microwindows-0.90/src/demos/nanox/launcher.cnf
+--- microwindows-0.90.orig/src/demos/nanox/launcher.cnf	2002-08-21 10:36:16.000000000 -0600
++++ microwindows-0.90/src/demos/nanox/launcher.cnf	2005-06-10 11:27:52.178344931 -0600
+@@ -71,16 +71,16 @@
+ # The icon filename can be the letter '-' to specify no icon.
+ 
+ Tetris bin/ntetris.ppm bin/ntetris
+-NanoBreaker bin/nbreaker.ppm bin/nbreaker -d demos/nbreaker/gamedata
+-Landmine bin/landmine.ppm bin/landmine
++# NanoBreaker bin/nbreaker.ppm bin/nbreaker -d demos/nbreaker/gamedata
++# Landmine bin/landmine.ppm bin/landmine
+ Slider bin/slider.ppm bin/slider bin/slidebmp.bmp
+ Terminal bin/nxterm.ppm bin/nxterm
+ Clock bin/nxclock.pgm bin/nxclock
+ # Map bin/world.ppm bin/world
+ Magnifier bin/logo.ppm bin/nxmag
+ Scribble bin/nxscribble.ppm bin/nxscribble
+-SoftKeyboard bin/nxkbd.pgm bin/nxkbd
+-Roach bin/nxroach.pgm bin/nxroach -roaches 10
++# SoftKeyboard bin/nxkbd.pgm bin/nxkbd
++Roach bin/nxroach.pgm bin/nxroach -roaches 2
+ Tux bin/tux.ppm bin/tux
+ NXEyes bin/nxeyes.pgm bin/nxeyes
+ # Pressure - bin/pressure

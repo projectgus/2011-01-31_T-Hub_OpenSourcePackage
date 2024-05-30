@@ -1,0 +1,688 @@
+--- linux-2.6.19.2/arch/arm/Kconfig	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/Kconfig	2007-01-10 15:41:10.000000000 -0700
+@@ -257,6 +257,12 @@ config ARCH_L7200
+ 	  If you have any questions or comments about the Linux kernel port
+ 	  to this board, send e-mail to <sjhill@cotw.com>.
+ 
++config ARCH_MXC
++	bool "Freescale MXC/iMX-based"
++	select ISA
++	help
++	  Support for Freescale MXC/iMX-based family of processors
++
+ config ARCH_PNX4008
+ 	bool "Philips Nexperia PNX4008 Mobile"
+ 	help
+@@ -363,6 +369,8 @@ source "arch/arm/mach-realview/Kconfig"
+ 
+ source "arch/arm/mach-at91rm9200/Kconfig"
+ 
++source "arch/arm/plat-mxc/Kconfig"
++
+ source "arch/arm/mach-netx/Kconfig"
+ 
+ # Definitions to make life easier
+@@ -716,7 +724,7 @@ config XIP_PHYS_ADDR
+ 
+ endmenu
+ 
+-if (ARCH_SA1100 || ARCH_INTEGRATOR || ARCH_OMAP)
++if (ARCH_SA1100 || ARCH_INTEGRATOR || ARCH_OMAP || ARCH_MXC)
+ 
+ menu "CPU Frequency scaling"
+ 
+@@ -873,7 +881,7 @@ source "drivers/acorn/block/Kconfig"
+ if PCMCIA || ARCH_CLPS7500 || ARCH_IOP32X || ARCH_IOP33X || ARCH_IXP4XX \
+ 	|| ARCH_L7200 || ARCH_LH7A40X || ARCH_PXA || ARCH_RPC \
+ 	|| ARCH_S3C2410 || ARCH_SA1100 || ARCH_SHARK || FOOTBRIDGE \
+-	|| ARCH_IXP23XX
++	|| ARCH_IXP23XX || ARCH_MX3 || ARCH_MX27
+ source "drivers/ide/Kconfig"
+ endif
+ 
+@@ -927,6 +935,10 @@ source "drivers/mmc/Kconfig"
+ 
+ source "drivers/rtc/Kconfig"
+ 
++if ARCH_MXC
++source "drivers/mxc/Kconfig"
++endif
++
+ endmenu
+ 
+ source "fs/Kconfig"
+@@ -935,6 +947,32 @@ source "arch/arm/oprofile/Kconfig"
+ 
+ source "arch/arm/Kconfig.debug"
+ 
++menu "CodeTEST setup"
++
++config CODETEST
++	bool "Turn on Freescale CodeTEST support"
++
++config CT_HOOKS_ENABLED
++	bool "Enable hooks by default"
++	depends on CODETEST
++
++config CT_USEPCI
++	bool "Use PCI Adapter"
++	depends on CODETEST
++
++config CT_USEMICTOR
++	bool
++	depends on CODETEST
++	default n if CT_USEPCI
++	default y if !CT_USEPCI
++
++config CT_ADDR
++	hex "Tag Port Physical Address"
++	depends on CODETEST && CT_USEMICTOR
++	default 0x14000000
++
++endmenu
++
+ source "security/Kconfig"
+ 
+ source "crypto/Kconfig"
+--- linux-2.6.19.2/arch/arm/kernel/head.S	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/kernel/head.S	2007-01-10 17:22:32.000000000 -0700
+@@ -23,6 +23,15 @@
+ #include <asm/thread_info.h>
+ #include <asm/system.h>
+ 
++#if defined(CONFIG_CPU_CACHE_L210)
++						@  RPSC
++						@  G
++						@  N
++#define SET_TTBR_ATTR(x)	orr x, x, #0x18 @ 11000
++#else
++#define SET_TTBR_ATTR(x)
++#endif
++
+ #define KERNEL_RAM_ADDR	(PAGE_OFFSET + TEXT_OFFSET)
+ 
+ /*
+@@ -164,6 +173,7 @@ __enable_mmu:
+ 		      domain_val(DOMAIN_TABLE, DOMAIN_MANAGER) | \
+ 		      domain_val(DOMAIN_IO, DOMAIN_CLIENT))
+ 	mcr	p15, 0, r5, c3, c0, 0		@ load domain access register
++	SET_TTBR_ATTR(r4)
+ 	mcr	p15, 0, r4, c2, c0, 0		@ load page table pointer
+ 	b	__turn_mmu_on
+ 
+--- linux-2.6.19.2/arch/arm/Makefile	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/Makefile	2007-01-10 15:35:26.000000000 -0700
+@@ -125,6 +125,9 @@ endif
+  machine-$(CONFIG_ARCH_EP93XX)     := ep93xx
+  machine-$(CONFIG_ARCH_PNX4008)    := pnx4008
+  machine-$(CONFIG_ARCH_NETX)       := netx
++  incdir-$(CONFIG_ARCH_MXC)        := mxc
++ machine-$(CONFIG_ARCH_MX3)	   := mx3
++ machine-$(CONFIG_ARCH_MX27)	   := mx27
+ 
+ ifeq ($(CONFIG_ARCH_EBSA110),y)
+ # This is what happens if you forget the IOCS16 line.
+@@ -165,6 +168,7 @@ core-$(CONFIG_VFP)		+= arch/arm/vfp/
+ # If we have a common platform directory, then include it in the build.
+ core-$(CONFIG_PLAT_IOP)		+= arch/arm/plat-iop/
+ core-$(CONFIG_ARCH_OMAP)	+= arch/arm/plat-omap/
++core-$(CONFIG_ARCH_MXC)		+= arch/arm/plat-mxc/
+ 
+ drivers-$(CONFIG_OPROFILE)      += arch/arm/oprofile/
+ drivers-$(CONFIG_ARCH_CLPS7500)	+= drivers/acorn/char/
+--- linux-2.6.19.2/arch/arm/mm/cache-l210.c	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mm/cache-l210.c	2007-01-10 17:09:57.000000000 -0700
+@@ -0,0 +1,313 @@
++/*
++ *  linux/arch/arm/mm/cache-l210.c
++ *
++ *  Copyright (C) 2001 Deep Blue Solutions Ltd.
++ *  Copyright (C) 2005-2006 Freescale Semiconductor, Inc.
++ *
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ */
++#include <linux/init.h>
++#include <linux/types.h>
++#include <linux/module.h>
++#include <asm/io.h>
++#include <asm/setup.h>
++#include <asm/arch/hardware.h>
++#include <asm/cacheflush.h>
++#include <linux/proc_fs.h>
++
++/* L210 related defines */
++#define L2_LINE_SIZE		32
++#define L2_ENABLE_BIT		0x1
++#define L2_EVTBUS_BIT		0x100000
++#define L2_ID_REG		(L2CC_BASE_ADDR_VIRT + 0x0)
++#define L2_TYPE_REG		(L2CC_BASE_ADDR_VIRT + 0x4)
++#define L2_CTL_REG		(L2CC_BASE_ADDR_VIRT + 0x100)
++#define L2_AUX_REG		(L2CC_BASE_ADDR_VIRT + 0x104)
++#define L2_SYNC_REG		(L2CC_BASE_ADDR_VIRT + 0x730)
++#define L2_INV_LINE_REG		(L2CC_BASE_ADDR_VIRT + 0x770)
++#define L2_INV_WAY_REG		(L2CC_BASE_ADDR_VIRT + 0x77C)
++#define L2_CLEAN_LINE_REG	(L2CC_BASE_ADDR_VIRT + 0x7B0)
++#define L2_CLEAN_WAY_REG	(L2CC_BASE_ADDR_VIRT + 0x7BC)
++#define L2_CLEAN_INV_LINE_REG	(L2CC_BASE_ADDR_VIRT + 0x7F0)
++#define L2_CLEAN_INV_WAY_REG	(L2CC_BASE_ADDR_VIRT + 0x7FC)
++#define L2_DEBUG_CTL_REG	(L2CC_BASE_ADDR_VIRT + 0xF40)
++
++#define IS_L2_ENABLED()		((__raw_readl(L2_CTL_REG) & L2_ENABLE_BIT) != 0)
++#define L2_ENABLE()		__raw_writel(L2_ENABLE_BIT, L2_CTL_REG)
++#define L2_DISABLE()		__raw_writel(0, L2_CTL_REG)
++#define L2_CLEAN_LINE(x)	__raw_writel(x, L2_CLEAN_LINE_REG)
++#define L2_CLEAN_INV_LINE(x)	__raw_writel(x, L2_CLEAN_INV_LINE_REG)
++#define L2_INV_LINE(x)		__raw_writel(x, L2_INV_LINE_REG)
++#define L2_CLEAN_INV_WAY(x)	__raw_writel(x, L2_CLEAN_INV_WAY_REG)
++#define IS_L2_ALL_CLEANED()	(__raw_readl(L2_CLEAN_INV_WAY_REG) == 0)
++#define L2_EVTBUS_ENABLE()	__raw_writel((__raw_readl(L2_AUX_REG)| L2_EVTBUS_BIT), L2_AUX_REG)
++#define L2_EVTBUS_DISABLE()	__raw_writel((__raw_readl(L2_AUX_REG)& ~L2_EVTBUS_BIT), L2_AUX_REG)
++
++/*!
++ * Invalidate the L2 data cache within the specified region; we will
++ * be performing a DMA operation in this region and we want to
++ * purge old data in the cache.
++ *
++ * @param start   physical start address of region
++ * @param end     physical end address of region
++ */
++void dmac_l2_inv_range(dma_addr_t start, dma_addr_t end)
++{
++	if (!IS_L2_ENABLED())
++		return;
++
++	if ((start & (L2_LINE_SIZE - 1)) != 0) {
++		start &= ~(L2_LINE_SIZE - 1);
++		L2_CLEAN_LINE(start);
++	}
++	if ((end & (L2_LINE_SIZE - 1)) != 0) {
++		end &= ~(L2_LINE_SIZE - 1);
++		L2_CLEAN_INV_LINE(end);
++	}
++	while (start < end) {
++		L2_INV_LINE(start);
++		start += L2_LINE_SIZE;
++	}
++}
++
++/*!
++ * Clean the L2 data cache within the specified region
++ *
++ * @param start   physical start address of region
++ * @param end     physical end address of region
++ */
++void dmac_l2_clean_range(dma_addr_t start, dma_addr_t end)
++{
++	if (!IS_L2_ENABLED())
++		return;
++
++	if ((start & (L2_LINE_SIZE - 1)) != 0) {
++		start &= ~(L2_LINE_SIZE - 1);
++	}
++	while (start < end) {
++		L2_CLEAN_LINE(start);
++		start += L2_LINE_SIZE;
++	}
++}
++
++/*!
++ * Flush (clean/invalidate) the L2 data cache within the specified region
++ *
++ * @param start   physical start address of region
++ * @param end     physical end address of region
++ */
++void dmac_l2_flush_range(dma_addr_t start, dma_addr_t end)
++{
++	if (!IS_L2_ENABLED())
++		return;
++
++	if ((start & (L2_LINE_SIZE - 1)) != 0) {
++		start &= ~(L2_LINE_SIZE - 1);
++	}
++	while (start < end) {
++		L2_CLEAN_INV_LINE(start);
++		start += L2_LINE_SIZE;
++	}
++}
++
++/*!
++ * Flush (clean and invalidate) the whole L2 cache
++ */
++void l2_flush_all(void)
++{
++	if (!IS_L2_ENABLED())
++		return;
++
++	L2_CLEAN_INV_WAY(0xFF);
++	while (!IS_L2_ALL_CLEANED()) {
++	}
++}
++
++/*!
++ * Enable the EVTBUS to monitor L2 cache events
++ */
++void l2_evtbus_enable(void)
++{
++	unsigned int flags;
++
++	local_irq_save(flags);
++	if (IS_L2_ENABLED()) {
++		L2_DISABLE();
++		L2_EVTBUS_ENABLE();
++		L2_ENABLE();
++	} else {
++		L2_EVTBUS_ENABLE();
++	}
++	local_irq_restore(flags);
++}
++
++/*!
++ * Disable the EVTBUS
++ */
++void l2_evtbus_disable(void)
++{
++	unsigned int flags;
++
++	local_irq_save(flags);
++	if (IS_L2_ENABLED()) {
++		L2_DISABLE();
++		L2_EVTBUS_DISABLE();
++		L2_ENABLE();
++	} else {
++		L2_EVTBUS_DISABLE();
++	}
++	local_irq_restore(flags);
++}
++
++/*!
++ * Disable the L2 cache
++ */
++void l2_disable(void)
++{
++	L2_DISABLE();
++}
++
++/*!
++ * Enable the L2 cache
++ */
++void l2_enable(void)
++{
++	L2_ENABLE();
++}
++
++/*
++ * Here are the L2 Cache options from the command line. By default the
++ * L2 is on with L2 in write through mode.
++ *
++ *       "off" -- off
++ *       "wt" --  write through (default)
++ *       "wb" -- write back
++*/
++static int l2_policy_updated;
++#define MAX_L2_STR_LEN			8
++static char l2_policy[MAX_L2_STR_LEN] = "wt";	/* default */
++
++static void __init l2_cmd_policy(char **p)
++{
++	strncpy(l2_policy, *p, MAX_L2_STR_LEN);
++	l2_policy[MAX_L2_STR_LEN - 1] = '\0';
++	l2_policy_updated = 1;
++}
++
++__early_param("L2cache=", l2_cmd_policy);
++
++/*!
++ * Initialize and enable L2 cache based on boot command line
++ */
++static int __init l2_init(void)
++{
++	if (!l2_policy_updated) {
++		/* L2 cache policy is not enforced via command line */
++		if ((__raw_readl(L2_ID_REG) & 0x3F) != 0x2) {
++			strcpy(l2_policy, "wb");
++		}
++	}
++
++	printk("L2 cache: ");
++	if (strncmp(l2_policy, "wt", 2) == 0) {
++		printk("WT");
++	} else if (strncmp(l2_policy, "wb", 2) == 0) {
++		printk("WB");
++		__raw_writel(0, L2_DEBUG_CTL_REG);
++	} else if (strncmp(l2_policy, "off", 3) == 0) {
++		printk("OFF");
++		l2_flush_all();
++		l2_disable();
++	} else {
++		printk("unknown L2 cache policy: %s", l2_policy);
++	}
++	printk("\n");
++	return 0;
++}
++
++arch_initcall(l2_init);
++
++extern void v6_flush_kern_cache_all(void);
++
++/*!
++ * Flush both L1 and L2 caches
++ */
++void v6_flush_kern_cache_all_l2(void)
++{
++	v6_flush_kern_cache_all();
++	l2_flush_all();
++}
++
++EXPORT_SYMBOL(dmac_l2_inv_range);
++EXPORT_SYMBOL(dmac_l2_clean_range);
++EXPORT_SYMBOL(dmac_l2_flush_range);
++EXPORT_SYMBOL(l2_flush_all);
++EXPORT_SYMBOL(v6_flush_kern_cache_all_l2);
++EXPORT_SYMBOL(l2_evtbus_enable);
++EXPORT_SYMBOL(l2_evtbus_disable);
++
++static int l2cache_read_proc(char *page, char **start, off_t off,
++			     int count, int *eof, void *data)
++{
++	char *p = page;
++	int len;
++	u32 size, way, waysize, linelen;
++	u32 l2_type = __raw_readl(L2_TYPE_REG);
++	u32 l2_aux = __raw_readl(L2_AUX_REG);
++
++	waysize = (l2_aux >> 17) & 0x7;
++	if (waysize == 0 || waysize > 5) {
++		waysize = 0;
++	} else {
++		waysize = (1 << (waysize - 1)) * 16384;
++	}
++
++	way = (l2_aux >> 13) & 0xF;
++	if (way > 8)
++		way = 0;
++
++	linelen = 32;
++	size = way * waysize;
++
++	p += sprintf(p, "L2:\t\t\t%s\n", (IS_L2_ENABLED()? "ON" : "OFF"));
++	p += sprintf(p, "L2 Cache type:\t\t%s\n",
++		     (__raw_readl(L2_DEBUG_CTL_REG) == 0 ?
++		      "write-back" : "write-through"));
++	p += sprintf(p, "L2 Cache lockdown:\t%s\n",
++		     (((l2_type >> 25) & 0xF) == 0xE ? "format C" : "unknown"));
++	p += sprintf(p, "L2 Cache format:\t%s\n", "unified");
++	p += sprintf(p, "L2 Cache size:\t\t%d\n", size);
++	p += sprintf(p, "L2 Cache ways:\t\t%d\n", way);
++	p += sprintf(p, "L2 Cache way size:\t%d\n", waysize);
++	p += sprintf(p, "L2 Cache line length:\t%d\n", linelen);
++
++	len = (p - page) - off;
++	if (len < 0)
++		len = 0;
++
++	*eof = (len <= count) ? 1 : 0;
++	*start = page + off;
++
++	return len;
++}
++
++static int __init setup_l2cache_proc_entry(void)
++{
++#ifdef CONFIG_PROC_FS
++	struct proc_dir_entry *res;
++
++	res = create_proc_read_entry("cpu/l2cache", 0, NULL,
++				     l2cache_read_proc, NULL);
++	if (!res) {
++		printk(KERN_ERR "Failed to create proc/cpu/l2cache\n");
++		return -ENOMEM;
++	}
++#endif
++	return 0;
++}
++
++late_initcall(setup_l2cache_proc_entry);
+--- linux-2.6.19.2/arch/arm/mm/consistent.c	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mm/consistent.c	2007-01-10 15:35:26.000000000 -0700
+@@ -208,6 +208,7 @@ __dma_alloc(struct device *dev, size_t s
+ 		unsigned long kaddr = (unsigned long)page_address(page);
+ 		memset(page_address(page), 0, size);
+ 		dmac_flush_range(kaddr, kaddr + size);
++		dmac_l2_flush_range(__pa(kaddr), __pa(kaddr + size));
+ 	}
+ 
+ 	/*
+@@ -488,12 +489,15 @@ void consistent_sync(void *vaddr, size_t
+ 	switch (direction) {
+ 	case DMA_FROM_DEVICE:		/* invalidate only */
+ 		dmac_inv_range(start, end);
++		dmac_l2_inv_range(__pa(start), __pa(end));
+ 		break;
+ 	case DMA_TO_DEVICE:		/* writeback only */
+ 		dmac_clean_range(start, end);
++		dmac_l2_clean_range(__pa(start), __pa(end));
+ 		break;
+ 	case DMA_BIDIRECTIONAL:		/* writeback and invalidate */
+ 		dmac_flush_range(start, end);
++		dmac_l2_flush_range(__pa(start), __pa(end));
+ 		break;
+ 	default:
+ 		BUG();
+--- linux-2.6.19.2/arch/arm/mm/Kconfig	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mm/Kconfig	2007-01-10 16:04:35.000000000 -0700
+@@ -171,8 +171,8 @@ config CPU_ARM925T
+ # ARM926T
+ config CPU_ARM926T
+ 	bool "Support ARM926T processor"
+-	depends on ARCH_INTEGRATOR || ARCH_VERSATILE_PB || MACH_VERSATILE_AB || ARCH_OMAP730 || ARCH_OMAP16XX || MACH_REALVIEW_EB || ARCH_PNX4008 || ARCH_NETX || CPU_S3C2412 || ARCH_AT91SAM9260 || ARCH_AT91SAM9261
+-	default y if ARCH_VERSATILE_PB || MACH_VERSATILE_AB || ARCH_OMAP730 || ARCH_OMAP16XX || ARCH_PNX4008 || ARCH_NETX || CPU_S3C2412 || ARCH_AT91SAM9260 || ARCH_AT91SAM9261
++	depends on ARCH_INTEGRATOR || ARCH_VERSATILE_PB || MACH_VERSATILE_AB || ARCH_OMAP730 || ARCH_OMAP16XX || MACH_REALVIEW_EB || ARCH_PNX4008 || ARCH_NETX || CPU_S3C2412 || ARCH_AT91SAM9260 || ARCH_AT91SAM9261 || ARCH_MX27
++	default y if ARCH_VERSATILE_PB || MACH_VERSATILE_AB || ARCH_OMAP730 || ARCH_OMAP16XX || ARCH_PNX4008 || ARCH_NETX || CPU_S3C2412 || ARCH_AT91SAM9260 || ARCH_AT91SAM9261 || ARCH_MX27
+ 	select CPU_32v5
+ 	select CPU_ABRT_EV5TJ
+ 	select CPU_CACHE_VIVT
+@@ -345,7 +345,8 @@ config CPU_XSC3
+ # ARMv6
+ config CPU_V6
+ 	bool "Support ARM V6 processor"
+-	depends on ARCH_INTEGRATOR || MACH_REALVIEW_EB || ARCH_OMAP2
++	depends on ARCH_INTEGRATOR || MACH_REALVIEW_EB || ARCH_OMAP2 || ARCH_MX3
++	default y if ARCH_MX3
+ 	select CPU_32v6
+ 	select CPU_ABRT_EV6
+ 	select CPU_CACHE_V6
+@@ -353,6 +354,7 @@ config CPU_V6
+ 	select CPU_CP15_MMU
+ 	select CPU_COPY_V6 if MMU
+ 	select CPU_TLB_V6 if MMU
++	select CPU_CACHE_L210 if ARCH_MXC
+ 
+ # ARMv6k
+ config CPU_32v6K
+@@ -499,6 +501,11 @@ config CPU_CP15_MPU
+ config IO_36
+ 	bool
+ 
++config CPU_CACHE_L210
++	bool
++	help
++	  Processor has L2 cache with L210 cache controller
++
+ comment "Processor Features"
+ 
+ config ARM_THUMB
+--- linux-2.6.19.2/arch/arm/mm/Makefile	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mm/Makefile	2007-01-10 15:35:26.000000000 -0700
+@@ -30,6 +30,7 @@ obj-$(CONFIG_CPU_CACHE_V4)	+= cache-v4.o
+ obj-$(CONFIG_CPU_CACHE_V4WT)	+= cache-v4wt.o
+ obj-$(CONFIG_CPU_CACHE_V4WB)	+= cache-v4wb.o
+ obj-$(CONFIG_CPU_CACHE_V6)	+= cache-v6.o
++obj-$(CONFIG_CPU_CACHE_L210)	+= cache-l210.o
+ 
+ obj-$(CONFIG_CPU_COPY_V3)	+= copypage-v3.o
+ obj-$(CONFIG_CPU_COPY_V4WT)	+= copypage-v4wt.o
+--- linux-2.6.19.2/arch/arm/mm/proc-v6.S	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mm/proc-v6.S	2007-01-10 17:22:32.000000000 -0700
+@@ -30,6 +30,61 @@
+ #define TTB_RGN_WT	(2 << 3)
+ #define TTB_RGN_WB	(3 << 3)
+ 
++#ifdef CONFIG_CPU_CACHE_L210
++							@  RPSC
++							@  G
++							@  N
++#define SET_TTBR_ATTR(x)	orr x, x, #TTB_RGN_WB	@ 11000
++
++	.macro ENABLE_L2_CACHE
++	mcr	p15, 0, r0, c7, c10, 4		@ drain write buffer
++
++	mov	r1, #L2CC_BASE_ADDR
++	ldr	r2, [r1, #0x100]		@ ARM L210 Control
++	bic	r2, r2, #0x1
++	str	r2, [r1, #0x100]		@ disable L2
++
++	mcr	p15, 0, r0, c7, c10, 4		@ drain write buffer
++
++	/*
++	 * Configure L2 Cache:
++	 * - 128k size(16k way)
++	 * - 8-way associativity
++	 * - 0 ws TAG/VALID/DIRTY
++	 * - 7 ws DATA R/W
++	 */
++	ldr	r2, [r1, #0x104]		@ ARM L210 Auxiliary Control
++	and	r2, r2, #0xFE000000
++	orr	r2, r2, #0x00030000
++	orr	r2, r2, #0x00000024
++	str	r2, [r1, #0x104]
++
++	mcr	p15, 0, r0, c7, c10, 4		@ drain write buffer
++
++	/* Invalidate By Way */
++	ldr	r2, =0xff
++	str	r2, [r1, #0x77C]		@ ARM L210 Invalidate By Way
++
++L2_inv_loop:
++	ldr	r3, [r1, #0x77C]
++	cmp	r3, #0
++	bne	L2_inv_loop
++
++	mcr	p15, 0, r0, c7, c10, 4		@ drain write buffer
++	/* Force L2 write through */
++	ldr	r2, =0x2
++	str	r2, [r1, #0xF40]
++	/* Enable L2 */
++	ldr	r2, [r1, #0x100]		@ ARM L210 Control
++	orr	r2, r2, #0x1
++	str	r2, [r1, #0x100]
++	.endm	/* ENABLE_L2_CACHE */
++
++#else
++#define SET_TTBR_ATTR(x)
++#define ENABLE_L2_CACHE
++#endif /* CONFIG_CPU_CACHE_L210 */
++
+ ENTRY(cpu_v6_proc_init)
+ 	mov	pc, lr
+ 
+@@ -66,7 +121,22 @@ ENTRY(cpu_v6_reset)
+  *	IRQs are already disabled.
+  */
+ ENTRY(cpu_v6_do_idle)
++#ifdef CONFIG_MX3_DOZE_DURING_IDLE
++	ldr	r1, =(AIPS2_IO_ADDRESS(CCM_BASE_ADDR))
++	ldr	r2, [r1]                     @ get CCMR
++	bic	r2, r2, #(0x3 << 14)         @ LPM mask
++	orr	r2, r2, #(1 << 14)           @ Doze mode
++	str	r2, [r1]
++
++	mcr	p15, 0, r1, c7, c0, 4        @ wait for interrupt
++	nop
++	nop
++	nop
++	nop
++	nop
++#else
+ 	mcr	p15, 0, r1, c7, c0, 4		@ wait for interrupt
++#endif
+ 	mov	pc, lr
+ 
+ ENTRY(cpu_v6_dcache_clean_area)
+@@ -97,6 +167,7 @@ ENTRY(cpu_v6_switch_mm)
+ #endif
+ 	mcr	p15, 0, r2, c7, c5, 6		@ flush BTAC/BTB
+ 	mcr	p15, 0, r2, c7, c10, 4		@ drain write buffer
++	SET_TTBR_ATTR(r0)
+ 	mcr	p15, 0, r0, c2, c0, 0		@ set TTB 0
+ 	mcr	p15, 0, r1, c13, c0, 1		@ set context ID
+ #endif
+@@ -205,6 +276,7 @@ __v6_setup:
+ #ifdef CONFIG_SMP
+ 	orr	r4, r4, #TTB_RGN_WBWA|TTB_S	@ mark PTWs shared, outer cacheable
+ #endif
++	SET_TTBR_ATTR(r4)
+ 	mcr	p15, 0, r4, c2, c0, 1		@ load TTB1
+ #endif /* CONFIG_MMU */
+ #ifdef CONFIG_VFP
+@@ -217,6 +289,9 @@ __v6_setup:
+ 	mrc	p15, 0, r0, c1, c0, 0		@ read control register
+ 	bic	r0, r0, r5			@ clear bits them
+ 	orr	r0, r0, r6			@ set them
++
++	ENABLE_L2_CACHE
++
+ 	mov	pc, lr				@ return to head.S:__ret
+ 
+ 	/*
+--- linux-2.6.19.2/include/asm-arm/cacheflush.h	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/include/asm-arm/cacheflush.h	2007-01-10 15:35:26.000000000 -0700
+@@ -426,4 +426,14 @@ extern void flush_dcache_page(struct pag
+ 
+ #endif
+ 
++#ifndef CONFIG_CPU_CACHE_L210
++#define dmac_l2_inv_range(start, end)
++#define dmac_l2_clean_range(start, end)
++#define dmac_l2_flush_range(start, end)
++#else
++void dmac_l2_inv_range(dma_addr_t start, dma_addr_t end);
++void dmac_l2_clean_range(dma_addr_t start, dma_addr_t end);
++void dmac_l2_flush_range(dma_addr_t start, dma_addr_t end);
++#endif
++
+ #endif
+--- linux-2.6.19.2/include/asm-arm/mach/keypad.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.6.19.2-mx/include/asm-arm/mach/keypad.h	2007-01-10 17:09:59.000000000 -0700
+@@ -0,0 +1,28 @@
++/*
++ * include/asm-arm/mach/keypad.h
++ *
++ * Generic Keypad struct
++ *
++ * Author: Armin Kuster <Akuster@mvista.com>
++ *
++ * 2005 (c) MontaVista Software, Inc. This file is licensed under
++ * the terms of the GNU General Public License version 2. This program
++ * is licensed "as is" without any warranty of any kind, whether express
++ * or implied.
++ */
++
++#ifndef __ASM_MACH_KEYPAD_H_
++#define __ASM_MACH_KEYPAD_H_
++
++#include <linux/input.h>
++
++struct keypad_data {
++	u16 rowmax;
++	u16 colmax;
++	u32 irq;
++	u16 delay;
++	u16 learning;
++	u16 *matrix;
++};
++
++#endif /* __ARM_MACH_KEYPAD_H_ */

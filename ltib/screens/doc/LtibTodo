@@ -1,0 +1,645 @@
+= Jan 2005 =
+* DONE: Integrate kernel into the build
+ * DONE: selection of kernel
+ * DONE: selection of config
+ * DONE: back end processes (mkimage)
+* Mechanism to point to kernel headers for the bsp
+ * make sure headers are available
+* DONE: Incremental deploy
+* DONE: Figure out why: [^\s] != [\S] under en_US.UTF-8 later RH/FC?
+ [^\s]  works but [^\s] doesn't
+ This is a redhat/perl bug.  Needs a workaround (LANG=C)
+* Make patchmerge prompt for a comment and also allow named version
+* DONE: (/var/tmp) Create the LPP dir with the correct permissions.
+* DONE: use stripall - Need to add stripping of shared libs to %install, /usr/lib/rpm/brp-strip-shared is not defined on all distros (Suse8.2)
+
+* DONE: Add --dry-run option 
+* DONE: continues after you control C a download !!!
+  7apr05: this leads to partial downloads of files in the lpp VERY BAD!!!!
+
+= Thu 10th Feb 05 =
+* DONE: Make sure that there is a check for sudo on the install machine
+* DONE: Investigate 'rpm --initdb' on debian 
+ * error: cannot open Packages index using db3 - No such file or directory (2)
+  * directory /var/lib/rpm is missing
+   * FIX:
+   mkdir /var/lib/rpm
+   rpm --initdb
+* DONE: Investigate hosting on ppc-linux
+* DONE: Should be able to specified a toolchain location, without an rpm package
+* DONE: config: TOOLCHAIN_PATH default from earlier sourced .lkc file
+overides later .lkc (tqm, sandbox)
+  * need dynamic sourcing, for now don't overlap options
+* Should wget fall back to non-proxy if proxies are set
+* DONE: yes: wget-1.9.1.spec, should --sysconfdir= be /etc not %{pfx}/etc 
+* DONE: e500 cross tools won't compile vim 
+
+= Fri 18th Feb =
+* DONE: moved to local: cross compiler installed in hosts rpmdb
+* DONE: figure out a sane way of processing toolchain prefix
+ host: /usr/bin/gcc
+ targ: /opt/mtwk/usr/local/powerpc-linux/gcc-3.3.2-glibc-2.3.2/bin/$cross-gcc
+ Fix: toolchain prefix is now includes the -, so: ${cross}gcc is used
+* write a cross ldconfig, this is a large static executable
+* Think about trimming out (from minimum distro)
+    561883 ./sbin/ldconfig               yes
+    750183 ./lib/libm-2.3.2.so           maybe
+   1005725 ./lib/libstdc++.so.5.0.5      yes
+   1483498 ./lib/libc-2.3.2.so           no
+ 
+= Mon 21 Feb =
+* DONE but not happy: improved spec file lookup (spec name and dir name should not have to match)
+* DONE: On change of config, remove non-relevant packages from rfs
+* DONE: supply a single package (e.g kernel where specname if different)
+
+= Tues 22nd Feb =
+* DONE: on distclean rootfs/{dev,var} are left behind.
+ * Added mkdistclean pseudo package.
+* DONE: differentiate between sudo not found and too old
+* DONE: permissions making directory /opt/freescale (install and rpm??)
+ * use /var/tmp/freescale.  Not sure this is a great thing though
+* DONE: write permissions in host's rpm build area
+ * use host prefix's usr/src/rpm (e.g /var/tmp/freescale/usr/src/rpm)
+* DONE: cannot use rpm < 4.04, need to bootstrap install this
+* DONE: duplicate, see above: cross compilers install in host's rpm database ?
+* DONE: move lpp to /var/tmp/freescale/pkgs?
+* DONE: lkc-1.4 does not pick up defconfig
+ * Fix: new patch
+* DONE: lkc-1.4 package core dumps on RH9
+
+= Weds 23rd Feb =
+ * DONE: If working on platorm, builds twice (host and target are the same)
+ * DONE: -f is incorrectly applied to all host side packages
+ * print a warning if the nfs directory is not exported, tftp link not made
+ * DONE: check to make sure packages are erased before installed
+
+= Thurs 24th Feb =
+ * DONE: Press Enter to continue" should check "--batch" cmd line option?
+  * Note: distclean is an exception!!!
+ * REJECT: (use &> logfile or script) Re-direct to a logfile (--logfile)
+
+= Fri 25th Feb =
+ * DONE: add md5sum check to downloads
+
+= Mon 28th Feb =
+ * DONE: -p <package> should build even if the config disables the package
+
+= Weds 2nd Mar =
+ * prevent rpm from stripping .a files during the install section
+ * DONE: LD_ASSUME_KERNEL=2.2.5 to disable NPTL on RH9?
+  * only needed for the host side rpm-fs package so far
+
+= Thu 3rd Mar =
+ * DONE: move spoof directory into the /var/tmp/freescale generic (shared) area
+ * DONE: profiles don't work combined with --preconfig unless the configure script
+ is run.  This will be needed for unattended builds to vary from min to max
+ configurations
+ * DONE, -p sets -f: -m scxxxx should imply -f
+
+= Fri 4th March =
+ * DONE: scdeploy should use the '%Files' clause from the original, this
+ is needed to get the right permissions on files (e.g busybox)
+ * if there is no mapping for a CONFIG_PKG_xxx, the selection is
+ silently skipped, there should be at least a warning
+
+= Mon 7th March =
+ * DONE: ltib doesn't work well over NFS as rpmdb can't be used on an
+ NFS directory due to locks over NFS.
+  * Work around by changing dbpath in .ltibrc
+
+= Weds 9th March = 
+ * gpp should be possible as a list of places, and support (intelligently)
+ local directories (e.g cdrom, or hard links to a local dir)
+
+= Thurs 10th March =
+ * DONE: fix c++ uclibc compiler build
+ * send uclibc toolchain build patch to open source
+ * DONE: removed fakeroot from ltib:
+ /opt/Embedix/usr/local/bin/fakeroot conflicts with ltib if using 
+ toolchains from there
+ * DONE: /opt/Embedix/tools/bin/rpm conflicts with ltib if using toolchains 
+ from there
+  * explicit use of /var/tmp/freescale/usr/bin/rpm
+
+= Mon 14th March =
+ * DONE: if you swap profile, you should do a full clean first (and remove
+ existing packages).  Else you get problems, for instance
+ BASE_LIBS may have been installed for uclibc and then you call
+ out a profile using a glibc toolchain.  The builds will fail as
+ the wrong libraries are found in the rootfs.
+
+ * DONE: rpm cannot delete stale BuildRoot if build by another user, the +t
+ flag on the directory prevents this.
+  * Override and put BuildRoot to /var/tmp/freescale/var/tmp/ ?
+  * also BuildRoot is now withing the user's ltib area (tmp).
+
+= Tues 15th March =
+ * DONE: remove  mtwk-powerpc-gcc-3.3.2-glibc-2.3.2-0.25-2.i686.rpm
+ from PQI flags
+ * condition main.lbc toolchain options so that you can't select
+ gcc-3.4 for linux-2.4 kernels (they won't compile)
+
+= Fri 18th March =
+ * DONE: automake can't be built (on rh7.3) as it needs autoconf >= 2.54
+ added autoconf to the host tools
+
+= Mon 21st March =
+ * DONE: make the host side directory permissions for <pfx>/usr/src/rpm/*
+ writable for all users
+ * DONE: make script die if it can't make symlinks to SOURCES (~ line 314)
+
+= Weds 23rd March =
+ * DONE: install of host packages (before mconf) too verbose.
+ * rpm arch compat IA32 for IA64 (handle during initial install)
+ * REJECT: glibc needs per-platform handling completed
+  * We only use libc from the cross toolchain.
+
+= Weds 30th March =
+ * DONE: Need defconfig for imx21ads
+ * DONE: Nice to have: detect platform switch and abort.
+ * DONE: If an rcfile is specified, load_system_config() should not look for other files (~/.ltibrc).
+ * DONE: Abort if a specified rcfile does not exist (ex: "--rcfile noSuchFile").
+ * Check if 'conf' $cf->{conf} exists before using. 
+ * DONE: Nice to have: option to print supported platforms, like: "ls config/platform/ | grep -v host | grep -v sandbox | grep -v CVS".
+  * This is presented when you first run ltib, or after a distclean
+
+= Thur 31st March =
+ * DONE: add warning if cf->{gpp_url} is not set. (also catch others)
+ * DONE: add --version|V option
+ * DONE: clean out Metrowerks (e.g in etc/issue in skell) 
+ * REJECT: (forgot what this is) --dry-run fails if 'conf' not in path
+ * --dry-run downloads packages (which doesn't seem very "dry").  Would be nice to know what will be downloaded though.
+ * DONE (I think): (bug) After fresh install, get confusing build error
+   "spoofing is not set up at ./ltib line 1005."
+  Problem is that the directory /var/tmp/freescale/usr/spoof does not exist.
+
+= Mon 4th April =
+ * REJECT see 5th May: rebuild of host package after spec file change
+ * DEFER: in sandbox bootstrap, put prefix back to /usr (not /var/tmp/freescale/...) 
+ * DONE: build rpm should be {pfx}/var/lib/rpm not {pfx}/usr/var/lib/rpm
+ * need to figureout how to remove u-boot-1.1.2-tqm8xxlds.patch (see TechLog)
+
+= Wed 6th April =
+ * find a simple and sane way to pass the V=1 flag to kernel builds
+ maybe a common way to pass MAKEFLAGS ???
+ * 'make dep' is not needed for 2.6.x kernels
+
+= Fri 8th April =
+ * DONE: move busybox configuration into the package list config area
+ * DONE: configure time dependency checks
+   * DEPLOYMENT_UBOOT_KERNEL  now depends ! KERNEL_NONE
+ * put in a ramdisk size limit option:
+ currently: mount -t $TMPFS rwfs  /mnt/rwfs -o size=512k
+
+= Tue 12th April =
+ * make build compiler (easily) changable
+ * DONE: add Perl package
+ * DONE: see LtibFaq: write a "howto" to change/add a package (kernel/uboot)
+
+= Fri 15th April =
+ * DONE: put a check in for the rpm directory being nfs
+
+= Thurs 21st April =
+ * DONE: /tmp/host_config.log -> $cf->{top}/host_config.log
+ * DONE: Changing ltib config does not force a ramdisk rebuild
+ * DONE: touch of merge/foo does not force a ramdisk rebuild
+ * REJECT: specify the rootfs directory in the menuconfig?
+ * REJECT: remove the 'cross compiler' option from busybox ?
+ * DONE: re-order the package list alphanumerically.
+
+= Fri 22nd April = 
+ * REJECT: move libc selection to userspace.lkc ??
+  * This alters choices for toolchain so cannot move.
+ * DONE: install a known host rpm and turn of perl dependency script
+
+= Tues 26th April =
+ * DONE: handle non-contigous patch numbers
+ * DONE: add gdb patches for fussy gcc (;)
+ * REJECT: (can't repeat) libgcc_s.so.1 is not found in /lib, so busybox
+ needsto be static.
+ * re-check addsrpms mode
+ * DONE: add a find, page up/down to lkc
+ * DONE: setup mailing lists on sourceforge
+
+= Thurs 28th April =
+ * DONE: add strace package
+ * importing Debian package
+ * Look into why ltib (rpm) stats all filesystems (rpm nfs)
+ * DONE: add noredirect|N flag - useful for autobuilding and debug
+ * DONE: fix redhat-8.0's lack of support for relocatable packages
+ * DONE: add CFLAG injection to spoofing mechanism
+
+= Thurs 5th May =
+ * DONE: updates to spec file should not trigger build for host 
+ * DONE: prevent patchmerge from going to gpp, use a dated patch instead
+
+= Fri 6th May =
+ * DONE: actually 6.2-e500 branch: Add gdb-6.3
+ * DONE: Add cross-gdb/gdbserver pair
+ * DONE: Release mechanism that encapsulates sources and/or binaries
+ 
+= Mon 9th May =
+ * REJECT: (what is this ?)  Add tarball->rpm import mechanism
+ * DONE: auto-generate top level main.lkc bsp list (for autobuilding)
+
+= Wed 18th May =
+ * add a mechanism to warn about package config selections that don't have
+ a mapping
+ * DONE: add a mechanism to detect config change for a package and to force a
+ re-build/install
+ * DONE: fix bug for large ramdisks (ext2 blocksize incorrect)
+
+= Thurs 19th May =
+ * DONE: update all kernel/busybox specs to use .dev version of configs
+ * DONE: Config state change handling (force rebuilding/clean etc)
+ * DONE: Binary release mechanism
+
+= Fri 20th May =
+ * DONE: files are left on the rootfs when they are removed from a package
+
+= Mon 23rd May =
+ * DONE: Fixup root filesystem size calculation
+ * DONE: Add deployment option to allocate extra free space on target image
+
+= Weds 25th May =
+ * DONE: add tcpdump package (also libpcap which is required)
+
+= Thurs 26th May = 
+ * DONE: Need a way to select alternate CFLAGS based on toolchain selection.
+ default "xxx" if is no good if there is a prompt string (lkc-defaults-x.patch)
+ * Generalize arch in mk_uboot_kernel().  mkimage call has '-A ppc', but
+ should be $pcf->{LINTARCH} (passed in as an arg).
+ 
+= Fri 27th May =
+ * DONE: add vsftpd
+
+= Mon 6th June = 
+ * Improve/separate host side packages from target (needs thought).
+
+= Thu 9th June =
+ * Look into why some packages (gdb) got left on rootfs after a distclean 
+ * u-boot broken for tqm823l under uclibc build (and mabe glibc):
+ Linking problem: Error 139
+ * DONE: e2fsprogs fakeroot are broken under uclibc
+ * DONE: automake-1.7.6 fakeroot-0.4.4  libusb-0.1.8  util-linux-2.12
+ are broken on rigoletto under debian.
+  * except for fakeroot, all are okay now. fakeroot fails on all cross builds
+ * DONE: update all platforms and kernel specs to include PKG_KERNEL_WANT_HEADERS
+
+= Fri 10th June =
+ * DONE: u-boot-tools fails under mpc8548cds on bf3
+ * DONE: cannot build kernels if module support turned off
+ * DONE: strace fails on tqm823l
+ * DONE: enable sysfs in 8548
+
+= Mon 13th June =
+ * REJECT: option to leave uncompress ext2 image
+ * turn 'bootloader' selection into a choicelist like the kernel.
+ * genext2fs makes /lost+found 461824 which seems too big (expect 16384) 
+ * DONE: remove S05syslog from busybox ?
+
+= Tues 14th June =
+ * investigate why udhcp output goes to stdout even though syslog is on ?
+ * update all busybox.configs (CONFIG_FEATURE_SHADOWPASSWDS=y)
+
+= Weds 15th June =
+ * DONE: mpc8548cds release: warnings about user seh for dev package
+ * DONE: If I don't start ltib from within ltib directory, it will abnormally
+ exit. Log are here
+
+= Mon 20th June =
+ * DONE: LTIB incorrectly says "Abnormal exit   : no" with --continue
+
+= Tues 21st June =
+ * add a test for zlib before building host packages (needed by rpm-fs)
+ * DONE: remove texinfo build from host side, but do a dep check before build.
+ * DONE: genext2fs dies: aclocal-1.8: command not found.  There is a race
+ condition, both configure and aclocal.m4 get touched, sometimes this
+ leads to configure being rebuilt which then fails (aclocal).
+
+= Weds 22nd June =
+ * psmisc fails on uclibc: fuser.c:257: undefined reference to `libintl_gettext'
+ 
+= Fri 24th June =
+ * DONE: SERIOUS: scdeploy causes a kernel extract/rebuild. Only affected
+ platforms using local pkg_maps, so not that serious.
+ * DONE: list specfile names for -m listpkgs
+ * the spec file names ./ltib -p kernel does not cause the deploy script to run
+ * allow setting of rootfs target directory (dev_image) from ./ltib -m config
+ * DONE: make sure user has write permissions on dev_image (not root)
+ * DEPLOYMENT_U_BOOT_KERNEL require a dummy entry for PKG_U_BOOT = ""
+ on platforms that don't have u-boot
+ * DONE: updated openssl to 0.9.7g (need CF sec patch from Matt W).
+ * DONE: add rsync-2.6.5
+ * DONE: ltib now lists packages that fail to build
+ * DONE: scbuild & scinstall  now implies -f
+ * DONE: Add a list of supported host platforms to the Faq
+ * DONE: mpc8548cds defconfig does not have login/tty enabled
+ set to: "::respawn:/sbin/getty -L ttyS1 115200 vt100"
+ * DONE: need to add System.map
+ * investigate whether network config values can be hidden if dhcp
+ * make install tests better: ncurses-devel needed, not just ncurses
+ * DONE: Add flash filesystem support (jffs2)
+
+
+= Thu 5th July =
+ * rpm-fs temp dir: /var/tmp/freescale/var/tmp/ has wrong perms:
+ drwxr-xr-x    2 root     root
+ Strange.  There is nothing wrong with the rpm, something else
+ looks to have clobbered this.  Also on bf3 
+ /var/tmp/freescale/usr/src/rpm/BUILD got clobbered/missing
+ Probably same issue.  Reported to happen on RH9.0 after a distclean
+ The problem has been traced to tmpwatch being run by cron.
+ * make sure filenames are limited to 64 chars as reports of truncation
+ on iso image (8548 spe toolchain)
+ * DONE: fixup mtd-utils-flash_eraseall.patch, remove 'static' from
+ static int target_endian (at least).  FC4 host compiler strictness.
+ * DONE: fixup all packages to put man pages into /usr/share/man not /usr/man
+
+= Weds 13th July =
+ * gcc build fail on imx21: you can build gcc-3.4 with gcc-3.3
+
+= Thurs 14th July =
+ * DONE (not a bug) on installation, say it's going to make the ltib directory
+ * DONE: -m distclean leaves some artifacts (rootfs).  Added a distclean
+ pseudo package which mops up this stuff.
+
+= Fri 15th July =
+ * DONE: add a means to search and jump to the searched item
+ * FC-2 dies when building host pkgs due problems with the autoconf
+ we installed. 
+
+= Wed 20th July =
+ * need to rebuild uclinux toolchain to include UCLIBC_HAS_RPC
+
+= Thu 21st July =
+ * DONE: add 'noauto' for /mnt/rwfs in /etc/fstab
+
+= Mon 25th July =
+ * rationalise duplicated (df from busybox and df from coreutils etc).
+ * find a better method of calculating the number of inodes for deploy
+ * fix df in coreutils (needs /etc/mtab)
+ * generate a listing that maps files to packages, add a cross reference for which util is in which package
+
+= Fri 29th July =
+ * ltib -m release left the CVS dir under config/platform/mpc7448taiga
+
+= Tue 9th Aug =
+ * add explanation about blanks/stickiness in lkc
+ 
+= Weds 24th Aug =
+ * DONE: you cannot set toolchain path and toolchain prefix the lkc-default
+ patch looks buggy (new patch from Chris)
+ * DONE: fix md5sum generation/checking
+
+= Weds 31st Aug =
+ * DONE: should not be able to do --preconfig with the -p <package> option.
+ * ./ltib --preconfig config/platform/mpc8548cds/tor-hsv_def.config --configure --batch does set overriden defaults such as CONFIG_PKG_KERNEL_PRECONFIG
+ This has been traced to the apparently correct behaviour of lkc.  If
+ a string item does not have a prompt, then it's saved valued in a .config
+ can be overriden by a 'calculated' value when you re-run mconf.  The
+ solution seems to be to add a prompt to any string values that need
+ to be kept from the --preconfig file.
+
+= Mon 5th Sept =
+ * DONE: skell: rcS restarts (f_portmap, settime), /etc/passwd, /etc/fstabroofs,
+  * DONE: /var/tmp /permissions are wrong (should be 777)
+  * /etc/hosts does not get set from values in the config session
+
+= Weds 7nd Sept =
+ * find a sane way of editing target config files (like inetd.conf)
+
+= Tues 13th Sept =
+ * DONE: the parsing of PLATFORM_DIR in ltib_config only works if --preconfig
+ is a relative path (e.g config/platform/<bsp>/<preconfig>
+
+= Mon 19th Sept =
+ * ppp_upload.cgi: consider clearing textbox after upload.  Also move
+ radio button (internal company use...) before the textbox.  Change
+ Submit Query to 'upload'
+
+= Thu 22nd Sept =
+ * re-check the md5sum on each build, even when package was not downloaded ?
+ 
+= Tues 27th Sept =
+ * DONE: fix copy_all_sources: copy file.md5, not MD5SUMS
+
+= Fri 30th Sept =
+ * DONE: verify pkg_map is working (Ross W: loging as root  14th Sept 2005)
+ No problem found.
+ * DONE: Michael Reiss reports patchmerge bug (2.6.11-pq38) 16th patch.
+ Fixed, needed a numeric sort.
+
+= Mon 3rd Oct =
+ * DONE: ./ltib -f should removed built rpms so that subsequent runs fail
+ if a package fails to build and -f is not issued
+ * DONE: add a HEAD method to try gpp/ppp before download
+ * DONE: add a method to test for files in lpp not in the ppp/gpp so that
+ after development, developers know what they may need to upload
+
+= Fri 7th Oct =
+ * DONE: ltib does not auto-detect toolchain upgrades in the .config file
+
+= Thur 20th Oct =
+ * Need to figure out how to support building external modules for 2.6
+ * After a clean, ltib fails as tries to install u-boot-tools after u-boot and glibc has not yet been installed (package match/globbing problem)
+ * Merge sysconfig into skell (suggested by Joe D'Abbraccio)
+ * Revert non-parsing of preconfigs once the string defaults bug in lkc has
+ been fixed.
+
+= Tues 25th Oct =
+ * Add a flag to drop into the spoofing environment
+ * A failed toolchain install (download/md5) does not re-process full rebuild
+ on next pass.  Need to defer touching of .config to sucessfull exit
+ * fix inetd, remove the /usr/sbin/tcpd stuff
+
+= Thu 3rd Nov =
+ * Add a deprecated warning to bin/listpkgs
+
+= Wed 9th Nov =
+ * -m scbuild installs rpm if a binary rpm has be previously built
+
+= Fri 25th Nov =
+ * DONE: add date to lkc's output into the config file.
+ * add option to save LTIBs config to the rootfs
+
+= Mon 28th Nov =
+ * ftpd from inetutils is reduntant (should use vsftpd) remove.
+
+= Tue 29th Nov =
+ * build of skell must trigger build of sysconfig
+
+= Fri 2nd Dec =
+ * ./ltib -p <pkg> should warn if package is not mapped in the BSP
+ * ./ltip -p <pkg> should do package stem matching so ./ltib -p u-boot
+ will find the right one for your configured BSP.  At the same time
+ change '-s' to me -s <spec> to allow unmapped packages to be built
+ for a BSP.
+
+= Wed 7th Dec =
+ * upgrade gdb -> 6.3 and merge in any patches from older version
+ * put the bootloader at the toplevel like the kernel
+
+= Mon 12th Dec =
+ * LTIB should warn if there is a local pkg_map override for an entry
+ that is not in common/pkg_map (can't override if there is nothing there
+ to override in the first place).
+
+= Tues 20 Dec =
+ n additional files for the release (toolchains for instance)
+
+
+= 2006 =
+
+= Thur 19 Jan 2006 =
+
+ * Add string prompt for kernel config to all BSPs that don't have this
+ * add a directory /flash that is used for flash staging, make world writable
+
+= Fri 10th Feb =
+ * Enforce re-install of higher order packages that share common files
+ to lower order packages that get re-built and re-installed
+
+ * Force a re-config if the defconfig is newer that the .config for 
+ a target
+
+= Tues 14th Feb =
+ * detect ftp_proxy and http_proxy environment variables
+ * allow the release of multiple targets in a -m release
+
+= Weds 15th Feb =
+ * Copy unselected toolchains into the release iso
+ * propogate mconf/menuconfig down to busybox, uclibc, kernel spec files
+ so non interactive builds work.
+
+= Mon 27th Feb =
+ * DONE: Make sure files are on the PPP during a ltib -m release
+ * Change patchmerge to choose the name and also request a comment
+
+= Tues 28th Feb =
+ * Overhall the kernel.spec files and main.lkc so that we pass the
+ correct kernel target in from SYSCFG_KTARG (e.g uImage, or zImage).
+ These should be conditioned in the platforms main.lkc so that if
+ you select u-boot, you get something different from redboot etc.
+ Also, we need to take care of which kernel we copy dependant on 
+ that selection.
+
+= Fri 3rd March =
+ * preset password for root, and pre-set user account
+
+= Mon 6th March =
+ * depmod script gives annoying message if /lib/modules/... is missing
+ * support for timezones
+ 
+= Fri 10th March =
+ * tftp and tftpd reported not to work
+ * add lrzsz package
+
+= Mon 13th March =
+ * fix copy_all_sources to pick up unselected kernels/u-boot/pkg_map
+ * fix bin/listpkginfo to only list potentially referenced spec files
+ * update all kernel/busybox specs to use .dev version of configs (again)
+ * add 's' to search to lkc
+
+= Mon 27th March =
+ * check in spec-files that we're not being run in background (e.g.
+  mconf/conf).
+ * Multiple ppp/gpp sources in %ppp_url, %gpp_url (e.g. 1 per line)
+
+= Weds 28th March =
+ * DONE: remove kernel-2.6.12-pq38.spec 
+
+= Tues 4th April =
+ * check that all spec files include rm -rf $RPM_BUILD_ROOT at
+ the start of the install phase, and in the %clean.  This makes
+ sure the staging area is clean during incremental trials
+
+= Tues 11th April =
+ * Ltib fails to install on FC-5 (rpm-fs LD_ASSUME_KERNEL issues)
+
+= Thur 14th April =
+
+ * Don't make device nodes if using devfs/udev etc (genext2fs, mkfs.jffs2).
+ * Add vlan/ifenslave: vlan is already in busybox.
+ * change skell inetd.conf to match inetutils (tftpd and other daemons)
+ * DONE: fix ./ltib -m config on first install (e.g. host package install)
+ * move ip in busybox from bin -> sbin
+
+= Mon 15th May =
+ * need to fix -m config, should not be a mode, change to --configonly ?
+ * depmod.pl output works with busybox, but not module_init_tools
+ 
+= Weds 17th May =
+ * DONE: patchmerge is not expanding tokens for patch: %{name}-%{version}-1147879887.patch
+
+= Weds 24th May =
+ * /tmp/rwfs size should be configurable in LTIB.
+
+= Thurs 25th May =
+ * after interactively re-configuring busybox, it still prompts for input
+ This happens if you update busybox and not your config and you exit
+ busybox configure without saving the new config.  This is actually
+ expected behaviour
+
+= Fri 26th May = 
+ * Add a section in the FAQ on how to add patches to ltib
+ * figure out what rpm/BUILD/pax_global_header is
+
+= Thu 6th July =
+ * DONE: Investigate yacc (byacc) dependency on Suse9.3 reported by Jafar
+ bison was not installed so configure fell back to yacc (byacc).  Later
+ ltib versions have an explicit depedency on bison.
+ 
+= Fri 4 Aug =
+ * on toolchain switch do a clean of RPMs first to de-populate the rootfs
+
+= Mon 14th Aug =
+ * Add an option to ppp_upload.cgi to ask not to review (or similar)
+ * Add an option to twiki scripts to allow review on a branch
+ * Figure out how to pre-build the ssh-keygen stuff at build time
+ * look at BB seq options that are missing (why do we need the real thing)
+ * FAQ entry about: can I disable the kernel build?
+ * Add section in FAQ about using ltib -m shell?
+ * make sure install directory is writable ? (can't remember)
+
+= Weds 6th Sept =
+ * DONE: Add distcc support?
+
+= Mon 18th Sept =
+ * make distclean work even if config info is lost
+ * add release info into the rootfs in a file /etc/ltib-release 
+
+= Weds 20th Sept =
+ * Add pre-checkin script for copyrights etc (for ltib)
+
+= Fri 29th Sept =
+ * patchmerge needs to insert at the end of he patch list!! (see qtopia)
+
+= Tue 17th Oct =
+ * Python does not build all modules (reported for imx), e.g. time
+ repeat with import time
+
+= Thur 19th Oct =
+ * A toolchain change in cvs updated defconfig did not cause a full rebuild?
+
+= Mon 23rd Oct =
+ * Change of toolchain should force a clean of the rootfs as well as
+ a full rebuild.  If you don't, unremoved interface libraries get linked
+ and can cause problems (e.g uClibc to glibc TC causes depend on libc.so.1)
+
+ * imx31:184: df command can't find the root device on a jffs2 rootfs deployment
+ Another solution is to patch /etc/udev/rules.s/10-mx31.rules
+on the target as follows:
+-KERNEL=="mtdblock*",   NAME="mtdblock/%n"
++KERNEL=="mtdblock*",    NAME="mtdblock/%n",     SYMLINK+="mtdblock%n"
+
+ * imx31:183@ LTIB "device nodes" package should be udev aware
+
+= Weds 25th Oct =
+ * DONE: real devfsd won't start with busybox style devfs.conf file (from skell)
+ added an install dependency in ltib for this.
+ * DONE: The real 'top' (psmisc) does not show proper output (but moves cursor)
+ upgraded package to 3.2.7
+
+= Tue 28th Nov =
+ * add rpm database to target?

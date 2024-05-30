@@ -1,0 +1,47 @@
++Steve Papacharalambous stevep@freescale.com 02 October 2006:
++
++This patch fixes the error:
++[snip]
++rm -f ./libgcov.a
++ar  rc ./libgcov.a libgcc/./_gcov.o libgcc/./_gcov_merge_add.o
++libgcc/./_gcov_me
++rge_single.o libgcc/./_gcov_merge_delta.o libgcc/./_gcov_fork.o
++libgcc/./_gcov_e
++xecl.o libgcc/./_gcov_execlp.o libgcc/./_gcov_execle.o
++libgcc/./_gcov_execv.o li
++bgcc/./_gcov_execvp.o libgcc/./_gcov_execve.o
++ranlib ./libgcov.a
++make[2]: Leaving directory `/export/home/devel/build/gcc-3.4.3/objdir/gcc'
++echo timestamp > stmp-multilib
++make[1]: Leaving directory `/export/home/devel/build/gcc-3.4.3/objdir/gcc'
++/bin/bash: -c: line 5: syntax error: unexpected end of file
++make: *** [multilib.out] Error 2
++[/snip]
++
++This failure is seen when using make-3.81, ref:
++http://gcc.gnu.org/bugzilla/show_bug.cgi?id=27023
++
++The patch was derived from:
++http://gcc.gnu.org/bugzilla/attachment.cgi?id=11199&action=view
+--- gcc-3.4.3/Makefile.in.orig	2006-10-02 16:52:00.000000000 +0100
++++ gcc-3.4.3/Makefile.in	2006-10-02 16:52:49.000000000 +0100
+@@ -23655,7 +23655,7 @@
+ 	@r=`${PWD_COMMAND}`; export r; \
+ 	echo "Checking multilib configuration..."; \
+ 	$(CC_FOR_TARGET) --print-multi-lib > multilib.tmp 2> /dev/null ; \
+-	$(SHELL) $(srcdir)/move-if-change multilib.tmp multilib.out ; \
++	$(SHELL) $(srcdir)/move-if-change multilib.tmp multilib.out ;
+ 
+ # Rebuilding Makefile.in, using autogen.
+ AUTOGEN = autogen
+--- gcc-3.4.3/Makefile.tpl.orig	2006-10-02 16:52:20.000000000 +0100
++++ gcc-3.4.3/Makefile.tpl	2006-10-02 16:53:04.000000000 +0100
+@@ -1408,7 +1408,7 @@
+ 	@r=`${PWD_COMMAND}`; export r; \
+ 	echo "Checking multilib configuration..."; \
+ 	$(CC_FOR_TARGET) --print-multi-lib > multilib.tmp 2> /dev/null ; \
+-	$(SHELL) $(srcdir)/move-if-change multilib.tmp multilib.out ; \
++	$(SHELL) $(srcdir)/move-if-change multilib.tmp multilib.out ;
+ 
+ # Rebuilding Makefile.in, using autogen.
+ AUTOGEN = autogen

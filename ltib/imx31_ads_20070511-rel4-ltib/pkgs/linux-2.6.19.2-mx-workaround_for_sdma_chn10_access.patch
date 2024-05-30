@@ -1,0 +1,44 @@
+CR: TLSbo86520
+Patch name: TLSbo86520_SW_Workaround_For_SDMA_Chnl0_Access_issue.patch
+Date: Thu Mar 1 14:45:56 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: Software workaround for SDMA hardware bug (TLSbo86232)
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiHigh.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiHigh.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiHigh.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiHigh.c	2007-04-25 17:38:11.000000000 -0600
+@@ -1789,9 +1789,9 @@ int retvalue = IAPI_SUCCESS;  /* Variabl
+    /* Set Command Channel (Channel Zero) */
+    SDMA_CHN0ADDR = 0x4050;
+    
+-   /* Set bits of CONFIG register*/
++   /* Set bits of CONFIG register but with static context switching */
+    SDMA_H_CONFIG = (config_p->dspdma << 12) | (config_p->rtdobs << 11) |
+-                    (config_p->acr << 4) | (config_p->csm);
++                    (config_p->acr << 4) | (0);
+    
+    /* Send the address for the host channel table to the SDMA*/
+    SDMA_H_C0PTR = (unsigned long)iapi_Virt2Phys(iapi_CCBHead);
+@@ -1799,8 +1799,13 @@ int retvalue = IAPI_SUCCESS;  /* Variabl
+    if(ram_image != NULL)
+    {
+       retvalue = iapi_SetScript(cd_p, (void*)ram_image, code_size,  
+-                                start_addr);   
++                                start_addr);
+    }
++
++   /* Set bits of CONFIG register with given context switching mode */
++   SDMA_H_CONFIG = (config_p->dspdma << 12) | (config_p->rtdobs << 11) |
++                    (config_p->acr << 4) | (config_p->csm);
++
+ #endif
+ #ifdef DSP
+    /* Send the address for the host channel table to the SDMA*/
+@@ -1810,6 +1815,7 @@ int retvalue = IAPI_SUCCESS;  /* Variabl
+    return retvalue;
+ }
+ 
++
+ /* ***************************************************************************/
+ /**High layer interface for starting a channel
+  *

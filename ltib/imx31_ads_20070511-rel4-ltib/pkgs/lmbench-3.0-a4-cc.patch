@@ -1,0 +1,12 @@
+diff --exclude CVS -uNr lmbench-3.0-a4/src/Makefile lmbench-3.0-a4.modified/src/Makefile
+--- lmbench-3.0-a4/src/Makefile	2004-08-10 05:43:22.000000000 -0500
++++ lmbench-3.0-a4.modified/src/Makefile	2005-08-09 03:14:42.000000000 -0500
+@@ -22,7 +22,7 @@
+ # I finally know why Larry Wall's Makefile says "Grrrr".
+ SHELL=/bin/sh
+ 
+-CC=`../scripts/compiler`
++#CC=`../scripts/compiler`
+ MAKE=`../scripts/make`
+ AR=ar
+ ARCREATE=cr

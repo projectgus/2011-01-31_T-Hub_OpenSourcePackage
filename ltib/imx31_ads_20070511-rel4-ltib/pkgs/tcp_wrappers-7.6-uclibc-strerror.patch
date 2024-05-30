@@ -1,0 +1,28 @@
+Steve Papacharalambous <stevep@freescale.com> 14 September 2006
+
+Fixes:
+percent_m.c: In function `percent_m':
+percent_m.c:35: error: `sys_nerr' undeclared (first use in this function)
+percent_m.c:35: error: (Each undeclared identifier is reported only once
+percent_m.c:35: error: for each function it appears in.)
+percent_m.c:36: error: `sys_errlist' undeclared (first use in this
+function)
+make[1]: *** [shared/percent_m.o] Error 1
+make[1]: Leaving directory
+`/home/stevep/work/ltib/rpm/BUILD/tcp_wrappers_7.6'
+make: *** [linux-uclibc] Error 2
+
+Fix generated in house.
+
+diff --exclude CVS -uNr tcp_wrappers_7.6/Makefile tcp_wrappers_7.6.modified/Makefile
+--- tcp_wrappers_7.6/Makefile	2006-09-14 08:39:11.000000000 +0100
++++ tcp_wrappers_7.6.modified/Makefile	2006-09-14 08:38:20.000000000 +0100
+@@ -160,7 +160,7 @@
+ 	@make REAL_DAEMON_DIR=$(REAL_DAEMON_DIR) STYLE=$(STYLE) \
+ 	LIBS=$(MYLIB) RANLIB=ranlib ARFLAGS=rv AUX_OBJ=weak_symbols.o \
+ 	NETGROUP=-DUSE_GETDOMAIN TLI= VSYSLOG= BUGS= all \
+-	EXTRA_CFLAGS="-DSYS_ERRLIST_DEFINED -DHAVE_WEAKSYMS -D_REENTRANT"
++	EXTRA_CFLAGS="-DHAVE_STRERROR -DHAVE_WEAKSYMS -D_REENTRANT"
+ 
+ gnu:
+ 	@make REAL_DAEMON_DIR=$(REAL_DAEMON_DIR) STYLE=$(STYLE) \

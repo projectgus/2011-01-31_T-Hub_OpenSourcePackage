@@ -1,0 +1,145 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkEditableText</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkDocument.html" title="AtkDocument"><link rel="next" href="AtkGObjectAccessible.html" title="AtkGObjectAccessible"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkDocument.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkGObjectAccessible.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkEditableText"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkEditableText</h2><p>AtkEditableText &#8212; The ATK interface implemented by components containing user-editable text content.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id251982"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkEditableText.html#AtkEditableText-struct">AtkEditableText</a>;
+gboolean    <a href="AtkEditableText.html#atk-editable-text-set-run-attributes">atk_editable_text_set_run_attributes</a>
+                                            (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             <a href="AtkText.html#AtkAttributeSet">AtkAttributeSet</a> *attrib_set,
+                                             gint start_offset,
+                                             gint end_offset);
+void        <a href="AtkEditableText.html#atk-editable-text-set-text-contents">atk_editable_text_set_text_contents</a>
+                                            (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             const gchar *string);
+void        <a href="AtkEditableText.html#atk-editable-text-insert-text">atk_editable_text_insert_text</a>   (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             const gchar *string,
+                                             gint length,
+                                             gint *position);
+void        <a href="AtkEditableText.html#atk-editable-text-copy-text">atk_editable_text_copy_text</a>     (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             gint start_pos,
+                                             gint end_pos);
+void        <a href="AtkEditableText.html#atk-editable-text-cut-text">atk_editable_text_cut_text</a>      (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             gint start_pos,
+                                             gint end_pos);
+void        <a href="AtkEditableText.html#atk-editable-text-delete-text">atk_editable_text_delete_text</a>   (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             gint start_pos,
+                                             gint end_pos);
+void        <a href="AtkEditableText.html#atk-editable-text-paste-text">atk_editable_text_paste_text</a>    (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             gint position);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GInterface
+   +----AtkEditableText
+</pre></div><div class="refsect1"><h2>Known Implementations</h2><p>
+AtkEditableText is implemented by
+ <a href="AtkNoOpObject.html" title="AtkNoOpObject">AtkNoOpObject</a>.</p></div><div class="refsect1"><h2>Description</h2><p>
+<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> should be implemented by UI components which contain
+text which the user can edit, via the <a href="AtkObject.html" title="AtkObject">AtkObject</a> corresponding to that
+component (see <a href="AtkObject.html" title="AtkObject">AtkObject</a>).
+</p><p>
+<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> is a subclass of <a href="AtkText.html" title="AtkText">AtkText</a>, and as such, an object which
+implements <a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> is by definition an <a href="AtkText.html" title="AtkText">AtkText</a> implementor as well.
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkEditableText-struct"></a>struct AtkEditableText</h3><a class="indexterm" name="id254093"></a><pre class="programlisting">struct AtkEditableText;</pre><p>
+The AtkEditableText structure does not contain any fields.
+
+</p></div><hr><div class="refsect2"><h3><a name="atk-editable-text-set-run-attributes"></a>atk_editable_text_set_run_attributes ()</h3><a class="indexterm" name="id254118"></a><pre class="programlisting">gboolean    atk_editable_text_set_run_attributes
+                                            (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             <a href="AtkText.html#AtkAttributeSet">AtkAttributeSet</a> *attrib_set,
+                                             gint start_offset,
+                                             gint end_offset);</pre><p>
+Sets the attributes for a specified range. See the ATK_ATTRIBUTE
+macros (such as ATK_ATTRIBUTE_LEFT_MARGIN) for examples of attributes 
+that can be set. Note that other attributes that do not have corresponding
+ATK_ATTRIBUTE macros may also be set for certain text widgets.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>text</tt></i> :</span></td><td> an <a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a>
+</td></tr><tr><td><span class="term"><i><tt>attrib_set</tt></i> :</span></td><td> an <a href="AtkText.html#AtkAttributeSet">AtkAttributeSet</a>
+</td></tr><tr><td><span class="term"><i><tt>start_offset</tt></i> :</span></td><td> start of range in which to set attributes
+</td></tr><tr><td><span class="term"><i><tt>end_offset</tt></i> :</span></td><td> end of range in which to set attributes
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> <tt>TRUE</tt> if attributes successfully set for the specified
+range, otherwise <tt>FALSE</tt>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-editable-text-set-text-contents"></a>atk_editable_text_set_text_contents ()</h3><a class="indexterm" name="id254373"></a><pre class="programlisting">void        atk_editable_text_set_text_contents
+                                            (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             const gchar *string);</pre><p>
+Set text contents of <i><tt>text</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>text</tt></i> :</span></td><td> an <a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a>
+</td></tr><tr><td><span class="term"><i><tt>string</tt></i> :</span></td><td> string to set for text contents of <i><tt>text</tt></i>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-editable-text-insert-text"></a>atk_editable_text_insert_text ()</h3><a class="indexterm" name="id254470"></a><pre class="programlisting">void        atk_editable_text_insert_text   (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             const gchar *string,
+                                             gint length,
+                                             gint *position);</pre><p>
+Insert text at a given position.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>text</tt></i> :</span></td><td> an <a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a>
+</td></tr><tr><td><span class="term"><i><tt>string</tt></i> :</span></td><td> the text to insert
+</td></tr><tr><td><span class="term"><i><tt>length</tt></i> :</span></td><td> the length of text to insert, in bytes
+</td></tr><tr><td><span class="term"><i><tt>position</tt></i> :</span></td><td> The caller initializes this to 
+the position at which to insert the text. After the call it
+points at the position after the newly inserted text.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-editable-text-copy-text"></a>atk_editable_text_copy_text ()</h3><a class="indexterm" name="id254597"></a><pre class="programlisting">void        atk_editable_text_copy_text     (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             gint start_pos,
+                                             gint end_pos);</pre><p>
+Copy text from <i><tt>start_pos</tt></i> up to, but not including <i><tt>end_pos</tt></i> 
+to the clipboard.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>text</tt></i> :</span></td><td> an <a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a>
+</td></tr><tr><td><span class="term"><i><tt>start_pos</tt></i> :</span></td><td> start position
+</td></tr><tr><td><span class="term"><i><tt>end_pos</tt></i> :</span></td><td> end position
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-editable-text-cut-text"></a>atk_editable_text_cut_text ()</h3><a class="indexterm" name="id254729"></a><pre class="programlisting">void        atk_editable_text_cut_text      (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             gint start_pos,
+                                             gint end_pos);</pre><p>
+Copy text from <i><tt>start_pos</tt></i> up to, but not including <i><tt>end_pos</tt></i>
+to the clipboard and then delete from the widget.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>text</tt></i> :</span></td><td> an <a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a>
+</td></tr><tr><td><span class="term"><i><tt>start_pos</tt></i> :</span></td><td> start position
+</td></tr><tr><td><span class="term"><i><tt>end_pos</tt></i> :</span></td><td> end position
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-editable-text-delete-text"></a>atk_editable_text_delete_text ()</h3><a class="indexterm" name="id254871"></a><pre class="programlisting">void        atk_editable_text_delete_text   (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             gint start_pos,
+                                             gint end_pos);</pre><p>
+Delete text <i><tt>start_pos</tt></i> up to, but not including <i><tt>end_pos</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>text</tt></i> :</span></td><td> an <a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a>
+</td></tr><tr><td><span class="term"><i><tt>start_pos</tt></i> :</span></td><td> start position
+</td></tr><tr><td><span class="term"><i><tt>end_pos</tt></i> :</span></td><td> end position
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-editable-text-paste-text"></a>atk_editable_text_paste_text ()</h3><a class="indexterm" name="id254986"></a><pre class="programlisting">void        atk_editable_text_paste_text    (<a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> *text,
+                                             gint position);</pre><p>
+Paste text from clipboard to specified <i><tt>position</tt></i>.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>text</tt></i> :</span></td><td> an <a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a>
+</td></tr><tr><td><span class="term"><i><tt>position</tt></i> :</span></td><td> position to paste
+</td></tr></tbody></table></div></div></div><div class="refsect1"><h2>See Also</h2><p>
+<a href="AtkText.html" title="AtkText">AtkText</a>
+</p></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkDocument.html"><b>&lt;&lt; AtkDocument</b></a></td><td align="right"><a accesskey="n" href="AtkGObjectAccessible.html"><b>AtkGObjectAccessible &gt;&gt;</b></a></td></tr></table></body></html>

@@ -1,0 +1,29 @@
+TLSbo89963_fix_mono_config.patch
+
+This fixes mono adder config for mono and stereo files and ensures output
+on both L and R channels for all files.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.c linux-2.6.19.2/sound/arm/mxc-alsa-pmic.c
+--- linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.c	2007-04-25 17:37:11.000000000 -0600
++++ linux-2.6.19.2/sound/arm/mxc-alsa-pmic.c	2007-04-25 17:37:36.000000000 -0600
+@@ -1323,12 +1323,20 @@ void configure_stereodac(snd_pcm_substre
+ 	pmic_audio_device_t *pmic;
+ 	int ssi_bus;
+ 	PMIC_AUDIO_HANDLE handle;
++	snd_pcm_runtime_t *runtime;
+ 
+ 	chip = snd_pcm_substream_chip(substream);
+ 	stream_id = substream->pstr->stream;
+ 	s = &chip->s[stream_id];
+ 	pmic = &s->pmic_audio_device;
+ 	handle = pmic->handle;
++	runtime = substream->runtime;
++
++	if (runtime->channels == 1) {
++		audio_mixer_control.mixer_mono_adder = MONO_ADD_LEFT_RIGHT;
++	} else {
++		audio_mixer_control.mixer_mono_adder = MONO_ADDER_OFF;
++	}
+ 
+ 	ssi_bus = (pmic->ssi == SSI1) ? AUDIO_DATA_BUS_1 : AUDIO_DATA_BUS_2;
+ 

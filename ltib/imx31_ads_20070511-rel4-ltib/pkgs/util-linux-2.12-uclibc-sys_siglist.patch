@@ -1,0 +1,21 @@
+Fri 11 Aug 2006, Stuart Hughes <seh@zee2.com>
+
+This is a patch suggested by Kumar Gala.
+
+If fixes a build failure if your uClibc does not have UCLIBC_HAS_SYS_SIGLIST
+enabled in it's configuration.
+
+I've tested that this does not break under glibc.
+
+diff --exclude CVS -uNr util-linux-2.12/mount/fstab.c util-linux-2.12.modified/mount/fstab.c
+--- util-linux-2.12/mount/fstab.c	2003-07-15 16:14:41.000000000 -0500
++++ util-linux-2.12.modified/mount/fstab.c	2006-08-10 11:44:24.000000000 -0500
+@@ -376,7 +376,7 @@
+ /* Ensure that the lock is released if we are interrupted.  */
+ static void
+ handler (int sig) {
+-     die (EX_USER, "%s", sys_siglist[sig]);
++     die (EX_USER, "%s", strsignal(sig));
+ }
+ 
+ static void

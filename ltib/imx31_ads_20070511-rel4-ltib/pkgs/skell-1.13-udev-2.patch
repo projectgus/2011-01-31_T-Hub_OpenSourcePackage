@@ -1,0 +1,70 @@
+diff -Naur skell-1.13.orig/etc/fstab skell-1.13/etc/fstab
+--- skell-1.13.orig/etc/fstab	2006-04-26 08:37:12.000000000 -0600
++++ skell-1.13/etc/fstab	2006-06-03 17:28:30.000000000 -0600
+@@ -1,11 +1,15 @@
+ #
+ # /etc/fstab: static file system information.
+ #
++# /proc and /sys need to be mounted very early for udev.
++# This is done in the separate init script /etc/rc.d/init.d/mount-proc-sys
++
++#
+ # file system   mount       type    options           dump    pass
+ #/dev/root       /           ext2    rw,noauto         0       1
+-proc            /proc       proc    defaults          0       0
++#proc            /proc       proc    defaults          0       0
+ devpts          /dev/pts    devpts  gid=5,mode=620    0       0
+-sysfs           /sys        sysfs   defaults          0       0
++#sysfs           /sys        sysfs   defaults          0       0
+ usbfs        /proc/bus/usb  usbfs   defaults          0       0
+ 
+ /dev/fd0        /mnt/floppy auto    noauto,owner      0       0
+diff -Naur skell-1.13.orig/etc/rc.d/init.d/filesystems skell-1.13/etc/rc.d/init.d/filesystems
+--- skell-1.13.orig/etc/rc.d/init.d/filesystems	2006-04-27 04:01:41.000000000 -0600
++++ skell-1.13/etc/rc.d/init.d/filesystems	2006-06-03 17:30:11.000000000 -0600
+@@ -11,7 +11,8 @@
+ if [ "$1" = "start" ]
+ then
+     echo Mounting filesystems
+-    mount -t proc  proc  /proc
++    # /proc is mounted by the mount-proc-sys script
++    # mount -t proc  proc  /proc
+     mount -t $TMPFS rwfs  /mnt/rwfs -o size=512k
+     if [ "$READONLY_FS" != "y" ]
+     then
+diff -Naur skell-1.13.orig/etc/rc.d/init.d/mount-proc-sys skell-1.13/etc/rc.d/init.d/mount-proc-sys
+--- skell-1.13.orig/etc/rc.d/init.d/mount-proc-sys	1969-12-31 17:00:00.000000000 -0700
++++ skell-1.13/etc/rc.d/init.d/mount-proc-sys	2006-06-03 15:43:29.000000000 -0600
+@@ -0,0 +1,16 @@
++#!/bin/sh
++
++# Copyright 2006 Freescale Semiconductor, Inc.
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 2 of the License, or
++# (at your option) any later version.
++
++if [ "$1" = "start" -o "$1" = "restart" ]
++then
++    echo "Mounting /proc and /sys "
++    mount -t proc proc /proc
++    mount -t sysfs sys /sys
++fi
++
+diff -Naur skell-1.13.orig/etc/rc.d/rc.conf skell-1.13/etc/rc.d/rc.conf
+--- skell-1.13.orig/etc/rc.d/rc.conf	2005-11-29 04:19:41.000000000 -0700
++++ skell-1.13/etc/rc.d/rc.conf	2006-06-03 15:46:05.000000000 -0600
+@@ -12,8 +12,8 @@
+ export READONLY_FS="n"
+ export SYSLOG_SOCKET_FILE=""
+ 
+-all_services="hostname filesystems syslog depmod modules network settime inetd portmap dropbear boa dhcpd"
+-all_services_r="dhcpd boa dropbear portmap inetd settime network modules depmod syslog filesystems hostname"
+-cfg_services="hostname filesystems syslog depmod modules network settime inetd portmap dropbear boa dhcpd"
+-cfg_services_r="dhcpd boa dropbear portmap inetd settime network modules depmod syslog filesystems hostname"
++all_services="hostname mount-proc-sys udev filesystems syslog depmod modules network settime inetd portmap dropbear boa"
++all_services_r="boa dropbear portmap inetd settime network modules depmod syslog filesystems udev mount-proc-sys hostname"
++cfg_services="hostname mount-proc-sys udev filesystems syslog depmod modules network settime inetd portmap dropbear boa"
++cfg_services_r="boa dropbear portmap inetd settime network modules depmod syslog filesystems udev mount-proc-sys hostname"
+ 

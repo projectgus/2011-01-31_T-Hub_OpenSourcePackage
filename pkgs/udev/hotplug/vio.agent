@@ -1,0 +1,42 @@
+#!/bin/sh -e
+# only needed for kernels < 2.6.15
+
+cd /lib/udev/
+. ./hotplug.functions
+
+if [ -z "$DEVPATH" ]; then
+    echo "\$DEVPATH is not set!" >&2
+    exit 1
+fi
+
+devspec=$(sysread devspec)
+
+if [ -z "$devspec" ]; then
+    echo "\$DEVPATH/devspec does not exist!" >&2
+    exit 1
+fi
+
+type_file="/proc/device-tree$devspec/device_type"
+if [ ! -r "$type_file" ]; then
+    echo "Cannot read $type_file!" >&2
+    exit 1
+fi
+
+# the trailing \000 makes read fail
+read device_type < $type_file || true
+case "$device_type" in
+    serial)		module=hvc_console ;;
+    serial-server)	module=hvcs ;;
+    network)		module=ibmveth ;;
+    vscsi)		module=ibmvscsic ;;
+    vlan)		module=iseries_veth ;;
+    viodasd)		module=viodasd ;;
+    viocd)		module=viocd ;;
+esac
+
+if [ "$module" ]; then
+    exec $MODPROBE $module
+fi
+
+exit 0
+

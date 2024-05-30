@@ -1,0 +1,29 @@
+CR: TLSbo91967
+Patch name: TLSbo91967_fix_FIR_after_clocking_API_changes.patch
+Date: Thu Mar 8 12:32:23 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: Fixed break in FIR functionality after clocking API changes.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/net/irda/mxc_ir.c linux-2.6.19.2/drivers/net/irda/mxc_ir.c
+--- linux-2.6.19.2.orig/drivers/net/irda/mxc_ir.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/net/irda/mxc_ir.c	2007-04-25 17:38:43.000000000 -0600
+@@ -1063,7 +1063,7 @@ void mxc_irda_firi_init(struct mxc_irda 
+ 	si->firi_clk = clk_get(si->dev, "firi_clk");
+ 	firi_baud = clk_round_rate(si->firi_clk, 48004500);
+ 	if ((firi_baud < 47995500) ||
+-		(clk_set_rate(si->firi_clk, firi_baud) < 0)) {
++	    (clk_set_rate(si->firi_clk, firi_baud) < 0)) {
+ 		dev_err(si->dev, "Unable to set FIR clock to 48MHz.\n");
+ 		return;
+ 	}
+@@ -1529,8 +1529,8 @@ static int mxc_irda_resume(struct platfo
+ 		clk_enable(si->uart_clk);
+ 
+ 		/*Now init FIRI */
+-                gpio_firi_active(si->firi_base + FIRITCR, FIRITCR_TPP);
+- 		mxc_irda_startup(si);
++		gpio_firi_active(si->firi_base + FIRITCR, FIRITCR_TPP);
++		mxc_irda_startup(si);
+ 
+ 		/* Enable the UART and FIRI interrupts.. */
+ 		local_irq_save(flags);

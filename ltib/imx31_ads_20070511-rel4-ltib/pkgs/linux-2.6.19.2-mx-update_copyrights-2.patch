@@ -1,0 +1,2387 @@
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/dma.c linux-2.6.19.2/arch/arm/mach-mx27/dma.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/dma.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/dma.c	2007-05-08 21:09:18.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/dpm.c linux-2.6.19.2/arch/arm/mach-mx27/dpm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/dpm.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/dpm.c	2007-05-08 21:09:18.000000000 -0600
+@@ -17,7 +17,7 @@
+  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+  *
+  * Copyright (C) 2002, 2004 MontaVista Software <source@mvista.com>.
+- * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2006-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  * Based on code by Matthew Locke, Dmitry Chigirev, and Bishop Brock.
+  */
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/gpio_mux.c linux-2.6.19.2/arch/arm/mach-mx27/gpio_mux.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/gpio_mux.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/gpio_mux.c	2007-05-08 21:09:18.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/gpio_mux.h linux-2.6.19.2/arch/arm/mach-mx27/gpio_mux.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/gpio_mux.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/gpio_mux.h	2007-05-08 21:09:18.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mm.c linux-2.6.19.2/arch/arm/mach-mx27/mm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mm.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mm.c	2007-05-08 21:09:18.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/pm.c linux-2.6.19.2/arch/arm/mach-mx27/pm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/pm.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/pm.c	2007-05-08 21:09:18.000000000 -0600
+@@ -15,7 +15,7 @@
+  * Cleanup 2004 for OMAP1510/1610 by Dirk Behme <dirk.behme@de.bosch.com>
+  *
+  * Modified for the MX27
+- * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2006-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  * This program is free software; you can redistribute it and/or modify it
+  * under the terms of the GNU General Public License as published by the
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/serial.h linux-2.6.19.2/arch/arm/mach-mx27/serial.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/serial.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/serial.h	2007-05-08 21:09:18.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/time.c linux-2.6.19.2/arch/arm/mach-mx27/time.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/time.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/time.c	2007-05-08 21:09:18.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/dma.c linux-2.6.19.2/arch/arm/mach-mx3/dma.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/dma.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/dma.c	2007-05-08 21:09:18.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright 2004 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/iomux.c linux-2.6.19.2/arch/arm/mach-mx3/iomux.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/iomux.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/iomux.c	2007-05-08 21:09:18.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/iomux.h linux-2.6.19.2/arch/arm/mach-mx3/iomux.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/iomux.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/iomux.h	2007-05-08 21:09:18.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/mm.c linux-2.6.19.2/arch/arm/mach-mx3/mm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/mm.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/mm.c	2007-05-08 21:09:18.000000000 -0600
+@@ -2,7 +2,7 @@
+  *  Copyright (C) 1999,2000 Arm Limited
+  *  Copyright (C) 2000 Deep Blue Solutions Ltd
+  *  Copyright (C) 2002 Shane Nay (shane@minirl.com)
+- *  Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *    - add MX31 specific definitions
+  *
+  * This program is free software; you can redistribute it and/or modify
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/pm.c linux-2.6.19.2/arch/arm/mach-mx3/pm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/pm.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/pm.c	2007-05-08 21:09:18.000000000 -0600
+@@ -15,7 +15,7 @@
+  * Cleanup 2004 for OMAP1510/1610 by Dirk Behme <dirk.behme@de.bosch.com>
+  *
+  * Modified for the MX31
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  * This program is free software; you can redistribute it and/or modify it
+  * under the terms of the GNU General Public License as published by the
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code.h linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code.h	2007-05-08 21:09:18.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code_pass2.h linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code_pass2.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code_pass2.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code_pass2.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/serial.h linux-2.6.19.2/arch/arm/mach-mx3/serial.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/serial.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/serial.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/system.c linux-2.6.19.2/arch/arm/mach-mx3/system.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/system.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/system.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,7 +1,7 @@
+ /*
+  * Copyright (C) 1999 ARM Limited
+  * Copyright (C) 2000 Deep Blue Solutions Ltd
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/time_priv.h linux-2.6.19.2/arch/arm/mach-mx3/time_priv.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/time_priv.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/time_priv.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/oprofile/evtmon_regs.h linux-2.6.19.2/arch/arm/oprofile/evtmon_regs.h
+--- linux-2.6.19.2.orig/arch/arm/oprofile/evtmon_regs.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/oprofile/evtmon_regs.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/oprofile/op_model_arm11.c linux-2.6.19.2/arch/arm/oprofile/op_model_arm11.c
+--- linux-2.6.19.2.orig/arch/arm/oprofile/op_model_arm11.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/oprofile/op_model_arm11.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/cpu_common.c linux-2.6.19.2/arch/arm/plat-mxc/cpu_common.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/cpu_common.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/cpu_common.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/gpio.c linux-2.6.19.2/arch/arm/plat-mxc/gpio.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/gpio.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/gpio.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/irq.c linux-2.6.19.2/arch/arm/plat-mxc/irq.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/irq.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/irq.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/dma_sdma.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/dma_sdma.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/dma_sdma.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/dma_sdma.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/epm.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/epm.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/epm.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/epm.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /* 
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiDefaults.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiDefaults.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiDefaults.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiDefaults.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapi.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapi.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapi.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapi.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiHigh.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiHigh.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiHigh.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiHigh.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiLow.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiLow.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiLow.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiLow.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiLowMcu.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiLowMcu.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiLowMcu.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiLowMcu.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiMiddle.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiMiddle.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiMiddle.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiMiddle.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiMiddleMcu.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiMiddleMcu.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiMiddleMcu.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiMiddleMcu.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiOS.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiOS.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/iapiOS.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/iapiOS.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/sdmaStruct.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/sdmaStruct.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/sdmaStruct.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/sdmaStruct.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiDefaults.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiDefaults.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiDefaults.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiDefaults.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiHigh.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiHigh.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiHigh.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiHigh.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiLow.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiLow.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiLow.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiLow.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiLowMcu.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiLowMcu.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiLowMcu.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiLowMcu.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiMiddle.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiMiddle.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiMiddle.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiMiddle.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiMiddleMcu.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiMiddleMcu.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiMiddleMcu.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiMiddleMcu.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiOS.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiOS.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/src/iapiOS.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/src/iapiOS.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,6 +1,6 @@
+ /******************************************************************************
+  *
+- * Copyright 2005 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  *
+  * The code contained herein is licensed under the GNU General Public
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/sdma_malloc.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/sdma_malloc.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/sdma_malloc.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/sdma_malloc.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/spba.c linux-2.6.19.2/arch/arm/plat-mxc/spba.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/spba.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/spba.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/char/watchdog/mxc_wdt.h linux-2.6.19.2/drivers/char/watchdog/mxc_wdt.h
+--- linux-2.6.19.2.orig/drivers/char/watchdog/mxc_wdt.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/char/watchdog/mxc_wdt.h	2007-05-08 21:09:19.000000000 -0600
+@@ -8,7 +8,7 @@
+  *       <AKuster@mvista.com> or <source@mvista.com>
+  *
+  * 2005 (c) MontaVista Software, Inc.
+- * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2006-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  * This file is licensed under the terms of the GNU General Public License
+  * version 2. This program is licensed "as is" without any warranty of any
+  * kind, whether express or implied.
+diff -uNpr linux-2.6.19.2.orig/drivers/i2c/busses/mxc_i2c_reg.h linux-2.6.19.2/drivers/i2c/busses/mxc_i2c_reg.h
+--- linux-2.6.19.2.orig/drivers/i2c/busses/mxc_i2c_reg.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/i2c/busses/mxc_i2c_reg.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/ide/arm/mxc_ide.h linux-2.6.19.2/drivers/ide/arm/mxc_ide.h
+--- linux-2.6.19.2.orig/drivers/ide/arm/mxc_ide.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/ide/arm/mxc_ide.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/input/keyboard/mxc_keyb.h linux-2.6.19.2/drivers/input/keyboard/mxc_keyb.h
+--- linux-2.6.19.2.orig/drivers/input/keyboard/mxc_keyb.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/input/keyboard/mxc_keyb.h	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/input/touchscreen/mxc_ts.c linux-2.6.19.2/drivers/input/touchscreen/mxc_ts.c
+--- linux-2.6.19.2.orig/drivers/input/touchscreen/mxc_ts.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/input/touchscreen/mxc_ts.c	2007-05-08 21:09:19.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2006-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_prp_enc.c linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_prp_enc.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_prp_enc.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_prp_enc.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_prp_sw.h linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_prp_sw.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_prp_sw.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_prp_sw.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_prp_vf_adc.c linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_prp_vf_adc.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_prp_vf_adc.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_prp_vf_adc.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_prp_vf_sdc_bg.c linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_prp_vf_sdc_bg.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_prp_vf_sdc_bg.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_prp_vf_sdc_bg.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_prp_vf_sdc.c linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_prp_vf_sdc.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_prp_vf_sdc.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_prp_vf_sdc.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_still.c linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_still.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/ipu_still.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/ipu_still.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mt9v111.c linux-2.6.19.2/drivers/media/video/mxc/capture/mt9v111.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mt9v111.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mt9v111.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mt9v111.h linux-2.6.19.2/drivers/media/video/mxc/capture/mt9v111.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mt9v111.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mt9v111.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_csi.h linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_csi.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_csi.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_csi.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_prp.h linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_prp.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_prp.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_prp.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_v4l2_capture.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.c linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.h linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/hmirror_rotate180_u16.c linux-2.6.19.2/drivers/media/video/mxc/opl/hmirror_rotate180_u16.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/hmirror_rotate180_u16.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/hmirror_rotate180_u16.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/opl.h linux-2.6.19.2/drivers/media/video/mxc/opl/opl.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/opl.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/opl.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/opl_mod.c linux-2.6.19.2/drivers/media/video/mxc/opl/opl_mod.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/opl_mod.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/opl_mod.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate270_u16.c linux-2.6.19.2/drivers/media/video/mxc/opl/rotate270_u16.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate270_u16.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/rotate270_u16.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate270_u16_qcif.S linux-2.6.19.2/drivers/media/video/mxc/opl/rotate270_u16_qcif.S
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate270_u16_qcif.S	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/rotate270_u16_qcif.S	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate90_u16.c linux-2.6.19.2/drivers/media/video/mxc/opl/rotate90_u16.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate90_u16.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/rotate90_u16.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate90_u16_qcif.S linux-2.6.19.2/drivers/media/video/mxc/opl/rotate90_u16_qcif.S
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate90_u16_qcif.S	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/rotate90_u16_qcif.S	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/vmirror_u16.c linux-2.6.19.2/drivers/media/video/mxc/opl/vmirror_u16.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/vmirror_u16.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/vmirror_u16.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/output/mx27_pp.h linux-2.6.19.2/drivers/media/video/mxc/output/mx27_pp.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/output/mx27_pp.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/output/mx27_pp.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/output/mx27_v4l2_output.c linux-2.6.19.2/drivers/media/video/mxc/output/mx27_v4l2_output.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/output/mx27_v4l2_output.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/output/mx27_v4l2_output.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/output/mxc_v4l2_output.c linux-2.6.19.2/drivers/media/video/mxc/output/mxc_v4l2_output.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/output/mxc_v4l2_output.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/output/mxc_v4l2_output.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/output/mxc_v4l2_output.h linux-2.6.19.2/drivers/media/video/mxc/output/mxc_v4l2_output.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/output/mxc_v4l2_output.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/output/mxc_v4l2_output.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mmc/mmc.c linux-2.6.19.2/drivers/mmc/mmc.c
+--- linux-2.6.19.2.orig/drivers/mmc/mmc.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mmc/mmc.c	2007-05-08 21:09:20.000000000 -0600
+@@ -4,7 +4,7 @@
+  *  Copyright (C) 2003-2004 Russell King, All Rights Reserved.
+  *  SD support Copyright (C) 2004 Ian Molton, All Rights Reserved.
+  *  SD support Copyright (C) 2005 Pierre Ossman, All Rights Reserved.
+- *  SDIO support Copyright (C) 2006 Freescale Semiconductor, Inc., All Rights Reserved.
++ *  SDIO support Copyright (C) 2006-2007 Freescale Semiconductor, Inc., All Rights Reserved.
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 as
+diff -uNpr linux-2.6.19.2.orig/drivers/mmc/mxc_mmc.h linux-2.6.19.2/drivers/mmc/mxc_mmc.h
+--- linux-2.6.19.2.orig/drivers/mmc/mxc_mmc.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mmc/mxc_mmc.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mtd/maps/mxc_nor.c linux-2.6.19.2/drivers/mtd/maps/mxc_nor.c
+--- linux-2.6.19.2.orig/drivers/mtd/maps/mxc_nor.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mtd/maps/mxc_nor.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  * (c) 2005 MontaVista Software, Inc.
+  */
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/mtd/nand/mxc_nd.h linux-2.6.19.2/drivers/mtd/nand/mxc_nd.h
+--- linux-2.6.19.2.orig/drivers/mtd/nand/mxc_nd.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mtd/nand/mxc_nd.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/dam/dam.c linux-2.6.19.2/drivers/mxc/dam/dam.c
+--- linux-2.6.19.2.orig/drivers/mxc/dam/dam.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/dam/dam.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/dam/dam.h linux-2.6.19.2/drivers/mxc/dam/dam.h
+--- linux-2.6.19.2.orig/drivers/mxc/dam/dam.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/dam/dam.h	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/dam/dam_v1.c linux-2.6.19.2/drivers/mxc/dam/dam_v1.c
+--- linux-2.6.19.2.orig/drivers/mxc/dam/dam_v1.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/dam/dam_v1.c	2007-05-08 21:09:20.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/hmp4e/mxc_hmp4e.c linux-2.6.19.2/drivers/mxc/hmp4e/mxc_hmp4e.c
+--- linux-2.6.19.2.orig/drivers/mxc/hmp4e/mxc_hmp4e.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/hmp4e/mxc_hmp4e.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/hmp4e/mxc_hmp4e.h linux-2.6.19.2/drivers/mxc/hmp4e/mxc_hmp4e.h
+--- linux-2.6.19.2.orig/drivers/mxc/hmp4e/mxc_hmp4e.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/hmp4e/mxc_hmp4e.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ipu/ipu_ic.c linux-2.6.19.2/drivers/mxc/ipu/ipu_ic.c
+--- linux-2.6.19.2.orig/drivers/mxc/ipu/ipu_ic.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ipu/ipu_ic.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ipu/ipu_param_mem.h linux-2.6.19.2/drivers/mxc/ipu/ipu_param_mem.h
+--- linux-2.6.19.2.orig/drivers/mxc/ipu/ipu_param_mem.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ipu/ipu_param_mem.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ipu/ipu_regs.h linux-2.6.19.2/drivers/mxc/ipu/ipu_regs.h
+--- linux-2.6.19.2.orig/drivers/mxc/ipu/ipu_regs.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ipu/ipu_regs.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ipu/pf/mxc_pf.c linux-2.6.19.2/drivers/mxc/ipu/pf/mxc_pf.c
+--- linux-2.6.19.2.orig/drivers/mxc/ipu/pf/mxc_pf.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ipu/pf/mxc_pf.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx27.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx27.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx27.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx27.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31_27ckih.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31_27ckih.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31_27ckih.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31_27ckih.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31_rev2.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31_rev2.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31_rev2.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31_rev2.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/core/mc13783.c linux-2.6.19.2/drivers/mxc/pmic/core/mc13783.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/core/mc13783.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/core/mc13783.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic_config.h linux-2.6.19.2/drivers/mxc/pmic/core/pmic_config.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic_config.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/core/pmic_config.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic_core_spi.c linux-2.6.19.2/drivers/mxc/pmic/core/pmic_core_spi.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic_core_spi.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/core/pmic_core_spi.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic-dev.c linux-2.6.19.2/drivers/mxc/pmic/core/pmic-dev.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic-dev.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/core/pmic-dev.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All rights reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All rights reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic_event.c linux-2.6.19.2/drivers/mxc/pmic/core/pmic_event.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic_event.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/core/pmic_event.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic_external.c linux-2.6.19.2/drivers/mxc/pmic/core/pmic_external.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic_external.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/core/pmic_external.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic.h linux-2.6.19.2/drivers/mxc/pmic/core/pmic.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/core/pmic.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/core/pmic.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_adc.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_adc.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_adc.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_adc.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_adc_defs.h linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_adc_defs.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_adc_defs.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_adc_defs.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_audio.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_audio.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_audio.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_audio.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_battery.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_battery.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_battery.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_battery.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_battery_defs.h linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_battery_defs.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_battery_defs.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_battery_defs.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_convity.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_convity.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_convity.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_convity.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_light.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_light.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_light.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_light.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_light_defs.h linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_light_defs.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_light_defs.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_light_defs.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_power.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_power.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_power.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_power.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_power_defs.h linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_power_defs.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_power_defs.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_power_defs.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_rtc.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_rtc.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_rtc.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_rtc.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_rtc_defs.h linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_rtc_defs.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_rtc_defs.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_rtc_defs.h	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.c linux-2.6.19.2/drivers/mxc/security/mxc_hacc.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_hacc.c	2007-05-08 21:09:21.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.h linux-2.6.19.2/drivers/mxc/security/mxc_hacc.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_hacc.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_rtic.h linux-2.6.19.2/drivers/mxc/security/mxc_rtic.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_rtic.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_rtic.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_sec_mod.c linux-2.6.19.2/drivers/mxc/security/mxc_sec_mod.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_sec_mod.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_sec_mod.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_driver.h linux-2.6.19.2/drivers/mxc/security/rng/include/rng_driver.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_driver.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/rng_driver.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_internals.h linux-2.6.19.2/drivers/mxc/security/rng/include/rng_internals.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_internals.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/rng_internals.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_rnga.h linux-2.6.19.2/drivers/mxc/security/rng/include/rng_rnga.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_rnga.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/rng_rnga.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_rngc.h linux-2.6.19.2/drivers/mxc/security/rng/include/rng_rngc.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_rngc.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/rng_rngc.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_driver.h linux-2.6.19.2/drivers/mxc/security/rng/include/shw_driver.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_driver.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/shw_driver.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_internals.h linux-2.6.19.2/drivers/mxc/security/rng/include/shw_internals.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_internals.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/shw_internals.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/rng_driver.c linux-2.6.19.2/drivers/mxc/security/rng/rng_driver.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/rng_driver.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/rng_driver.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/shw_driver.c linux-2.6.19.2/drivers/mxc/security/rng/shw_driver.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/shw_driver.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/shw_driver.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_auth.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_auth.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_auth.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_auth.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_hash.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_hash.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_hash.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_hash.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_hmac.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_hmac.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_hmac.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_hmac.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_rand.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_rand.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_rand.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_rand.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_sym.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_sym.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_sym.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_sym.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_user.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_user.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_user.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_user.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_wrap.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_wrap.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_wrap.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_wrap.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/adaptor.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/adaptor.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/adaptor.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/adaptor.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/diagnostic.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/diagnostic.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/diagnostic.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/diagnostic.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/fsl_platform.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/fsl_platform.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/fsl_platform.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/fsl_platform.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/fsl_shw.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/fsl_shw.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/fsl_shw.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/fsl_shw.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/portable_os.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/portable_os.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/portable_os.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/portable_os.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sahara.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/sahara.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sahara.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/sahara.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_driver_common.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_driver_common.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_driver_common.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_driver_common.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_hardware_interface.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_hardware_interface.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_hardware_interface.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_hardware_interface.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_interrupt_handler.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_interrupt_handler.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_interrupt_handler.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_interrupt_handler.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_kernel.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_kernel.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_kernel.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_kernel.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_memory_mapper.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_memory_mapper.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_memory_mapper.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_memory_mapper.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_queue_manager.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_queue_manager.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_queue_manager.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_queue_manager.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_status_manager.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_status_manager.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sah_status_manager.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/sah_status_manager.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sf_util.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/sf_util.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/sf_util.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/sf_util.h	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/km_adaptor.c linux-2.6.19.2/drivers/mxc/security/sahara2/km_adaptor.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/km_adaptor.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/km_adaptor.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_hardware_interface.c linux-2.6.19.2/drivers/mxc/security/sahara2/sah_hardware_interface.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_hardware_interface.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/sah_hardware_interface.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_interrupt_handler.c linux-2.6.19.2/drivers/mxc/security/sahara2/sah_interrupt_handler.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_interrupt_handler.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/sah_interrupt_handler.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_memory_mapper.c linux-2.6.19.2/drivers/mxc/security/sahara2/sah_memory_mapper.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_memory_mapper.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/sah_memory_mapper.c	2007-05-08 21:09:22.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_queue.c linux-2.6.19.2/drivers/mxc/security/sahara2/sah_queue.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_queue.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/sah_queue.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_queue_manager.c linux-2.6.19.2/drivers/mxc/security/sahara2/sah_queue_manager.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_queue_manager.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/sah_queue_manager.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_status_manager.c linux-2.6.19.2/drivers/mxc/security/sahara2/sah_status_manager.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sah_status_manager.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/sah_status_manager.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sf_util.c linux-2.6.19.2/drivers/mxc/security/sahara2/sf_util.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sf_util.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/sf_util.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ssi/registers.h linux-2.6.19.2/drivers/mxc/ssi/registers.h
+--- linux-2.6.19.2.orig/drivers/mxc/ssi/registers.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ssi/registers.h	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ssi/ssi.h linux-2.6.19.2/drivers/mxc/ssi/ssi.h
+--- linux-2.6.19.2.orig/drivers/mxc/ssi/ssi.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ssi/ssi.h	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ssi/ssi_types.h linux-2.6.19.2/drivers/mxc/ssi/ssi_types.h
+--- linux-2.6.19.2.orig/drivers/mxc/ssi/ssi_types.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ssi/ssi_types.h	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/net/gianfar.c linux-2.6.19.2/drivers/net/gianfar.c
+--- linux-2.6.19.2.orig/drivers/net/gianfar.c	2007-01-10 12:10:37.000000000 -0700
++++ linux-2.6.19.2/drivers/net/gianfar.c	2007-05-08 21:09:23.000000000 -0600
+@@ -9,7 +9,7 @@
+  * Author: Andy Fleming
+  * Maintainer: Kumar Gala
+  *
+- * Copyright (c) 2002-2004 Freescale Semiconductor, Inc.
++ * Copyright (c) 2002-2007 Freescale Semiconductor, Inc.
+  *
+  * This program is free software; you can redistribute  it and/or modify it
+  * under  the terms of  the GNU General  Public License as published by the
+diff -uNpr linux-2.6.19.2.orig/drivers/net/irda/mxc_ir.h linux-2.6.19.2/drivers/net/irda/mxc_ir.h
+--- linux-2.6.19.2.orig/drivers/net/irda/mxc_ir.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/net/irda/mxc_ir.h	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/net/irda/mxc_sir.c linux-2.6.19.2/drivers/net/irda/mxc_sir.c
+--- linux-2.6.19.2.orig/drivers/net/irda/mxc_sir.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/net/irda/mxc_sir.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/net/ucc_geth.c linux-2.6.19.2/drivers/net/ucc_geth.c
+--- linux-2.6.19.2.orig/drivers/net/ucc_geth.c	2007-01-10 12:10:37.000000000 -0700
++++ linux-2.6.19.2/drivers/net/ucc_geth.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) Freescale Semicondutor, Inc. 2006. All rights reserved.
++ * Copyright (C) 2006-2007 Freescale Semicondutor, Inc. All rights reserved.
+  *
+  * Author: Shlomi Gridish <gridish@freescale.com>
+  *	   Li Yang <leoli@freescale.com>
+diff -uNpr linux-2.6.19.2.orig/drivers/spi/mxc_spi.h linux-2.6.19.2/drivers/spi/mxc_spi.h
+--- linux-2.6.19.2.orig/drivers/spi/mxc_spi.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/spi/mxc_spi.h	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/spi/mxc_spi_mx27.h linux-2.6.19.2/drivers/spi/mxc_spi_mx27.h
+--- linux-2.6.19.2.orig/drivers/spi/mxc_spi_mx27.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/spi/mxc_spi_mx27.h	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.c linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.c
+--- linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.h linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.h
+--- linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.h	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/host/ehci-arc.c linux-2.6.19.2/drivers/usb/host/ehci-arc.c
+--- linux-2.6.19.2.orig/drivers/usb/host/ehci-arc.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/host/ehci-arc.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,7 +1,7 @@
+ /*
+  * drivers/usb/host/ehci-arc.c
+  *
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/otg/fsl_otg.c linux-2.6.19.2/drivers/usb/otg/fsl_otg.c
+--- linux-2.6.19.2.orig/drivers/usb/otg/fsl_otg.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/otg/fsl_otg.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/otg/fsl_otg.h linux-2.6.19.2/drivers/usb/otg/fsl_otg.h
+--- linux-2.6.19.2.orig/drivers/usb/otg/fsl_otg.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/otg/fsl_otg.h	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/otg/otg_fsm.c linux-2.6.19.2/drivers/usb/otg/otg_fsm.c
+--- linux-2.6.19.2.orig/drivers/usb/otg/otg_fsm.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/otg/otg_fsm.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2006-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/otg/otg_fsm.h linux-2.6.19.2/drivers/usb/otg/otg_fsm.h
+--- linux-2.6.19.2.orig/drivers/usb/otg/otg_fsm.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/otg/otg_fsm.h	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2006-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/fs453.c linux-2.6.19.2/drivers/video/mxc/fs453.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/fs453.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/fs453.c	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/fs453.h linux-2.6.19.2/drivers/video/mxc/fs453.h
+--- linux-2.6.19.2.orig/drivers/video/mxc/fs453.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/fs453.h	2007-05-08 21:09:23.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mx2fb_epson.c linux-2.6.19.2/drivers/video/mxc/mx2fb_epson.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mx2fb_epson.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mx2fb_epson.c	2007-05-08 21:09:24.000000000 -0600
+@@ -1,6 +1,6 @@
+ #error "please port this file to linux 2.6.18"
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.h linux-2.6.19.2/drivers/video/mxc/mx2fb.h
+--- linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mx2fb.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mxcfb.c linux-2.6.19.2/drivers/video/mxc/mxcfb.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mxcfb.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mxcfb.c	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mxcfb_epson.c linux-2.6.19.2/drivers/video/mxc/mxcfb_epson.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mxcfb_epson.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mxcfb_epson.c	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mxcfb_epson_qvga.c linux-2.6.19.2/drivers/video/mxc/mxcfb_epson_qvga.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mxcfb_epson_qvga.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mxcfb_epson_qvga.c	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mxcfb_modedb.c linux-2.6.19.2/drivers/video/mxc/mxcfb_modedb.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mxcfb_modedb.c	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mxcfb_modedb.c	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2006-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mxcfb_sharp_128x128.c linux-2.6.19.2/drivers/video/mxc/mxcfb_sharp_128x128.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mxcfb_sharp_128x128.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mxcfb_sharp_128x128.c	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mxcfb_toshiba_qvga.c linux-2.6.19.2/drivers/video/mxc/mxcfb_toshiba_qvga.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mxcfb_toshiba_qvga.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mxcfb_toshiba_qvga.c	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/arc_otg.h linux-2.6.19.2/include/asm-arm/arch-mxc/arc_otg.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/arc_otg.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/arc_otg.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,6 +1,6 @@
+ 
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board-mx31ads.h linux-2.6.19.2/include/asm-arm/arch-mxc/board-mx31ads.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board-mx31ads.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/board-mx31ads.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/debug-macro.S linux-2.6.19.2/include/asm-arm/arch-mxc/debug-macro.S
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/debug-macro.S	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/debug-macro.S	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dma.h linux-2.6.19.2/include/asm-arm/arch-mxc/dma.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dma.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/dma.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dptc.h linux-2.6.19.2/include/asm-arm/arch-mxc/dptc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dptc.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/dptc.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,6 +1,6 @@
+ 
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dvfs_dptc_struct.h linux-2.6.19.2/include/asm-arm/arch-mxc/dvfs_dptc_struct.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dvfs_dptc_struct.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/dvfs_dptc_struct.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dvfs.h linux-2.6.19.2/include/asm-arm/arch-mxc/dvfs.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dvfs.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/dvfs.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/entry-macro.S linux-2.6.19.2/include/asm-arm/arch-mxc/entry-macro.S
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/entry-macro.S	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/entry-macro.S	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/gpio.h linux-2.6.19.2/include/asm-arm/arch-mxc/gpio.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/gpio.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/gpio.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/hardware.h linux-2.6.19.2/include/asm-arm/arch-mxc/hardware.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/hardware.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/hardware.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/ide.h linux-2.6.19.2/include/asm-arm/arch-mxc/ide.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/ide.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/ide.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/iim.h linux-2.6.19.2/include/asm-arm/arch-mxc/iim.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/iim.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/iim.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/io.h linux-2.6.19.2/include/asm-arm/arch-mxc/io.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/io.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/io.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/ipu.h linux-2.6.19.2/include/asm-arm/arch-mxc/ipu.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/ipu.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/ipu.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/irqs.h linux-2.6.19.2/include/asm-arm/arch-mxc/irqs.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/irqs.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/irqs.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/isp1301.h linux-2.6.19.2/include/asm-arm/arch-mxc/isp1301.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/isp1301.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/isp1301.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,6 +1,6 @@
+ 
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/isp1504.h linux-2.6.19.2/include/asm-arm/arch-mxc/isp1504.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/isp1504.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/isp1504.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,6 +1,6 @@
+ 
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/memory.h linux-2.6.19.2/include/asm-arm/arch-mxc/memory.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/memory.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/memory.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mmc.h linux-2.6.19.2/include/asm-arm/arch-mxc/mmc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mmc.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mmc.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2006-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx27_pins.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx27_pins.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx27_pins.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx27_pins.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx27_usb.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx27_usb.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx27_usb.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx27_usb.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx2_dma.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx2_dma.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx2_dma.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx2_dma.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx31_pins.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx31_pins.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx31_pins.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx31_pins.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx31_usb.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx31_usb.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx31_usb.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx31_usb.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxcfb.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxcfb.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxcfb.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxcfb.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_i2c.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_i2c.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_i2c.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_i2c.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_pf.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_pf.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_pf.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_pf.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_pm.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_pm.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_pm.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_pm.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,6 +1,6 @@
+ 
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_scc_driver.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_scc_driver.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_scc_driver.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_scc_driver.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,6 +1,6 @@
+ 
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_scc.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_scc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_scc.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_scc.h	2007-05-08 21:09:24.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_security_api.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_security_api.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_security_api.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_security_api.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,6 +1,6 @@
+ 
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_v4l2.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_v4l2.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_v4l2.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_v4l2.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_vpu.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_vpu.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_vpu.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_vpu.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/param.h linux-2.6.19.2/include/asm-arm/arch-mxc/param.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/param.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/param.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,6 +1,6 @@
+ /*
+  *  Copyright (C) 1999 ARM Limited
+- *  Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pcmcia.h linux-2.6.19.2/include/asm-arm/arch-mxc/pcmcia.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pcmcia.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pcmcia.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pm_api.h linux-2.6.19.2/include/asm-arm/arch-mxc/pm_api.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pm_api.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pm_api.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_adc.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_adc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_adc.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_adc.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_audio.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_audio.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_audio.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_audio.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_battery.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_battery.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_battery.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_battery.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_convity.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_convity.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_convity.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_convity.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_external.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_external.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_external.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_external.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_light.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_light.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_light.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_light.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_power.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_power.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_power.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_power.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_rtc.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_rtc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_rtc.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_rtc.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_status.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_status.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_status.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_status.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/sdma.h linux-2.6.19.2/include/asm-arm/arch-mxc/sdma.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/sdma.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/sdma.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,6 +1,6 @@
+ 
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/spba.h linux-2.6.19.2/include/asm-arm/arch-mxc/spba.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/spba.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/spba.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,6 +1,6 @@
+ 
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/system.h linux-2.6.19.2/include/asm-arm/arch-mxc/system.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/system.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/system.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,7 +1,7 @@
+ /*
+  *  Copyright (C) 1999 ARM Limited
+  *  Copyright (C) 2000 Deep Blue Solutions Ltd
+- *  Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/timex.h linux-2.6.19.2/include/asm-arm/arch-mxc/timex.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/timex.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/timex.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,6 +1,6 @@
+ /*
+  *  Copyright (C) 1999 ARM Limited
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/vmalloc.h linux-2.6.19.2/include/asm-arm/arch-mxc/vmalloc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/vmalloc.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/vmalloc.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,6 +1,6 @@
+ /*
+  *  Copyright (C) 2000 Russell King.
+- *  Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ *  Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+diff -uNpr linux-2.6.19.2.orig/include/linux/mmc/protocol.h linux-2.6.19.2/include/linux/mmc/protocol.h
+--- linux-2.6.19.2.orig/include/linux/mmc/protocol.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/include/linux/mmc/protocol.h	2007-05-08 21:09:25.000000000 -0600
+@@ -2,7 +2,7 @@
+  * Header for MultiMediaCard (MMC)
+  *
+  * Copyright 2002 Hewlett-Packard Company
+- * SDIO support Copyright 2006 Freescale Semiconductor, Inc.
++ * SDIO support Copyright 2006-2007 Freescale Semiconductor, Inc.
+  *
+  * Use consistent with the GNU GPL is permitted,
+  * provided that this copyright notice is
+diff -uNpr linux-2.6.19.2.orig/kernel/codetest.c linux-2.6.19.2/kernel/codetest.c
+--- linux-2.6.19.2.orig/kernel/codetest.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/kernel/codetest.c	2007-05-08 21:09:25.000000000 -0600
+@@ -3,7 +3,7 @@
+ |
+ | codetest.c - Linux implementation of CodeTEST RTOS event hooks
+ |
+-| Copyright (c) 2003 - 2005 Freescale Semiconductor, Inc.
++| Copyright (c) 2003 - 2007 Freescale Semiconductor, Inc.
+ |
+ | This software is licensed under the GPL.  It may be redistributed
+ | and/or modified under the terms of the GNU General Public License as
+diff -uNpr linux-2.6.19.2.orig/kernel/ctswic.h linux-2.6.19.2/kernel/ctswic.h
+--- linux-2.6.19.2.orig/kernel/ctswic.h	2007-05-08 20:52:29.000000000 -0600
++++ linux-2.6.19.2/kernel/ctswic.h	2007-05-08 21:09:25.000000000 -0600
+@@ -4,7 +4,7 @@
+ | ctswic.h - Header for CodeTEST SWIC data structures used
+ |            in the Linux kernel
+ |
+-| Copyright (c) 2003 - 2005 Freescale Semiconductor, Inc.
++| Copyright (c) 2003 - 2007 Freescale Semiconductor, Inc.
+ | 
+ | This software is licensed under the GPL.  It may be redistributed 
+ | and/or modified under the terms of the GNU General Public License as 
+diff -uNpr linux-2.6.19.2.orig/sound/arm/mxc-alsa-common.h linux-2.6.19.2/sound/arm/mxc-alsa-common.h
+--- linux-2.6.19.2.orig/sound/arm/mxc-alsa-common.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/sound/arm/mxc-alsa-common.h	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/sound/arm/mxc-alsa-mixer.c linux-2.6.19.2/sound/arm/mxc-alsa-mixer.c
+--- linux-2.6.19.2.orig/sound/arm/mxc-alsa-mixer.c	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/sound/arm/mxc-alsa-mixer.c	2007-05-08 21:09:25.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.h linux-2.6.19.2/sound/arm/mxc-alsa-pmic.h
+--- linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.h	2007-05-08 20:52:28.000000000 -0600
++++ linux-2.6.19.2/sound/arm/mxc-alsa-pmic.h	2007-05-08 21:09:25.000000000 -0600
+@@ -13,7 +13,7 @@
+  * along with this program; if not, write to the Free Software
+  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+- * Copyright (C) 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright (C) 2006-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+  /*!

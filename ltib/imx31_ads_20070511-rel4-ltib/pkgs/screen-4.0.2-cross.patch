@@ -1,0 +1,153 @@
+Fri Nov 25 2006 Stuart Hughes <stuarth@freescale.com>
+
+This is a patch to allow screen to cross compile
+
+diff --exclude CVS -uNr screen-4.0.2/configure screen-4.0.2.modified/configure
+--- screen-4.0.2/configure	2003-12-05 13:46:53.000000000 +0000
++++ screen-4.0.2.modified/configure	2006-11-24 14:16:26.000000000 +0000
+@@ -2704,7 +2704,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -2753,7 +2753,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -2800,7 +2800,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -4163,7 +4163,8 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
++   fifo=1
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -4272,7 +4273,8 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
++   sock=1
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -4365,7 +4367,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -4460,7 +4462,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -4573,7 +4575,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -4915,7 +4917,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -5359,7 +5361,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -6206,7 +6208,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -6482,7 +6484,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -7004,7 +7006,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -7056,7 +7058,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -7110,7 +7112,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -7951,7 +7953,7 @@
+ See \`config.log' for more details." >&5
+ echo "$as_me: error: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"

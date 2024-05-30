@@ -1,0 +1,13 @@
+This is a sub-set taken from the mtd project. Specifically:
+ftp://ftp.uk.linux.org/pub/people/dwmw2/mtd/cvs/mtd-snapshot-20060302.tar.bz2
+
+This is used just to build the utilities for the host side so we
+can make jff2 filesystems etc.  All the unused directories have been
+removed.
+
+Changes: 
+  * util/Makefile  : to cleanly install when rpm built
+
+For more details about the mtd project see: http://www.linux-mtd.infradead.org/
+
+Stuart Hughes, stuarth@freescale.com, 14th March 2006

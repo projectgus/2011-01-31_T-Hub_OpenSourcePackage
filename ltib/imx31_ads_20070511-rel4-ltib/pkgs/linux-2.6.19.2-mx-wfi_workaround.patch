@@ -1,0 +1,82 @@
+CR: TLSbo91371
+Patch name: TLSbo91371_update_WFI_workaround_implementation.patch
+Date: Tue Mar 6 11:45:08 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: Use a global variable instead of AVIC register.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/system.c linux-2.6.19.2/arch/arm/mach-mx3/system.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/system.c	2007-04-25 17:38:32.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/system.c	2007-04-25 17:38:34.000000000 -0600
+@@ -41,6 +41,8 @@
+  * @ingroup System
+  */
+ 
++extern int mxc_jtag_enabled;
++
+ /*!
+  * This function puts the CPU into idle mode. It is called by default_idle()
+  * in process.c file.
+@@ -51,7 +53,7 @@ void arch_idle(void)
+ 	 * This should do all the clock switching
+ 	 * and wait for interrupt tricks.
+ 	 */
+-	if ((__raw_readl(AVIC_VECTOR) & MXC_WFI_ENABLE) != 0) {
++	if (!mxc_jtag_enabled) {
+ 		cpu_do_idle();
+ 	}
+ }
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/cpu_common.c linux-2.6.19.2/arch/arm/plat-mxc/cpu_common.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/cpu_common.c	2007-04-25 17:37:23.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/cpu_common.c	2007-04-25 17:38:34.000000000 -0600
+@@ -112,7 +112,7 @@ static void system_rev_update(void)
+ 	}
+ }
+ 
+-static int mxc_jtag_enabled __initdata = 0;	/* OFF: 0 (default), ON: 1 */
++int mxc_jtag_enabled __initdata = 0;	/* OFF: 0 (default), ON: 1 */
+ 
+ /*
+  * Here are the JTAG options from the command line. By default JTAG
+@@ -135,26 +135,7 @@ static void __init jtag_wfi_setup(char *
+ 
+ __early_param("jtag=", jtag_wfi_setup);
+ 
+-/*!
+- * Enable or Disable WFI based on JTAG on boot command line
+- */
+-static void __init jtag_wfi_init(void)
+-{
+-	if (mxc_jtag_enabled) {
+-		/* Disable WFI as JTAG is connected */
+-		__raw_writel(__raw_readl(AVIC_VECTOR) & ~(MXC_WFI_ENABLE),
+-			     AVIC_VECTOR);
+-		pr_debug("jtag: on\n");
+-	} else {
+-		/* Enable WFI as JTAG is not connected */
+-		__raw_writel(__raw_readl(AVIC_VECTOR) | (MXC_WFI_ENABLE),
+-			     AVIC_VECTOR);
+-		pr_debug("jtag: off\n");
+-	}
+-}
+-
+ void mxc_cpu_common_init(void)
+ {
+ 	system_rev_update();
+-	jtag_wfi_init();
+ }
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc.h	2007-04-25 17:38:06.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc.h	2007-04-25 17:38:34.000000000 -0600
+@@ -167,12 +167,6 @@ struct mxc_spi_master {
+ #define IIM_PROD_REV_SH		3
+ #define IIM_PROD_REV_LEN	5
+ 
+-/* Since AVIC vector registers are NOT used, we reserve some for various
+- * purposes. */
+-#define AVIC_VEC_0		0x100	/* For WFI workaround. */
+-#define AVIC_VECTOR		IO_ADDRESS(AVIC_BASE_ADDR + AVIC_VEC_0)
+-#define MXC_WFI_ENABLE		0x00000008
+-
+ /* DMA driver defines */
+ #define MXC_IDE_DMA_WATERMARK	32	/* DMA watermark level in bytes */
+ #define MXC_IDE_DMA_BD_NR	(512/3/4)	/* Number of BDs per channel */

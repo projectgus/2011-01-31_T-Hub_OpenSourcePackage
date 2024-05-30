@@ -1,0 +1,99 @@
+--- timezone-2006n/Makefile.orig	2006-10-02 12:32:16.000000000 -0700
++++ timezone-2006n/Makefile	2006-10-19 10:25:23.000000000 -0700
+@@ -218,9 +218,11 @@ CFLAGS=
+ 
+ zic=		./zic
+ ZIC=		$(zic) $(ZFLAGS)
++zic-host=		./zic-host
++ZIC-HOST=		$(zic-host) $(ZFLAGS)
+ 
+ # The name of a Posix-compliant `awk' on your system.
+-AWK=		nawk
++AWK=		awk
+ 
+ # The path where SGML DTDs are kept.
+ SGML_SEARCH_PATH= $(TOPDIR)/share/doc/sgml-lib/REC-html401-19991224/
+@@ -244,8 +246,15 @@ VALIDATE_ENV = \
+ cc=		cc
+ CC=		$(cc) -DTZDIR=\"$(TZDIR)\"
+ 
++# Get host compiler for cross environment. If HOST_CC is not defined,
++# assume non-cross build.
++ifndef HOST_CC
++	HOST_CC=$(CC)
++endif
++
+ TZCSRCS=	zic.c localtime.c asctime.c scheck.c ialloc.c
+ TZCOBJS=	zic.o localtime.o asctime.o scheck.o ialloc.o
++TZCOBJS-HOST=	zic-host.o localtime-host.o asctime-host.o scheck-host.o ialloc-host.o
+ TZDSRCS=	zdump.c localtime.c ialloc.c
+ TZDOBJS=	zdump.o localtime.o ialloc.o
+ DATESRCS=	date.c localtime.c logwtmp.c strftime.c asctime.c
+@@ -278,12 +287,12 @@ ENCHILADA=	$(DOCS) $(SOURCES) $(DATA) $(
+ 
+ SHELL=		/bin/sh
+ 
+-all:		tzselect zic zdump $(LIBOBJS)
++all:		tzselect zic zic-host zdump $(LIBOBJS)
+ 
+ ALL:		all date
+ 
+ install:	all $(DATA) $(REDO) $(TZLIB) $(MANS) $(TABDATA)
+-		$(ZIC) -y $(YEARISTYPE) \
++		$(ZIC-HOST) -y $(YEARISTYPE) \
+ 			-d $(TZDIR) -l $(LOCALTIME) -p $(POSIXRULES)
+ 		-rm -f $(TZDIR)/iso3166.tab $(TZDIR)/zone.tab
+ 		cp iso3166.tab zone.tab $(TZDIR)/.
+@@ -314,15 +323,18 @@ zdump:		$(TZDOBJS)
+ zic:		$(TZCOBJS) yearistype
+ 		$(CC) $(CFLAGS) $(LFLAGS) $(TZCOBJS) $(LDLIBS) -o $@
+ 
++zic-host:	$(TZCOBJS-HOST) yearistype
++		$(HOST_CC) $(CFLAGS) $(LFLAGS) $(TZCOBJS-HOST) $(LDLIBS) -o $@
++
+ yearistype:	yearistype.sh
+ 		cp yearistype.sh yearistype
+ 		chmod +x yearistype
+ 
+-posix_only:	zic $(TDATA)
+-		$(ZIC) -y $(YEARISTYPE) -d $(TZDIR) -L /dev/null $(TDATA)
++posix_only:	zic-host $(TDATA)
++		$(ZIC-HOST) -y $(YEARISTYPE) -d $(TZDIR) -L /dev/null $(TDATA)
+ 
+-right_only:	zic leapseconds $(TDATA)
+-		$(ZIC) -y $(YEARISTYPE) -d $(TZDIR) -L leapseconds $(TDATA)
++right_only:	zic-host leapseconds $(TDATA)
++		$(ZIC-HOST) -y $(YEARISTYPE) -d $(TZDIR) -L leapseconds $(TDATA)
+ 
+ # In earlier versions of this makefile, the other two directories were
+ # subdirectories of $(TZDIR).  However, this led to configuration errors.
+@@ -333,9 +345,9 @@ right_only:	zic leapseconds $(TDATA)
+ # Therefore, the other two directories are now siblings of $(TZDIR).
+ # You must replace all of $(TZDIR) to switch from not using leap seconds
+ # to using them, or vice versa.
+-other_two:	zic leapseconds $(TDATA)
+-		$(ZIC) -y $(YEARISTYPE) -d $(TZDIR)-posix -L /dev/null $(TDATA)
+-		$(ZIC) -y $(YEARISTYPE) \
++other_two:	zic-host leapseconds $(TDATA)
++		$(ZIC-HOST) -y $(YEARISTYPE) -d $(TZDIR)-posix -L /dev/null $(TDATA)
++		$(ZIC-HOST) -y $(YEARISTYPE) \
+ 			-d $(TZDIR)-leaps -L leapseconds $(TDATA)
+ 
+ posix_right:	posix_only other_two
+@@ -364,6 +376,7 @@ tzselect:	tzselect.ksh
+ 		sed \
+ 			-e 's|AWK=[^}]*|AWK=$(AWK)|g' \
+ 			-e 's|TZDIR=[^}]*|TZDIR=$(TZDIR)|' \
++			-e 's|/bin/ksh|/bin/bash|g' \
+ 			<$? >$@
+ 		chmod +x $@
+ 
+@@ -423,4 +436,8 @@ scheck.o:	private.h
+ strftime.o:	tzfile.h
+ zic.o:		private.h tzfile.h
+ 
++# Rules for host objects
++%-host.o:	%.c
++	$(HOST_CC) $(CFLAGS) -c $< -o $@
++
+ .KEEP_STATE:

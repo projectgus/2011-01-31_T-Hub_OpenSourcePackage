@@ -1,0 +1,868 @@
+DSPhl28981_i2c_plat_specific_cleanup.patch
+
+This patch moves platform device info out of the driver.
+It adds support to set i2c divider based on input clock and desired i2c speed.
+It fixes dynamic detection of devices on i2c bus.
+It fixes support for multiple instances of i2c modules.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/devices.c linux-2.6.19.2/arch/arm/mach-mx27/devices.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/devices.c	2007-04-25 17:37:26.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/devices.c	2007-04-25 17:37:33.000000000 -0600
+@@ -403,6 +403,99 @@ static inline void mxc_init_spi(void)
+ }
+ #endif
+ 
++/* I2C controller and device data */
++#if defined(CONFIG_I2C_MXC) || defined(CONFIG_I2C_MXC_MODULE)
++
++#ifdef CONFIG_I2C_MXC_SELECT1
++/*!
++ * Resource definition for the I2C1
++ */
++static struct resource mxci2c1_resources[] = {
++	[0] = {
++	       .start = I2C_BASE_ADDR,
++	       .end = I2C_BASE_ADDR + SZ_4K - 1,
++	       .flags = IORESOURCE_MEM,
++	       },
++	[1] = {
++	       .start = INT_I2C,
++	       .end = INT_I2C,
++	       .flags = IORESOURCE_IRQ,
++	       },
++};
++
++/*! Platform Data for MXC I2C */
++static struct mxc_i2c_platform_data mxci2c1_data = {
++	.clk = I2C_CLK,
++	.i2c_clk = 100000,
++};
++#endif
++
++#ifdef CONFIG_I2C_MXC_SELECT2
++/*!
++ * Resource definition for the I2C2
++ */
++static struct resource mxci2c2_resources[] = {
++	[0] = {
++	       .start = I2C2_BASE_ADDR,
++	       .end = I2C2_BASE_ADDR + SZ_4K - 1,
++	       .flags = IORESOURCE_MEM,
++	       },
++	[1] = {
++	       .start = INT_I2C2,
++	       .end = INT_I2C2,
++	       .flags = IORESOURCE_IRQ,
++	       },
++};
++
++/*! Platform Data for MXC I2C */
++static struct mxc_i2c_platform_data mxci2c2_data = {
++	.clk = I2C2_CLK,
++	.i2c_clk = 100000,
++};
++#endif
++
++/*! Device Definition for MXC I2C */
++static struct platform_device mxci2c_devices[] = {
++#ifdef CONFIG_I2C_MXC_SELECT1
++	{
++	 .name = "mxc_i2c",
++	 .id = 0,
++	 .dev = {
++		 .release = mxc_nop_release,
++		 .platform_data = &mxci2c1_data,
++		 },
++	 .num_resources = ARRAY_SIZE(mxci2c1_resources),
++	 .resource = mxci2c1_resources,},
++#endif
++#ifdef CONFIG_I2C_MXC_SELECT2
++	{
++	 .name = "mxc_i2c",
++	 .id = 1,
++	 .dev = {
++		 .release = mxc_nop_release,
++		 .platform_data = &mxci2c2_data,
++		 },
++	 .num_resources = ARRAY_SIZE(mxci2c2_resources),
++	 .resource = mxci2c2_resources,},
++#endif
++};
++
++static inline void mxc_init_i2c(void)
++{
++	int i;
++
++	for (i = 0; i < ARRAY_SIZE(mxci2c_devices); i++) {
++		if (platform_device_register(&mxci2c_devices[i]) < 0)
++			dev_err(&mxci2c_devices[i].dev,
++				"Unable to register I2C device\n");
++	}
++}
++#else
++static inline void mxc_init_i2c(void)
++{
++}
++#endif
++
+ #ifdef	CONFIG_MXC_VPU
+ /*! Platform Data for MXC VPU */
+ static struct platform_device mxcvpu_device = {
+@@ -508,6 +601,7 @@ static int __init mxc_init_devices(void)
+ 	mxc_init_wdt();
+ 	mxc_init_mmc();
+ 	mxc_init_spi();
++	mxc_init_i2c();
+ 	mxc_init_rtc();
+ 	mxc_init_owire();
+ 	mxc_init_vpu();
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/Kconfig linux-2.6.19.2/arch/arm/mach-mx27/Kconfig
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/Kconfig	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/Kconfig	2007-04-25 17:37:33.000000000 -0600
+@@ -5,9 +5,9 @@ config MACH_MX27ADS
+ 	bool "Support MX27ADS platforms"
+ 	default y
+ 	help
+-	  Include support for MX27ADS platform. This includes specific 
++	  Include support for MX27ADS platform. This includes specific
+ 	  configurations for the board and its peripherals.
+-	
++
+ config ISP1504_MXC
+ 	tristate "ISP1504 transceiver support"
+ 	select ISP1504_MXC_OTG if USB_GADGET && USB_EHCI_HCD && USB_OTG
+@@ -23,4 +23,22 @@ config ISP1301_MXC
+ 	bool
+ 	select I2C_MXC
+ 
++menu "Device options"
++
++config I2C_MXC_SELECT1
++	bool "Enable I2C1 module"
++	default y
++	depends on I2C_MXC
++	help
++	  Enable MX31 I2C1 module.
++
++config I2C_MXC_SELECT2
++	bool "Enable I2C2 module"
++	default n
++	depends on I2C_MXC
++	help
++	  Enable MX31 I2C2 module.
++
++endmenu
++
+ endmenu
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/devices.c linux-2.6.19.2/arch/arm/mach-mx3/devices.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/devices.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/devices.c	2007-04-25 17:37:33.000000000 -0600
+@@ -560,6 +560,134 @@ static inline void mxc_init_spi(void)
+ }
+ #endif
+ 
++/* I2C controller and device data */
++#if defined(CONFIG_I2C_MXC) || defined(CONFIG_I2C_MXC_MODULE)
++
++#ifdef CONFIG_I2C_MXC_SELECT1
++/*!
++ * Resource definition for the I2C1
++ */
++static struct resource mxci2c1_resources[] = {
++	[0] = {
++	       .start = I2C_BASE_ADDR,
++	       .end = I2C_BASE_ADDR + SZ_4K - 1,
++	       .flags = IORESOURCE_MEM,
++	       },
++	[1] = {
++	       .start = INT_I2C,
++	       .end = INT_I2C,
++	       .flags = IORESOURCE_IRQ,
++	       },
++};
++
++/*! Platform Data for MXC I2C */
++static struct mxc_i2c_platform_data mxci2c1_data = {
++	.clk = I2C1_CLK,
++	.i2c_clk = 100000,
++};
++#endif
++
++#ifdef CONFIG_I2C_MXC_SELECT2
++/*!
++ * Resource definition for the I2C2
++ */
++static struct resource mxci2c2_resources[] = {
++	[0] = {
++	       .start = I2C2_BASE_ADDR,
++	       .end = I2C2_BASE_ADDR + SZ_4K - 1,
++	       .flags = IORESOURCE_MEM,
++	       },
++	[1] = {
++	       .start = INT_I2C2,
++	       .end = INT_I2C2,
++	       .flags = IORESOURCE_IRQ,
++	       },
++};
++
++/*! Platform Data for MXC I2C */
++static struct mxc_i2c_platform_data mxci2c2_data = {
++	.clk = I2C2_CLK,
++	.i2c_clk = 100000,
++};
++#endif
++
++#ifdef CONFIG_I2C_MXC_SELECT3
++/*!
++ * Resource definition for the I2C3
++ */
++static struct resource mxci2c3_resources[] = {
++	[0] = {
++	       .start = I2C3_BASE_ADDR,
++	       .end = I2C3_BASE_ADDR + SZ_4K - 1,
++	       .flags = IORESOURCE_MEM,
++	       },
++	[1] = {
++	       .start = INT_I2C3,
++	       .end = INT_I2C3,
++	       .flags = IORESOURCE_IRQ,
++	       },
++};
++
++/*! Platform Data for MXC I2C */
++static struct mxc_i2c_platform_data mxci2c3_data = {
++	.clk = I2C3_CLK,
++	.i2c_clk = 100000,
++};
++#endif
++
++/*! Device Definition for MXC I2C1 */
++static struct platform_device mxci2c_devices[] = {
++#ifdef CONFIG_I2C_MXC_SELECT1
++	{
++	 .name = "mxc_i2c",
++	 .id = 0,
++	 .dev = {
++		 .release = mxc_nop_release,
++		 .platform_data = &mxci2c1_data,
++		 },
++	 .num_resources = ARRAY_SIZE(mxci2c1_resources),
++	 .resource = mxci2c1_resources,},
++#endif
++#ifdef CONFIG_I2C_MXC_SELECT2
++	{
++	 .name = "mxc_i2c",
++	 .id = 1,
++	 .dev = {
++		 .release = mxc_nop_release,
++		 .platform_data = &mxci2c2_data,
++		 },
++	 .num_resources = ARRAY_SIZE(mxci2c2_resources),
++	 .resource = mxci2c2_resources,},
++#endif
++#ifdef CONFIG_I2C_MXC_SELECT3
++	{
++	 .name = "mxc_i2c",
++	 .id = 2,
++	 .dev = {
++		 .release = mxc_nop_release,
++		 .platform_data = &mxci2c3_data,
++		 },
++	 .num_resources = ARRAY_SIZE(mxci2c3_resources),
++	 .resource = mxci2c3_resources,},
++#endif
++};
++
++static inline void mxc_init_i2c(void)
++{
++	int i;
++
++	for (i = 0; i < ARRAY_SIZE(mxci2c_devices); i++) {
++		if (platform_device_register(&mxci2c_devices[i]) < 0)
++			dev_err(&mxci2c_devices[i].dev,
++				"Unable to register I2C device\n");
++	}
++}
++#else
++static inline void mxc_init_i2c(void)
++{
++}
++#endif
++
+ struct mxc_gpio_port mxc_gpio_ports[GPIO_PORT_NUM] = {
+ 	{
+ 	 .num = 0,
+@@ -605,6 +733,7 @@ static int __init mxc_init_devices(void)
+ 	mxc_init_mmc();
+ 	mxc_init_ir();
+ 	mxc_init_spi();
++	mxc_init_i2c();
+ 	mxc_init_rtc();
+ 	mxc_init_owire();
+ 	mxc_init_pcmcia();
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/Kconfig linux-2.6.19.2/arch/arm/mach-mx3/Kconfig
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/Kconfig	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/Kconfig	2007-04-25 17:37:33.000000000 -0600
+@@ -36,5 +36,31 @@ config MXC_SDMA_API
+         help
+            This selects the Freescale MXC SDMA API.
+            If unsure, say N.
++
++menu "Device options"
++
++config I2C_MXC_SELECT1
++	bool "Enable I2C1 module"
++	default y
++	depends on I2C_MXC
++	help
++	  Enable MX31 I2C1 module.
++
++config I2C_MXC_SELECT2
++	bool "Enable I2C2 module"
++	default n
++	depends on I2C_MXC
++	help
++	  Enable MX31 I2C2 module.
++
++config I2C_MXC_SELECT3
++	bool "Enable I2C3 module"
++	default n
++	depends on I2C_MXC
++	help
++	  Enable MX31 I2C3 module.
++
++endmenu
++
+ endmenu
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/i2c/busses/mxc_i2c.c linux-2.6.19.2/drivers/i2c/busses/mxc_i2c.c
+--- linux-2.6.19.2.orig/drivers/i2c/busses/mxc_i2c.c	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/drivers/i2c/busses/mxc_i2c.c	2007-04-25 17:37:33.000000000 -0600
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+  */
+ 
+ /*
+@@ -29,10 +29,10 @@
+ #include <linux/delay.h>
+ #include <linux/interrupt.h>
+ #include <linux/platform_device.h>
++#include <linux/i2c.h>
++
+ #include <asm/irq.h>
+ #include <asm/io.h>
+-#include <linux/i2c.h>
+-#include <asm/arch/mxc_i2c.h>
+ #include <asm/arch/clock.h>
+ #include "mxc_i2c_reg.h"
+ 
+@@ -55,7 +55,7 @@ typedef struct {
+ 	/*!
+ 	 * The base address of the I2C device.
+ 	 */
+-	char *membase;
++	unsigned long membase;
+ 
+ 	/*!
+ 	 * The interrupt number used by the I2C device.
+@@ -68,6 +68,11 @@ typedef struct {
+ 	unsigned int clkdiv;
+ 
+ 	/*!
++	 * The default clock source to be used.
++	 */
++	enum mxc_clocks clk;
++
++	/*!
+ 	 * The current power state of the device
+ 	 */
+ 	bool low_power;
+@@ -83,32 +88,29 @@ static bool transfer_done = false;
+  */
+ static bool tx_success = false;
+ 
+-/*!
+- * This is an array where each element holds information about a I2C module,
+- * like base address, interrupt number etc. This elements of this structure
+- * are stored in the appropriate i2c_adapter structure during the module
+- * initialization.
+- */
+-static mxc_i2c_device mxc_i2c_devs[I2C_NR] = {
+-	[0] = {
+-	       .membase = (void *)IO_ADDRESS(I2C_BASE_ADDR),
+-	       .irq = INT_I2C,
+-	       .clkdiv = I2C1_FRQ_DIV,
+-	       },
+-#if I2C_NR > 1
+-	[1] = {
+-	       .membase = (void *)IO_ADDRESS(I2C2_BASE_ADDR),
+-	       .irq = INT_I2C2,
+-	       .clkdiv = I2C2_FRQ_DIV,
+-	       },
+-#if I2C_NR > 2
+-	[2] = {
+-	       .membase = (void *)IO_ADDRESS(I2C3_BASE_ADDR),
+-	       .irq = INT_I2C3,
+-	       .clkdiv = I2C3_FRQ_DIV,
+-	       }
+-#endif
+-#endif
++struct clk_div_table {
++	int reg_value;
++	int div;
++};
++
++static const struct clk_div_table i2c_clk_table[] = {
++	{0x20, 22}, {0x21, 24}, {0x22, 26}, {0x23, 28},
++	{0, 30}, {1, 32}, {0x24, 32}, {2, 36},
++	{0x25, 36}, {0x26, 40}, {3, 42}, {0x27, 44},
++	{4, 48}, {0x28, 48}, {5, 52}, {0x29, 56},
++	{6, 60}, {0x2A, 64}, {7, 72}, {0x2B, 72},
++	{8, 80}, {0x2C, 80}, {9, 88}, {0x2D, 96},
++	{0xA, 104}, {0x2E, 112}, {0xB, 128}, {0x2F, 128},
++	{0xC, 144}, {0xD, 160}, {0x30, 160}, {0xE, 192},
++	{0x31, 192}, {0x32, 224}, {0xF, 240}, {0x33, 256},
++	{0x10, 288}, {0x11, 320}, {0x34, 320}, {0x12, 384},
++	{0x35, 384}, {0x36, 448}, {0x13, 480}, {0x37, 512},
++	{0x14, 576}, {0x15, 640}, {0x38, 640}, {0x16, 768},
++	{0x39, 768}, {0x3A, 896}, {0x17, 960}, {0x3B, 1024},
++	{0x18, 1152}, {0x19, 1280}, {0x3C, 1280}, {0x1A, 1536},
++	{0x3D, 1536}, {0x3E, 1792}, {0x1B, 1920}, {0x3F, 2048},
++	{0x1C, 2304}, {0x1D, 2560}, {0x1E, 3072}, {0x1F, 3840},
++	{0, 0}
+ };
+ 
+ extern void gpio_i2c_active(int i2c_num);
+@@ -157,44 +159,14 @@ static void mxc_i2c_stop(mxc_i2c_device 
+ static int mxc_i2c_wait_for_tc(mxc_i2c_device * dev, int trans_flag)
+ {
+ 	int retry = 16;
+-	volatile unsigned int sr, cr;
+ 
+-	if (trans_flag & MXC_I2C_FLAG_POLLING) {
+-		/* I2C_POLLING_MODE */
+-		unsigned long x = jiffies + dev->adap.timeout * HZ;
+-		while (!(readw(dev->membase + MXC_I2SR) & MXC_I2SR_IIF)) {
+-			if (unlikely(time_after(jiffies, x))) {
+-				/* Poll timeout */
+-				retry = -ETIMEDOUT;
+-				break;
+-			}
+-			if (unlikely(signal_pending(current))) {
+-				/* Poll interrupted */
+-				retry = -ERESTARTSYS;
+-				break;
+-			}
+-			if (!irqs_disabled()) {
+-				schedule();
+-			}
+-		}
+-		sr = readw(dev->membase + MXC_I2SR);
+-		cr = readw(dev->membase + MXC_I2CR);
+-		writew(0, dev->membase + MXC_I2SR);
+-
+-		tx_success = false;
+-		/* Check if RXAK is received in Transmit mode */
+-		if ((cr & MXC_I2CR_MTX) && (!(sr & MXC_I2SR_RXAK))) {
+-			tx_success = true;
+-		}
+-	} else {
+-		/* Interrupt mode */
+-		while (retry-- && !transfer_done) {
+-			wait_event_interruptible_timeout(dev->wq,
+-							 transfer_done,
+-							 dev->adap.timeout);
+-		}
+-		transfer_done = false;
++	while (retry-- && !transfer_done) {
++		wait_event_interruptible_timeout(dev->wq,
++						 transfer_done,
++						 dev->adap.timeout);
+ 	}
++	transfer_done = false;
++
+ 	if (retry <= 0) {
+ 		/* Unable to send data */
+ 		printk(KERN_DEBUG "Data not transmitted\n");
+@@ -401,18 +373,14 @@ static int mxc_i2c_writebytes(mxc_i2c_de
+  */
+ static void mxc_i2c_module_en(mxc_i2c_device * dev, int trans_flag)
+ {
+-	mxc_clks_enable(I2C_CLK);
++	mxc_clks_enable(dev->clk);
+ 	/* Set the frequency divider */
+ 	writew(dev->clkdiv, dev->membase + MXC_IFDR);
+ 	/* Clear the status register */
+ 	writew(0x0, dev->membase + MXC_I2SR);
+ 	/* Enable I2C and its interrupts */
+-	if (trans_flag & MXC_I2C_FLAG_POLLING) {
+-		writew(MXC_I2CR_IEN, dev->membase + MXC_I2CR);
+-	} else {
+-		writew(MXC_I2CR_IEN, dev->membase + MXC_I2CR);
+-		writew(MXC_I2CR_IEN | MXC_I2CR_IIEN, dev->membase + MXC_I2CR);
+-	}
++	writew(MXC_I2CR_IEN, dev->membase + MXC_I2CR);
++	writew(MXC_I2CR_IEN | MXC_I2CR_IIEN, dev->membase + MXC_I2CR);
+ }
+ 
+ /*!
+@@ -423,7 +391,7 @@ static void mxc_i2c_module_en(mxc_i2c_de
+ static void mxc_i2c_module_dis(mxc_i2c_device * dev)
+ {
+ 	writew(0x0, dev->membase + MXC_I2CR);
+-	mxc_clks_disable(I2C_CLK);
++	mxc_clks_disable(dev->clk);
+ }
+ 
+ /*!
+@@ -659,19 +627,90 @@ static int mxci2c_resume(struct platform
+  */
+ static int mxci2c_probe(struct platform_device *pdev)
+ {
++	mxc_i2c_device *mxc_i2c;
++	struct mxc_i2c_platform_data *i2c_plat_data = pdev->dev.platform_data;
++	struct resource *res;
+ 	int id = pdev->id;
++	u32 clk_freq;
++	int ret = 0;
+ 	int i;
+ 
+-	for (i = 0; i < I2C_NR; i++) {
+-		/*
+-		 * Get the appropriate device structure for this I2C adapter
+-		 */
+-		if (mxc_i2c_devs[i].adap.id != id) {
+-			continue;
++	mxc_i2c = kzalloc(sizeof(mxc_i2c_device), GFP_KERNEL);
++	if (!mxc_i2c) {
++		return -ENOMEM;
++	}
++
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	if (res == NULL) {
++		ret = -ENODEV;
++		goto err1;
++	}
++	mxc_i2c->membase = IO_ADDRESS(res->start);
++
++	/*
++	 * Request the I2C interrupt
++	 */
++	mxc_i2c->irq = platform_get_irq(pdev, 0);
++	if (mxc_i2c->irq < 0) {
++		ret = mxc_i2c->irq;
++		goto err1;
++	}
++
++	ret = request_irq(mxc_i2c->irq, mxc_i2c_handler,
++			  0, pdev->name, mxc_i2c);
++	if (ret < 0) {
++		goto err1;
++	}
++
++	init_waitqueue_head(&mxc_i2c->wq);
++
++	mxc_i2c->low_power = false;
++
++	gpio_i2c_active(id);
++
++	clk_freq = mxc_get_clocks(i2c_plat_data->clk);
++	mxc_i2c->clkdiv = -1;
++	if (i2c_plat_data->i2c_clk) {
++		/* Calculate divider and round up any fractional part */
++		int div = (clk_freq + i2c_plat_data->i2c_clk - 1) /
++		    i2c_plat_data->i2c_clk;
++		for (i = 0; i2c_clk_table[i].div != 0; i++) {
++			if (i2c_clk_table[i].div >= div) {
++				mxc_i2c->clkdiv = i2c_clk_table[i].reg_value;
++				break;
++			}
+ 		}
+-		platform_set_drvdata(pdev, &mxc_i2c_devs[i]);
+ 	}
++	if (mxc_i2c->clkdiv == -1) {
++		i--;
++		mxc_i2c->clkdiv = 0x1F;	/* Use max divider */
++	}
++	dev_dbg(&pdev->dev, "i2c speed is %d/%d = %d bps, reg val = 0x%02X\n",
++		clk_freq, i2c_clk_table[i].div,
++		clk_freq / i2c_clk_table[i].div, mxc_i2c->clkdiv);
++
++	/*
++	 * Set the adapter information
++	 */
++	strcpy(mxc_i2c->adap.name, pdev->name);
++	mxc_i2c->adap.id = id;
++	mxc_i2c->adap.algo = &mxc_i2c_algorithm;
++	mxc_i2c->adap.timeout = 1;
++	i2c_set_adapdata(&mxc_i2c->adap, mxc_i2c);
++	if ((ret = i2c_add_adapter(&mxc_i2c->adap)) < 0) {
++		goto err2;
++	}
++
++	printk(KERN_INFO "MXC I2C driver\n");
+ 	return 0;
++
++      err2:
++	free_irq(mxc_i2c->irq, mxc_i2c);
++	gpio_i2c_inactive(id);
++      err1:
++	dev_err(&pdev->dev, "failed to probe i2c adapter\n");
++	kfree(mxc_i2c);
++	return ret;
+ }
+ 
+ /*!
+@@ -684,6 +723,12 @@ static int mxci2c_probe(struct platform_
+  */
+ static int mxci2c_remove(struct platform_device *pdev)
+ {
++	mxc_i2c_device *mxc_i2c = platform_get_drvdata(pdev);
++	int id = pdev->id;
++
++	free_irq(mxc_i2c->irq, mxc_i2c);
++	i2c_del_adapter(&mxc_i2c->adap);
++	gpio_i2c_inactive(id);
+ 	platform_set_drvdata(pdev, NULL);
+ 	return 0;
+ }
+@@ -693,7 +738,7 @@ static int mxci2c_remove(struct platform
+  */
+ static struct platform_driver mxci2c_driver = {
+ 	.driver = {
+-		   .name = "mxci2c",
++		   .name = "mxc_i2c",
+ 		   .owner = THIS_MODULE,
+ 		   },
+ 	.probe = mxci2c_probe,
+@@ -702,26 +747,6 @@ static struct platform_driver mxci2c_dri
+ 	.resume = mxci2c_resume,
+ };
+ 
+-/*! Device Definition for MXC I2C devices */
+-static struct platform_device mxci2c_devices[I2C_NR] = {
+-	[0] = {
+-	       .name = "mxci2c",
+-	       .id = 0,
+-	       },
+-#if I2C_NR > 1
+-	[1] = {
+-	       .name = "mxci2c",
+-	       .id = 1,
+-	       },
+-#if I2C_NR > 2
+-	[2] = {
+-	       .name = "mxci2c",
+-	       .id = 2,
+-	       }
+-#endif
+-#endif
+-};
+-
+ /*!
+  * Function requests the interrupts and registers the i2c adapter structures.
+  *
+@@ -729,63 +754,8 @@ static struct platform_device mxci2c_dev
+  */
+ static int __init mxc_i2c_init(void)
+ {
+-	int i, ret = 0, err = 0;
+-
+-	printk(KERN_INFO "MXC I2C driver\n");
+-
+ 	/* Register the device driver structure. */
+-	ret = platform_driver_register(&mxci2c_driver);
+-	if (ret != 0) {
+-		return ret;
+-	}
+-
+-	for (i = 0; i < I2C_NR; i++) {
+-		/*
+-		 * Request the I2C interrupt
+-		 */
+-		ret = request_irq(mxc_i2c_devs[i].irq, mxc_i2c_handler,
+-				  0, "MXC I2C", &mxc_i2c_devs[i]);
+-		if (ret != 0) {
+-			printk(KERN_CRIT "mxc-i2c%d: failed to request i2c "
+-			       "interrupt\n", i);
+-			err = ret;
+-			continue;
+-		}
+-
+-		init_waitqueue_head(&mxc_i2c_devs[i].wq);
+-
+-		mxc_i2c_devs[i].low_power = false;
+-		/*
+-		 * Set the adapter information
+-		 */
+-		strcpy(mxc_i2c_devs[i].adap.name, MXC_ADAPTER_NAME);
+-		mxc_i2c_devs[i].adap.id = i;	/* Used by MXC I2C client */
+-		mxc_i2c_devs[i].adap.algo = &mxc_i2c_algorithm;
+-		mxc_i2c_devs[i].adap.timeout = 1;
+-		i2c_set_adapdata(&mxc_i2c_devs[i].adap, &mxc_i2c_devs[i]);
+-
+-		if ((ret = i2c_add_adapter(&mxc_i2c_devs[i].adap)) != 0) {
+-			printk(KERN_CRIT "mxc-i2c%d: failed to register i2c "
+-			       "adapter\n", i);
+-			free_irq(mxc_i2c_devs[i].irq, &mxc_i2c_devs[i]);
+-			err = ret;
+-			continue;
+-		}
+-		/* Register the I2C device */
+-		ret = platform_device_register(&mxci2c_devices[i]);
+-		if (ret != 0) {
+-			printk(KERN_CRIT "mxc-i2c%d: failed to register i2c "
+-			       "platform device\n", i);
+-			free_irq(mxc_i2c_devs[i].irq, &mxc_i2c_devs[i]);
+-			err = ret;
+-		}
+-		/*
+-		 * Enable the I2C pins
+-		 */
+-		gpio_i2c_active(i);
+-	}
+-
+-	return err;
++	return platform_driver_register(&mxci2c_driver);
+ }
+ 
+ /*!
+@@ -793,15 +763,7 @@ static int __init mxc_i2c_init(void)
+  */
+ static void __exit mxc_i2c_exit(void)
+ {
+-	int i;
+-
+-	for (i = 0; i < I2C_NR; i++) {
+-		gpio_i2c_inactive(i);
+-		free_irq(mxc_i2c_devs[i].irq, &mxc_i2c_devs[i]);
+-		i2c_del_adapter(&mxc_i2c_devs[i].adap);
+-		platform_driver_unregister(&mxci2c_driver);
+-		platform_device_unregister(&mxci2c_devices[i]);
+-	}
++	platform_driver_unregister(&mxci2c_driver);
+ }
+ 
+ subsys_initcall(mxc_i2c_init);
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mt9v111.c linux-2.6.19.2/drivers/media/video/mxc/capture/mt9v111.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mt9v111.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mt9v111.c	2007-04-25 17:37:33.000000000 -0600
+@@ -581,13 +581,9 @@ static void mt9v111_test_pattern(bool fl
+  * @param adapter            struct i2c_adapter *
+  * @return  Error code indicating success or failure
+  */
+-static int mt9v111_attach(struct i2c_adapter *adapter)
++static int mt9v111_detect_client(struct i2c_adapter *adapter, int address,
++				 int kind)
+ {
+-	if (strcmp(adapter->name, MXC_ADAPTER_NAME) != 0) {
+-		printk(KERN_ERR "mt9v111_attach: %s\n", adapter->name);
+-		return -1;
+-	}
+-
+ 	mt9v111_i2c_client.adapter = adapter;
+ 	if (i2c_attach_client(&mt9v111_i2c_client)) {
+ 		mt9v111_i2c_client.adapter = NULL;
+@@ -602,9 +598,32 @@ static int mt9v111_attach(struct i2c_ada
+ 		return -1;
+ 	}
+ 
++	mxc_clks_disable(CSI_BAUD);
++	printk(KERN_INFO "MT9V111 Detected\n");
++
+ 	return 0;
+ }
+ 
++static unsigned short normal_i2c[] = { MT9V111_I2C_ADDRESS, I2C_CLIENT_END };
++
++/* Magic definition of all other variables and things */
++I2C_CLIENT_INSMOD;
++
++/*!
++ * mt9v111 I2C attach function
++ *
++ * @param adapter            struct i2c_adapter *
++ * @return  Error code indicating success or failure
++ */
++static int mt9v111_attach(struct i2c_adapter *adap)
++{
++	uint32_t mclk = 27000000;
++	mxc_clks_enable(CSI_BAUD);
++	set_mclk_rate(&mclk);
++
++	return i2c_probe(adap, &addr_data, &mt9v111_detect_client);
++}
++
+ /*!
+  * mt9v111 I2C detach function
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board.h linux-2.6.19.2/include/asm-arm/arch-mxc/board.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/board.h	2007-04-25 17:37:33.000000000 -0600
+@@ -18,6 +18,8 @@
+ #error "Do not include directly."
+ #endif
+ 
++#include <asm/arch/clock.h>
++
+ #ifndef __ASSEMBLY__
+ 
+ struct mxc_ipu_config {
+@@ -27,6 +29,12 @@ struct mxc_ipu_config {
+ struct mxc_ir_platform_data {
+ 	int uart_ir_mux;
+ };
++
++struct mxc_i2c_platform_data {
++	enum mxc_clocks clk;
++	u32 i2c_clk;
++};
++
+ #endif
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board-mx27ads.h linux-2.6.19.2/include/asm-arm/arch-mxc/board-mx27ads.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board-mx27ads.h	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/board-mx27ads.h	2007-04-25 17:37:33.000000000 -0600
+@@ -45,17 +45,6 @@
+ /* Size of contiguous memory for DMA and other h/w blocks */
+ #define CONSISTENT_DMA_SIZE	SZ_8M
+ 
+-/* I2C configuration */
+-/*!
+- * This defines the number of I2C modules in the MXC platform
+- */
+-#define I2C_NR                 1
+-/*!
+- * This define specifies the frequency divider value to be written into
+- * the I2C \b IFDR register.
+- */
+-#define I2C1_FRQ_DIV            0x17
+-
+ /*!
+  * @name MXC UART EVB board level configurations
+  */
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board-mx31ads.h linux-2.6.19.2/include/asm-arm/arch-mxc/board-mx31ads.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board-mx31ads.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/board-mx31ads.h	2007-04-25 17:37:33.000000000 -0600
+@@ -25,18 +25,6 @@
+ /* Size of contiguous memory for DMA and other h/w blocks */
+ #define CONSISTENT_DMA_SIZE	SZ_8M
+ 
+-/* I2C configuration */
+-/*!
+- * This defines the number of I2C modules in the MXC platform
+- * Defined as 1, as MC13783 on ADS uses the other pins
+- */
+-#define I2C_NR                  1
+-/*!
+- * This define specifies the frequency divider value to be written into
+- * the I2C \b IFDR register.
+- */
+-#define I2C1_FRQ_DIV            0x17
+-
+ /*!
+  * @name MXC UART EVB board level configurations
+  */

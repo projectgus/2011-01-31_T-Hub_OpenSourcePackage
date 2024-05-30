@@ -1,0 +1,42 @@
+CR: ENGR00028660
+Patch name: ENGR00028660_Reversing_ENGR00028231_Remove_workaround.patch
+Date: Wed Mar 14 16:49:57 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: Reversing the earlier patch beause the new SDMA scripts do
+not solve the issue completely, and the existing workaround is still
+required.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/net/irda/mxc_ir.c linux-2.6.19.2/drivers/net/irda/mxc_ir.c
+--- linux-2.6.19.2.orig/drivers/net/irda/mxc_ir.c	2007-04-25 17:38:57.000000000 -0600
++++ linux-2.6.19.2/drivers/net/irda/mxc_ir.c	2007-04-25 17:39:33.000000000 -0600
+@@ -908,12 +908,15 @@ static int mxc_irda_hard_xmit(struct sk_
+ 	} else {
+ 		unsigned int mtt = irda_get_mtt(skb);
+ 		unsigned char *p = skb->data;
++		unsigned int skb_len = skb->len;
+ #ifdef FIRI_SDMA_TX
+ 		mxc_dma_requestbuf_t dma_request;
+ #else
+ 		unsigned int i, sr;
+ #endif
+ 
++		skb_len = skb_len + ((4 - (skb_len % 4)) % 4);
++
+ 		if (si->txskb) {
+ 			BUG();
+ 		}
+@@ -940,11 +943,11 @@ static int mxc_irda_hard_xmit(struct sk_
+ 		 * Number of bytes in SK buffer to transfer and Transfer complete
+ 		 * callback function.
+ 		 */
+-		si->dma_tx_buff_len = skb->len;
++		si->dma_tx_buff_len = skb_len;
+ 		si->dma_tx_buff_phy =
+-		    dma_map_single(si->dev, p, skb->len, DMA_TO_DEVICE);
++		    dma_map_single(si->dev, p, skb_len, DMA_TO_DEVICE);
+ 
+-		dma_request.num_of_bytes = skb->len;
++		dma_request.num_of_bytes = skb_len;
+ 		dma_request.dst_addr = si->firi_res->start + FIRITXFIFO;
+ 		dma_request.src_addr = si->dma_tx_buff_phy;
+ 

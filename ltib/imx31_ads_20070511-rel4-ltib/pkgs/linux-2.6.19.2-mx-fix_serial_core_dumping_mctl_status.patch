@@ -1,0 +1,65 @@
+CR: TLSbo92104
+Patch name: TLSbo92104_serial_core_fix_when_dumping_MCTRL_status.patch
+Date: Fri Mar 2 08:17:25 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description:
+author George G. Davis <gdavis@mvista.com>
+Wed, 14 Feb 2007 08:33:06 +0000 (00:33 -0800)
+committer Linus Torvalds <torvalds@woody.linux-foundation.org>
+Wed, 14 Feb 2007 16:09:52 +0000 (08:09 -0800)
+commit 3689a0ec60bc8f56cc372c1dfa0d89dab48f7c9c
+tree 2481249f304a34fbff2db433b955178face86026
+parent 9b22271d4b8c1be8a81563c322d3f04e7cbe2153
+
+[PATCH] serial: make sure UART is powered up when dumping MCTRL status
+
+Since serial devices are powered down when not in use and some of those
+devices cannot be accessed when powered down, we need to enable power
+around calls to get_mcrtl() when dumping port state via uart_line_info().
+This resolves hangs observed on some machines while reading serial device
+registers when a port is powered off.
+
+Signed-off-by: George G. Davis <gdavis@mvista.com>
+Cc: Russell King <rmk@arm.linux.org.uk>
+Cc: Alan Cox <alan@lxorguk.ukuu.org.uk>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/serial/serial_core.c linux-2.6.19.2/drivers/serial/serial_core.c
+--- linux-2.6.19.2.orig/drivers/serial/serial_core.c	2007-01-10 12:10:37.000000000 -0700
++++ linux-2.6.19.2/drivers/serial/serial_core.c	2007-04-25 17:38:15.000000000 -0600
+@@ -1660,6 +1660,7 @@ static const char *uart_type(struct uart
+ static int uart_line_info(char *buf, struct uart_driver *drv, int i)
+ {
+ 	struct uart_state *state = drv->state + i;
++	int pm_state;
+ 	struct uart_port *port = state->port;
+ 	char stat_buf[32];
+ 	unsigned int status;
+@@ -1682,9 +1683,16 @@ static int uart_line_info(char *buf, str
+ 
+ 	if(capable(CAP_SYS_ADMIN))
+ 	{
++		mutex_lock(&state->mutex);
++		pm_state = state->pm_state;
++		if (pm_state)
++			uart_change_pm(state, 0);
+ 		spin_lock_irq(&port->lock);
+ 		status = port->ops->get_mctrl(port);
+ 		spin_unlock_irq(&port->lock);
++		if (pm_state)
++			uart_change_pm(state, pm_state);
++		mutex_unlock(&state->mutex);
+ 
+ 		ret += sprintf(buf + ret, " tx:%d rx:%d",
+ 				port->icount.tx, port->icount.rx);
+@@ -2100,6 +2108,9 @@ uart_configure_port(struct uart_driver *
+ 
+ 		uart_report_port(drv, port);
+ 
++		/* Power up port for set_mctrl() */
++		uart_change_pm(state, 0);
++
+ 		/*
+ 		 * Ensure that the modem control lines are de-activated.
+ 		 * We probably don't need a spinlock around this, but

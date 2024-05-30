@@ -1,0 +1,141 @@
+diff -uNpr misc.orig/module_test/ipctestmod.c misc/module_test/ipctestmod.c
+--- misc.orig/module_test/ipctestmod.c	2007-01-12 15:14:46.000000000 -0700
++++ misc/module_test/ipctestmod.c	2007-01-26 11:52:19.000000000 -0700
+@@ -14,7 +14,6 @@
+ /*
+  * Include Files
+  */
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/init.h>
+ #include <linux/device.h>
+diff -uNpr misc.orig/module_test/mxc_HAC_test.c misc/module_test/mxc_HAC_test.c
+--- misc.orig/module_test/mxc_HAC_test.c	2007-01-12 15:21:35.000000000 -0700
++++ misc/module_test/mxc_HAC_test.c	2007-01-26 11:52:23.000000000 -0700
+@@ -14,7 +14,6 @@
+ /*
+  * General Include Files
+  */
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/version.h>
+diff -uNpr misc.orig/module_test/mxc_i2c_test.c misc/module_test/mxc_i2c_test.c
+--- misc.orig/module_test/mxc_i2c_test.c	2007-01-12 15:14:46.000000000 -0700
++++ misc/module_test/mxc_i2c_test.c	2007-01-26 11:52:26.000000000 -0700
+@@ -14,7 +14,6 @@
+ /*
+  * General Include Files
+  */
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/version.h>
+diff -uNpr misc.orig/module_test/mxc_i2c_testmod.c misc/module_test/mxc_i2c_testmod.c
+--- misc.orig/module_test/mxc_i2c_testmod.c	2007-01-12 15:14:46.000000000 -0700
++++ misc/module_test/mxc_i2c_testmod.c	2007-01-26 11:52:37.000000000 -0700
+@@ -11,7 +11,6 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ 
+-#include <linux/config.h>	/* kmalloc_sizes.h needs CONFIG_ options */
+ #include <linux/gfp.h>
+ #include <linux/init.h>
+ #include <linux/types.h>
+diff -uNpr misc.orig/module_test/mxc_pm_test.c misc/module_test/mxc_pm_test.c
+--- misc.orig/module_test/mxc_pm_test.c	2007-01-12 15:22:05.000000000 -0700
++++ misc/module_test/mxc_pm_test.c	2007-01-26 11:52:41.000000000 -0700
+@@ -14,7 +14,6 @@
+ /*
+  * General Include Files
+  */
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/version.h>
+diff -uNpr misc.orig/module_test/mxc_test.c misc/module_test/mxc_test.c
+--- misc.orig/module_test/mxc_test.c	2007-01-12 15:32:13.000000000 -0700
++++ misc/module_test/mxc_test.c	2007-01-26 11:52:47.000000000 -0700
+@@ -15,7 +15,6 @@
+ /*
+  * General Include Files
+  */
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/version.h>
+diff -uNpr misc.orig/module_test/mxc_wdog_tm.c misc/module_test/mxc_wdog_tm.c
+--- misc.orig/module_test/mxc_wdog_tm.c	2007-01-12 15:14:46.000000000 -0700
++++ misc/module_test/mxc_wdog_tm.c	2007-01-26 11:52:44.000000000 -0700
+@@ -14,7 +14,6 @@
+ /*
+  * General Include Files
+  */
+-#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/version.h>
+diff -uNpr misc.orig/test/mxc_keyb_test/mxc_keyb_test.c misc/test/mxc_keyb_test/mxc_keyb_test.c
+--- misc.orig/test/mxc_keyb_test/mxc_keyb_test.c	2007-01-12 15:14:47.000000000 -0700
++++ misc/test/mxc_keyb_test/mxc_keyb_test.c	2007-01-26 11:52:51.000000000 -0700
+@@ -22,7 +22,6 @@
+  * mxc_keyb_test.c 
+  *
+  */
+-#include <linux/config.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+diff -uNpr misc.orig/test/mxc_pmic_test/pmic_module_power/pmic_power_module.c misc/test/mxc_pmic_test/pmic_module_power/pmic_power_module.c
+--- misc.orig/test/mxc_pmic_test/pmic_module_power/pmic_power_module.c	2007-01-12 15:14:47.000000000 -0700
++++ misc/test/mxc_pmic_test/pmic_module_power/pmic_power_module.c	2007-01-26 11:53:15.000000000 -0700
+@@ -31,7 +31,6 @@ Test Executable Name:  pmic_power_module
+ ==============================================================================*/
+ #include <linux/kernel.h>
+ #include <linux/module.h>
+-#include <linux/config.h>
+ #include <linux/device.h>
+ #include <linux/kdev_t.h>
+ #include <linux/major.h>
+diff -uNpr misc.orig/test/mxc_pm_test/mxc_pm_test.c misc/test/mxc_pm_test/mxc_pm_test.c
+--- misc.orig/test/mxc_pm_test/mxc_pm_test.c	2007-01-12 15:43:47.000000000 -0700
++++ misc/test/mxc_pm_test/mxc_pm_test.c	2007-01-26 11:53:01.000000000 -0700
+@@ -20,7 +20,6 @@
+ #include <fcntl.h>
+ #include <limits.h>
+ #include "mxc_test.h"
+-#include <linux/config.h>
+ 
+ #include <asm-arm/arch-mxc/mxc_pm.h>
+ 
+diff -uNpr misc.orig/test/mxc_v4l2_test/mxc_v4l2_test.c misc/test/mxc_v4l2_test/mxc_v4l2_test.c
+--- misc.orig/test/mxc_v4l2_test/mxc_v4l2_test.c	2007-01-12 15:14:51.000000000 -0700
++++ misc/test/mxc_v4l2_test/mxc_v4l2_test.c	2007-01-26 11:53:23.000000000 -0700
+@@ -49,7 +49,6 @@ extern "C"{
+ #include <linux/compiler.h>
+ #include <linux/videodev.h>
+ 
+-#include <linux/config.h>
+ #if !defined( CONFIG_MACH_MX31ADS ) && !defined( CONFIG_MACH_MX21ADS )
+ #include <linux/delay.h>
+ #endif
+diff -uNpr misc.orig/test/mxc_udma_test/Makefile misc/test/mxc_udma_test/Makefile
+--- misc.orig/test/mxc_udma_test/Makefile	2007-01-12 15:53:23.000000000 -0700
++++ misc/test/mxc_udma_test/Makefile	2007-05-11 11:45:46.000000000 -0600
+@@ -1,13 +1,13 @@
+ #
+ # Setup the proper directories for make.rules to function
+ #
+-OBJDIR=$(TOPDIR)/platform/$(BOARD)/$(MODULE_NAME)
++OBJDIR=$(TOPDIR)/platform/$(PLATFORM)/$(MODULE_NAME)
+ SRCDIR=$(TOPDIR)/source/examples/$(MODULE_NAME)
+ 
+ # list of platforms which did not want this test case
+ EXCLUDE_LIST:= "IMX31ADS"
+ 
+-ifeq (,$(findstring $(BOARD), $(EXCLUDE_LIST)))
++ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
+ OBJS = $(OBJDIR)/mxc_udma_test.out
+ else
+ OBJS = 
+

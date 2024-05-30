@@ -1,0 +1,42 @@
+Steve Papacharalambous stevep@freescale.com 03 August 2006:
+
+Patch to fix linker errors in coreutils sort when the BIG feature is
+selected when compiling with a uClibc toolchain.
+Errors are:
+[snip]
+/home/kapil/ltib/rpm/BUILD/busybox-1.1.3/coreutils/coreutils.a(sort.o):
+In function `compare_keys':
+sort.c:(.text+0x4c8): undefined reference to `__isnan'
+sort.c:(.text+0x4dc): undefined reference to `__isnan'
+sort.c:(.text+0x4f8): undefined reference to `__isnan'
+sort.c:(.text+0x50c): undefined reference to `__isinf'
+sort.c:(.text+0x53c): undefined reference to `__isinf'
+sort.c:(.text+0x578): undefined reference to `__isinf'
+sort.c:(.text+0x5ac): undefined reference to `__isinf'
+collect2: ld returned 1 exit status
+make[1]: *** [busybox_unstripped] Error 1
+[/snip]
+
+See: http://www.busybox.net/lists/busybox/2006-January/018037.html
+
+Patch downloaded from:
+http://busybox.net/lists/busybox/attachments/20060123/6843398e/sortlibm.bin
+===============================================================================
+Index: coreutils/Makefile.in
+===================================================================
+--- coreutils/Makefile.in	(revision 13496)
++++ coreutils/Makefile.in	(working copy)
+@@ -88,6 +88,13 @@
+ APPLET_SRC-y+=$(COREUTILS_SRC-y)
+ APPLET_SRC-a+=$(COREUTILS_SRC-a)
+ 
++needlibm-y:=
++needlibm-$(CONFIG_FEATURE_SORT_BIG) := y
++ifeq ($(needlibm-y),y)
++  LIBRARIES := -lm $(filter-out -lm,$(LIBRARIES))
++endif
++ 
++
+ $(COREUTILS_DIR)$(COREUTILS_AR): $(patsubst %,$(COREUTILS_DIR)%, $(COREUTILS-y))
+ 	$(AR) $(ARFLAGS) $@ $(patsubst %,$(COREUTILS_DIR)%, $(COREUTILS-y))
+ 

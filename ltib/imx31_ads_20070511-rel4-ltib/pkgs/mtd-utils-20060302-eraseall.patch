@@ -1,0 +1,20 @@
+Tue Nov 21 2006 Stuart Hughes <stuarth@freescale.com>
+
+This allows flash_eraseall to work on older kernels that don't
+support the badblock ioctl.  Without it on old kernels you'd see
+the message:
+
+flash_eraseall: /dev/mtd3: MTD get bad block failed: Inappropriate ioctl for device
+
+--- mtd/util/flash_eraseall.c	2005-11-08 01:02:20.000000000 +0000
++++ mtd.modified/util/flash_eraseall.c	2006-11-21 16:38:26.000000000 +0000
+@@ -152,6 +152,9 @@
+ 						fprintf(stderr, "%s: %s: Bad block check not available\n", exe_name, mtd_device);
+ 						exit(1);
+ 					}
++				} else if (errno == ENOTTY) {
++					;	// ignore, you get this with 2.4 kernels that don't
++						// implement the check     
+ 				} else {
+ 					fprintf(stderr, "\n%s: %s: MTD get bad block failed: %s\n", exe_name, mtd_device, strerror(errno));
+ 					exit(1);

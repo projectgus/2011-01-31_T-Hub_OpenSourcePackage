@@ -1,0 +1,254 @@
+From: John Rigby <jrigby@freescale.com>
+Date: Thu, 24 Aug 2006 14:28:36 -0600
+Subject: [PATCH] mx21 buttons
+
+Adds support for mx21 buttons.
+This is from the the mx21 PCS bsp:
+	qtopia-2.2.0-mx21-buttons.patch
+Written by Ross Wille at Metrowerks now at Freescale.
+
+With modifications that allow it to work correctly with qtopia
+configured for platforms other than mx21.
+
+Signed-off-by: John Rigby <jrigby@freescale.com>
+
+---
+
+ qt2/src/kernel/qkeyboard_qws.cpp         |  152 ++++++++++++++++++++++++++++++
+ qt2/src/kernel/qwindowsystem_qws.cpp     |    2 
+ qtopia/src/games/qasteroids/toplevel.cpp |   18 +++-
+ 3 files changed, 167 insertions(+), 5 deletions(-)
+
+7472f0871c150338d461cbec955aae9258cfbcb4
+diff --git a/qt2/src/kernel/qkeyboard_qws.cpp b/qt2/src/kernel/qkeyboard_qws.cpp
+index 0f4c28a..6620904 100644
+--- a/qt2/src/kernel/qkeyboard_qws.cpp
++++ b/qt2/src/kernel/qkeyboard_qws.cpp
+@@ -651,6 +651,25 @@ private:
+     QSocketNotifier *notifier;
+ };
+ 
++class QWSMX21ButtonsHandler : public QWSKeyboardHandler
++{
++    Q_OBJECT
++public:
++    QWSMX21ButtonsHandler();
++    virtual ~QWSMX21ButtonsHandler();
++    bool isOpen() { return buttonFD > 0; }
++
++private slots:
++    void readKeyboardData();
++
++private:
++    QString terminalName;
++    int buttonFD;
++    int kbdBufferLen;
++    unsigned char *kbdBuffer;
++    QSocketNotifier *notifier;
++};
++
+ class QWSVFbKeyboardHandler : public QWSKeyboardHandler
+ {
+     Q_OBJECT
+@@ -1659,6 +1678,137 @@ #endif
+ 
+ 
+ /*
++ * Freescale M9328MX21ADS buttons driver
++ */
++/* Standard keyboard mappings */
++#include <linux/input.h>
++QWSMX21ButtonsHandler::QWSMX21ButtonsHandler() : QWSKeyboardHandler()
++{
++#ifdef QT_QWS_MX21
++	terminalName = "/dev/buttons";
++	buttonFD = -1;
++	notifier = NULL;
++	if ((buttonFD = open(terminalName, O_RDONLY | O_NDELAY, 0)) < 0) {
++		qWarning("Cannot open %s\n", terminalName.latin1());
++	}
++	if (buttonFD >= 0) {
++		notifier = new QSocketNotifier(buttonFD, QSocketNotifier::Read, this);
++		connect(notifier, SIGNAL(activated(int)),this, SLOT(readKeyboardData()));
++	}
++#endif
++}
++
++QWSMX21ButtonsHandler::~QWSMX21ButtonsHandler()
++{
++#ifdef QT_QWS_MX21
++	if (buttonFD > 0) {
++		::close(buttonFD);
++		buttonFD = -1;
++	}
++	delete notifier;
++	notifier = 0;
++	delete [] kbdBuffer;
++#endif
++}
++
++void QWSMX21ButtonsHandler::readKeyboardData()
++{
++#ifdef QT_QWS_MX21
++	int n;
++	unsigned short p_key;
++	while ((n = read(buttonFD, &p_key, sizeof(unsigned short))) > 0) {
++		bool pushed = false;
++		int keyCode = Qt::Key_unknown;
++		if (p_key & 0x8000) {
++			pushed = true;
++			p_key &= 0x7fff;
++		}
++		//if (pushed) printf(" key=0x%04x\n", p_key);
++		switch (p_key) {
++			case KEY_F1:
++				keyCode = Qt::Key_F1; break;		// EXTRA 5
++			case KEY_F2:
++				keyCode = Qt::Key_F2; break;		// EXTRA 4
++			case KEY_F3:
++				keyCode = Qt::Key_F3; break;		// EXTRA 3
++			case KEY_F4:
++				keyCode = Qt::Key_F4; break;		// EXTRA 2
++			case KEY_BACKSPACE:
++				keyCode = Qt::Key_Backspace; break;	// BACK
++			case KEY_END:
++				keyCode = Qt::Key_End; break;		// END
++			case KEY_MACRO:
++				keyCode = Qt::Key_NumberSign; break;	// #
++			case KEY_9:
++				keyCode = Qt::Key_9; break;		// 9
++			case KEY_6:
++				keyCode = Qt::Key_6; break;		// 6
++			case KEY_3:
++				keyCode = Qt::Key_3; break;		// 3
++			case KEY_RIGHT:
++				keyCode = Qt::Key_Right; break;		// RIGHT
++			case KEY_F5:
++				keyCode = Qt::Key_F5; break;		// KEY 2
++			case KEY_0:
++				keyCode = Qt::Key_0; break;		// 0
++			case KEY_8:
++				keyCode = Qt::Key_8; break;		// 8
++			case KEY_5:
++				keyCode = Qt::Key_5; break;		// 5
++			case KEY_2:
++				keyCode = Qt::Key_2; break;		// 2
++			case KEY_F6:
++				//keyCode = Qt::Key_F6; break;		// ACTION
++				//keyCode = Qt::Key_Enter; break;	// ACTION
++				keyCode = Qt::Key_Return; break;	// ACTION
++			case KEY_UP:
++				keyCode = Qt::Key_Up; break;		// UP
++			case KEY_KPASTERISK:
++				keyCode = Qt::Key_Asterisk; break;	// *
++			case KEY_7:
++				keyCode = Qt::Key_7; break;		// 7
++			case KEY_4:
++				keyCode = Qt::Key_4; break;		// 4
++			case KEY_1:
++				keyCode = Qt::Key_1; break;		// 1
++			case KEY_LEFT:
++				keyCode = Qt::Key_Left; break;		// LEFT
++			case KEY_F7:
++				keyCode = Qt::Key_F7; break;		// KEY 1
++			case KEY_F8:
++				keyCode = Qt::Key_F8; break;		// RECORD
++			case KEY_F9:
++				keyCode = Qt::Key_F9; break;		// EXTRA 1
++			case KEY_F10:
++				keyCode = Qt::Key_F10; break;		// APP 4
++			case KEY_F11:
++				keyCode = Qt::Key_F11; break;		// APP 3
++			case KEY_HOME:
++				keyCode = Qt::Key_Home; break;		// HOME
++			case KEY_F12:
++				keyCode = Qt::Key_F12; break;		// SEND
++			case KEY_POWER:
++				keyCode = Qt::Key_F13; break;		// POWER
++			case KEY_VOLUMEDOWN:
++				keyCode = Qt::Key_F14; break;		// VOL DOWN
++			case KEY_VOLUMEUP:
++				keyCode = Qt::Key_F15; break;		// VOL UP
++			case KEY_DOWN:
++				keyCode = Qt::Key_Down; break;		// DOWN
++			case KEY_F16:
++				keyCode = Qt::Key_F16; break;		// APP 2
++			case KEY_F17:
++				keyCode = Qt::Key_F17; break;		// APP 1
++			default:
++				keyCode = Qt::Key_unknown; 		// Keys not mapped
++				qWarning("Unmapped key 0x%04x", p_key);
++		};
++		processKeyEvent(0,keyCode,0,pushed,FALSE);
++	}
++#endif
++}
++
++/*
+  * Virtual framebuffer keyboard driver
+  */
+ 
+@@ -1766,6 +1916,8 @@ #if defined(QT_QWS_YOPY)
+ 	handler = new QWSyopyButtonsHandler();
+ #elif defined(QT_QWS_CASSIOPEIA)
+ 	handler = new QWSVr41xxButtonsHandler();
++#elif defined(QT_QWS_MX21)
++	handler = new QWSMX21ButtonsHandler();
+ #endif
+     } else if ( type == "QVFbKeyboard" ) {
+ 	handler = new QWSVFbKeyboardHandler(device);
+diff --git a/qt2/src/kernel/qwindowsystem_qws.cpp b/qt2/src/kernel/qwindowsystem_qws.cpp
+index ce40ced..9a813db 100644
+--- a/qt2/src/kernel/qwindowsystem_qws.cpp
++++ b/qt2/src/kernel/qwindowsystem_qws.cpp
+@@ -2915,6 +2915,8 @@ void QWSServer::openKeyboard()
+     if ( keyboards.isEmpty() ) {
+ #if defined( QT_QWS_CASSIOPEIA )
+ 	keyboards = "Buttons";
++#elif defined(QT_QWS_MX21)
++	keyboards = "Buttons";
+ #elif !defined(QT_NO_QWS_VFB)
+ 	extern bool qvfbEnabled;
+ 	if ( qvfbEnabled )
+diff --git a/qtopia/src/games/qasteroids/toplevel.cpp b/qtopia/src/games/qasteroids/toplevel.cpp
+index 65812b3..4c419bd 100644
+--- a/qtopia/src/games/qasteroids/toplevel.cpp
++++ b/qtopia/src/games/qasteroids/toplevel.cpp
+@@ -304,8 +304,8 @@ #endif
+     actions.insert( Qt::Key_Down, Brake );
+ #ifndef QTOPIA_PHONE
+     actions.insert( Qt::Key_Enter, Shoot );
+-    actions.insert( Qt::Key_Z, Teleport );
+-    actions.insert( Qt::Key_Space, Shoot );
++	actions.insert( Qt::Key_Return, Shoot );
++	actions.insert( Qt::Key_F7, Teleport );
+     actions.insert( Qt::Key_P, Pause );
+ 
+ #else
+@@ -318,12 +318,20 @@ #endif
+ 
+ #ifndef QTOPIA_PHONE
+     const QValueList<DeviceButton>& buttons = DeviceButtonManager::instance().buttons();
+-    actions.insert( buttons[0].keycode(), Launch );
+-    actions.insert( buttons[1].keycode(), Shield );
+-    launchButtonText = buttons[0].userText();
++	actions.insert( Qt::Key_F1, Launch );
++	actions.insert( Qt::Key_F5, Shield );
++	launchButtonText = tr("EXTRA 5");
+ #else
+     launchButtonText = tr("Select Key");
+ #endif
++	//  Start        = EXTRA 5
++	//  Thrust	  = UP
++	//  Brake	  = DOWN
++	//  Rotate Left  = LEFT
++	//  Rotate Right = RIGHT
++	//  Shoot	  = ACTION
++	//  Teleport     = KEY 1
++	//  Shield       = KEY 2
+ 
+     view->showText( tr( "Press '%1'\nto start playing", "e.g. Select Key" ).
+ 	arg(launchButtonText), yellow );
+-- 
+1.3.3
+

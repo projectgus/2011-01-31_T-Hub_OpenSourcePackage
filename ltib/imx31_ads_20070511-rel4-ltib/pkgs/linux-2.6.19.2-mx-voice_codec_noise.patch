@@ -1,0 +1,71 @@
+Bugzilla 337 - TLSbo85807 ALSA : Playback on Voice Codec produces noise occasionally
+MX27 and MX31 are affected.
+Applied TLSbo85807_Fix_Vcodec_Playback_Noise.patch
+Applied TLSbo87686_Remove_debug_prints_in_pmic_audio.patch
+
+cvs diff -puN -r1.1 -r1.2 drivers/mxc/pmic/mc13783/pmic_audio.c
+Index: drivers/mxc/pmic/mc13783/pmic_audio.c
+===================================================================
+RCS file: drivers/mxc/pmic/mc13783/pmic_audio.c,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -p -u -r1.1 -r1.2
+--- linux-2.6.19.2-mx/drivers/mxc/pmic/mc13783/pmic_audio.c	15 Jan 2007 05:44:50 -0000	1.1
++++ linux-2.6.19.2-mx/drivers/mxc/pmic/mc13783/pmic_audio.c	19 Jan 2007 23:49:47 -0000	1.2
+@@ -1721,7 +1721,7 @@ PMIC_STATUS pmic_audio_digital_filter_re
+ 	} else if ((handle == vCodec.handle) &&
+ 		   (vCodec.handleState == HANDLE_IN_USE)) {
+ 		reg_mask = SET_BITS(regAUD_CODEC, CDCRESET, 1);
+-		if (pmic_write_reg(REG_AUDIO_CODEC, 1,
++		if (pmic_write_reg(REG_AUDIO_CODEC, reg_mask,
+ 				   reg_mask) != PMIC_SUCCESS) {
+ 			rc = PMIC_ERROR;
+ 		} else {
+@@ -4451,10 +4451,8 @@ PMIC_STATUS pmic_audio_output_set_pgaGai
+ 			    SET_BITS(regAUDIO_RX_1, ARXINEN, 1);
+ 		} else if ((handle == vCodec.handle) &&
+ 			   (vCodec.handleState == HANDLE_IN_USE)) {
+-			reg_mask = SET_BITS(regAUDIO_RX_1, PGARX, 15) |
+-			    SET_BITS(regAUDIO_RX_1, PGARXEN, 1);
+-			reg_write = SET_BITS(regAUDIO_RX_1, PGARX, reg_gain) |
+-			    SET_BITS(regAUDIO_RX_1, PGARXEN, 1);
++			reg_mask = SET_BITS(regAUDIO_RX_1, PGARX, 15);
++			reg_write = SET_BITS(regAUDIO_RX_1, PGARX, reg_gain);
+ 		} else if ((handle == stDAC.handle) &&
+ 			   (stDAC.handleState == HANDLE_IN_USE)) {
+ 			reg_mask = SET_BITS(regAUDIO_RX_1, PGAST, 15) |
+@@ -5356,7 +5354,6 @@ static PMIC_STATUS pmic_audio_close_hand
+ 		 * else is still using it.
+ 		 */
+ 		rc = pmic_audio_reset_device(vCodec.handle);
+-
+ 		if (rc == PMIC_SUCCESS) {
+ 			vCodec.handle = AUDIO_HANDLE_NULL;
+ 			vCodec.handleState = HANDLE_FREE;
+cvs diff -puN -r1.2 -r1.3 sound/arm/mxc-alsa-pmic.c
+Index: sound/arm/mxc-alsa-pmic.c
+===================================================================
+RCS file: sound/arm/mxc-alsa-pmic.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -p -u -r1.2 -r1.3
+--- linux-2.6.19.2-mx/sound/arm/mxc-alsa-pmic.c	17 Jan 2007 21:58:37 -0000	1.2
++++ linux-2.6.19.2-mx/sound/arm/mxc-alsa-pmic.c	19 Jan 2007 23:49:48 -0000	1.3
+@@ -1289,6 +1289,8 @@ void configure_codec(snd_pcm_substream_t
+ 				    pmic->sample_rate, NO_INVERT);
+ 	msleep(20);
+ 	pmic_audio_vcodec_set_config(handle, VCODEC_MASTER_CLOCK_OUTPUTS);
++	pmic_audio_digital_filter_reset(handle);
++	msleep(15);
+ 	if (stream_id == 2) {
+ 		pmic_audio_output_enable_mixer(handle);
+ 		set_mixer_output_device(handle, MIXER_OUT, OP_NODEV, 1);
+@@ -1335,6 +1337,8 @@ void configure_stereodac(snd_pcm_substre
+ 	pmic_audio_stdac_set_rxtx_timeslot(handle, USE_TS0_TS1);
+ 	pmic_audio_stdac_enable_mixer(handle, USE_TS2_TS3, STDAC_NO_MIX,
+ 				      STDAC_MIX_OUT_0DB);
++	pmic_audio_digital_filter_reset(handle);
++	msleep(10);
+ 	pmic_audio_set_protocol(handle, ssi_bus, pmic->protocol, pmic->mode,
+ 				USE_2_TIMESLOTS);
+ 	pmic_audio_stdac_set_clock(handle, pmic->pll, pmic->pll_rate,

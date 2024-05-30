@@ -1,0 +1,137 @@
+From: John Rigby <jrigby@freescale.com>
+Date: Thu, 24 Aug 2006 15:24:42 -0600
+Subject: [PATCH] mpc5200 platform
+
+qtopia/src/libraries/qtopia/custom-linux-mpc5200-g++.h
+	modified copy of qtopia/src/libraries/qtopia/custom-linux-ipaq-g++.h
+qtopia/src/libraries/qtopia/custom-linux-mpc5200-g++.cpp
+	modified copy of qtopia/src/libraries/qtopia/custom-linux-generic-g++.cpp
+
+Signed-off-by: John Rigby <jrigby@freescale.com>
+
+---
+
+ .../libraries/qtopia/custom-linux-mpc5200-g++.cpp  |   62 +++++++++++++++++++++++
+ .../libraries/qtopia/custom-linux-mpc5200-g++.h    |   46 +++++++++++++++++
+ 2 files changed, 108 insertions(+), 0 deletions(-)
+ create mode 100644 qtopia/src/libraries/qtopia/custom-linux-mpc5200-g++.cpp
+ create mode 100644 qtopia/src/libraries/qtopia/custom-linux-mpc5200-g++.h
+
+67a599a00be5a2d68270fcc1a1a251d506ef84e9
+diff --git a/qtopia/src/libraries/qtopia/custom-linux-mpc5200-g++.cpp b/qtopia/src/libraries/qtopia/custom-linux-mpc5200-g++.cpp
+new file mode 100644
+index 0000000..9621a9c
+--- /dev/null
++++ b/qtopia/src/libraries/qtopia/custom-linux-mpc5200-g++.cpp
+@@ -0,0 +1,62 @@
++/**********************************************************************
++** Copyright (C) 2000-2005 Trolltech AS.  All rights reserved.
++**
++** This file is part of the Qtopia Environment.
++** 
++** This program is free software; you can redistribute it and/or modify it
++** under the terms of the GNU General Public License as published by the
++** Free Software Foundation; either version 2 of the License, or (at your
++** option) any later version.
++** 
++** A copy of the GNU GPL license version 2 is included in this package as 
++** LICENSE.GPL.
++**
++** This program is distributed in the hope that it will be useful, but
++** WITHOUT ANY WARRANTY; without even the implied warranty of
++** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
++** See the GNU General Public License for more details.
++**
++** In addition, as a special exception Trolltech gives permission to link
++** the code of this program with Qtopia applications copyrighted, developed
++** and distributed by Trolltech under the terms of the Qtopia Personal Use
++** License Agreement. You must comply with the GNU General Public License
++** in all respects for all of the code used other than the applications
++** licensed under the Qtopia Personal Use License Agreement. If you modify
++** this file, you may extend this exception to your version of the file,
++** but you are not obligated to do so. If you do not wish to do so, delete
++** this exception statement from your version.
++** 
++** See http://www.trolltech.com/gpl/ for GPL licensing information.
++**
++** Contact info@trolltech.com if any conditions of this licensing are
++** not clear to you.
++**
++**********************************************************************/
++
++#include "qtopia/power.h"
++
++int qpe_sysBrightnessSteps()
++{
++    return 255;
++}
++
++
++void qpe_setBrightness(int)
++{
++}
++
++void PowerStatusManager::getStatus()
++{
++#ifdef Q_WS_QWS
++    int ac, bs, bf, pc, sec;
++    if ( getProcApmStatus( ac, bs, bf, pc, sec ) ) {
++	ps->percentRemain = pc;
++	ps->secsRemain = sec;
++	ps->percentAccurate = TRUE;
++    } else {
++	ps->percentRemain = 100;
++	ps->secsRemain = -1;
++	ps->percentAccurate = FALSE;
++    }
++#endif
++}
+diff --git a/qtopia/src/libraries/qtopia/custom-linux-mpc5200-g++.h b/qtopia/src/libraries/qtopia/custom-linux-mpc5200-g++.h
+new file mode 100644
+index 0000000..754b33c
+--- /dev/null
++++ b/qtopia/src/libraries/qtopia/custom-linux-mpc5200-g++.h
+@@ -0,0 +1,40 @@
++/**********************************************************************
++** Copyright (C) 2000-2005 Trolltech AS.  All rights reserved.
++**
++** This file is part of the Qtopia Environment.
++** 
++** This program is free software; you can redistribute it and/or modify it
++** under the terms of the GNU General Public License as published by the
++** Free Software Foundation; either version 2 of the License, or (at your
++** option) any later version.
++** 
++** A copy of the GNU GPL license version 2 is included in this package as 
++** LICENSE.GPL.
++**
++** This program is distributed in the hope that it will be useful, but
++** WITHOUT ANY WARRANTY; without even the implied warranty of
++** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
++** See the GNU General Public License for more details.
++**
++** In addition, as a special exception Trolltech gives permission to link
++** the code of this program with Qtopia applications copyrighted, developed
++** and distributed by Trolltech under the terms of the Qtopia Personal Use
++** License Agreement. You must comply with the GNU General Public License
++** in all respects for all of the code used other than the applications
++** licensed under the Qtopia Personal Use License Agreement. If you modify
++** this file, you may extend this exception to your version of the file,
++** but you are not obligated to do so. If you do not wish to do so, delete
++** this exception statement from your version.
++** 
++** See http://www.trolltech.com/gpl/ for GPL licensing information.
++**
++** Contact info@trolltech.com if any conditions of this licensing are
++** not clear to you.
++**
++**********************************************************************/
++
++#define QPE_NEED_CALIBRATION
++#define QPE_USE_MALLOC_FOR_NEW
++#define QPE_ARCHITECTURE "Freescale/MPC5200"
++#define QPE_DEFAULT_TODAY_MODE "Daily"
++
+-- 
+1.3.3
+

@@ -1,0 +1,45 @@
+config PROGRESSBAR
+	default n
+	depends on ARCH_MXC
+	bool "Progress bar"
+   help
+      Draw a progress bar over the logo screen.
+      If unsure say No.
+
+config PROGRESSBAR_DEBUG
+	default n
+	depends on PROGRESSBAR
+	bool "Debug of Progress Bar"
+
+choice 
+   prompt "Choose the aspect of the progress bar." if PROGRESSBAR
+   default PROGRESSBAR_ASPECT_FLAT
+   depends on PROGRESSBAR
+
+config PROGRESSBAR_ASPECT_FLAT
+   bool "flat" 
+   help 
+      Flat aspect filled (left to right) by a single color.
+
+config PROGRESSBAR_ASPECT_ROUNDED
+   bool "rounded"
+   help 
+      Rounded predefined progressbar. No parmeter yet.
+
+endchoice
+
+config PROGRESSBAR_GEOMETRY
+   string "Geometry"
+   default "354x23+221+404" if PROGRESSBAR_ASPECT_ROUNDED
+   default "347x4+289+329" if PROGRESSBAR_ASPECT_FLAT
+   depends on PROGRESSBAR_ASPECT_FLAT
+   help
+      "WIDTHxHEIGHT+XTOP+YTOP"
+
+config PROGRESSBAR_COLOR
+   hex "Color of the progress bar in RGB888."
+   default "0xC0C0C0"
+   depends on PROGRESSBAR_ASPECT_FLAT
+   help 
+      The solid color of the progress bar.
+

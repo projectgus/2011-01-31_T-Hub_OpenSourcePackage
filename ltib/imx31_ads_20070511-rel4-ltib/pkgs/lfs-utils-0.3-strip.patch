@@ -1,0 +1,43 @@
+Stuart Hughes, stuarth@freescale.com 23mar05
+
+Allow strip to be passed in.  This allows for cross compiling.
+
+This fixed a failure seen on an amd64 Debian 3.1 machine:
+
+/bin/sh ./install-sh -c -m 0555 -s mktemp /tmp/lfs-utils-0.3//opt/freescale/rootfs/ppc//usr/bin/mktemp
+/usr/bin/strip: Unable to recognise the format of the input file /tmp/lfs-utils-
+
+
+diff --exclude CVS -uNr lfs-utils-0.3/mktemp-1.5/install-sh lfs-utils-0.3.modified/mktemp-1.5/install-sh
+--- lfs-utils-0.3/mktemp-1.5/install-sh	2000-02-07 01:56:07.000000000 +0000
++++ lfs-utils-0.3.modified/mktemp-1.5/install-sh	2005-03-23 10:41:00.361194800 +0000
+@@ -15,7 +15,7 @@
+ MKDIR=mkdir
+ MV=mv
+ RM=rm
+-STRIP=strip
++STRIP=${STRIP:-strip}
+ WHOAMI=whoami
+ 
+ ##  Some systems don't support -x, so we have to use -f.
+@@ -37,13 +37,13 @@
+     fi
+ fi
+ 
+-if [ ${STRIP} = strip ] ; then
+-    if [ -f /usr/ccs/bin/strip ] ; then
+-	STRIP=/usr/ccs/bin/strip
+-    elif [ -f /usr/bin/strip ] ; then
+-	STRIP=/usr/bin/strip
+-    fi
+-fi
++#if [ ${STRIP} = strip ] ; then
++#    if [ -f /usr/ccs/bin/strip ] ; then
++#	STRIP=/usr/ccs/bin/strip
++#    elif [ -f /usr/bin/strip ] ; then
++#	STRIP=/usr/bin/strip
++#    fi
++#fi
+ 
+ ##  Defaults.
+ CHOWNIT=false

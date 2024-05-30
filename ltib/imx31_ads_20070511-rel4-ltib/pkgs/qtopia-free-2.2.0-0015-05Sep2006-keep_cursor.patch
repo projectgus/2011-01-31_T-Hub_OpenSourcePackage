@@ -1,0 +1,28 @@
+Source: Freescale Semiconductor, Inc.
+Type: Defect Fix
+Author: Ross Wille
+Description:
+This file is a patch to qtopia 2.2.0 that prevents qtopia from sending
+escape sequences to several serial/tty devices to hide the cursor, etc. 
+This turns off the cursor on the serial console, which makes it
+difficult to edit files, etc.
+
+The preferred approach is to modify the rc.qpe file (if needed) to emit
+the proper escape sequence to the specific device that will host the
+qtopia graphics window, rather than blasting to several tty devices.
+
+This patch is original work by Ross Wille at Freescale Semiconductor,
+Inc.  Since this is a one-line change that removes items from a list,
+this file is not protected by copyright.
+
+--- qtopia-free-2.2.0/qt2/src/kernel/qgfxlinuxfb_qws.cpp.orig	2005-11-10 19:38:12.000000000 -0700
++++ qtopia-free-2.2.0/qt2/src/kernel/qgfxlinuxfb_qws.cpp	2006-09-05 15:15:24.000000000 -0600
+@@ -233,7 +233,7 @@ void QLinuxFbScreen::disconnect()
+ 
+ static void writeTerm(const char* termctl, int sizeof_termctl)
+ {
+-    const char* tt[]={"/dev/console","/dev/tty","/dev/tty0",0};
++    const char* tt[]={0};	// don't mess with the terminals
+     const char** dev=tt;
+     while (*dev) {
+ 	int tty=::open(*dev,O_WRONLY);

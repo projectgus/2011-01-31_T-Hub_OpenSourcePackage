@@ -1,0 +1,139 @@
+eval 'LANG=C exec perl -w -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+$running_under_some_shell = 0;
+
+######################################################################
+#
+# Copyright © Freescale Semiconductor, Inc. 2004-2005. All rights reserved.
+#
+# Stuart Hughes, stuarth@freescale.com,  29th May 2006
+#
+# This file is part of LTIB.
+# LTIB is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# LTIB is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with LTIB; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#
+######################################################################
+$exclude = { m520xevb => 1, m532xevb => 1};
+
+$irs = $/;
+undef $/;
+foreach $dir ( glob("*") ) {
+    next unless -d $dir;
+    open(MCF, "$dir/.config") or warn("no main config for $dir\n"), next;
+    $_ = <MCF>;
+    close MCF;
+    ($tgt) = m,^CONFIG_PLATFORM_DIR="[^\s]+/([^/"]+)",m;
+    next if $exclude->{$tgt};
+    push @tgts, $tgt;
+    #warn "platform = $tgt\n";
+    $len = length("$dir/rpm/BUILD/");
+    foreach $fail ( glob("$dir/rpm/BUILD/*") ) {
+        $pkg = substr($fail, $len);
+        $pkgs->{$pkg}{$tgt} = 1;
+    }
+}
+$/ = $irs;
+@astgts = sort @tgts;
+
+# save today's results for comparison next run
+$wf = "pkg_res";
+rename($wf, "$wf.old") if -f $wf;
+open(WF, ">$wf") or die("open(>$wf): $!\n");
+foreach $tgt (@astgts) {
+    print WF "$tgt";
+    foreach $pkg ( sort keys %$pkgs ){
+        if($pkgs->{$pkg}{$tgt}) {
+            print WF "\t$pkg";
+            $new->{$tgt}{$pkg} = 1;
+        }
+    }
+    print WF "\n";
+}
+close(WF);
+
+# calculate the diff list if there is a .old file
+goto CALC_RES unless -f "$wf.old";
+$dt = 1;
+open(WF, "$wf.old") or die("open($wf.old): $!\n");
+while($line = <WF>) {
+    chomp $line;
+    @fails = split(/\s+/, $line);
+    $tgt = shift(@fails);
+    # the second term is to list all packages
+    map { $old->{$tgt}{$_} = 1; $pkgs->{$_}{$tgt} = 1 } @fails;
+}
+close(WF);
+
+CALC_RES:
+print htheader();
+print "<table border=1 cellpadding=2>\n<tr><th>Package</th>\n";
+foreach $tgt (@astgts) {
+    print "<th>$tgt</th>";
+}
+print "</tr>\n";
+foreach $pkg ( sort keys %$pkgs ){
+    print "<tr>";
+    print "<td>$pkg</td>";
+    foreach $tgt (@astgts) {
+        if(! $dt) {
+           $str = $pkgs->{$pkg}{$tgt} ? 'x' : '&nbsp';
+           print "<td align=center>$str</td>";
+           next;
+        }
+        if(       ! $new->{$tgt}{$pkg} && ! $old->{$tgt}{$pkg}) {
+            $str = '&nbsp';
+        } elsif ( ! $new->{$tgt}{$pkg} &&   $old->{$tgt}{$pkg} ) {
+            $str = '-';
+        } elsif (   $new->{$tgt}{$pkg} && ! $old->{$tgt}{$pkg} ) {
+            $str = '+';
+        } elsif  (   $new->{$tgt}{$pkg} &&   $old->{$tgt}{$pkg} ) {
+            $str = 'x';
+        }
+        print "<td align=center>$str</td>";
+        
+    }
+    print "</tr>\n";
+}
+print "</table>\n";
+
+print htfooter();
+exit 0;
+
+sub htheader
+{
+    return <<TXT;
+<html>
+<body>
+<center><b>BSP package build failures on ${\ scalar gmtime() } GMT</b></center>
+<br>
+For full build results and other information <a href=http://auslxsc01.mtwk.freescale.net/ltib/>click here</a><br>
+<br>
+<b><u>KEY</u></b><br>
+<b>x</b> : Failed, failed last time<br>
+<b>+</b> : Failed, new failure<br>
+<b>-</b> : Changed from fail to pass<br>
+<br>
+TXT
+
+}
+
+sub htfooter
+{
+    return <<TXT;
+</body>
+</html>
+TXT
+}
+

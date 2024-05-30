@@ -1,0 +1,16 @@
+diff --exclude CVS -uNr vim62/src/osdef2.h.in vim62.modified/src/osdef2.h.in
+--- vim62/src/osdef2.h.in	2001-12-15 15:24:12.000000000 -0600
++++ vim62.modified/src/osdef2.h.in	2005-03-16 10:01:39.000000000 -0600
+@@ -48,8 +48,10 @@
+ extern int	tgetent __ARGS((char *, char *));
+ extern int	tgetnum __ARGS((char *));
+ extern int	tgetflag __ARGS((char *));
+-extern char	*tgoto __ARGS((char *, int, int));
+-extern int	tputs __ARGS((char *, int, int (*)(int)));
++/* seh: 16mar05
++extern char	*tgoto __ARGS((const char *, int, int));
++extern int	tputs __ARGS((const char *, int, int (*)(int)));
++*/
+ 
+ #ifdef HAVE_TERMIOS_H
+ struct termios;		/* for tcgetattr __ARGS */

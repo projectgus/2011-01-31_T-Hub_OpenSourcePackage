@@ -1,0 +1,316 @@
+Bug #444. Fix watchdog timer so that it times out and reboots the system after
+the specified timeout (default is 60 seconds).
+diff -uNpr linux-2.6.19.2.orig/drivers/char/watchdog/mxc_wdt.c linux-2.6.19.2/drivers/char/watchdog/mxc_wdt.c
+--- linux-2.6.19.2.orig/drivers/char/watchdog/mxc_wdt.c	2007-02-08 09:33:45.000000000 -0700
++++ linux-2.6.19.2/drivers/char/watchdog/mxc_wdt.c	2007-02-08 22:44:23.000000000 -0700
+@@ -65,51 +65,43 @@
+ #define WDOG_SEC_TO_COUNT(s)  ((s * 2) << 8)
+ #define WDOG_COUNT_TO_SEC(c)  ((c >> 8) / 2)
+ 
+-static u32 wdt_base_reg;
+ static int mxc_wdt_users;
+ 
+-static unsigned timer_margin = TIMER_MARGIN_DEFAULT;
++static unsigned int timer_margin = TIMER_MARGIN_DEFAULT;
+ module_param(timer_margin, uint, 0);
+ MODULE_PARM_DESC(timer_margin, "initial watchdog timeout (in seconds)");
+ 
+-static unsigned dev_num = 0;
+-
+-static void mxc_wdt_ping(u32 base)
++static void mxc_wdt_ping(void)
+ {
+ 	/* issue the service sequence instructions */
+-	__raw_writew(WDT_MAGIC_1, base + MXC_WDT_WSR);
+-	__raw_writew(WDT_MAGIC_2, base + MXC_WDT_WSR);
++	__raw_writew(WDT_MAGIC_1, MXC_WDT_WSR);
++	__raw_writew(WDT_MAGIC_2, MXC_WDT_WSR);
+ }
+ 
+-static void mxc_wdt_config(u32 base)
++static void mxc_wdt_config(void)
+ {
+ 	u16 val;
+ 
+-	val = __raw_readw(base + MXC_WDT_WCR);
+-	val |= 0xFF00 | WCR_WOE_BIT | WCR_WDA_BIT | WCR_SRS_BIT;
+-	/* enable suspend WDT */
+-	val |= WCR_WDZST_BIT | WCR_WDBG_BIT;
+-	/* generate reset if wdog times out */
+-	val &= ~WCR_WRE_BIT;
+-
+-	__raw_writew(val, base + MXC_WDT_WCR);
++	val = WDOG_SEC_TO_COUNT(TIMER_MARGIN_MAX) |
++	      WCR_WDA_BIT | WCR_SRS_BIT | WCR_WDBG_BIT;
++	__raw_writew(val, MXC_WDT_WCR);
+ }
+ 
+-static void mxc_wdt_enable(u32 base)
++static void mxc_wdt_enable(void)
+ {
+ 	u16 val;
+ 
+-	val = __raw_readw(base + MXC_WDT_WCR);
++	val = __raw_readw(MXC_WDT_WCR);
+ 	val |= WCR_WDE_BIT;
+-	__raw_writew(val, base + MXC_WDT_WCR);
++	__raw_writew(val, MXC_WDT_WCR);
+ }
+ 
+-static void mxc_wdt_disable(u32 base)
++static void mxc_wdt_disable(void)
+ {
+ 	/* disable not supported by this chip */
+ }
+ 
+-static void mxc_wdt_adjust_timeout(unsigned new_timeout)
++static void mxc_wdt_adjust_timeout(unsigned int new_timeout)
+ {
+ 	if (new_timeout < TIMER_MARGIN_MIN)
+ 		new_timeout = TIMER_MARGIN_DEFAULT;
+@@ -118,29 +110,29 @@ static void mxc_wdt_adjust_timeout(unsig
+ 	timer_margin = new_timeout;
+ }
+ 
+-static u16 mxc_wdt_get_timeout(u32 base)
++static unsigned int mxc_wdt_get_timeout(void)
+ {
+ 	u16 val;
+ 
+-	val = __raw_readw(base + MXC_WDT_WCR);
++	val = __raw_readw(MXC_WDT_WCR);
+ 	return WDOG_COUNT_TO_SEC(val);
+ }
+ 
+-static u16 mxc_wdt_get_bootreason(u32 base)
++static unsigned int mxc_wdt_get_boot_reason(void)
+ {
+ 	u16 val;
+ 
+-	val = __raw_readw(base + MXC_WDT_WRSR);
++	val = __raw_readw(MXC_WDT_WRSR);
+ 	return val;
+ }
+ 
+-static void mxc_wdt_set_timeout(u32 base)
++static void mxc_wdt_set_timeout(void)
+ {
+ 	u16 val;
+-	val = __raw_readw(base + MXC_WDT_WCR);
++	val = __raw_readw(MXC_WDT_WCR);
+ 	val = (val & 0x00FF) | WDOG_SEC_TO_COUNT(timer_margin);
+-	__raw_writew(val, base + MXC_WDT_WCR);
+-	val = __raw_readw(base + MXC_WDT_WCR);
++	__raw_writew(val, MXC_WDT_WCR);
++	val = __raw_readw(MXC_WDT_WCR);
+ 	timer_margin = WDOG_COUNT_TO_SEC(val);
+ }
+ 
+@@ -150,14 +142,13 @@ static void mxc_wdt_set_timeout(u32 base
+ 
+ static int mxc_wdt_open(struct inode *inode, struct file *file)
+ {
+-
+ 	if (test_and_set_bit(1, (unsigned long *)&mxc_wdt_users))
+ 		return -EBUSY;
+ 
+-	mxc_wdt_config(wdt_base_reg);
+-	mxc_wdt_set_timeout(wdt_base_reg);
+-	mxc_wdt_enable(wdt_base_reg);
+-	mxc_wdt_ping(wdt_base_reg);
++	mxc_wdt_config();
++	mxc_wdt_set_timeout();
++	mxc_wdt_enable();
++	mxc_wdt_ping();
+ 
+ 	return 0;
+ }
+@@ -168,8 +159,7 @@ static int mxc_wdt_release(struct inode 
+ 	 *      Shut off the timer unless NOWAYOUT is defined.
+ 	 */
+ #ifndef CONFIG_WATCHDOG_NOWAYOUT
+-	mxc_wdt_disable(wdt_base_reg);
+-
++	mxc_wdt_disable();
+ #else
+ 	printk(KERN_CRIT "mxc_wdt: Unexpected close, not stopping!\n");
+ #endif
+@@ -183,7 +173,7 @@ mxc_wdt_write(struct file *file, const c
+ {
+ 	/* Refresh LOAD_TIME. */
+ 	if (len)
+-		mxc_wdt_ping(wdt_base_reg);
++		mxc_wdt_ping();
+ 	return len;
+ }
+ 
+@@ -191,8 +181,8 @@ static int
+ mxc_wdt_ioctl(struct inode *inode, struct file *file,
+ 	      unsigned int cmd, unsigned long arg)
+ {
+-	int new_margin;
+-	int bootr;
++	unsigned int new_margin;
++	int boot_reason;
+ 
+ 	static struct watchdog_info ident = {
+ 		.identity = "MXC Watchdog",
+@@ -208,27 +198,30 @@ mxc_wdt_ioctl(struct inode *inode, struc
+ 				    sizeof(ident));
+ 	case WDIOC_GETSTATUS:
+ 		return put_user(0, (int __user *)arg);
++
+ 	case WDIOC_GETBOOTSTATUS:
+-		bootr = mxc_wdt_get_bootreason(wdt_base_reg);
+-		return put_user(bootr, (int __user *)arg);
++		boot_reason = mxc_wdt_get_boot_reason();
++		return put_user(boot_reason, (unsigned int __user *)arg);
++
+ 	case WDIOC_KEEPALIVE:
+-		mxc_wdt_ping(wdt_base_reg);
++		mxc_wdt_ping();
+ 		return 0;
++
+ 	case WDIOC_SETTIMEOUT:
+-		if (get_user(new_margin, (int __user *)arg))
++		if (get_user(new_margin, (unsigned int __user *)arg))
+ 			return -EFAULT;
+ 
+ 		mxc_wdt_adjust_timeout(new_margin);
+-		mxc_wdt_disable(wdt_base_reg);
+-		mxc_wdt_set_timeout(wdt_base_reg);
+-		mxc_wdt_enable(wdt_base_reg);
+-		mxc_wdt_ping(wdt_base_reg);
++		mxc_wdt_disable();
++		mxc_wdt_set_timeout();
++		mxc_wdt_enable();
++		mxc_wdt_ping();
+ 		return 0;
+ 
+ 	case WDIOC_GETTIMEOUT:
+-		mxc_wdt_ping(wdt_base_reg);
+-		new_margin = mxc_wdt_get_timeout(wdt_base_reg);
+-		return put_user(new_margin, (int __user *)arg);
++		mxc_wdt_ping();
++		new_margin = mxc_wdt_get_timeout();
++		return put_user(new_margin, (unsigned int __user *)arg);
+ 	}
+ }
+ 
+@@ -248,23 +241,9 @@ static struct miscdevice mxc_wdt_miscdev
+ 
+ static int __init mxc_wdt_probe(struct platform_device *pdev)
+ {
+-	struct resource *res, *mem;
+ 	int ret;
+ 
+-	/* reserve static register mappings */
+-	res = platform_get_resource(pdev, IORESOURCE_MEM, dev_num);
+-	if (!res)
+-		return -ENOENT;
+-
+-	mem = request_mem_region(res->start, res->end - res->start + 1,
+-				 pdev->name);
+-	if (mem == NULL)
+-		return -EBUSY;
+-
+-	platform_set_drvdata(pdev, mem);
+-
+-	wdt_base_reg = IO_ADDRESS(res->start);
+-	mxc_wdt_disable(wdt_base_reg);
++	mxc_wdt_disable();
+ 	mxc_wdt_adjust_timeout(timer_margin);
+ 
+ 	mxc_wdt_users = 0;
+@@ -275,30 +254,26 @@ static int __init mxc_wdt_probe(struct p
+ 	if (ret)
+ 		goto fail;
+ 
+-	pr_info("MXC Watchdog # %d Timer: initial timeout %d sec\n", dev_num,
++	pr_info("MXC Watchdog Timer: initial timeout %d sec\n",
+ 		timer_margin);
+ 
+ 	return 0;
+ 
+       fail:
+-	release_resource(mem);
+ 	pr_info("MXC Watchdog Probe failed\n");
+ 	return ret;
+ }
+ 
+ static void mxc_wdt_shutdown(struct platform_device *pdev)
+ {
+-	struct resource *res = platform_get_drvdata(pdev);
+-	mxc_wdt_disable(res->start);
+-	pr_info("MXC Watchdog # %d shutdown\n", dev_num);
++	mxc_wdt_disable();
++	pr_info("MXC Watchdog shutdown\n");
+ }
+ 
+ static int __exit mxc_wdt_remove(struct platform_device *pdev)
+ {
+-	struct resource *mem = platform_get_drvdata(pdev);
+ 	misc_deregister(&mxc_wdt_miscdev);
+-	release_resource(mem);
+-	pr_info("MXC Watchdog # %d removed\n", dev_num);
++	pr_info("MXC Watchdog removed\n");
+ 	return 0;
+ }
+ 
+@@ -312,27 +287,24 @@ static int __exit mxc_wdt_remove(struct 
+ 
+ static int mxc_wdt_suspend(struct platform_device *pdev, pm_message_t state)
+ {
+-	struct resource *res = platform_get_drvdata(pdev);
+-
+ 	if (mxc_wdt_users) {
+-		mxc_wdt_disable(res->start);
++		mxc_wdt_disable();
+ 	}
+ 	return 0;
+ }
+ 
+ static int mxc_wdt_resume(struct platform_device *pdev)
+ {
+-	struct resource *res = platform_get_drvdata(pdev);
+ 	if (mxc_wdt_users) {
+-		mxc_wdt_enable(res->start);
+-		mxc_wdt_ping(res->start);
++		mxc_wdt_enable();
++		mxc_wdt_ping();
+ 	}
+ 	return 0;
+ }
+ 
+ #else
+-#define	mxc_wdt_suspend	NULL
+-#define	mxc_wdt_resume		NULL
++#define	mxc_wdt_suspend NULL
++#define	mxc_wdt_resume  NULL
+ #endif
+ 
+ static struct platform_driver mxc_wdt_driver = {
+diff -uNpr linux-2.6.19.2.orig/drivers/char/watchdog/mxc_wdt.h linux-2.6.19.2/drivers/char/watchdog/mxc_wdt.h
+--- linux-2.6.19.2.orig/drivers/char/watchdog/mxc_wdt.h	2007-02-08 09:33:45.000000000 -0700
++++ linux-2.6.19.2/drivers/char/watchdog/mxc_wdt.h	2007-02-08 22:37:44.000000000 -0700
+@@ -17,9 +17,9 @@
+ #ifndef __MXC_WDT_H__
+ #define __MXC_WDT_H__
+ 
+-#define MXC_WDT_WCR             0x00
+-#define MXC_WDT_WSR             0x02
+-#define MXC_WDT_WRSR            0x04
++#define MXC_WDT_WCR             IO_ADDRESS(WDOG_BASE_ADDR + 0x00)
++#define MXC_WDT_WSR             IO_ADDRESS(WDOG_BASE_ADDR + 0x02)
++#define MXC_WDT_WRSR            IO_ADDRESS(WDOG_BASE_ADDR + 0x04)
+ #define WCR_WOE_BIT             (1 << 6)
+ #define WCR_WDA_BIT             (1 << 5)
+ #define WCR_SRS_BIT             (1 << 4)
+@@ -34,4 +34,7 @@
+ #define TIMER_MARGIN_DEFAULT	60	/* 60 secs */
+ #define TIMER_MARGIN_MIN	1
+ 
++#define WDOG_SEC_TO_COUNT(s)  ((s * 2) << 8)
++#define WDOG_COUNT_TO_SEC(c)  ((c >> 8) / 2)
++
+ #endif				/* __MXC_WDT_H__ */

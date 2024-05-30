@@ -1,0 +1,673 @@
+= Common Root File-System Proposal =
+
+[[TableOfContents]]
+
+
+= Document Header =
+
+||'''Title'''           || Common Root File-system Proposal     ||
+||'''Started on'''      || 8th December 2004                    ||
+||'''Revision'''        || 1.0                                  ||
+||'''Status'''          || Draft                                ||
+||'''Classification'''  || Freescale Internal Use Only          ||
+||<|2> '''Prepared by'''|| Stuart Hughes stuarth@freescale.com ||
+|| Steve Papa    stevep@freescale.com  ||
+
+
+= Introduction =
+
+When people talk about running 'Linux' on a target platform, what is actually
+meant is the combination of a Linux kernel and a RFS (root file-system).
+
+What is often not understood is that there is relatively little coupling
+between the RFS and the version of the Linux kernel used to provide
+the underlying services to the RFS.  This means that essentially the
+Kernel and RFS can be treated as separate components and maintained
+separately.
+
+The RFS itself is actually a collection of user-space packages.  
+Depending on the system being supported, this may comprise as
+few as ten packages for an embedded system, rising to over a thousand
+for a desktop system.  Because many packages not only depend on other
+packages, but also on a particular versions of these packages, building
+a complete RFS that works is non-trivial.  In the desktop world, many
+vendors supply distributions that solves this problem but in many
+cases, these are only available for x86 hosts.  In the 
+embedded world, there are far fewer distributions available and those
+that are available often have limitations. 
+
+In this document, we will propose a common root file-system that can be
+used to support Freescale silicon in a simple but flexible way.
+
+
+= Purpose =
+
+The purpose of this document is to:
+
+ * Explain the need for a Freescale RFS builder project.
+
+ * Highlight choices for future work.
+
+
+= Scope =
+
+The scope of this document is to:
+
+ * Highlight existing embedded RFS projects and their merits/limitation.
+
+ * Explain the current prototype system and it's features.
+
+ * Examine choices for the package sets (e.g. LFS vs Fedora).
+
+ * Explain limitations and trade-offs.
+
+ * Monta Vista and other proprietary systems are not discussed as they
+ are not freely available for review.
+
+
+= Why not use an existing distribution or RFS builder =
+
+As the reader may be aware, there are already a number of existing distribution
+and RFS projects.  Many of these are very good, and could be used.  However,
+they all suffer one major problem at the macro level: lack of control.  Unless
+we have control over the whole 'food-chain' for our Linux targets, we'll be in a
+position of only being able to provide what is already there in the Open Source
+Community.  By offering our own, we'll be in control and be able to respond in
+a timely manner to the needs of our silicon consumers.  This means we can
+offer consistent, tested and maintainable output.
+
+In addition to the main high level 'control' issue, individual project have a
+number of other limitations.  Here we have highlighted just a few issues:
+
+
+== Debian ==
+
+Debian can and is used to assemble root file-systems for cross architecture.
+This is normally achieved by running 'dbootstrap' for the target
+architecture you want to support.  This will pull in binary packages
+and unpack them in a directory of your choice, which then can be
+NFS mounted by the target system.
+
+Here are a list of issues:
+
+ * Does not scale down well for use in embedded systems.
+
+ * Only really usable from a Debian host.
+
+ * Building is only possible self-hosted and on a Debian system.
+
+ * Adding new packages is only possible by 'Debian heads'.
+
+ * Not available on all platforms Freescale support (Coldfire).
+
+ * Many up to date packages only supported in the 'unstable' tree.
+
+
+== Fedora Core for PowerPC ==
+
+Fedora Core is an increasingly popular distribution, and is available 
+now for PowerPC.  This distribution is intended (like Debian) to be
+self-hosted.  Unlike Debian it is only available for a few architectures,
+and so in its native form would not be usable across the range of
+Freescale silicon.
+
+
+== Buildroot ==
+
+Buildroot is a system to build uclibc based root file-systems. This is
+available from the maintainer of uclibc/busybox via CVS (it is not
+actually released as a formal project).
+
+This system starts by guiding a user through a configuration process,
+before building all components for the root file-system from source
+(packages are downloaded on demand).  The result is a directory
+containing the root file-system for the architecture selected
+during configuration.
+
+Here are a list of issues:
+
+ * The output has no package management.
+
+ * It is targeting uclibc, not glibc and so would need some modifications.
+
+ * Doesn't appear to be that actively maintained.
+
+ * The configuration process may need updating (uses 2.4 Config.in).
+
+ * Does not support distribution on binary packages.
+
+
+== Denx ELDK ==
+
+ELDK (Embedded Linux Development Kit) is provided by Denx Sofware Engineering.
+This system uses a set of modified Yellow Dog Linux sources/specfiles to
+cross build a set of rpms for the target architecture.  This system is 
+rpm based, and it's primary aim is to install a fixed set of pre-built
+binary rpms that compose the root file-system to be NFS mounted.
+
+The system used by Denx to accomplish cross-compilation is similar to
+the 'spoofing' mechanism used by PCS (Platform Creation Suite).  This
+and other features of this system make it the best 'off the shelf' 
+solution to building root file-systems, however it still has limitations
+which are listed below.
+
+Here are a list of issues:
+
+ * It's not clear that all pieces of his system are freely distributable.
+
+ * You can only (easily) have one instance of a root file-system for
+ a given target on a machine.
+
+ * Denx uses his own modified cross compilers. This means that it would
+ not be possible to take standard cross compilers and used them with
+ this system.
+
+ * The target root file-system is not easily configurable.
+
+
+== PCS (Platform Creation Suite) ==
+
+Of all the root file-system builders, this is the most comprehensive
+and feature rich.  In particular, it has an unrivaled fine grain
+configuration capability that acts pre and post build.  If the question
+was 'what is the best solution', PCS would be the easy winner.  However,
+features and capability alone are not the only considerations:
+
+Here are a list of issues:
+
+ * The tool costs money.  When free alternatives are available, many
+ people prefer to use them, even if they don't offer the same level of
+ capability.
+
+ * Installation/setup is relatively complex.
+
+ * Because BSP development is de-coupled from the main tool, each BSP
+ can supply it's own unique set of packages and versions for the root
+ file-system.  This is both a strength and weakness.  The strength is
+ that a BSP can be uniquely optimised and targeted for a platform.
+ The downside is that this leads to fragmentation of the package set.
+ Consequently PCS has no common set of packages, which means the
+ test cycle has to be exercised per BSP, which drives cost.  Furthermore
+ The essential 'keep it up to date' cycle for the BSP has to be done
+ per BSP and so is often neglected.
+
+ * PCS binary packages are just plain tarballs and so they are not
+ 'package managed'.
+
+ * PCS build controls are non-standard.  This is deliberate, conveying
+ additional capabilities.  However, acceptance in the wider community
+ of anything that is not immediately comprehended is often rejected.
+ These days the time people have to 'learn' a tool is extremely limited
+ and so unless something is immediately obvious and usable, it often
+ will be dropped.
+
+
+= The proposed Freescale root file-system builder =
+
+== Introduction ==
+
+A short investigation has been undertaken as a proof of concept to 
+try to build a common root file-system using a simple tool.  The 
+purpose of this exercise is to design a system that can be used 
+to build and deploy common root file-systems across the range of
+Freescale platforms.
+
+
+== Status ==
+
+It has been possible to build and deploy root file-systems
+built from the same sources on 8xx (powerpc) and an imx (arm)
+platform.
+
+
+== Feature comparison ==
+
+In the table below, a set of features are compared.
+The new system is identified as 'FSB' (Freescale builder) 
+
+|| System name|| Value    ||
+|| D          || Debian   ||
+|| E          || ELDK     ||
+|| B          || Buildroot||
+|| P          || PCS      ||
+|| F          || FSB      ||
+
+|| Key        || Value    ||
+|| y          || yes      ||
+|| n          || no       ||
+|| p          || planned  ||
+|| l          || limited  ||
+|| m          || manual   ||
+|| ?          || not known||
+
+
+||<|2>'''Feature'''           ||<-5> '''Systems''' ||<|2> '''Comment'''||
+||D||E||B||P||F||
+||Package managed             ||y||y||n||n||y||FSB uses rpm packages||
+||Easy source build           ||n||n||y||y||y||FSB will build if no binary rpm is available||
+||Builds coupled to host      ||y||y||y||n||y||PCS uniquely sandboxes the build||
+||Standard cross compilers    ||y||n||y||y||y||Buildroot builds uclibc based compilers||
+||Supports sub-architectures  ||n||y||n||n||p||Support for non-generic derivatives (7xx,8xx,82xx etc), cross-compiler driven||
+||Supports compiler spoofing  ||n||l||n||y||y||The incrementally built interface libs/headers are isolated from other builds||
+||Sources pulled on demand    ||n||n||y||n||y||FSB supports LPP/GPP but will fall back to the Internet using URLs in spec files||
+||Supports multiple instances ||y||l||y||y||y||Required for multiple concurrent configurations||
+||Pre-built binary support    ||y||y||n||y||y||FSB will only attempt package build if the binary rpm is not present||
+||Kernel config system        ||n||n||y||y||p||i.e. built into the system||
+||Supports Linux-2.6          ||?||n||?||n||y||FSB has the required packages at appropriate revisions to support a 2.6 kernel||
+||Pre-build configuration     ||n||n||y||y||p||FSB supports package list selection/adjustment||
+||Post-build configuration    ||n||l||n||y||l||FSB will support rpm package insert/remove||
+||Coarse dependency checking  ||y||y||l||y||y||FSB uses rpm built-in dependency checking (libraries)||
+||Fine grain dependencies     ||n||n||n||n||n||Only PCS supports very fine grain dependency checking||
+||Conflicts detection         ||y||y||n||y||y||FSB uses rpm built-in conflict detection, this may be overridden to resolve||
+||Conflict resolution         ||m||m||m||y||m||PCS has a sophisticated conflict resolution system||
+||Non NFS deployment          ||n||l||l||y||p||FSB will support limited non-NFS deployment (in-line with Denx/buildroot)||
+||Easy auto-build             ||n||y||y||l||y||FSB is designed to be very simple to support||
+||Easy package version support||n||n||y||l||y||FSB spec files include versions in their name and are referenced from a list||
+||Supports multiple distros   ||n||n||n||l||y||FSB distribution specific spec files are isolated.  Distros need some conversion||
+||Package sets maintainable   ||y||y||n||n||y||FSB will be based of a standard distribution(s), common across architectures||
+||Package export              ||n||y||n||l||y||FSB can easily produce srpms which encapsulate source and build controls||
+||Package import              ||n||l||l||l||y||FSB can easily import srpm packages (there is a switch for this)||
+||Package modification        ||m||m||y||y||y||FSB guards edits in progress and supports prep, short-circuit build/install||
+||Patch generation            ||m||m||n||y||y||FSB supports generation of a patch for package changes||
+||Patch integration           ||m||m||l||m||y||FSB supports 'patchmerge' which will generate a patch and adjust the spec||
+||Shallow learning curve      ||n||y||n||n||y||Assuming you have no prior knowledge of a similar system||
+||Novice tolerant            ||n||y||y||n||y||How likely is it for a new user to get a successful result||
+
+
+= Distribution choice =
+
+== Current Freescale builder prototype ==
+
+To date the prototype FSB has used two sets of package sources to enable
+the proof of concept demonstration. The bulk of these has been drawn
+from the 'sandbox' specfiles/sources, which is based on LFS-5.1.  These
+modified LFS spec files provide many components in a typical desktop
+system (i.e. it favours features over space).  To complement this,
+a small set of packages drawn from Open Source and PCS have been used
+to provide a minimal root file-system. 
+
+Currently it is possible to build a minimal RFS composed of only:
+
+ * skell-1.0
+ * emb_base_libs-1.0
+ * busybox-1.00rc2
+ * tinylogin-1.4 (optional)
+ * modutils-2.4.25 or module-init-tools-3.1 (optional)
+
+This combination of packages will boot to a shell prompt. Although this
+RFS is limited in scope, it does provide a very quick and simple basic
+RFS that can be used during initial kernel development to test board-bringup.
+
+For a fuller (desktop like) RFS, the following packages listed below have
+been built and booted.  It should be noted however that very little
+testing has been done on this full system, and many aspects of the package 
+configuration are missing.
+
+ * skell-1.0
+ * base_libs-1.0
+ * bash-2.05b
+ * coreutils-5.0
+ * zlib-1.1.4
+ * lfs-utils-0.3
+ * findutils-4.1.20
+ * gawk-3.1.3
+ * ncurses-5.3
+ * libtermcap-2.0.8
+ * vim-6.2
+ * m4-1.4
+ * bison-1.875
+ * less-381
+ * groff-1.18.1
+ * sed-4.0.7
+ * flex-2.5.4
+ * gettext-0.12.1
+ * net-tools-1.60
+ * inetutils-1.4.2
+ * autoconf-2.57
+ * automake-1.7.6 : needs autoconf to build, not on debian by default
+ * libtool-1.5
+ * bzip2-1.0.2
+ * diffutils-2.8.1
+ * ed-0.2
+ * e2fsprogs-1.34
+ * grep-2.5.1
+ * man-1.5m2
+ * make-3.80
+ * modutils-2.4.25 or module-init-tools-3.1 for 2.6 kernels
+ * patch-2.5.4
+ * procinfo-18
+ * procps-3.2.3
+ * sysklogd-1.4.1
+ * tar-1.13.25
+ * util-linux-2.12
+ * which-2.14
+ * fakeroot-0.4.4
+ * wget-1.9.1
+ * expat-1.95.7
+ * freetype-2.1.7
+
+
+== What distribution should we base our RFS on moving forward ==
+
+While the list of already building packages for LFS is significant (>40),
+it is far from complete. There are approximately another 40 packages
+available from the sandbox package list that could be converted.  It 
+should be noted however that the initial 40 were chosen to investigate
+whether or not it was possible to convert standard rpms and have
+them cross compile.  The higher order packages (graphical, with complex
+dependencies) would take more effort per package to convert.  
+
+Before blindly moving forward with extending this package list, it is
+important to make sure that we:
+
+ * Choose the appropriate distribution to base our work on.
+
+ * Use the appropriate list of packages to work from.
+
+ * Choose something that we can maintain currency on.
+
+
+== Why we cannot solely rely on an off-the-shelf distribution ==
+
+If you look at the set of packages required for a single application
+simple embedded device, this differs vastly to a fully featured
+desktop system installation.  Between these two classes of installation
+there is every conceivable gradation.  Ideally it would be possible
+to scale up a single distribution from a tiny footprint, all the way
+up to a full desktop installation.  Unfortunately, this is far from
+simple.  The main issues are:
+
+ * Overlaps (conflicts) between packages.
+
+ * Inter-package dependencies (the "plate of spaghetti effect").
+
+A few years ago it would have been possible to install a desktop system
+such as Redhat 4.2 and get a basic text only system running in a 
+10 Mbyte footprint.  These days you'd be lucky to get a system with a
+footprint under 100Mbytes.  Clearly the point is that a current
+'off-the-shelf' distribution is not able to serve the needs of 
+an embedded device, and so we will need to augment any distribution
+we choose with a set of packages that support the needs of the types of devices
+Freescale supplies silicon into.  Fortunately we have already received
+lists of packages from various sources that will help us with this process.
+
+
+== Considerations for an appropriate distribution base  ==
+
+It is a myth that any one distribution is 'better' than another.  The
+truth is that all distributions draw 99% of their packages from the
+same set of originating providers.  The main difference between offerings
+is:
+
+ * Installation, package management and configuration utilities.
+
+ * Policy (Debian deprecates non open source packages).
+
+ * Currency: some track the latest package offering more quickly than others.
+
+Largely the choice of distribution is driven by marketing perceptions
+and any technical need.  Below a few popular distributions are highlighted
+and discussed.
+
+ * '''Debian''':  There is no doubt that Debian is very popular and is an
+ excellent distribution.  However Debian is somewhat an "all or nothing"
+ distribution.  If you want to develop with Debian, you really need
+ to use a Debian host.  Furthermore Debian uses a unique package
+ management system that although powerful can be somewhat arcane.
+ Debian is also relatively slow to update its 'stable' distribution.
+ This would mean that if we used Debian we'd have to reference the
+ 'testing' and 'unstable' trees.  This in itself would probably scare
+ of some less knowledgeable potential users.
+
+ * '''Linux From Scratch''': This project is not so much a distribution
+ as a book that describes how to construct a Linux desktop system in
+ the simplest manner from scratch.  LFS is quite well known, but does not have
+ the user base of Debian, Fedora, Suse, Mandrake etc.  The principle benefit of
+ LFS is that it regularly updates the list of packages needed to build a systems
+ (i.e. it maintains currency).  The other benefit we have internally is that it
+ has been used to construct the 'sandbox' to be used in the PCS replacement
+ (CWTB).  This means that some of the work to build a distribution has already
+ been done.
+
+ * '''Yellowdog''': This is a powerpc derivative of Fedora.  Given that we
+ need to support more architectures than powerpc, it would probably
+ be better to go to the original distribution (Fedora).
+
+ * '''Fedora''': Fedora is essentially the successor to Redhat Linux,
+ which was the most popular desktop Linux distribution in its time.
+ Fedora is rpm based, and also kept up to date (it has 6 monthly release
+ cycles).  Fedora is also starting to include support for architectures
+ other than x86 (such as powerpc).
+
+
+== Distribution conclusion ==
+
+This is ultimately a marketing driven decision. However we believe that
+the choice should be between '''Fedora''' or '''LFS'''.  Fedora has
+the greater user base, but would require more effort to modify to be
+'cross-compilable' than the existing LFS packages we have available within
+the CWTB sandbox.
+
+Whatever the choice, the decision must be made quickly to prevent delays.
+
+
+= Freescale builder: further work, limitations and trade-offs =
+
+The prototype 'proof of concept' has shown that it is clearly possible
+to take standard rpm packages and with relatively few changes make
+them 'cross-compilable'.  Having done this, there is still a number
+of outstanding areas of work to address
+
+
+== Completion of desktop distribution ==
+
+We would not seek to convert every possible package in a desktop distribution.
+There are over 1000 packages in a desktop distribution, and many are of limited
+interest.  Instead an initial  sub-set of around 100 or so would be sufficient
+(the ELDK supports approximately 130 packages).
+
+The work so far has focused on relatively simple packages in terms of
+inter-package dependencies.  Whether or not it is possible to support
+these more complex packages (e.g Xorg, gtk, gnome etc) would require
+further investigation.  In particular 'pkg-config' is used by many
+high order packages to work out how to build/link with dependent packages.
+We would need to find a way of getting this to work in a cross compiler
+environment.  In addition X libraries are installed outside the normal
+linker search path.  There are various way to resolve this during cross
+builds, but the best overall approach would need to be investigated.
+In our opinion, these higher order packages can be left to later in
+the work order list, or even postponed to a later release.
+
+
+== Completion of the embedded package set ==
+
+In addition to the packages selected from a well know desktop distribution,
+additional 'embedded' support packages must be supported.  It is expected that
+priority would be given to these packages .  These packages would be extracted
+from the lists sent so far.  These packages would be provided in addition to
+those in the 'desktop' distribution
+
+
+== Configuration system ==
+
+The current prototype only supports building a root file-system by
+referencing a list of packages residing in a file.  This list does
+not include the Linux kernel, which is not part of the RFS.  It 
+would be highly desirable to have a configuration system based
+on 'LKC'.  This would be used to select packages (pre/post build)
+and also to select architecture, output type (NFS, JFFS2 etc).
+
+There is a big trade-off here to balance the amount of effort we put
+into this versus the complexity and usefulness of the feature.  While
+we think it is important to have a usable configuration tool, we
+don't think it appropiate to extend this to the levels found in PCS.
+
+In the past a great deal of effort was put into PCS to allow fine grain
+pre-build configuration of packages.  It is our view that although this
+is a nice feature, it doesn't warrant the extra complexity.  This is
+especially true if you consider the benefit of saving a 10kb by
+configuring out a component in Busybox, only to later select a
+1MB package like ncurses later in the build.
+
+
+== Dependency Tracking ==
+
+In our view correct ordering of the build sequence of packages, coupled
+with the built-in library dependency tracking system in rpm is
+sufficient to satisfy package dependency tracking in a basic form.
+
+Compared with PCS, which tracks dependencies across packages and the
+Linux kernel itself, this is rather limited, but the aim is to balance
+feature value against effort.
+
+
+== Conflict Management ==
+
+In the desktop world things are relatively simple, conflicts are
+in general at the package level and you choose one package(s) over
+other(s).  This being the case, rpm is sufficient to manage conflicts,
+it will detect and prevent you from overwriting the files of one
+package with files from another that have the same path.
+
+In the case of a root file-system that needs to scale from the small
+embedded footprint, up to a more full footprint, this becomes more
+difficult.  Take for instance the case where you have busybox installed
+and then decide to use a full bash shell.  When you try to install 
+the bash shell, you would be warned that this conflicts with busybox.
+If you naively removed busybox, you lose many other utilities you hadn't
+meant to remove and the system would no longer function.
+
+To solve this is again a balance of effort versus completeness of feature.
+In PCS there is a very comprehensive conflict resolution system.  However,
+we believe this level of feature is incorporate in a simple RFS builder.
+
+We propose that in normal circumstances files from a package later
+in the build list that conflict with those of an package earlier in
+the list will simply be overwritten.  We make the assumption that 
+partial (or whole)  package replacement was intended.  As a safeguard,
+the configuration system should highlight high-level meta-packages
+that provide the same functionality (e.g boa versus apache).
+
+
+== Roadmap and ROM estimates ==
+
+Below are a list of tasks in the order they need to be carried
+out and rough estimates of the time needed to complete.  Note
+this list only includes engineering effort, and the tasks currently
+anticipated.
+
+This is subject to change as requirements/constraints unfold.
+
+ * Completion of the embedded package list: 30 packages * 0.5 = 15 days
+
+ * Completion of the desktop packages (LFS):  60 packages * 0.5 = 30 days '''or:''' Conversion of the desktop packages (Fedora): 100 packages * 0.5 = 50 days 
+
+ * Dependency crude tracking: 5 days 
+
+ * Crude conflict management: 5 days
+
+ * Configuration system based on Kconfig: 45 days
+
+ * Investigate extended hi-order packages (X etc): 8 days
+
+ * Extend the desktop list to cover extended packages: 40 packages * 0.7 = 28 days
+
+
+Note: most tasks can be attempted in parallel.
+
+
+= Related work =
+
+== Cross compilers ==
+
+One other important consideration is how optimsed we make our rootfs
+distribution.  At the simplest level we could ship a single binary
+RFS for each architecture (e.g. one for powerpc one for arm etc).
+These would be built for the general case and rely on the kernel
+to handle FPU traps (for CPU's that don't have FPUs).
+
+The other alternative is to try to build RFS binaries that are highly
+optimised for each piece of target silicon.  This could include:
+
+ * Instruction set optimisations (e.g -mcpu=xxx)
+ * Intruction set extensions (e.g -maltivec)
+ * Soft-float emulation libraries (-msoft-float)
+ * Bi-endian support (where appropriate)
+
+The trade off here is effort versus providing root file-systems that
+display the best performance for our silicon.
+
+If we decide to produce optimised root file-systems, it would mean
+building specific cross-compiler(s) to support each target.
+Once these were available, the root file-system would be built and
+saved as a set of rpms specific for that cpu type.  To our knowlege,
+the only non-x86 distribution that does this at the moment is
+the Denx ELDK, which has rpm sets for ppc_4xx, ppc_4xxFP, ppc_74xx,
+ppc_7xx, ppc_82xx and ppc_8xx.
+
+If we decide to do this, we would also need to consider whether we
+want to provide a single muli-libbed 'jumbo' toolchain per architecture,
+or an individual 'specific' compiler for each target type.  The 'specific'
+type is easier to implement, but results in a greater number
+of cross-compilers.
+
+
+== Host dependency (sandbox) ==
+
+When cross compiling a set of packages, many packages on the host get used
+(rpm, wget, make, sed, awk, perl, autoconf, flex, bison, automake etc).  In
+order to guarantee consistent output from the same sources, the composition of
+the host operating system should be the same on all building machines.  For
+binary rpms built and distributed by Freescale, this should be mandated.
+Rather than insisting that all developers have the same operating system, it is
+possible to use a 'sandbox'.  This is a known set of host packages that provide
+a consistent build environment. Such a sandbox has been built for PCS (CWTB).
+It is recommended that for non-casual builds, this sandbox be used.
+
+As far as end users  of our root file systems go, the situation is less clear.
+If the emphasis is on providing a set of binary rpms, then maybe it is not
+necessary to provide a sandbox.  This would mean that a user could re-build
+from source, provided their host had the right build support packages
+installed.  Some of the considerations to be made are:
+
+ * Whether we are providing a binary rootfs to show-off our silicon, with
+ the ability to be able to re-build being un-supported.
+
+ * Whether the cost of dealing with support calls due to build failures
+ resulting from host dependent package failures is more effort than
+ simply making available the sandbox we use internally to build
+ our root file systems. 
+
+
+= References and links =
+
+|| '''Name'''  || '''Comment'''                   || '''Link'''||
+|| Debian      || Debian distribution packages    || http://www.debian.org/distrib/packages ||
+|| Denx ELDK   || Cross distro/builder from Denx  || http://www.denx.de/twiki/bin/view/DULG/ELDK ||
+|| LFS         || LFS book                        || http://lfs-mirror.tpegg.org/lfs/view/stable/ ||
+|| BFLS        || BLS book                        || http://lfs-mirror.tpegg.org/blfs/view/stable/||
+|| cross-LFS   || Cross LFS/BLFS prototype        || http://www.linuxfromscratch.org/~ryan/scripts/cross-lfs/ ||
+|| buildroot   || uClibc RFS  builder             || http://www.uclibc.org/cgi-bin/cvsweb/buildroot/ ||
+|| Fedora      || Fedora distribution             || http://fedora.redhat.com/ ||
+|| Fedoroa PPC || Fedora PowerPC distribution     || http://fedoraproject.org/fedorappc/FC-3/ ||
+|| crosstool   || Cross compiler building         || http://kegel.com/crosstool/||
+
+
+= Definitions and Acronyms =
+
+|| '''Acronym'''|| '''Long form''' ||
+|| '''ELDK'''   || Embedded Linux Development Kit (from Denx) ||
+|| '''RFS'''    || Root File System ||
+|| '''LFS'''    || Linux From Scratch ||
+|| '''BFS'''    || Beyond Linux From Scratch ||
+|| '''OSS'''    || Open Source Software ||
+|| '''PCS'''    || Platform Creation Suite ||
+|| '''FSB'''    || Freescale builder ||
+|| '''LPP'''    || Local Package Pool ||
+|| '''GPP'''    || Global Package Pool ||
+|| '''LFS'''    || Linux From Scratch ||
+|| '''RPM'''    || Redhat Package Manager||
+|| '''LKC'''    || Linux (2.6) Kernel Configuration System ||
+|| '''ROM'''    || Rough Order of Magnitude ||
+
+----

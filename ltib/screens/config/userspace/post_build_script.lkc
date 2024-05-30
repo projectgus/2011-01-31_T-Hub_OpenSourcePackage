@@ -1,0 +1,12 @@
+comment "Post build script"
+
+config WANT_BUILD_SCRIPT
+    bool "Run a script after the build"
+    default y
+
+config POST_BUILD_SCRIPT
+    depends WANT_BUILD_SCRIPT
+    string  "Enter the name of the post build script"
+    default "post_build_script"
+
+

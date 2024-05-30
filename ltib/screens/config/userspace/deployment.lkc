@@ -1,0 +1,187 @@
+comment 'Target Image Generation'
+
+menu "Options"
+
+comment 'Choose your root filesystem image type'
+choice 
+    prompt "Target image:"
+    default DEPLOYMENT_NFS
+    help
+        By default just the NFS staging area (rootfs) will be left.  This
+        area is always available
+
+    config DEPLOYMENT_JFFS2
+        bool "jffs2"
+        help
+            build a jffs2 flash filesystem image
+
+    config DEPLOYMENT_RAMDISK
+        bool "ext2.gz ramdisk"
+        help
+            build a compress ext2 filesystem that can be used as a ramdisk
+
+    config DEPLOYMENT_CRAMFS
+        bool "cramfs"
+        help
+            This is a read-only compressed root filesystem, see:
+            http://sourceforge.net/projects/cramfs/
+
+    config DEPLOYMENT_ROMFS
+        depends CAP_DEPLOYMENT_ROMFS
+        bool "romfs (uClinux)"
+        help
+            This option creates a rom filesystem that is appended to the
+            kernel.  This type of system is common in the uClinux environment
+
+    config DEPLOYMENT_NFS
+        bool "NFS only"
+        help
+        By default just the NFS staging area (rootfs) will be left.  This
+        area is always available
+endchoice
+
+config SYSCFG_DEPLOYMENT_STYLE
+    string
+    default JFFS2      if DEPLOYMENT_JFFS2
+    default RAMDISK    if DEPLOYMENT_RAMDISK
+    default CRAMFS     if DEPLOYMENT_CRAMFS
+    default ROMFS      if DEPLOYMENT_ROMFS 
+    default NFS        if DEPLOYMENT_NFS
+
+
+config DEPLOYMENT_ERASE_BLOCK_SIZE
+    depends DEPLOYMENT_JFFS2
+    string "jffs2 erase block size in KB"
+    default ERASE_BLOCK_SIZE
+    help
+        This sets the erase block size.  This should be in kilo bytes.
+
+config DEPLOYMENT_ZIP
+    depends DEPLOYMENT_ROMFS
+    bool "Create a compressed image of the kernel/romfs image"
+    default y
+    help
+        This reduces the size of the target image.  Version v4b.1a.1d of 
+        the dBUG bootloader can handle compressed images.
+
+config DEPLOYMENT_SREC
+    depends DEPLOYMENT_ROMFS
+    bool "Create an S-Record of the ROMFS images."
+    default n
+    help
+        Binary images need to be converted to an ascii srec files for serial
+        downloads.
+
+config SYSCFG_READONLY_FS
+    bool "read-only root filesystem"
+    default n
+
+config SYSCFG_RAM_DIRS
+    depends SYSCFG_READONLY_FS || DEPLOYMENT_JFFS2 || DEPLOYMENT_ROMFS || DEPLOYMENT_CRAMFS
+    string "Place these dirs in writable RAM"
+    default "/tmp /etc" if DEPLOYMENT_READONLY_FS
+    default "/tmp /etc" if DEPLOYMENT_ROMFS
+    default "/tmp"      if DEPLOYMENT_JFFS2
+    help
+       Flash may only be erased a finite number of times (of the order
+       of 100000 times for a NOR device).  If you deploy to Flash,
+       frequently written files should be written to RAM to avoid
+       exhausting Flash.  List here a space separated list of directories
+       to be put in tmpfs (RAM).  Changes to these directories will 
+       be lost on reboot.  You may also want to use this option if
+       you choose to deploy a read-only root filesystem
+
+config DEPLOYMENT_RAMDISK_U_BOOT
+    depends DEPLOYMENT_RAMDISK
+    bool "create a ramdisk that can be used by u-boot"
+    default n
+
+config DEPLOYMENT_ROOTFS_DIR
+    depends ! DEPLOYMENT_NFS
+    default ""
+    string "rootfs target directory"
+    help
+        Set this to the directory where you want your disk image
+        file to be placed (for intance /tftpboot/<user>).
+        Note by default it will be placed in the current ltib diretory
+
+config DEPLOYMENT_ROOTFS_KEEPSTAGE
+    depends ! DEPLOYMENT_NFS
+    bool "Keep temporary staging directory"
+    help
+       The root filesytem is constructed by copying the NFS deploy
+       area and removing/stripping parts.  This is normally done in
+       a directory rootfs.tmp.  Normally this is removed after the
+       output image has been produced.  If you'd like to keep this around
+       (for debugging purposes) please select this option
+
+config DEPLOYMENT_RM_DOCS
+    depends ! DEPLOYMENT_NFS
+    bool "remove man pages etc from the target image"
+    default y
+    help
+        This helps reduce the size of the target image
+
+config DEPLOYMENT_RM_BOOT
+    depends ! DEPLOYMENT_NFS
+    bool "remove the /boot directory"
+    default y
+    help
+        This removes the boot directory from the target image
+
+config DEPLOYMENT_RM_USR_SRC
+    depends ! DEPLOYMENT_NFS
+    bool "remove the /usr/src/ directory"
+    default y
+    help
+        This removes the /usr/src directory from the target image
+
+config DEPLOYMENT_RM_USR_INCLUDE
+    depends ! DEPLOYMENT_NFS
+    bool "remove the /usr/include directory"
+    default y
+    help
+        This removes the /usr/include directory from the target image
+
+config DEPLOYMENT_RM_USER_DIRS
+    depends ! DEPLOYMENT_NFS
+    string "remove these directories"
+    default "include home/sagem home/dt usr/man usr/share/info usr/share/man usr/info usr/share/locale usr/local/include usr/lib/pkgconfig usr/share/aclocal lib/pkgconfig usr/lib/glib-2.0/include usr/local/include"
+    help
+        Enter a space separated list of directories you want to remove
+        from the target image
+
+config DEPLOYMENT_RM_USER_FILES
+    depends ! DEPLOYMENT_NFS
+    string "remove these files"
+    default ""
+    help
+        Enter a space separated list of file paths you want to remove
+        from the target image e.g:
+        lib/libstdc++.so  lib/libstdc++.so.5  lib/libstdc++.so.5.0.5
+
+config DEPLOYMENT_RM_STATIC_LIBS
+    depends ! DEPLOYMENT_NFS
+    bool "remove the static libraries"
+    default y
+    help
+        This removes static (.a) libraries from the target image
+
+config DEPLOYMENT_STRIP
+    depends ! DEPLOYMENT_NFS
+    bool "strip any remaining binaries or libraries in the target image"
+    default y
+    help
+        This helps reduce the size of the target image
+
+
+config DEPLOYMENT_PADDING_KB
+    depends ! DEPLOYMENT_NFS
+    default "0"
+    string "Allocate extra space (Kbytes)"
+    help
+        Set this value (decimal) if you want to allocate some extra
+        free space on your target root filesystem.  The value is in
+        Kilo bytes.
+
+endmenu

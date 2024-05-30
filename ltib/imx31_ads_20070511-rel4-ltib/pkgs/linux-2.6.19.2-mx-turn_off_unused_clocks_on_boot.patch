@@ -1,0 +1,304 @@
+CR: ENGR00027824
+Patch name: ENGR00027824_turn_off_unused_clocks_on_boot.patch
+Date: Thu Mar 8 17:02:39 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: This patch initializes all unnecessary clocks on boot and
+turns off unused PLLs.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/clock.c linux-2.6.19.2/arch/arm/mach-mx27/clock.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/clock.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/clock.c	2007-04-25 17:39:06.000000000 -0600
+@@ -56,6 +56,28 @@ static void _clk_disable(struct clk *clk
+ 	__raw_writel(reg, clk->enable_reg);
+ }
+ 
++static int _clk_spll_enable(struct clk *clk)
++{
++	unsigned long reg;
++
++	reg = __raw_readl(CCM_CSCR);
++	reg |= CCM_CSCR_SPEN;
++	__raw_writel(reg, CCM_CSCR);
++
++	while ((__raw_readl(CCM_SPCTL1) & CCM_SPCTL1_LF) == 0) ;
++
++	return 0;
++}
++
++static void _clk_spll_disable(struct clk *clk)
++{
++	unsigned long reg;
++
++	reg = __raw_readl(CCM_CSCR);
++	reg &= ~CCM_CSCR_SPEN;
++	__raw_writel(reg, CCM_CSCR);
++}
++
+ static void _clk_pccr01_enable(unsigned long mask0, unsigned long mask1)
+ {
+ 	unsigned long reg;
+@@ -451,6 +473,8 @@ static struct clk spll_clk = {
+ 	.name = "spll",
+ 	.parent = &ckih_clk,
+ 	.recalc = _clk_pll_recalc,
++	.enable = _clk_spll_enable,
++	.disable = _clk_spll_disable,
+ };
+ 
+ static struct clk cpu_clk = {
+@@ -554,7 +578,7 @@ struct clk uart3_clk[] = {
+ 	 .secondary = &uart3_clk[1],},
+ 	{
+ 	 .name = "uart_ipg_clk",
+-	 .id = 3,
++	 .id = 2,
+ 	 .parent = &ipg_clk,
+ 	 .enable = _clk_enable,
+ 	 .enable_reg = CCM_PCCR1,
+@@ -860,7 +884,6 @@ static struct clk usb_clk[] = {
+ 	{
+ 	 .name = "usb_clk",
+ 	 .parent = &spll_clk,
+-	 .secondary = &usb_clk[1],
+ 	 .recalc = _clk_usb_recalc,
+ 	 .enable = _clk_enable,
+ 	 .enable_reg = CCM_PCCR1,
+@@ -919,7 +942,7 @@ static struct clk ssi2_clk[] = {
+ 
+ static struct clk nfc_clk = {
+ 	.name = "nfc_clk",
+-	.parent = &ahb_clk,
++	.parent = &cpu_clk,
+ 	.recalc = _clk_nfc_recalc,
+ 	.enable = _clk_enable,
+ 	.enable_reg = CCM_PCCR1,
+@@ -1345,7 +1368,10 @@ int __init mxc_clocks_init(void)
+ 	}
+ 
+ 	/* Turn off all possible clocks */
+-	// TODO
++	__raw_writel(CCM_PCCR0_GPT1_MASK, CCM_PCCR0);
++	__raw_writel(CCM_PCCR1_PERCLK1_MASK | CCM_PCCR1_HCLK_EMI_MASK,
++		     CCM_PCCR1);
++	spll_clk.disable(&spll_clk);
+ 
+ 	cscr = CSCR();
+ 	if (cscr & CCM_CSCR_MCU) {
+@@ -1354,9 +1380,9 @@ int __init mxc_clocks_init(void)
+ 		mpll_clk.parent = &ckil_clk;
+ 	}
+ 	if (cscr & CCM_CSCR_SP) {
+-		mpll_clk.parent = &ckih_clk;
++		spll_clk.parent = &ckih_clk;
+ 	} else {
+-		mpll_clk.parent = &ckil_clk;
++		spll_clk.parent = &ckil_clk;
+ 	}
+ 
+ 	/* Determine which high frequency clock source is coming in */
+@@ -1369,8 +1395,11 @@ int __init mxc_clocks_init(void)
+ 
+ 	/* This will propagate to all children and init all the clock rates */
+ 	propagate_rate(&ckih_clk);
++	propagate_rate(&ckil_clk);
+ 
++	clk_enable(&emi_clk);
+ 	clk_enable(&gpio_clk);
++	clk_enable(&iim_clk);
+ 	clk_enable(&gpt1_clk[0]);
+ 
+ 	return 0;
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/clock.c linux-2.6.19.2/arch/arm/mach-mx3/clock.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/clock.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/clock.c	2007-04-25 17:39:06.000000000 -0600
+@@ -19,6 +19,7 @@
+ 
+ #include <linux/module.h>
+ #include <linux/spinlock.h>
++#include <linux/delay.h>
+ #include <linux/clk.h>
+ #include <asm/io.h>
+ #include <asm/arch/clock.h>
+@@ -187,6 +188,50 @@ static void _clk_pll_recalc(struct clk *
+ 	clk->rate = temp;
+ }
+ 
++static int _clk_usb_pll_enable(struct clk *clk)
++{
++	u32 reg;
++	reg = __raw_readl(MXC_CCM_CCMR);
++	reg |= MXC_CCM_CCMR_UPE;
++	__raw_writel(reg, MXC_CCM_CCMR);
++
++	/* No lock bit on MX31, so using max time from spec */
++	udelay(80);
++
++	return 0;
++}
++
++static void _clk_usb_pll_disable(struct clk *clk)
++{
++	u32 reg;
++
++	reg = __raw_readl(MXC_CCM_CCMR);
++	reg &= ~MXC_CCM_CCMR_UPE;
++	__raw_writel(reg, MXC_CCM_CCMR);
++}
++
++static int _clk_serial_pll_enable(struct clk *clk)
++{
++	u32 reg;
++	reg = __raw_readl(MXC_CCM_CCMR);
++	reg |= MXC_CCM_CCMR_SPE;
++	__raw_writel(reg, MXC_CCM_CCMR);
++
++	/* No lock bit on MX31, so using max time from spec */
++	udelay(80);
++
++	return 0;
++}
++
++static void _clk_serial_pll_disable(struct clk *clk)
++{
++	u32 reg;
++
++	reg = __raw_readl(MXC_CCM_CCMR);
++	reg &= ~MXC_CCM_CCMR_SPE;
++	__raw_writel(reg, MXC_CCM_CCMR);
++}
++
+ #define PDR0(mask, off) ((__raw_readl(MXC_CCM_PDR0) & mask) >> off)
+ #define PDR1(mask, off) ((__raw_readl(MXC_CCM_PDR1) & mask) >> off)
+ #define PDR2(mask, off) ((__raw_readl(MXC_CCM_PDR2) & mask) >> off)
+@@ -443,6 +488,8 @@ static struct clk serial_pll_clk = {
+ 	.parent = &ckih_clk,
+ 	.set_rate = _clk_pll_set_rate,
+ 	.recalc = _clk_pll_recalc,
++	.enable = _clk_serial_pll_enable,
++	.disable = _clk_serial_pll_disable,
+ };
+ 
+ static struct clk usb_pll_clk = {
+@@ -450,6 +497,8 @@ static struct clk usb_pll_clk = {
+ 	.parent = &ckih_clk,
+ 	.set_rate = _clk_pll_set_rate,
+ 	.recalc = _clk_pll_recalc,
++	.enable = _clk_usb_pll_enable,
++	.disable = _clk_usb_pll_disable,
+ };
+ 
+ static struct clk cpu_clk = {
+@@ -601,14 +650,18 @@ static struct clk rtc_clk = {
+ 	.disable = _clk_disable,
+ };
+ 
+-static struct clk usb_clk = {
+-	.name = "usb_clk",
+-	.parent = &usb_pll_clk,
+-	.recalc = _clk_usb_recalc,
+-	.enable = _clk_enable,
+-	.enable_reg = MXC_CCM_CGR1,
+-	.enable_shift = MXC_CCM_CGR1_USBOTG_OFFSET,
+-	.disable = _clk_disable,
++static struct clk usb_clk[] = {
++	{
++	 .name = "usb_clk",
++	 .parent = &usb_pll_clk,
++	 .recalc = _clk_usb_recalc,},
++	{
++	 .name = "usb_ahb_clk",
++	 .parent = &ahb_clk,
++	 .enable = _clk_enable,
++	 .enable_reg = MXC_CCM_CGR1,
++	 .enable_shift = MXC_CCM_CGR1_USBOTG_OFFSET,
++	 .disable = _clk_disable,},
+ };
+ 
+ static struct clk csi_clk = {
+@@ -728,6 +781,7 @@ static struct clk ssi_clk[] = {
+ 	 .disable = _clk_disable,},
+ 	{
+ 	 .name = "ssi_clk",
++	 .id = 1,
+ 	 .parent = &serial_pll_clk,
+ 	 .recalc = _clk_ssi2_recalc,
+ 	 .enable = _clk_enable,
+@@ -976,7 +1030,8 @@ static struct clk *mxc_clks[] = {
+ 	&nfc_clk,
+ 	&ipu_clk,
+ 	&kpp_clk,
+-	&usb_clk,
++	&usb_clk[0],
++	&usb_clk[1],
+ 	&csi_clk,
+ 	&uart_clk[0],
+ 	&uart_clk[1],
+@@ -1015,7 +1070,14 @@ int __init mxc_clocks_init(void)
+ 	}
+ 
+ 	/* Turn off all possible clocks */
+-	// TODO
++	__raw_writel(MXC_CCM_CGR0_GPT_MASK, MXC_CCM_CGR0);
++	__raw_writel(0, MXC_CCM_CGR1);
++	__raw_writel(MXC_CCM_CGR2_EMI_MASK |
++		     MXC_CCM_CGR2_IPMUX1_MASK |
++		     MXC_CCM_CGR2_IPMUX2_MASK, MXC_CCM_CGR2);
++	cko1_clk.disable(&cko1_clk);
++	serial_pll_clk.disable(&serial_pll_clk);
++	usb_pll_clk.disable(&usb_pll_clk);
+ 
+ 	/* Determine which high frequency clock source is coming in */
+ 	if ((__raw_readw(PBC_BASE_ADDRESS + PBC_BSTAT) &
+@@ -1029,6 +1091,9 @@ int __init mxc_clocks_init(void)
+ 	/* This will propagate to all children and init all the clock rates */
+ 	propagate_rate(&ckih_clk);
+ 
++	clk_enable(&gpt_clk);
++	clk_enable(&emi_clk);
++
+ 	return 0;
+ }
+ 
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/crm_regs.h linux-2.6.19.2/arch/arm/mach-mx3/crm_regs.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/crm_regs.h	2007-04-25 17:37:52.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/crm_regs.h	2007-04-25 17:39:06.000000000 -0600
+@@ -60,6 +60,8 @@
+ #define MXC_CCM_CCMR_LPM_MASK                   (0x3 << 14)
+ #define MXC_CCM_CCMR_FIRS_OFFSET                11
+ #define MXC_CCM_CCMR_FIRS_MASK                  (0x3 << 11)
++#define MXC_CCM_CCMR_UPE                        (1 << 9)
++#define MXC_CCM_CCMR_SPE                        (1 << 8)
+ #define MXC_CCM_CCMR_MDS                        (1 << 7)
+ #define MXC_CCM_CCMR_SBYCS                      (1 << 4)
+ #define MXC_CCM_CCMR_MPE                        (1 << 3)
+diff -uNpr linux-2.6.19.2.orig/drivers/mtd/nand/mxc_nd.c linux-2.6.19.2/drivers/mtd/nand/mxc_nd.c
+--- linux-2.6.19.2.orig/drivers/mtd/nand/mxc_nd.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mtd/nand/mxc_nd.c	2007-04-25 17:39:06.000000000 -0600
+@@ -1093,6 +1093,7 @@ static int __init mxcnd_probe(struct pla
+ 	this->verify_buf = mxc_nand_verify_buf;
+ 
+ 	nfc_clk = clk_get(&pdev->dev, "nfc_clk");
++	clk_enable(nfc_clk);
+ 
+ 	NFC_CONFIG1 |= NFC_INT_MSK;
+ 	init_waitqueue_head(&irq_waitq);
+diff -uNpr linux-2.6.19.2.orig/drivers/serial/mxc_uart.c linux-2.6.19.2/drivers/serial/mxc_uart.c
+--- linux-2.6.19.2.orig/drivers/serial/mxc_uart.c	2007-04-25 17:38:03.000000000 -0600
++++ linux-2.6.19.2/drivers/serial/mxc_uart.c	2007-04-25 17:39:06.000000000 -0600
+@@ -1636,6 +1636,8 @@ static int __init mxcuart_console_setup(
+ 		return -ENODEV;
+ 	}
+ 
++	clk_enable(umxc->clk);
++
+ 	/* initialize port.lock else oops */
+ 	spin_lock_init(&umxc->port.lock);
+ 
+@@ -1803,6 +1805,7 @@ static int mxcuart_probe(struct platform
+ 		}
+ 
+ 		mxc_ports[id]->clk = clk_get(&pdev->dev, "uart_clk");
++		clk_enable(mxc_ports[id]->clk);
+ 		if (mxc_ports[id]->clk == NULL)
+ 			return -1;
+ 

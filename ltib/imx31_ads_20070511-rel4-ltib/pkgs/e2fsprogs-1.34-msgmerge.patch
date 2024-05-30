@@ -1,0 +1,11 @@
+diff -uNr e2fsprogs-1.34.orig/po/Makefile.in.in e2fsprogs-1.34/po/Makefile.in.in
+--- e2fsprogs-1.34.orig/po/Makefile.in.in	2003-05-21 23:38:18.000000000 +0100
++++ e2fsprogs-1.34/po/Makefile.in.in	2004-11-22 08:51:28.000000000 +0000
+@@ -109,7 +109,6 @@
+ 	@lang=`echo $@ | sed -e 's,.*/,,' -e 's/\.po$$//'`; \
+ 	test "$(srcdir)" = . && cdcmd="" || cdcmd="cd $(srcdir) && "; \
+ 	echo "$${cdcmd}$(MSGMERGE_UPDATE) $${lang}.po $(DOMAIN).pot"; \
+-	cd $(srcdir) && $(MSGMERGE_UPDATE) $${lang}.po $(DOMAIN).pot
+ 
+ 
+ install: install-exec install-data

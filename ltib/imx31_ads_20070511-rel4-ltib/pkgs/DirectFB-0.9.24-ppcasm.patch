@@ -1,0 +1,21 @@
+Mon Oct 16 2006 Stuart Hughes <stuarth@freescale.com>
+
+This fixes the problem whereby when compiling we needed real kernel 
+headers, but only for a few assembler files in this directory.  The
+symptom looks like this:
+
+In file included from ppcasm_memcpy_cachable.S:14:
+/opt/freescale/usr/local/gcc-3.4.3-uClibc-0.9.28-nfp-1/powerpc-linux/lib/gcc/powerpc-linux-uclibc/3.4.3/../../../../powerpc-linux-uclibc/sys-include/linux/config.h:1:2: #error "Compilation aborted. Please read the FAQ for linux-libc-headers package."
+
+diff --exclude CVS -uNr DirectFB-0.9.24/lib/direct/Makefile.in DirectFB-0.9.24.modified/lib/direct/Makefile.in
+--- DirectFB-0.9.24/lib/direct/Makefile.in	2005-10-24 12:01:30.000000000 -0500
++++ DirectFB-0.9.24.modified/lib/direct/Makefile.in	2006-10-16 09:58:50.000000000 -0500
+@@ -311,7 +311,7 @@
+ 	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
+ 
+ .S.lo:
+-	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
++	$(LIBTOOL) --mode=compile $(COMPILE) -I $(KHDR) -c $<
+ 
+ mostlyclean-libtool:
+ 	-rm -f *.lo

@@ -1,0 +1,158 @@
+Steve Papacharalambous <stevep@freescale.com>, 30 May 2006:
+Downloaded this patch from:
+http://lists.openswan.org/pipermail/dev/2005-March/000821.html
+==============================================================================
+  [Openswan dev] [PATCH][2.3.1dr4] GCC4 compilation fixes
+
+*Vinay K Nallamothu* vinay.nallamothu at gsecone.com
+<mailto:dev%40openswan.org?Subject=%5BOpenswan%20dev%5D%20%5BPATCH%5D%5B2.3.1dr4%5D%20GCC4%20compilation%20fixes&In-Reply-To=>
+/Sun Mar 27 19:36:58 CEST 2005/
+
+    * Previous message: [Openswan dev] [PATCH][Oenswan-1.X] GCC4.X
+      compilation fixes <000820.html>
+    * Next message: [Openswan dev] Re: IPv4 tunneled over IPv6-IPsec?
+      <000819.html>
+    * *Messages sorted by:* [ date ] <date.html#821> [ thread ]
+      <thread.html#821> [ subject ] <subject.html#821> [ author ]
+      <author.html#821>
+
+------------------------------------------------------------------------
+
+Hi,
+
+The patch below fixes the following compilation errors reported by
+GCC-4.0
+
+In file included from log.c:54:
+openswan-2.3.1dr4-m/include/kernel_alg.h:56: error: array type has incomplete element type
+openswan-2.3.1dr4-m/include/kernel_alg.h:57: error: array type has incomplete element type
+
+cc1: warnings being treated as errors
+ikeping.c: In function ?receive_ping?:
+ikeping.c:206: warning: pointer targets in passing argument 6 of ?recvfrom? differ in signedness
+
+Thanks
+Vinay
+
+ ikeping/ikeping.c   |    3 ++-
+ pluto/connections.c |    1 +
+ pluto/ipsec_doi.c   |    1 +
+ pluto/log.c         |    1 +
+ pluto/rcv_whack.c   |    1 +
+ pluto/spdb.c        |    1 +
+ pluto/spdb_struct.c |    1 +
+ 7 files changed, 8 insertions(+), 1 deletion(-)
+
+
+======================================================================
+diff -urN openswan-2.3.1dr4/programs/ikeping/ikeping.c openswan-2.3.1dr4-m/programs/ikeping/ikeping.c
+--- openswan-2.3.1dr4/programs/ikeping/ikeping.c	2004-10-18 05:28:59.000000000 +0530
++++ openswan-2.3.1dr4-m/programs/ikeping/ikeping.c	2005-03-27 18:22:32.326750488 +0530
+@@ -32,6 +32,7 @@
+ #include <poll.h>
+ 
+ #include <openswan.h>
++#include "pfkeyv2.h"
+ 
+ #include "constants.h"
+ #include "packet.h"
+@@ -203,7 +204,7 @@
+ 	rport = 500;
+ 	xchg  = 0;
+ 	sendlen=sizeof(sender);
+-	n = recvfrom(s, &ih, sizeof(ih), 0, (struct sockaddr *)&sender, &sendlen);
++	n = recvfrom(s, &ih, sizeof(ih), 0, (struct sockaddr *)&sender, (socklen_t*)&sendlen);
+ 
+ 	addrtot(&sender, 0, buf, sizeof(buf));
+ 	switch(afamily) {
+diff -urN openswan-2.3.1dr4/programs/pluto/connections.c openswan-2.3.1dr4-m/programs/pluto/connections.c
+--- openswan-2.3.1dr4/programs/pluto/connections.c	2005-03-21 09:19:42.000000000 +0530
++++ openswan-2.3.1dr4-m/programs/pluto/connections.c	2005-03-27 18:22:50.305017376 +0530
+@@ -30,6 +30,7 @@
+ 
+ #include <openswan.h>
+ #include <openswan/ipsec_policy.h>
++#include "pfkeyv2.h"
+ #include "kameipsec.h"
+ 
+ #include "constants.h"
+diff -urN openswan-2.3.1dr4/programs/pluto/ipsec_doi.c openswan-2.3.1dr4-m/programs/pluto/ipsec_doi.c
+--- openswan-2.3.1dr4/programs/pluto/ipsec_doi.c	2005-03-20 07:57:50.000000000 +0530
++++ openswan-2.3.1dr4-m/programs/pluto/ipsec_doi.c	2005-03-27 18:19:43.768375256 +0530
+@@ -31,6 +31,7 @@
+ 
+ #include <openswan.h>
+ #include <openswan/ipsec_policy.h>
++#include "pfkeyv2.h"
+ 
+ #include "constants.h"
+ #include "defs.h"
+diff -urN openswan-2.3.1dr4/programs/pluto/log.c openswan-2.3.1dr4-m/programs/pluto/log.c
+--- openswan-2.3.1dr4/programs/pluto/log.c	2004-12-29 11:38:20.000000000 +0530
++++ openswan-2.3.1dr4-m/programs/pluto/log.c	2005-03-27 18:19:13.939909872 +0530
+@@ -30,6 +30,7 @@
+ #include <sys/types.h>
+ 
+ #include <openswan.h>
++#include "pfkeyv2.h"
+ 
+ #include "constants.h"
+ #include "oswlog.h"
+diff -urN openswan-2.3.1dr4/programs/pluto/rcv_whack.c openswan-2.3.1dr4-m/programs/pluto/rcv_whack.c
+--- openswan-2.3.1dr4/programs/pluto/rcv_whack.c	2005-03-21 09:21:59.000000000 +0530
++++ openswan-2.3.1dr4-m/programs/pluto/rcv_whack.c	2005-03-27 18:20:12.287039760 +0530
+@@ -31,6 +31,7 @@
+ #include <sys/queue.h>
+ 
+ #include <openswan.h>
++#include "pfkeyv2.h"
+ 
+ #include "constants.h"
+ #include "defs.h"
+diff -urN openswan-2.3.1dr4/programs/pluto/spdb.c openswan-2.3.1dr4-m/programs/pluto/spdb.c
+--- openswan-2.3.1dr4/programs/pluto/spdb.c	2004-11-30 07:58:28.000000000 +0530
++++ openswan-2.3.1dr4-m/programs/pluto/spdb.c	2005-03-27 18:20:37.837155552 +0530
+@@ -24,6 +24,7 @@
+ 
+ #include <openswan.h>
+ #include <openswan/ipsec_policy.h>
++#include "pfkeyv2.h"
+ 
+ #include "constants.h"
+ #include "oswlog.h"
+diff -urN openswan-2.3.1dr4/programs/pluto/spdb_struct.c openswan-2.3.1dr4-m/programs/pluto/spdb_struct.c
+--- openswan-2.3.1dr4/programs/pluto/spdb_struct.c	2005-02-15 07:24:20.000000000 +0530
++++ openswan-2.3.1dr4-m/programs/pluto/spdb_struct.c	2005-03-27 18:20:59.474866120 +0530
+@@ -24,6 +24,7 @@
+ 
+ #include <openswan.h>
+ #include <openswan/ipsec_policy.h>
++#include "pfkeyv2.h"
+ 
+ #include "constants.h"
+ #include "oswlog.h"
+
+======================================================================
+
+
+
+-- 
+Views expressed in this mail are those of the individual sender and 
+do not bind Gsec1 Limited. or its subsidiary, unless the sender has done
+so expressly with due authority of Gsec1.
+_________________________________________________________________________
+
+
+------------------------------------------------------------------------
+
+    * Previous message: [Openswan dev] [PATCH][Oenswan-1.X] GCC4.X
+      compilation fixes <000820.html>
+    * Next message: [Openswan dev] Re: IPv4 tunneled over IPv6-IPsec?
+      <000819.html>
+    * *Messages sorted by:* [ date ] <date.html#821> [ thread ]
+      <thread.html#821> [ subject ] <subject.html#821> [ author ]
+      <author.html#821>
+
+------------------------------------------------------------------------
+More information about the Dev mailing list
+<http://lists.openswan.org/mailman/listinfo/dev>

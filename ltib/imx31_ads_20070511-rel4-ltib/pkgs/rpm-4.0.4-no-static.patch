@@ -1,0 +1,27 @@
+Thu 10 Aug 2006 Stuart Hughes <stuarth@freescale.com>
+
+Disable rpm's attempts to link statically.
+
+This avoids:
+/opt/freescale/usr/local/gcc-4.1-glibc-2.3/m68k-glibc/lib/gcc/m68k-linux-gnu/4.1.0/../../../../m68k-linux-gnu/bin/ld: attempted static link of dynamic object `./build/.libs/librpmbuild.so'
+
+In addition, pass: noinst_PROGRAMS= 
+to make, when making.
+
+diff --exclude CVS -uNr rpm-4.0.4/configure rpm-4.0.4.modified/configure
+--- rpm-4.0.4/configure	2006-08-10 10:43:48.000000000 -0500
++++ rpm-4.0.4.modified/configure	2006-08-10 10:43:30.000000000 -0500
+@@ -1931,6 +1931,13 @@
+ 	# just link it dynamically
+ 	LDFLAGS_STATIC=""
+ fi
++
++# seh: I really mean static
++if [ "$enable_static" = "no" ]
++then
++    LDFLAGS_STATIC=""
++fi
++
+ LDFLAGS_STATIC="${LDFLAGS} ${LDFLAGS_STATIC}"	# libtool format
+ echo "$ac_t""$LDFLAGS_STATIC" 1>&6
+ 

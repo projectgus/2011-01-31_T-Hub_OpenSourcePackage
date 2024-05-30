@@ -1,0 +1,10 @@
+#
+# Power Managment devices
+#
+
+menu "Advanced Power Management devices"
+
+
+
+endmenu
+

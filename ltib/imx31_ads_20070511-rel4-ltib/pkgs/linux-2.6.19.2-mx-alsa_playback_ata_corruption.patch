@@ -1,0 +1,106 @@
+Bugzilla 83 - Playback corrupted by system I/O
+Applied TLSbo73840_fix_alsa_playback_corruption_with_ata.patch
+
+cvs diff -puN -r1.1 -r1.2 arch/arm/mach-mx27/dma.c
+Index: arch/arm/mach-mx27/dma.c
+===================================================================
+RCS file: arch/arm/mach-mx27/dma.c,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -p -u -r1.1 -r1.2
+--- linux-2.6.19.2-mx/arch/arm/mach-mx27/dma.c	15 Jan 2007 05:44:48 -0000	1.1
++++ linux-2.6.19.2-mx/arch/arm/mach-mx27/dma.c	17 Jan 2007 21:58:36 -0000	1.2
+@@ -21,6 +21,9 @@
+ #include <linux/init.h>
+ #include <asm/dma.h>
+ 
++#define MXC_SOUND_PLAYBACK_CHAIN_DMA 1
++#define MXC_SOUND_CAPTURE_CHAIN_DMA 1
++
+ /*!
+  * @brief  the structure stored device_id and dma_info pointer
+  */
+cvs diff -puN -r1.1 -r1.2 include/asm-arm/arch-mxc/board-mx27ads.h
+Index: include/asm-arm/arch-mxc/board-mx27ads.h
+===================================================================
+RCS file: include/asm-arm/arch-mxc/board-mx27ads.h,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -p -u -r1.1 -r1.2
+--- linux-2.6.19.2-mx/include/asm-arm/arch-mxc/board-mx27ads.h	15 Jan 2007 05:44:52 -0000	1.1
++++ linux-2.6.19.2-mx/include/asm-arm/arch-mxc/board-mx27ads.h	17 Jan 2007 21:58:37 -0000	1.2
+@@ -438,19 +438,4 @@ enum mxc_card_no {
+          __raw_writew(  \
+                 PBC_BCTRL2_ATAFEC_EN |PBC_BCTRL2_ATAFEC_SEL | PBC_BCTRL2_ATA_EN,                PBC_BCTRL2_SET_REG)
+ 
+-#define MXC_SOUND_PLAYBACK_CHAIN_DMA_EN
+-#define MXC_SOUND_CAPTURE_CHAIN_DMA_EN
+-
+-#ifdef MXC_SOUND_PLAYBACK_CHAIN_DMA_EN
+-#define MXC_SOUND_PLAYBACK_CHAIN_DMA  1
+-#else
+-#define MXC_SOUND_PLAYBACK_CHAIN_DMA  0
+-#endif
+-
+-#ifdef MXC_SOUND_CAPTURE_CHAIN_DMA_EN
+-#define MXC_SOUND_CAPTURE_CHAIN_DMA  1
+-#else
+-#define MXC_SOUND_CAPTURE_CHAIN_DMA  0
+-#endif
+-
+ #endif				/* __ASM_ARCH_MXC_BOARD_MX27ADS_H__ */
+cvs diff -puN -r1.1 -r1.2 sound/arm/mxc-alsa-pmic.c
+Index: sound/arm/mxc-alsa-pmic.c
+===================================================================
+RCS file: sound/arm/mxc-alsa-pmic.c,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -p -u -r1.1 -r1.2
+--- linux-2.6.19.2-mx/sound/arm/mxc-alsa-pmic.c	15 Jan 2007 04:44:14 -0000	1.1
++++ linux-2.6.19.2-mx/sound/arm/mxc-alsa-pmic.c	17 Jan 2007 21:58:37 -0000	1.2
+@@ -84,6 +84,13 @@
+ #define SOUND_CARD_NAME				"MXC"
+ 
+ /*!
++ * These defines enable DMA chaining for playback
++ * and capture respectively.
++ */
++#define MXC_SOUND_PLAYBACK_CHAIN_DMA_EN 1
++#define MXC_SOUND_CAPTURE_CHAIN_DMA_EN 1
++
++/*!
+   * ID for this card
+   */
+ static char *id = NULL;
+@@ -1681,6 +1688,11 @@ static void audio_playback_dma(audio_str
+ 	memset(&dma_request, 0, sizeof(mxc_dma_requestbuf_t));
+ 
+ 	if (s->active) {
++		if (ssi_get_status(s->ssi) & ssi_transmitter_underrun_0) {
++			ssi_enable(s->ssi, false);
++			ssi_transmit_enable(s->ssi, false);
++			ssi_enable(s->ssi, true);
++		}
+ 		dma_size = frames_to_bytes(runtime, runtime->period_size);
+ 		pr_debug("s->period (%x) runtime->periods (%d)\n",
+ 			 s->period, runtime->periods);
+@@ -1712,7 +1724,7 @@ static void audio_playback_dma(audio_str
+ 		mxc_dma_config(s->dma_wchannel, &dma_request, 1,
+ 			       MXC_DMA_MODE_WRITE);
+ 		ret = mxc_dma_enable(s->dma_wchannel);
+-
++		ssi_transmit_enable(s->ssi, true);
+ 		s->tx_spin = 1;	/* FGA little trick to retrieve DMA pos */
+ 
+ 		if (ret) {
+@@ -2167,7 +2179,9 @@ static int snd_mxc_audio_playback_prepar
+ 		pr_debug(KERN_ERR "MXC: PMIC Playback Config FAILED\n");
+ 
+ 	ssi_interrupt_enable(ssi, ssi_tx_fifo_0_empty);
+-	ssi_transmit_enable(ssi, true);
++	/*
++	   ssi_transmit_enable(ssi, true);
++	 */
+ 
+ 	s->period = 0;
+ 	s->periods = 0;

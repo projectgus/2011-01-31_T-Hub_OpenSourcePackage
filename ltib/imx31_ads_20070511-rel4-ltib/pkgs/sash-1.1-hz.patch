@@ -1,0 +1,17 @@
+Tues April 4 2006 Stuart Hughes <stuarth@freescale.com>
+
+This defines a default for HZ to cope with older kernel (headers)
+
+diff --exclude CVS -uNr sash-1.1/ps.c sash-1.1.modified/ps.c
+--- sash-1.1/ps.c	2003-02-11 21:56:26.000000000 -0600
++++ sash-1.1.modified/ps.c	2006-04-04 04:22:22.000000000 -0500
+@@ -27,6 +27,9 @@
+ #ifdef __UC_LIBC__
+ #include <mathf.h>
+ #endif
++#ifndef HZ
++#define HZ 100
++#endif
+ 
+ char psbuf[256];
+ char name[40];

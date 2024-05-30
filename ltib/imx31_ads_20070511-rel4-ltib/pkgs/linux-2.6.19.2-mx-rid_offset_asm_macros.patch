@@ -1,0 +1,71 @@
+TLSbo89469_From-RMK-review-use-PHYS_OFFSET-PAGE_OFFSET.patch
+
+Get rid of PHYS_OFFSET_ASM and PAGE_OFFSET_ASM
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads.c linux-2.6.19.2/arch/arm/mach-mx27/mx27ads.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mx27ads.c	2007-04-25 17:37:14.000000000 -0600
+@@ -693,7 +693,7 @@ MACHINE_START(MX27ADS, "Freescale i.MX27
+ 	.phys_io        = AIPI_BASE_ADDR,
+ 	.io_pg_offst    = ((AIPI_BASE_ADDR_VIRT) >> 18) & 0xfffc,
+ #endif
+-	.boot_params    = PHYS_OFFSET_ASM + 0x100,
++	.boot_params    = PHYS_OFFSET + 0x100,
+ 	.fixup          = fixup_mxc_board,
+ 	.map_io         = mxc_map_io,
+ 	.init_irq       = mxc_init_irq,
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/mx31ads.c linux-2.6.19.2/arch/arm/mach-mx3/mx31ads.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/mx31ads.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/mx31ads.c	2007-04-25 17:37:14.000000000 -0600
+@@ -542,15 +542,20 @@ static void __init mxc_board_init(void)
+  * The following uses standard kernel macros define in arch.h in order to
+  * initialize __mach_desc_MX31ADS data structure.
+  */
++/* *INDENT-OFF* */
+ MACHINE_START(MX31ADS, "Freescale MX31ADS")
+-    /* Maintainer: Freescale Semiconductor, Inc. */
++	/* Maintainer: Freescale Semiconductor, Inc. */
+ #ifdef CONFIG_SERIAL_8250_CONSOLE
+-    .phys_io = CS4_BASE_ADDR,.io_pg_offst =
+-    ((CS4_BASE_ADDR_VIRT) >> 18) & 0xfffc,
++	.phys_io = CS4_BASE_ADDR,
++	.io_pg_offst = ((CS4_BASE_ADDR_VIRT) >> 18) & 0xfffc,
+ #else
+-    .phys_io = AIPS1_BASE_ADDR,.io_pg_offst =
+-    ((AIPS1_BASE_ADDR_VIRT) >> 18) & 0xfffc,
++	.phys_io = AIPS1_BASE_ADDR,
++	.io_pg_offst = ((AIPS1_BASE_ADDR_VIRT) >> 18) & 0xfffc,
+ #endif
+-    .boot_params = PHYS_OFFSET_ASM + 0x100,.fixup = fixup_mxc_board,.map_io =
+-    mxc_map_io,.init_irq = mxc_init_irq,.init_machine = mxc_board_init,.timer =
+-    &mxc_timer, MACHINE_END
++	.boot_params = PHYS_OFFSET + 0x100,
++	.fixup = fixup_mxc_board,
++	.map_io = mxc_map_io,
++	.init_irq = mxc_init_irq,
++	.init_machine = mxc_board_init,
++	.timer = &mxc_timer,
++MACHINE_END
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/memory.h linux-2.6.19.2/include/asm-arm/arch-mxc/memory.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/memory.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/memory.h	2007-04-25 17:37:14.000000000 -0600
+@@ -28,19 +28,6 @@
+  */
+ 
+ /*!
+- * Physical start address of the first bank of RAM
+- */
+-#if defined(PHYS_OFFSET)
+-
+-/*! This is needed for L2 Cache support */
+-#define PHYS_OFFSET_ASM	        PHYS_OFFSET
+-#define PAGE_OFFSET_ASM	        0xC0000000
+-
+-#else
+-#error "Define PHYS_OFFSET to the base of the physical memory's PA"
+-#endif
+-
+-/*!
+  * Virtual view <-> DMA view memory address translations
+  * This macro is used to translate the virtual address to an address
+  * suitable to be passed to set_dma_addr()

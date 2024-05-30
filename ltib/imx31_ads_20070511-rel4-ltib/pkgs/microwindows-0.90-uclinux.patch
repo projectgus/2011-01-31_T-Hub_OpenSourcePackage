@@ -1,0 +1,173 @@
+diff --exclude CVS -uNr microwindows-0.90/src/config microwindows-0.90.modified/src/config
+--- microwindows-0.90/src/config	2006-05-02 14:29:43.972786288 -0600
++++ microwindows-0.90.modified/src/config	2006-05-02 14:19:30.941981136 -0600
+@@ -309,9 +309,9 @@
+ # HARRIERMOUSE	NEC Harrier (/dev/tpanel)
+ ####################################################################
+ GPMMOUSE                 = N
+-SERMOUSE                 = Y
++SERMOUSE                 = N
+ SUNMOUSE                 = N
+-NOMOUSE                  = N
++NOMOUSE                  = Y
+ IPAQMOUSE                = N
+ ZAURUSMOUSE              = N
+ TUXMOUSE                 = N
+@@ -325,12 +325,12 @@
+ HARRIERMOUSE             = N
+ 
+ # keyboard or null kbd driver
+-TTYKBD                   = Y
++TTYKBD                   = N
+ SCANKBD                  = N
+ PIPEKBD                  = N
+ IPAQKBD                  = N
+ LIRCKBD                  = N
+-NOKBD                    = N
++NOKBD                    = Y
+ 
+ endif
+ 
+diff --exclude CVS -uNr microwindows-0.90/src/demos/mwin/mterm.c microwindows-0.90.modified/src/demos/mwin/mterm.c
+--- microwindows-0.90/src/demos/mwin/mterm.c	2001-06-21 00:32:39.000000000 -0600
++++ microwindows-0.90.modified/src/demos/mwin/mterm.c	2006-05-02 14:20:54.237318320 -0600
+@@ -32,6 +32,10 @@
+ #define SIGCHLD		17 /* from Linux, not defined in DJGPP */
+ #endif
+ 
++#ifdef __uClinux__
++#define killpg(x,y) kill(-x,y)
++#endif
++
+ /* forward decls*/
+ LRESULT CALLBACK WndProc(HWND hwnd,UINT uMsg,WPARAM wp,LPARAM lp);
+ void EmOutChar(HWND hwnd, int ch);
+@@ -285,6 +289,10 @@
+ 	}
+ 	signal(SIGCHLD, ptysignaled);
+ 	signal(SIGINT, ptysignaled);
++#ifdef __uClinux__
++#undef fork
++#define fork() vfork()
++#endif
+ 	if ((pid = fork()) == -1) {
+ 		fprintf(stderr, "No processes\n");
+ 		return -1;
+diff --exclude CVS -uNr microwindows-0.90/src/demos/nanowm/wlist.c microwindows-0.90.modified/src/demos/nanowm/wlist.c
+--- microwindows-0.90/src/demos/nanowm/wlist.c	2001-11-15 15:49:18.000000000 -0700
++++ microwindows-0.90.modified/src/demos/nanowm/wlist.c	2006-05-02 14:21:18.555621376 -0600
+@@ -13,7 +13,7 @@
+ 
+ #include "nanowm.h"
+ 
+-static win *windows = NULL;
++win *windows = NULL;
+ 
+ /*
+  * Find the windowlist entry for the specified window ID and return a pointer
+diff --exclude CVS -uNr microwindows-0.90/src/demos/nanox/launcher.c microwindows-0.90.modified/src/demos/nanox/launcher.c
+--- microwindows-0.90/src/demos/nanox/launcher.c	2003-04-11 00:50:42.000000000 -0600
++++ microwindows-0.90.modified/src/demos/nanox/launcher.c	2006-05-02 14:22:51.911429136 -0600
+@@ -438,6 +438,10 @@
+ {
+ 	pid_t pid;
+ 
++#ifdef __uClinux__
++#undef fork
++#define fork() vfork()
++#endif
+ 	if((pid = fork()) == -1) perror("Couldn't fork");
+ 	else if(!pid) {
+ 		if(execvp(prog->command, prog->argv) == -1)
+diff --exclude CVS -uNr microwindows-0.90/src/demos/nanox/nterm.c microwindows-0.90.modified/src/demos/nanox/nterm.c
+--- microwindows-0.90/src/demos/nanox/nterm.c	2003-05-04 10:27:39.000000000 -0600
++++ microwindows-0.90.modified/src/demos/nanox/nterm.c	2006-05-02 14:23:17.851485648 -0600
+@@ -186,6 +186,10 @@
+ 	}
+ 	signal(SIGCHLD, sigchild);
+ 	signal(SIGINT, sigchild);
++#ifdef __uClinux__
++#undef fork
++#define fork() vfork()
++#endif
+ 	if ((pid = fork()) == -1) {
+ 		fprintf(stderr, "No processes\n");
+ 		return -1;
+diff --exclude CVS -uNr microwindows-0.90/src/demos/nanox/nxterm.c microwindows-0.90.modified/src/demos/nanox/nxterm.c
+--- microwindows-0.90/src/demos/nanox/nxterm.c	2003-05-06 00:18:37.000000000 -0600
++++ microwindows-0.90.modified/src/demos/nanox/nxterm.c	2006-05-02 14:23:43.714553864 -0600
+@@ -1122,6 +1122,10 @@
+ 	}
+ 	signal(SIGCHLD, sigchild);
+ 	signal(SIGINT, sigchild);
++#ifdef __uClinux__
++#undef fork
++#define fork() vfork()
++#endif
+ 	if ((pid = fork()) == -1) {
+ 		fprintf(stderr, "No processes\n");
+ 		return -1;
+diff --exclude CVS -uNr microwindows-0.90/src/demos/nxroach/Makefile microwindows-0.90.modified/src/demos/nxroach/Makefile
+--- microwindows-0.90/src/demos/nxroach/Makefile	2003-05-10 15:37:49.000000000 -0600
++++ microwindows-0.90.modified/src/demos/nxroach/Makefile	2006-05-02 14:24:38.222267432 -0600
+@@ -44,5 +44,5 @@
+ 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(CCNANOXCLIENTLIBS)
+ else
+ $(TOP)/bin/nxroach: $(OBJS) $(NANOXCLIENTLIBS) $(TOP)/config
+-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(NANOXCLIENTLIBS)
++	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(NANOXCLIENTLIBS) $(LDFLAGS)
+ endif
+diff --exclude CVS -uNr microwindows-0.90/src/drivers/scr_fb.c microwindows-0.90.modified/src/drivers/scr_fb.c
+--- microwindows-0.90/src/drivers/scr_fb.c	2003-02-25 01:59:52.000000000 -0700
++++ microwindows-0.90.modified/src/drivers/scr_fb.c	2006-05-02 14:27:02.207378368 -0600
+@@ -241,6 +241,7 @@
+ 	close(tty);
+ #endif
+ 	/* mmap framebuffer into this address space*/
++#ifndef __uClinux__
+ 	psd->size = (psd->size + getpagesize () - 1)
+ 			/ getpagesize () * getpagesize ();
+ #ifdef ARCH_LINUX_SPARC
+@@ -269,7 +270,13 @@
+ 		EPRINTF("Error mmaping %s: %m\n", env);
+ 		goto fail;
+ 	}
+-
++#else
++	psd->addr = mmap(NULL, psd->size, PROT_READ|PROT_WRITE,MAP_PRIVATE,fb,0);
++	if(psd->addr == MAP_FAILED) {
++		EPRINTF("Error mmaping %s: %m\n", env);
++		goto fail;
++	}
++#endif
+ 	/* save original palette*/
+ 	ioctl_getpalette(0, 16, saved_red, saved_green, saved_blue);
+ 
+diff --exclude CVS -uNr microwindows-0.90/src/include/swap.h microwindows-0.90.modified/src/include/swap.h
+--- microwindows-0.90/src/include/swap.h	2006-05-02 14:29:43.976785680 -0600
++++ microwindows-0.90.modified/src/include/swap.h	2006-05-02 14:27:45.857742504 -0600
+@@ -49,6 +49,7 @@
+ /* ********************************************************************* */
+ /* Linux                                                                 */
+ /* ********************************************************************* */
++#ifndef __uClinux__
+ #ifdef linux
+ 
+ # include <endian.h>
+@@ -138,3 +139,4 @@
+  */
+ # warning You might want to define optimized byte swapping macros for this machine - if not, you can safely ignore this warning.
+ #endif
++#endif
+diff --exclude CVS -uNr microwindows-0.90/src/mwin/winevent.c microwindows-0.90.modified/src/mwin/winevent.c
+--- microwindows-0.90/src/mwin/winevent.c	2002-08-21 10:36:20.000000000 -0600
++++ microwindows-0.90.modified/src/mwin/winevent.c	2006-05-02 14:28:18.162831384 -0600
+@@ -14,7 +14,7 @@
+ #include <string.h>
+ 
+ #if !(DOS_TURBOC | DOS_QUICKC | _MINIX | VXWORKS)
+-static int
++int
+ abs(int n)
+ {
+ 	return n >= 0? n: -n;

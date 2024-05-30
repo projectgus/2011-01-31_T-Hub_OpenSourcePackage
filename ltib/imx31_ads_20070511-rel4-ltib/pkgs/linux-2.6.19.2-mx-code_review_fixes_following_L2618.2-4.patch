@@ -1,0 +1,1342 @@
+Bug 510. Changes made to fix bugs and/or port to 2.6.19.2 after including
+GSO L2618-2 patches as discovered and discussed in the code review.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/mxc_pm.c linux-2.6.19.2/arch/arm/mach-mx3/mxc_pm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/mxc_pm.c	2007-04-25 17:39:57.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/mxc_pm.c	2007-04-25 17:40:23.000000000 -0600
+@@ -56,7 +56,6 @@ static struct clk *mcu_pll_clk;
+ static struct clk *cpu_clk;
+ static struct clk *ahb_clk;
+ static struct clk *ipg_clk;
+-static struct clk *csi_baud;
+ 
+ /*!
+  * Compare two frequences using allowable tolerance
+@@ -283,7 +282,6 @@ void mxc_pm_lowpower(int mode)
+ 		__raw_writel(INT_GPT, AVIC_INTDISNUM);
+ 
+ 		/* work-around for SR mode after camera related test */
+-		clk_enable(csi_baud);
+ 		__raw_writel(0x51, IPU_CONF);
+ 		break;
+ 
+@@ -316,7 +314,6 @@ void mxc_pm_lowpower(int mode)
+ 
+ 	/* work-around for SR mode after camera related test */
+ 	__raw_writel(ipu_conf, IPU_CONF);
+-	clk_disable(csi_baud);
+ 
+ 	__raw_writel(INT_GPT, AVIC_INTENNUM);
+ 
+@@ -369,7 +366,6 @@ static int __init mxc_pm_init_module(voi
+ 	cpu_clk = clk_get(NULL, "cpu_clk");
+ 	ahb_clk = clk_get(NULL, "ahb_clk");
+ 	ipg_clk = clk_get(NULL, "ipg_clk");
+-	csi_baud = clk_get(NULL, "csi_baud");
+ 	return 0;
+ }
+ 
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/pm.c linux-2.6.19.2/arch/arm/mach-mx3/pm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/pm.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/pm.c	2007-04-25 17:40:23.000000000 -0600
+@@ -59,7 +59,7 @@
+ 
+ static int mx31_pm_enter(suspend_state_t state)
+ {
+-	printk("Hi, from mx31_pm_enter\n");
++	printk(KERN_INFO "Hi, from mx31_pm_enter\n");
+ 	switch (state) {
+ 	case PM_SUSPEND_MEM:
+ 		mxc_pm_lowpower(STOP_MODE);
+@@ -104,7 +104,7 @@ struct pm_ops mx31_pm_ops = {
+ 
+ static int __init mx31_pm_init(void)
+ {
+-	printk("Power Management for Freescale MX31\n");
++	printk(KERN_INFO "Power Management for Freescale MX31\n");
+ 	pm_set_ops(&mx31_pm_ops);
+ 
+ 	return 0;
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code.h linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code.h	2007-04-25 17:39:57.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code.h	2007-04-25 17:40:23.000000000 -0600
+@@ -340,11 +340,14 @@
+ #define RAM_CODE_SIZE	1792
+ 
+ /*!
+-* This function returns buffer that holds the image of SDMA RAM
++* This function returns buffer that holds the image of SDMA RAM.
++* This is required to start on a 4-byte aligned boundary on some platforms
++* for SDMA to work properly.
+ *
+ * @return pointer to buffer that holds the image of SDMA RAM
+ */
+ 
++__attribute__ ((__aligned__(4)))
+ static const short sdma_code[] = {
+ 	0xc0ec, 0x7d59, 0x0970, 0x0111, 0x5111, 0x5ad1, 0x5bd9, 0xc0fe,
+ 	0x5ce1, 0x7d02, 0x0200, 0x9806, 0x08ff, 0x0011, 0x28ff, 0x00bc,
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code_pass2.h linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code_pass2.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code_pass2.h	2007-04-25 17:39:57.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code_pass2.h	2007-04-25 17:40:23.000000000 -0600
+@@ -322,11 +322,14 @@
+ #define RAM_CODE_SIZE_2	1810
+ 
+ /*!
+-* This function returns buffer that holds the image of SDMA RAM
++* This function returns buffer that holds the image of SDMA RAM.
++* This is required to start on a 4-byte aligned boundary on some platforms
++* for SDMA to work properly.
+ *
+ * @return pointer to buffer that holds the image of SDMA RAM
+ */
+ 
++__attribute__ ((__aligned__(4)))
+ static const short sdma_code_2[] = {
+ 	0x0870, 0x0011, 0x5010, 0xc0ec, 0x7d60, 0x5ac0, 0x5bc8, 0x5ef8,
+ 	0xc0fe, 0x56f8, 0x7d02, 0x0200, 0x9806, 0x6ec3, 0x6dd7, 0x5df0,
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/gpio.c linux-2.6.19.2/arch/arm/plat-mxc/gpio.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/gpio.c	2007-04-25 17:39:57.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/gpio.c	2007-04-25 17:40:23.000000000 -0600
+@@ -36,7 +36,7 @@
+  */
+ 
+ /* GPIO related defines */
+-#if defined(CONFIG_ARCH_MX27) || defined(CONFIG_ARCH_MX21)
++#if defined(CONFIG_ARCH_MX27)
+ enum gpio_reg {
+ 	GPIO_DR = 0x1C,
+ 	GPIO_GDIR = 0x00,
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/epm.h linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/epm.h
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/iapi/include/epm.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/iapi/include/epm.h	2007-04-25 17:40:23.000000000 -0600
+@@ -109,6 +109,22 @@
+ #define SDMA_CHNPRI_29          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x174))
+ #define SDMA_CHNPRI_30          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x178))
+ #define SDMA_CHNPRI_31          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x17C))
++#define SDMA_CHNPRI_32          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x180))
++#define SDMA_CHNPRI_33          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x184))
++#define SDMA_CHNPRI_34          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x188))
++#define SDMA_CHNPRI_35          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x18C))
++#define SDMA_CHNPRI_36          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x190))
++#define SDMA_CHNPRI_37          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x194))
++#define SDMA_CHNPRI_38          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x198))
++#define SDMA_CHNPRI_39          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x19C))
++#define SDMA_CHNPRI_40          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x1A0))
++#define SDMA_CHNPRI_41          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x1A4))
++#define SDMA_CHNPRI_42          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x1A8))
++#define SDMA_CHNPRI_43          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x1AC))
++#define SDMA_CHNPRI_44          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x1B0))
++#define SDMA_CHNPRI_45          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x1B4))
++#define SDMA_CHNPRI_46          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x1B8))
++#define SDMA_CHNPRI_47          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x1BC))
+ #define SDMA_ONCE_COUNT         *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x200))
+ #define SDMA_ONCE_ECTL          *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x204))
+ #define SDMA_ONCE_EAA           *((volatile unsigned long *)(SDMA_BASE_IO_ADDR + 0x208))
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/sdma.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/sdma.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/sdma.c	2007-04-25 17:39:57.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/sdma.c	2007-04-25 17:40:23.000000000 -0600
+@@ -364,7 +364,6 @@ static unsigned short sdma_get_pc(sdma_p
+ 	}
+ 
+ 	return res;
+-
+ }
+ 
+ /*!
+@@ -1232,7 +1231,6 @@ int __init sdma_init(void)
+       sdma_init_fail:
+ 	printk(KERN_ERR "Error 0x%x in sdma_init\n", res);
+ 	return res;
+-
+ }
+ 
+ arch_initcall(sdma_init);
+diff -uNpr linux-2.6.19.2.orig/drivers/ide/Kconfig linux-2.6.19.2/drivers/ide/Kconfig
+--- linux-2.6.19.2.orig/drivers/ide/Kconfig	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/ide/Kconfig	2007-04-25 17:40:23.000000000 -0600
+@@ -845,7 +845,7 @@ config BLK_DEV_IDE_BAST
+ 
+ config BLK_DEV_IDE_MXC
+         tristate "Freescale MXC IDE support"
+-        depends on ARM && ( ARCH_MX3 || ARCH_MX27 )
++        depends on ARM && (ARCH_MX3 || ARCH_MX27)
+         help
+           Say Y here if you want to support the IDE controller on the
+           Freescale iMX3 processor.
+diff -uNpr linux-2.6.19.2.orig/drivers/input/keyboard/Makefile linux-2.6.19.2/drivers/input/keyboard/Makefile
+--- linux-2.6.19.2.orig/drivers/input/keyboard/Makefile	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/input/keyboard/Makefile	2007-04-25 17:40:23.000000000 -0600
+@@ -18,4 +18,3 @@ obj-$(CONFIG_KEYBOARD_HIL)		+= hil_kbd.o
+ obj-$(CONFIG_KEYBOARD_HIL_OLD)		+= hilkbd.o
+ obj-$(CONFIG_KEYBOARD_OMAP)             += omap-keypad.o
+ obj-$(CONFIG_KEYBOARD_MXC)		+= mxc_keyb.o
+-
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_csi.c linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_csi.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_csi.c	2007-04-25 17:39:45.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_csi.c	2007-04-25 17:40:23.000000000 -0600
+@@ -47,7 +47,7 @@ static irqreturn_t csi_irq_handler(int i
+ 	if (g_callback)
+ 		g_callback(g_callback_data, status);
+ 
+-	pr_debug("CSI status = 0x%08X\n", status);
++	pr_debug("CSI status = 0x%08lX\n", status);
+ 
+ 	return IRQ_HANDLED;
+ }
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/hmp4e/mxc_hmp4e.c linux-2.6.19.2/drivers/mxc/hmp4e/mxc_hmp4e.c
+--- linux-2.6.19.2.orig/drivers/mxc/hmp4e/mxc_hmp4e.c	2007-04-25 17:40:00.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/hmp4e/mxc_hmp4e.c	2007-04-25 17:40:04.000000000 -0600
+@@ -478,7 +478,6 @@ static s32 hmp4e_map_hwregs(struct file 
+  *
+  * @param   irq		the irq number
+  * @param   dev_id	driver data when ISR was regiatered
+- * @param   regs	pointer to struct pt_regs
+  *
+  * @return  The return value is IRQ_HANDLED.
+  *
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ipu/Kconfig linux-2.6.19.2/drivers/mxc/ipu/Kconfig
+--- linux-2.6.19.2.orig/drivers/mxc/ipu/Kconfig	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ipu/Kconfig	2007-04-25 17:40:23.000000000 -0600
+@@ -11,7 +11,6 @@ config MXC_IPU
+ config MXC_IPU_LPMC
+ 	bool
+ 	depends on MXC_IPU
+-	default n
+ 
+ source "drivers/mxc/ipu/pf/Kconfig"
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dptc.c linux-2.6.19.2/drivers/mxc/pm/dptc.c
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dptc.c	2007-04-25 17:40:00.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dptc.c	2007-04-25 17:40:23.000000000 -0600
+@@ -48,11 +48,6 @@
+ #include <asm/arch/pmic_power.h>
+ 
+ /*
+- * Comment EVB_DEBUG to disable debug messages
+- */
+-/* #define EVB_DEBUG 1 */
+-
+-/*
+  * Module header file
+  */
+ #include <asm/arch/dptc.h>
+@@ -180,30 +175,22 @@ int enable_ref_circuits(dvfs_dptc_params
+ 		if (rc_state & 0x1) {
+ 			mxc_ccm_modify_reg(MXC_CCM_PMCR0, MXC_CCM_PMCR0_DRCE0,
+ 					   MXC_CCM_PMCR0_DRCE0);
+-#ifdef EVB_DEBUG
+-			printk("Ref circuit 0 enabled\n");
+-#endif
++			pr_debug("Ref circuit 0 enabled\n");
+ 		}
+ 		if (rc_state & 0x2) {
+ 			mxc_ccm_modify_reg(MXC_CCM_PMCR0, MXC_CCM_PMCR0_DRCE1,
+ 					   MXC_CCM_PMCR0_DRCE1);
+-#ifdef EVB_DEBUG
+-			printk("Ref circuit 1 enabled\n");
+-#endif
++			pr_debug("Ref circuit 1 enabled\n");
+ 		}
+ 		if (rc_state & 0x4) {
+ 			mxc_ccm_modify_reg(MXC_CCM_PMCR0, MXC_CCM_PMCR0_DRCE2,
+ 					   MXC_CCM_PMCR0_DRCE2);
+-#ifdef EVB_DEBUG
+-			printk("Ref circuit 2 enabled\n");
+-#endif
++			pr_debug("Ref circuit 2 enabled\n");
+ 		}
+ 		if (rc_state & 0x8) {
+ 			mxc_ccm_modify_reg(MXC_CCM_PMCR0, MXC_CCM_PMCR0_DRCE3,
+ 					   MXC_CCM_PMCR0_DRCE3);
+-#ifdef EVB_DEBUG
+-			printk("Ref circuit 3 enabled\n");
+-#endif
++			pr_debug("Ref circuit 3 enabled\n");
+ 		}
+ 
+ 		ret_val = 0;
+@@ -232,30 +219,22 @@ int disable_ref_circuits(dvfs_dptc_param
+ 		if (rc_state & 0x1) {
+ 			mxc_ccm_modify_reg(MXC_CCM_PMCR0,
+ 					   MXC_CCM_PMCR0_DRCE0, 0);
+-#ifdef EVB_DEBUG
+-			printk("Ref circuit 0 disabled\n");
+-#endif
++			pr_debug("Ref circuit 0 disabled\n");
+ 		}
+ 		if (rc_state & 0x2) {
+ 			mxc_ccm_modify_reg(MXC_CCM_PMCR0,
+ 					   MXC_CCM_PMCR0_DRCE1, 0);
+-#ifdef EVB_DEBUG
+-			printk("Ref circuit 1 disabled\n");
+-#endif
++			pr_debug("Ref circuit 1 disabled\n");
+ 		}
+ 		if (rc_state & 0x4) {
+ 			mxc_ccm_modify_reg(MXC_CCM_PMCR0,
+ 					   MXC_CCM_PMCR0_DRCE2, 0);
+-#ifdef EVB_DEBUG
+-			printk("Ref circuit 2 disabled\n");
+-#endif
++			pr_debug("Ref circuit 2 disabled\n");
+ 		}
+ 		if (rc_state & 0x8) {
+ 			mxc_ccm_modify_reg(MXC_CCM_PMCR0,
+ 					   MXC_CCM_PMCR0_DRCE3, 0);
+-#ifdef EVB_DEBUG
+-			printk("Ref circuit 3 disabled\n");
+-#endif
++			pr_debug("Ref circuit 3 disabled\n");
+ 		}
+ 
+ 		ret_val = 0;
+@@ -272,15 +251,13 @@ static void dptc_workqueue_handler(void 
+ 
+ 	params = (dvfs_dptc_params_s *) arg;
+ 
+-#ifdef EVB_DEBUG
+-	printk("In %s: PTVAI = %d\n", __FUNCTION__, dptc_get_ptvai());
+-	printk("PMCR0 = 0x%x ", mxc_ccm_get_reg(MXC_CCM_PMCR0));
+-	printk("DCVR0 = 0x%x ", mxc_ccm_get_reg(MXC_CCM_DCVR0));
+-	printk("DCVR1 = 0x%x ", mxc_ccm_get_reg(MXC_CCM_DCVR1));
+-	printk("DCVR2 = 0x%x ", mxc_ccm_get_reg(MXC_CCM_DCVR2));
+-	printk("DCVR3 = 0x%x ", mxc_ccm_get_reg(MXC_CCM_DCVR3));
+-	printk("PTVAI = 0x%x\n", ptvai);
+-#endif
++	pr_debug("In %s: PTVAI = %d\n", __FUNCTION__, dptc_get_ptvai());
++	pr_debug("PMCR0 = 0x%x ", mxc_ccm_get_reg(MXC_CCM_PMCR0));
++	pr_debug("DCVR0 = 0x%x ", mxc_ccm_get_reg(MXC_CCM_DCVR0));
++	pr_debug("DCVR1 = 0x%x ", mxc_ccm_get_reg(MXC_CCM_DCVR1));
++	pr_debug("DCVR2 = 0x%x ", mxc_ccm_get_reg(MXC_CCM_DCVR2));
++	pr_debug("DCVR3 = 0x%x ", mxc_ccm_get_reg(MXC_CCM_DCVR3));
++	pr_debug("PTVAI = 0x%x\n", ptvai);
+ 
+ #ifndef CONFIG_MXC_DVFS_SDMA
+ 	switch (ptvai) {
+@@ -334,11 +311,9 @@ void dptc_irq(void)
+ #ifndef CONFIG_MXC_DVFS_SDMA
+ 	ptvai = dptc_get_ptvai();
+ 
+-#ifdef EVB_DEBUG
+-	printk("Got DPTC interrupt on %d ", (int)jiffies);
+-	printk("ptvai = 0x%x (0x%x)!!!!!!!\n", ptvai,
+-	       mxc_ccm_get_reg(MXC_CCM_PMCR0));
+-#endif
++	pr_debug("Got DPTC interrupt on %d ", (int)jiffies);
++	pr_debug("ptvai = 0x%x (0x%x)!!!!!!!\n", ptvai,
++		 mxc_ccm_get_reg(MXC_CCM_PMCR0));
+ 
+ 	if (ptvai != 0) {
+ 		dptc_mask_dptc_int();
+@@ -380,13 +355,11 @@ void set_pmic_voltage(dvfs_dptc_tables_s
+ 	pmic_power_switcher_set_stby(SW_SW1B, volt);
+ #endif
+ 
+-#ifdef EVB_DEBUG
+ 	if (cpu_is_mx31()) {
+-		printk("DPVV = 0x%x (0x%x)\n",
+-		       mxc_ccm_get_reg(MXC_CCM_PMCR0) & MXC_CCM_PMCR0_DPVV,
+-		       mxc_ccm_get_reg(MXC_CCM_PMCR0));
++		pr_debug("DPVV = 0x%x (0x%x)\n",
++			 mxc_ccm_get_reg(MXC_CCM_PMCR0) & MXC_CCM_PMCR0_DPVV,
++			 mxc_ccm_get_reg(MXC_CCM_PMCR0));
+ 	}
+-#endif				/* EVB_DEBUG */
+ }
+ 
+ /*!
+@@ -528,9 +501,7 @@ void set_dptc_wp(dvfs_dptc_params_s * pa
+ 	add_dptc_log_entry(params, &params->dptc_log_buffer,
+ 			   params->dvfs_dptc_tables_ptr->curr_wp, freq_index);
+ 
+-#ifdef EVB_DEBUG
+-	printk("Current wp: %d\n", params->dvfs_dptc_tables_ptr->curr_wp);
+-#endif
++	pr_debug("Current wp: %d\n", params->dvfs_dptc_tables_ptr->curr_wp);
+ }
+ 
+ /*!
+@@ -887,7 +858,7 @@ int set_dptc_curr_freq(dvfs_dptc_params_
+  */
+ void dptc_sdma_callback(dvfs_dptc_params_s * params)
+ {
+-	printk("In %s: params->dvfs_dptc_tables_ptr->curr_wp = %d\n",
++	printk(KERN_INFO "In %s: params->dvfs_dptc_tables_ptr->curr_wp = %d\n",
+ 	       __FUNCTION__, params->dvfs_dptc_tables_ptr->curr_wp);
+ }
+ #endif
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dptc_mx27.c linux-2.6.19.2/drivers/mxc/pm/dptc_mx27.c
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dptc_mx27.c	2007-04-25 17:39:57.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dptc_mx27.c	2007-04-25 17:40:23.000000000 -0600
+@@ -1153,9 +1153,7 @@ static int dptc_mx27_ioctl(struct inode 
+ 
+ 	down(&access_mutex);
+ 
+-#ifdef EVB_DEBUG
+-	printk("DVFS_DPTC ioctl (%d)\n", cmd);
+-#endif
++	pr_debug("DVFS_DPTC ioctl (%d)\n", cmd);
+ 
+ 	switch (cmd) {
+ 		/* Enable the DPTC module */
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc.c linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc.c
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc.c	2007-04-25 17:40:00.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc.c	2007-04-25 17:40:23.000000000 -0600
+@@ -57,11 +57,6 @@
+ #endif
+ 
+ /*
+- * Comment EVB_DEBUG to disable debug messages
+- */
+-/* #define EVB_DEBUG 1 */
+-
+-/*
+  * Prototypes
+  */
+ static int dvfs_dptc_open(struct inode *inode, struct file *filp);
+@@ -1018,9 +1013,7 @@ static int dvfs_dptc_ioctl(struct inode 
+ 
+ 	down(&access_mutex);
+ 
+-#ifdef EVB_DEBUG
+-	printk("DVFS_DPTC ioctl (%d)\n", cmd);
+-#endif
++	pr_debug("DVFS_DPTC ioctl (%d)\n", cmd);
+ 
+ 	switch (cmd) {
+ #ifdef CONFIG_MXC_DPTC
+@@ -1176,10 +1169,8 @@ static int dvfs_dptc_ioctl(struct inode 
+  */
+ static irqreturn_t dvfs_dptc_irq(int irq, void *dev_id)
+ {
+-#ifdef EVB_DEBUG
+-	printk("CCM interrupt (0x%x)!!!\n",
+-	       (unsigned int)mxc_ccm_get_reg(MXC_CCM_PMCR0));
+-#endif
++	pr_debug("CCM interrupt (0x%x)!!!\n",
++		 (unsigned int)mxc_ccm_get_reg(MXC_CCM_PMCR0));
+ 
+ #ifdef CONFIG_MXC_DPTC
+ 	if (dvfs_dptc_params.dptc_is_active == TRUE) {
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/Makefile linux-2.6.19.2/drivers/mxc/security/Makefile
+--- linux-2.6.19.2.orig/drivers/mxc/security/Makefile	2007-04-25 17:38:48.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/Makefile	2007-04-25 17:40:23.000000000 -0600
+@@ -2,9 +2,6 @@
+ ifeq ($( SCC_DEBUG),y)
+ EXTRA_CFLAGS += -DDEBUG
+ endif
+-ifeq ($(MXC_HAC_TEST_DEBUG),y)
+-EXTRA_CFLAGS += -DDEBUG
+-endif
+ ifeq ($(MXC_RTIC_TEST_DEBUG),y)
+ EXTRA_CFLAGS += -DDEBUG
+ endif
+@@ -14,7 +11,6 @@ endif
+ 
+ obj-$(CONFIG_MXC_SECURITY_SCC) += mxc_scc.o
+ obj-$(CONFIG_MXC_SECURITY_RTIC) += mxc_rtic.o
+-obj-$(CONFIG_MXC_SECURITY_HAC) += mxc_hacc.o
+ obj-$(CONFIG_MXC_SECURITY_RNG) += rng/
+ obj-$(CONFIG_MXC_SECURITY_CORE) += mxc_sec_mod.o
+ obj-$(CONFIG_MXC_SAHARA) += sahara2/
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.c linux-2.6.19.2/drivers/mxc/security/mxc_hacc.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.c	2007-04-25 17:39:38.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_hacc.c	1969-12-31 17:00:00.000000000 -0700
+@@ -1,522 +0,0 @@
+-/*
+- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+- */
+-
+-/*
+- * The code contained herein is licensed under the GNU General Public
+- * License. You may obtain a copy of the GNU General Public License
+- * Version 2 or later at the following locations:
+- *
+- * http://www.opensource.org/licenses/gpl-license.html
+- * http://www.gnu.org/copyleft/gpl.html
+- */
+-
+-/*!
+- * @file mxc_hacc.c
+- *
+- * @brief APIs for HAC Module.
+- *
+- * This file provides the APIs for accessing Hash Acceleration (HAC)
+- * module. HAC module accelerates the creation of a SHA-1 hash over
+- * selected memory spaces. The SHA-1 algorithm is a one-way hash
+- * algorithm that creates 160 bit hash of any length input.
+- *
+- * @ingroup MXC_Security
+- */
+-
+-#include "mxc_hacc.h"
+-#include <linux/clk.h>
+-#ifdef CONFIG_MXC_HAC_TEST_DEBUG
+-#include <linux/module.h>
+-#endif				/* CONFIG_MXC_HAC_TEST_DEBUG */
+-
+-/*!
+- * This variable indicates whether HAC module is in suspend or in resume
+- * mode.
+- */
+-static unsigned short hac_suspend_state = 0;
+-
+-/*!
+- * This API configures the start address and block length of the data that
+- * needs to be hashed. Start address indicates starting location from where
+- * the data in the flash memory is to be hashed. The number of blocks that
+- * needs to be hashed is loaded in the block count register. This API does
+- * the starting of Hashing process or continue with Hashing of next block of
+- * data configured in the START_ADDR, BLOCK_COUNT register depending on the
+- * hash parameter passed.
+- *
+- * @param   start_address   Starting address of the flash memory to be hashed.
+- *                          user has to pass physical address here.
+- * @param   blk_len         Number of blocks to be hashed.
+- * @param   option          Mode of operation like Start or Continue hashing.\n
+- *                          Following parameters are passed:
+- *                          HAC_START       : Starts the Hashing process.
+- *                          HAC_LAST_START  : Starts the Hashing process with
+- *                                            last block of data.
+- *                          HAC_CONTINUE    : Continue the Hashing process.
+- *                          HAC_LAST        : Continue the Hashing process with
+- *                                            last block of data.
+- *
+- *
+- * @return  HAC_SUCCESS    Successfully hashed the data.\n
+- *          HAC_FAILURE    Error in the parameters passed.
+- *          HAC_BUSY       HAC module is busy in Hashing process.
+- */
+-hac_ret hac_hash_data(ulong start_address, ulong blk_len, hac_hash option)
+-{
+-	struct clk *clk;
+-	ulong hac_start, hac_blk_cnt, hac_ctl;
+-	hac_ret ret_val = HAC_SUCCESS;
+-
+-	clk = clk_get(NULL, "hac_clk");
+-	clk_enable(clk);
+-	hac_start = __raw_readl(HAC_START_ADDR);
+-	hac_blk_cnt = __raw_readl(HAC_BLK_CNT);
+-	hac_ctl = __raw_readl(HAC_CTL);
+-	if (hac_suspend_state == 1) {
+-		pr_debug("HAC Module: HAC Module is in suspend mode.\n");
+-		return -EPERM;
+-	}
+-	pr_debug("Function %s. HAC Module: Start address: 0x%08lX, "
+-		 "block length: 0x%08lX, hash option: 0x%08X\n",
+-		 __FUNCTION__, start_address, blk_len, option);
+-	/* Validating the parameters. Checking for start address to be in
+-	   512 bit boundary(64 byte) and block count value must not to be
+-	   zero. */
+-	if ((!start_address) || (blk_len > HAC_MAX_BLOCK_LENGTH) ||
+-	    (blk_len == 0) || (!((start_address % 64) == 0))) {
+-		pr_debug("HAC Module: Invalid parameters passed. \n");
+-		return HAC_FAILURE;
+-	}
+-	if ((hac_ctl & HAC_CTL_BUSY) == 0) {
+-		hac_start = start_address;
+-		__raw_writel(hac_start, HAC_START_ADDR);
+-		hac_blk_cnt = blk_len;
+-		__raw_writel(hac_blk_cnt, HAC_BLK_CNT);
+-		pr_debug("HAC Module: Hashing start address 0x%08lX\n ",
+-			 start_address);
+-		pr_debug("HAC Module: Hashing blk length 0x%08lX\n ", blk_len);
+-	} else {
+-		pr_debug("HAC Module: HAC module is busy in Hashing "
+-			 "process.\n");
+-		return HAC_HASH_BUSY;
+-	}
+-
+-	switch (option) {
+-	case HAC_START:
+-		/*
+-		 * HAC_START will starts the Hashing of data in the memory.
+-		 * Before starting the Hashing process, it checks for 'STOP'
+-		 * bit, 'DONE' bit and 'ERROR' bit is set in the HAC Control
+-		 * register. If 'STOP' bit is set, it clears the 'STOP' bit in
+-		 * HAC Control register. If 'DONE' bit and  'ERROR' bit are
+-		 * set, they are cleared.
+-		 */
+-		pr_debug("HAC Module: Starts the hashing process \n");
+-		/* Checking if the Stop bit is been set. */
+-		if ((hac_ctl & HAC_CTL_STOP) == HAC_CTL_STOP) {
+-			pr_debug("HAC Module: STOP bit is set while"
+-				 "starting the Hashing\n");
+-			hac_ctl &= ~HAC_CTL_STOP;
+-			__raw_writel(hac_ctl, HAC_CTL);
+-		}
+-		/* Checking if the 'DONE' bit and 'ERROR' bit is been set.
+-		   If they are set write to clear those bits */
+-		if (((hac_ctl & HAC_CTL_DONE) == HAC_CTL_DONE) ||
+-		    ((hac_ctl & HAC_CTL_ERROR) == HAC_CTL_ERROR)) {
+-			pr_debug("HAC Module: DONE and ERROR bit is set"
+-				 "while starting the Hashing\n");
+-			hac_ctl |= HAC_CTL_DONE;
+-			__raw_writel(hac_ctl, HAC_CTL);
+-			hac_ctl |= HAC_CTL_ERROR;
+-			__raw_writel(hac_ctl, HAC_CTL);
+-		}
+-		hac_ctl |= HAC_CTL_START;
+-		__raw_writel(hac_ctl, HAC_CTL);
+-		break;
+-
+-	case HAC_START_LAST:
+-		/*
+-		 * HAC_START_LAST will starts the Hashing of last block of data
+-		 * in the memory. Since this is last block of data in the
+-		 * memory 'PAD' bit in HAC control register is set to add
+-		 * appropriate padding to the end of the data structure.
+-		 * Before starting the Hashing process, it checks for 'STOP'
+-		 * bit, 'DONE' bit and 'ERROR' bit is set in the HAC Control
+-		 * register. If 'STOP' bit is set, it clears the 'STOP' bit in
+-		 * HAC Control register. If 'DONE' bit and  'ERROR' bit are
+-		 * set, they are cleared.
+-		 */
+-		pr_debug("HAC Module: Starts with last block"
+-			 "the hashing process \n");
+-		/* Checking if the Stop bit is been set. */
+-		if ((hac_ctl & HAC_CTL_STOP) == HAC_CTL_STOP) {
+-			pr_debug("HAC Module: STOP bit is set while"
+-				 "starting the Hashing\n");
+-			hac_ctl &= ~HAC_CTL_STOP;
+-			__raw_writel(hac_ctl, HAC_CTL);
+-		}
+-		/* Checking if the 'DONE' bit and 'ERROR' bit is been set.
+-		   If they are set write to clear those bits */
+-		if (((hac_ctl & HAC_CTL_DONE) == HAC_CTL_DONE) ||
+-		    ((hac_ctl & HAC_CTL_ERROR) == HAC_CTL_ERROR)) {
+-			pr_debug(" HAC Module: DONE and ERROR bit is set"
+-				 "while  starting the Hashing\n");
+-			hac_ctl |= HAC_CTL_DONE;
+-			__raw_writel(hac_ctl, HAC_CTL);
+-			hac_ctl |= HAC_CTL_ERROR;
+-			__raw_writel(hac_ctl, HAC_CTL);
+-		}
+-		hac_ctl |= HAC_CTL_START;
+-		__raw_writel(hac_ctl, HAC_CTL);
+-		/* Hash for the last block by padding it. */
+-		pr_debug("HAC Module: Setting the PAD bit while start"
+-			 "Hashing the last block\n");
+-		hac_ctl |= HAC_CTL_PAD;
+-		__raw_writel(hac_ctl, HAC_CTL);
+-		break;
+-
+-	case HAC_CONTINUE:
+-		/*
+-		 * HAC_CONTINUE will continue the Hashing of data in the memory.
+-		 * This will continue the hashing processing by taking into
+-		 * consideration of the previous hash result and continues
+-		 * further hashing of the new data block. Before continue the
+-		 * Hashing process, it checks for 'STOP' bit, 'DONE' bit and
+-		 * 'ERROR' bit is set in the HAC Control register. If 'STOP'
+-		 * bit is set, it clears the 'STOP' bit in Control register.
+-		 * If 'DONE' bit is set, it clears the 'DONE' bit in control
+-		 * register. If 'ERROR' bit is set, then error message is
+-		 * indicated to the user.
+-		 */
+-		pr_debug("HAC Module: Continue hashing process. \n");
+-		/* Checking if the Stop bit is been set. */
+-		if ((hac_ctl & HAC_CTL_STOP) == HAC_CTL_STOP) {
+-			hac_ctl &= ~HAC_CTL_STOP;
+-			__raw_writel(hac_ctl, HAC_CTL);
+-		}
+-		/* Checking if the 'DONE' bit is been set. If it is set write
+-		   one to clear the bit */
+-		if ((hac_ctl & HAC_CTL_DONE) == HAC_CTL_DONE) {
+-			hac_ctl |= HAC_CTL_DONE;
+-			__raw_writel(hac_ctl, HAC_CTL);
+-		}
+-		/* Checking if 'ERROR' bit is been set. If it is set resturn
+-		   return back indicating error in Hashing porcess. */
+-		if ((hac_ctl & HAC_CTL_ERROR) == HAC_CTL_ERROR) {
+-			return HAC_FAILURE;
+-		}
+-		hac_ctl |= HAC_CTL_CONTINUE;
+-		__raw_writel(hac_ctl, HAC_CTL);
+-		break;
+-
+-	case HAC_LAST:
+-		/*
+-		 * HAC_LAST will continue the Hashing of last block of data
+-		 * in the memory. Since this is last block of data in the
+-		 * memory 'PAD' bit in HAC control register is set to add
+-		 * appropriate padding to the end of the data structure.
+-		 * This will continue the hashing processing by taking into
+-		 * consideration of the previous hash result and continues
+-		 * further hashing of the new data block. Before continue the
+-		 * Hashing process, it checks for 'STOP' bit, 'DONE' bit and
+-		 * 'ERROR' bit is set in the HAC Control register. If 'STOP'
+-		 * bit is set, it clears the 'STOP' bit in Control register.
+-		 * If 'DONE' bit is set, it clears the 'DONE' bit in control
+-		 * register. If 'ERROR' bit is set, then error message is
+-		 * indicated to the user.
+-		 */
+-		pr_debug("HAC Module: Last block to hash. \n");
+-		/* Checking if the Stop bit is been set. */
+-		if ((hac_ctl & HAC_CTL_STOP) == HAC_CTL_STOP) {
+-			hac_ctl &= ~HAC_CTL_STOP;
+-			__raw_writel(hac_ctl, HAC_CTL);
+-		}
+-		/* Checking if the 'DONE' bit is been set. If it is set write
+-		   one to clear the bit */
+-		if ((hac_ctl & HAC_CTL_DONE) == HAC_CTL_DONE) {
+-			hac_ctl |= HAC_CTL_DONE;
+-			__raw_writel(hac_ctl, HAC_CTL);
+-		}
+-		/* Checking if 'ERROR' bit is been set. If it is set resturn
+-		   return back indicating error in Hashing porcess. */
+-		if ((hac_ctl & HAC_CTL_ERROR) == HAC_CTL_ERROR) {
+-			return HAC_FAILURE;
+-		}
+-		hac_ctl |= HAC_CTL_CONTINUE;
+-		__raw_writel(hac_ctl, HAC_CTL);
+-		/* Continuing the hash for the last block by padding it. */
+-		hac_ctl |= HAC_CTL_PAD;
+-		__raw_writel(hac_ctl, HAC_CTL);
+-		break;
+-
+-	default:
+-		ret_val = HAC_FAILURE;
+-		/* NOT RESPONDING */
+-		break;
+-	}
+-	return ret_val;
+-}
+-
+-/*!
+- * This API returns the status of the Hashing.
+- *
+- * @return      HAC_BUSY : Indicated HAC Module is busy with Hashing.\n
+- *              HAC_DONE : Indicates Hashing of data is done.\n
+- *              HAC_ERR  : Indicates error has occurred during Hashing.\n
+- *              HAC_UNKNOWN: Hashing status unknown. This may be when the
+- *                           hashing process has not been initiated atleast
+- *                           once or 'ERROR' bit or 'DONE' bits were reset
+- *                           after the hashing process was completed.
+- */
+-hac_hash_status hac_hashing_status(void)
+-{
+-	ulong hac_ctl;
+-	hac_ctl = __raw_readl(HAC_CTL);
+-	if ((hac_ctl & HAC_CTL_BUSY) != 0) {
+-		pr_debug("HAC Module: Hash module is in busy state \n");
+-		return HAC_BUSY;
+-	} else if ((hac_ctl & HAC_CTL_DONE) != 0) {
+-		/* Clearing the done bit of the control register */
+-		pr_debug("HAC Module: Hashing of data is done \n");
+-		return HAC_DONE;
+-	} else if ((hac_ctl & HAC_CTL_ERROR) != 0) {
+-		/* Clearing the error bit of the control register */
+-		pr_debug("HAC Module: Error has occurred during hashing \n");
+-		return HAC_ERR;
+-	} else {
+-		return HAC_UNKNOWN;
+-	}
+-}
+-
+-/*!
+- * This API returns the status of the Hash module.
+- *
+- * @return      Value of the Hashing control register.
+- */
+-ulong hac_get_status(void)
+-{
+-	ulong hac_ctl = __raw_readl(HAC_CTL);
+-	pr_debug("HAC Module: Hashing status register value 0x%08lX\n ",
+-		 hac_ctl);
+-	return hac_ctl;
+-}
+-
+-/*!
+- * This API stops the Hashing of data when the Hashing is in progress.
+- */
+-hac_ret hac_stop(void)
+-{
+-	ulong hac_ctl;
+-	hac_ctl = __raw_readl(HAC_CTL);
+-	if (hac_suspend_state == 1) {
+-		pr_debug("HAC Module: HAC Module is in suspend mode.\n");
+-		return HAC_FAILURE;
+-	}
+-	pr_debug("HAC Module: Stop hashing process. \n");
+-	hac_ctl |= HAC_CTL_STOP;
+-	__raw_writel(hac_ctl, HAC_CTL);
+-	return HAC_SUCCESS;
+-}
+-
+-/*!
+- * This API reads 160 bit hash result from Hash result register. The data is
+- * copied to the memory pointed by the input pointer.
+- *
+- * @param    hash_result_reg    structure Pointer where the hash result is
+- *                              copied.
+- */
+-hac_ret hac_hash_result(hac_hash_rlt * hash_result_reg)
+-{
+-	ulong hac_hsh4, hac_hsh3, hac_hsh2, hac_hsh1, hac_hsh0;
+-	struct clk *clk;
+-
+-	clk = clk_get(NULL, "hac_clk");
+-	hac_hsh4 = __raw_readl(HAC_HSH4);
+-	hac_hsh3 = __raw_readl(HAC_HSH3);
+-	hac_hsh2 = __raw_readl(HAC_HSH2);
+-	hac_hsh1 = __raw_readl(HAC_HSH1);
+-	hac_hsh0 = __raw_readl(HAC_HSH0);
+-	clk_disable(clk);
+-	if (hac_suspend_state == 1) {
+-		pr_debug("HAC Module: HAC Module is in suspend mode.\n");
+-		return HAC_FAILURE;
+-	}
+-	pr_debug("HAC Module: Read hash result \n");
+-	hash_result_reg->hash_result[0] = hac_hsh4;
+-	hash_result_reg->hash_result[1] = hac_hsh3;
+-	hash_result_reg->hash_result[2] = hac_hsh2;
+-	hash_result_reg->hash_result[3] = hac_hsh1;
+-	hash_result_reg->hash_result[4] = hac_hsh0;
+-	return HAC_SUCCESS;
+-}
+-
+-/*!
+- * This API will initiates software reset of the entire HAC module. It resets
+- * all state machine to their default values. All status bits (BUSY/ERROR/DONE)
+- * and any pending interrupts are cleared.
+- *
+- * @return  HAC_SUCCESS    Successfully in doing software reset.\n
+- *          HAC_FAILURE    Error in doing software reset.
+- */
+-hac_ret hac_swrst(void)
+-{
+-	ulong hac_ctl;
+-	ulong hac_ret = HAC_SUCCESS;
+-	hac_ctl = __raw_readl(HAC_CTL);
+-	pr_debug("HAC Module: HAC Software reset function. \n");
+-	if (hac_suspend_state == 1) {
+-		pr_debug("HAC MODULE: HAC Module is in suspend mode.\n");
+-		return HAC_FAILURE;
+-	}
+-	hac_ctl |= HAC_CTL_SWRST;
+-	__raw_writel(hac_ctl, HAC_CTL);
+-	return hac_ret;
+-}
+-
+-/*!
+- * This API configures the burst mode of the HAC. When Burst mode set in HAC
+- * Control register then ARM9 is configured for a 16-WORD burst, while Burst
+- * mode is cleared then ARM9 is configured for a incremental burst.
+- *
+- * @param  burst_mode   Configures burst mode operations.
+- *
+- * @return  HAC_SUCCESS    Successfully in configuring burst mode.\n
+- *          HAC_FAILURE    Error in configuring burst mode.
+- */
+-hac_ret hac_burst_mode(hac_burst_mode_config burst_mode)
+-{
+-	ulong hac_ctl;
+-	ulong hac_ret = HAC_SUCCESS;
+-	hac_ctl = __raw_readl(HAC_CTL);
+-	pr_debug("HAC Module: HAC Burst Mode function. \n");
+-	if (hac_suspend_state == 1) {
+-		pr_debug("HAC MODULE: HAC Module is in suspend mode.\n");
+-		return HAC_FAILURE;
+-	}
+-	switch (burst_mode) {
+-	case HAC_INR_BURST:
+-		hac_ctl |= HAC_CTL_BURST_MODE;
+-		break;
+-
+-	case HAC_16WORD_BURST:
+-		hac_ctl &= ~HAC_CTL_BURST_MODE;
+-		break;
+-
+-	default:
+-		hac_ret = HAC_FAILURE;
+-		break;
+-	}
+-	return hac_ret;
+-}
+-
+-/*!
+- * This API configures HAC burst read nature.
+- *
+- * @param  burst_read   Configures burst read.
+- *
+- * @return  HAC_SUCCESS    Successfully in configuring burst read.\n
+- *          HAC_FAILURE    Error in configuring burst read.
+- */
+-hac_ret hac_burst_read(hac_burst_read_config burst_read)
+-{
+-	ulong hac_ctl;
+-	ulong hac_ret = HAC_SUCCESS;
+-	hac_ctl = __raw_readl(HAC_CTL);
+-	pr_debug("HAC Module: HAC Burst Read function. \n");
+-	if (hac_suspend_state == 1) {
+-		pr_debug("HAC MODULE: HAC Module is in suspend mode.\n");
+-		return HAC_FAILURE;
+-	}
+-	switch (burst_read) {
+-	case HAC_16WORD_BURST_READ:
+-		__raw_writel(HAC_CTL_16WORD_BURST, HAC_CTL);
+-		break;
+-
+-	case HAC_8WORD_BURST_READ:
+-		hac_ctl &= ~HAC_CTL_NO_BURST_READ;
+-		hac_ctl |= HAC_CTL_8WORD_BURST;
+-		__raw_writel(hac_ctl, HAC_CTL);
+-		break;
+-
+-	case HAC_4WORD_BURST_READ:
+-		hac_ctl &= ~HAC_CTL_NO_BURST_READ;
+-		hac_ctl |= HAC_CTL_4WORD_BURST;
+-		__raw_writel(hac_ctl, HAC_CTL);
+-		break;
+-
+-	case HAC_NO_WORD_BURST_READ:
+-		hac_ctl &= ~HAC_CTL_NO_BURST_READ;
+-		hac_ctl |= HAC_CTL_NO_BURST_READ;
+-		break;
+-
+-	default:
+-		hac_ret = HAC_FAILURE;
+-		break;
+-	}
+-	return hac_ret;
+-}
+-
+-#ifdef CONFIG_PM
+-/*!
+- * This function is called to put the HAC in a low power state. Refer to the
+- * document driver-model/driver.txt in the kernel source tree for more
+- * information.
+- *
+- * @param   pdev  the device structure used to give information on HAC
+- *                to suspend.
+- * @param   state the power state the device is entering.
+- *
+- * @return  The function always returns HAC_SUCCESS.
+- */
+-hac_ret hac_suspend(struct platform_device * pdev, pm_message_t state)
+-{
+-	ulong hac_ctl;
+-	struct clk *clk;
+-
+-	hac_ctl = __raw_readl(HAC_CTL);
+-	clk = clk_get(NULL, "hac_clk");
+-	hac_suspend_state = 1;
+-
+-	pr_debug("HAC Module: In suspend power down.\n");
+-
+-	/* Enable stop bits in HAC Control Register. */
+-	hac_ctl |= HAC_CTL_STOP;
+-	__raw_writel(hac_ctl, HAC_CTL);
+-	clk_disable(clk);
+-
+-	return HAC_SUCCESS;
+-}
+-
+-/*!
+- * This function is called to bring the HAC back from a low power state.
+- * Refer to the document driver-model/driver.txt in the kernel source tree
+- * for more information.
+- *
+- * @param   pdev  the device structure used to give information on HAC
+- *                to resume.
+- *
+- * @return  The function always returns HAC_SUCCESS.
+- */
+-hac_ret hac_resume(struct platform_device * pdev)
+-{
+-	ulong hac_ctl;
+-	struct clk *clk;
+-
+-	clk = clk_get(NULL, "hac_clk");
+-	clk_enable(clk);
+-	hac_ctl = __raw_readl(HAC_CTL);
+-
+-	pr_debug("HAC Module: Resume power on.\n");
+-	/* Disable stop bit in HAC Control register. */
+-	hac_ctl &= ~HAC_CTL_STOP;
+-	__raw_writel(hac_ctl, HAC_CTL);
+-
+-	hac_suspend_state = 0;
+-
+-	return HAC_SUCCESS;
+-}
+-#else
+-#define mxc_hac_suspend NULL
+-#define mxc_hac_resume  NULL
+-#endif				/* CONFIG_PM */
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.h linux-2.6.19.2/drivers/mxc/security/mxc_hacc.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_hacc.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_hacc.h	1969-12-31 17:00:00.000000000 -0700
+@@ -1,145 +0,0 @@
+-/*
+- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+- */
+-
+-/*
+- * The code contained herein is licensed under the GNU General Public
+- * License. You may obtain a copy of the GNU General Public License
+- * Version 2 or later at the following locations:
+- *
+- * http://www.opensource.org/licenses/gpl-license.html
+- * http://www.gnu.org/copyleft/gpl.html
+- */
+-
+-/*!
+- * @file mxc_hacc.h
+- *
+- * @brief The header file for Hash Acceleration (HAC) module.
+- * This file contains all register defines and bit definition of HAC module.
+- *
+- * @ingroup MXC_Security
+- */
+-
+-#ifndef __MXC_HACC_H__
+-#define __MXC_HACC_H__
+-
+-#include <asm/arch/mxc_security_api.h>
+-#include <asm/hardware.h>
+-#include <asm/errno.h>
+-
+-/*
+- * HAC Control register
+- */
+-#define  HAC_CTL         IO_ADDRESS(HAC_BASE_ADDR + 0x00)
+-
+-/*
+- * HAC Start Address Register
+- */
+-#define  HAC_START_ADDR  IO_ADDRESS(HAC_BASE_ADDR + 0x04)
+-
+-/*
+- * HAC Block Count Register
+- */
+-#define  HAC_BLK_CNT     IO_ADDRESS(HAC_BASE_ADDR + 0x08)
+-
+-/*
+- * HAC Hash Register 4 Register
+- */
+-#define  HAC_HSH4        IO_ADDRESS(HAC_BASE_ADDR + 0x0C)
+-
+-/*
+- * HAC Hash Register 3 Register
+- */
+-#define  HAC_HSH3        IO_ADDRESS(HAC_BASE_ADDR + 0x10)
+-
+-/*
+- * HAC Hash Register 2 Register
+- */
+-#define  HAC_HSH2        IO_ADDRESS(HAC_BASE_ADDR + 0x14)
+-
+-/*
+- * HAC Hash Register 1 Register
+- */
+-#define  HAC_HSH1        IO_ADDRESS(HAC_BASE_ADDR + 0x18)
+-
+-/*
+- * HAC Hash Register 0 Register
+- */
+-#define  HAC_HSH0        IO_ADDRESS(HAC_BASE_ADDR + 0x1C)
+-
+-/*!
+- * HAC Hash Done status
+- */
+-#define         HAC_CTL_DONE            0x01
+-
+-/*!
+- * HAC  Hash Error Status
+- */
+-#define         HAC_CTL_ERROR           0x02
+-
+-/*!
+- * HAC  Hash Accelerator Module Busy Status
+- */
+-#define         HAC_CTL_BUSY            0x04
+-
+-/*!
+- * HAC  HAC Interrupt Mask Bit.
+- */
+-#define         HAC_CTL_IMSK            0x08
+-
+-/*!
+- * HAC  Command to Stop hash processing
+- */
+-#define         HAC_CTL_STOP            0x10
+-
+-/*!
+- * HAC  Command for software reset
+- */
+-#define         HAC_CTL_SWRST           0x20
+-
+-/*!
+- * HAC  Command to start hash processing
+- */
+-#define         HAC_CTL_START           0x40
+-
+-/*!
+- * HAC  Command to continue hash processing
+- */
+-#define         HAC_CTL_CONTINUE        0x80
+-
+-/*!
+- * HAC  Command to do padding
+- */
+-#define         HAC_CTL_PAD             0x100
+-
+-/*!
+- * HAC  Command not to do burst read
+- */
+-#define         HAC_CTL_NO_BURST_READ   0x600
+-
+-/*!
+- * HAC  Command to do 4 word Burst read
+- */
+-#define         HAC_CTL_4WORD_BURST     0x100
+-
+-/*!
+- * HAC  Command to do 8 word Burst read
+- */
+-#define         HAC_CTL_8WORD_BURST     0x400
+-
+-/*!
+- * HAC  Command to do 16 word Burst read
+- */
+-#define         HAC_CTL_16WORD_BURST    0x000
+-
+-/*!
+- * HAC  Command to configure the burst mode
+- */
+-#define         HAC_CTL_BURST_MODE      0x800
+-
+-/*!
+- * Maximum block length that can be configured to the HAC module.
+- */
+-#define         HAC_MAX_BLOCK_LENGTH    0x7FFFFF
+-
+-#endif				/* __MXC_HACC_H__ */
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/mxc_sec_mod.c linux-2.6.19.2/drivers/mxc/security/mxc_sec_mod.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/mxc_sec_mod.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/mxc_sec_mod.c	2007-04-25 17:40:23.000000000 -0600
+@@ -25,24 +25,6 @@ static void __exit mxc_sec_mod_cleanup(v
+ 	printk(KERN_INFO "SEC: mxc_sec_mod_cleanup() called \n");
+ }
+ 
+-#ifndef        CONFIG_ARCH_MX3
+-#ifdef CONFIG_MXC_SECURITY_HAC
+-/* Export Symbol of HACC */
+-EXPORT_SYMBOL(hac_hash_data);
+-EXPORT_SYMBOL(hac_hashing_status);
+-EXPORT_SYMBOL(hac_get_status);
+-EXPORT_SYMBOL(hac_stop);
+-EXPORT_SYMBOL(hac_hash_result);
+-EXPORT_SYMBOL(hac_swrst);
+-EXPORT_SYMBOL(hac_burst_mode);
+-EXPORT_SYMBOL(hac_burst_read);
+-#ifdef CONFIG_PM
+-EXPORT_SYMBOL(hac_suspend);
+-EXPORT_SYMBOL(hac_resume);
+-#endif
+-#endif
+-#endif
+-
+ /* Export Symbol of RTIC */
+ EXPORT_SYMBOL(rtic_init);
+ EXPORT_SYMBOL(rtic_configure_mode);
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_internals.h linux-2.6.19.2/drivers/mxc/security/rng/include/shw_internals.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/shw_internals.h	2007-04-25 17:38:54.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/shw_internals.h	2007-04-25 17:40:23.000000000 -0600
+@@ -150,6 +150,7 @@ static os_error_code add_entropy(fsl_shw
+ 
+ MODULE_AUTHOR("Freescale Semiconductor, Inc.");
+ MODULE_DESCRIPTION("Device Driver for FSL SHW API");
++MODULE_LICENSE("GPL");
+ 
+ #endif				/* LINUX_VERSION_CODE */
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/Makefile linux-2.6.19.2/drivers/mxc/security/sahara2/Makefile
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/Makefile	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/Makefile	2007-04-25 17:40:23.000000000 -0600
+@@ -37,10 +37,6 @@ endif
+ 
+ EXTRA_CFLAGS += -Idrivers/mxc/security/sahara2/include
+ 
+-# handle buggy BSP -- uncomment if these are undefined during build
+-#EXTRA_CFLAGS += -DSAHARA_BASE_ADDR=HAC_BASE_ADDR -DINT_SAHARA=INT_HAC_RTIC
+-
+-
+ obj-$(CONFIG_MXC_SAHARA) += sahara.o
+ 
+ sahara-objs := $(SOURCES:.c=.o) $(API_SOURCES:.c=.o)
+diff -uNpr linux-2.6.19.2.orig/drivers/net/gianfar.c linux-2.6.19.2/drivers/net/gianfar.c
+--- linux-2.6.19.2.orig/drivers/net/gianfar.c	2007-01-10 12:10:37.000000000 -0700
++++ linux-2.6.19.2/drivers/net/gianfar.c	2007-04-25 17:40:23.000000000 -0600
+@@ -145,7 +145,7 @@ static void gfar_set_mac_for_addr(struct
+ 
+ extern const struct ethtool_ops gfar_ethtool_ops;
+ 
+-MODULE_AUTHOR("Freescale Semiconductor, Inc");
++MODULE_AUTHOR("Freescale Semiconductor, Inc.");
+ MODULE_DESCRIPTION("Gianfar Ethernet Driver");
+ MODULE_LICENSE("GPL");
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/net/irda/Kconfig linux-2.6.19.2/drivers/net/irda/Kconfig
+--- linux-2.6.19.2.orig/drivers/net/irda/Kconfig	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/net/irda/Kconfig	2007-04-25 17:40:23.000000000 -0600
+@@ -432,6 +432,10 @@ config MCS_FIR
+ 
+ 	  To compile it as a module, choose M here: the module will be called
+ 
++config MXC_FIR
++	tristate "Freescale MXC FIR driver"
++	depends on ARCH_MXC && IRDA
++
+ config MXC_IRDA
+ 	tristate "Freescale MXC IrDA support"
+ 	depends on ARCH_MXC && IRDA
+diff -uNpr linux-2.6.19.2.orig/drivers/net/irda/Makefile linux-2.6.19.2/drivers/net/irda/Makefile
+--- linux-2.6.19.2.orig/drivers/net/irda/Makefile	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/net/irda/Makefile	2007-04-25 17:40:23.000000000 -0600
+@@ -13,7 +13,6 @@ obj-$(CONFIG_SIGMATEL_FIR)	+= stir4200.o
+ obj-$(CONFIG_NSC_FIR)		+= nsc-ircc.o
+ obj-$(CONFIG_WINBOND_FIR)	+= w83977af_ir.o
+ obj-$(CONFIG_SA1100_FIR)	+= sa1100_ir.o
+-obj-$(CONFIG_MXC_FIR)		+= mxc_ir.o
+ obj-$(CONFIG_TOSHIBA_FIR)	+= donauboe.o
+ obj-$(CONFIG_SMC_IRCC_FIR)	+= smsc-ircc2.o
+ obj-$(CONFIG_ALI_FIR)		+= ali-ircc.o
+@@ -21,6 +20,7 @@ obj-$(CONFIG_VLSI_FIR)		+= vlsi_ir.o
+ obj-$(CONFIG_VIA_FIR)		+= via-ircc.o
+ obj-$(CONFIG_PXA_FICP)	        += pxaficp_ir.o
+ obj-$(CONFIG_MCS_FIR)	        += mcs7780.o
++obj-$(CONFIG_MXC_FIR)		+= mxc_ir.o
+ obj-$(CONFIG_MXC_IRDA)	        += mxc_sir.o
+ # Old dongle drivers for old SIR drivers
+ obj-$(CONFIG_ESI_DONGLE_OLD)		+= esi.o
+diff -uNpr linux-2.6.19.2.orig/drivers/net/ucc_geth.c linux-2.6.19.2/drivers/net/ucc_geth.c
+--- linux-2.6.19.2.orig/drivers/net/ucc_geth.c	2007-01-10 12:10:37.000000000 -0700
++++ linux-2.6.19.2/drivers/net/ucc_geth.c	2007-04-25 17:40:23.000000000 -0600
+@@ -4312,6 +4312,6 @@ static void __exit ucc_geth_exit(void)
+ module_init(ucc_geth_init);
+ module_exit(ucc_geth_exit);
+ 
+-MODULE_AUTHOR("Freescale Semiconductor, Inc");
++MODULE_AUTHOR("Freescale Semiconductor, Inc.");
+ MODULE_DESCRIPTION(DRV_DESC);
+ MODULE_LICENSE("GPL");
+diff -uNpr linux-2.6.19.2.orig/drivers/spi/Kconfig linux-2.6.19.2/drivers/spi/Kconfig
+--- linux-2.6.19.2.orig/drivers/spi/Kconfig	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/spi/Kconfig	2007-04-25 17:40:23.000000000 -0600
+@@ -124,7 +124,7 @@ config SPI_MXC_SELECT1
+ config SPI_MXC_SELECT2
+ 	bool "CSPI2"
+ 	depends on SPI_MXC
+-	default y
++	default n
+ 
+ config SPI_MXC_SELECT3
+ 	bool "CSPI3"
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.c linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.c
+--- linux-2.6.19.2.orig/drivers/usb/gadget/arcotg_udc.c	2007-04-25 17:40:00.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/gadget/arcotg_udc.c	2007-04-25 17:40:23.000000000 -0600
+@@ -2860,7 +2860,8 @@ static int __devinit arcotg_udc_probe(st
+ 	rsrc_len = pdev->resource[0].end - pdev->resource[0].start + 1;
+ 
+ 	pr_debug("     start=0x%lx   end=0x%lx\n",
+-		 pdev->resource[0].start, pdev->resource[0].end);
++		 (unsigned long)pdev->resource[0].start,
++		 (unsigned long)pdev->resource[0].end);
+ 	pr_debug("rsrc_start=0x%llx  rsrc_len=0x%llx\n", rsrc_start, rsrc_len);
+ 
+ #if 0				/* DDD */
+@@ -3029,7 +3030,7 @@ static int __devexit arcotg_udc_remove(s
+ static int arcotg_udc_suspend(struct device *dev, pm_message_t state)
+ {
+ 	struct arcotg_udc *udc = udc_controller;
+-	pr_debug("udc: Suspend.  state=%d\n", state);
++	pr_debug("udc: Suspend.\n");
+ 	udc->stopped = 1;
+ 	return 0;
+ }
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/otg/fsl_otg.c linux-2.6.19.2/drivers/usb/otg/fsl_otg.c
+--- linux-2.6.19.2.orig/drivers/usb/otg/fsl_otg.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/otg/fsl_otg.c	2007-04-25 17:40:23.000000000 -0600
+@@ -580,7 +580,7 @@ static void fsl_otg_event(void *ptr)
+  * intact.  It needs to have knowledge of some USB interrupts
+  * such as port change.
+  */
+-irqreturn_t fsl_otg_isr(int irq, void *dev_id, struct pt_regs *regs)
++irqreturn_t fsl_otg_isr(int irq, void *dev_id)
+ {
+ 	struct otg_fsm *fsm = &((struct fsl_otg *)dev_id)->fsm;
+ 	struct otg_transceiver *otg = &((struct fsl_otg *)dev_id)->otg;
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mxcfb.c linux-2.6.19.2/drivers/video/mxc/mxcfb.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mxcfb.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mxcfb.c	2007-04-25 17:40:23.000000000 -0600
+@@ -874,6 +874,7 @@ static int mxcfb_resume(struct platform_
+  * all virtual memory access to the video memory should occur at the new region.
+  *
+  * @param       fbi     framebuffer information pointer
++ * @param       use_internal_ram flag on whether to use internal RAM for memory
+  *
+  * @return      Error code indicating success or failure
+  */
+diff -uNpr linux-2.6.19.2.orig/drivers/w1/masters/mxc_w1.c linux-2.6.19.2/drivers/w1/masters/mxc_w1.c
+--- linux-2.6.19.2.orig/drivers/w1/masters/mxc_w1.c	2007-04-25 17:40:00.000000000 -0600
++++ linux-2.6.19.2/drivers/w1/masters/mxc_w1.c	2007-04-25 17:40:23.000000000 -0600
+@@ -431,5 +431,5 @@ module_init(mxc_w1_init);
+ module_exit(mxc_w1_exit);
+ 
+ MODULE_LICENSE("GPL");
+-MODULE_AUTHOR("Freescale Semiconductor, Inc");
++MODULE_AUTHOR("Freescale Semiconductor, Inc.");
+ MODULE_DESCRIPTION("Driver for One-Wire on MXC");
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/hardware.h linux-2.6.19.2/include/asm-arm/arch-mxc/hardware.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/hardware.h	2007-04-25 17:40:00.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/hardware.h	2007-04-25 17:40:23.000000000 -0600
+@@ -61,8 +61,6 @@
+ #define cpu_is_mx31()		(0)
+ #endif
+ 
+-#define cpu_is_mx21()		(0)
+-
+ #ifdef CONFIG_ARCH_MX27
+ #include <asm/arch/mx27.h>
+ #define cpu_is_mx27()		(1)
+diff -uNpr linux-2.6.19.2.orig/include/linux/mmc/protocol.h linux-2.6.19.2/include/linux/mmc/protocol.h
+--- linux-2.6.19.2.orig/include/linux/mmc/protocol.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/linux/mmc/protocol.h	2007-04-25 17:40:23.000000000 -0600
+@@ -261,33 +261,6 @@ struct _mmc_csd {
+ #define CSD_SPEC_VER_2      2           /* Implements system specification 2.0 - 2.2 */
+ #define CSD_SPEC_VER_3      3           /* Implements system specification 3.1 */
+ 
+-/*
+- * Card Command Classes (CCC)
+- */
+-#define CCC_BASIC		(1<<0)	/* (0) Basic protocol functions */
+-					/* (CMD0,1,2,3,4,7,9,10,12,13,15) */
+-#define CCC_STREAM_READ		(1<<1)	/* (1) Stream read commands */
+-					/* (CMD11) */
+-#define CCC_BLOCK_READ		(1<<2)	/* (2) Block read commands */
+-					/* (CMD16,17,18) */
+-#define CCC_STREAM_WRITE	(1<<3)	/* (3) Stream write commands */
+-					/* (CMD20) */
+-#define CCC_BLOCK_WRITE		(1<<4)	/* (4) Block write commands */
+-					/* (CMD16,24,25,26,27) */
+-#define CCC_ERASE		(1<<5)	/* (5) Ability to erase blocks */
+-					/* (CMD32,33,34,35,36,37,38,39) */
+-#define CCC_WRITE_PROT		(1<<6)	/* (6) Able to write protect blocks */
+-					/* (CMD28,29,30) */
+-#define CCC_LOCK_CARD		(1<<7)	/* (7) Able to lock down card */
+-					/* (CMD16,CMD42) */
+-#define CCC_APP_SPEC		(1<<8)	/* (8) Application specific */
+-					/* (CMD55,56,57,ACMD*) */
+-#define CCC_IO_MODE		(1<<9)	/* (9) I/O mode */
+-					/* (CMD5,39,40,52,53) */
+-#define CCC_SWITCH		(1<<10)	/* (10) High speed switch */
+-					/* (CMD6,34,35,36,37,50) */
+-					/* (11) Reserved */
+-					/* (CMD?) */
+ 
+ /*
+  * SD bus widths

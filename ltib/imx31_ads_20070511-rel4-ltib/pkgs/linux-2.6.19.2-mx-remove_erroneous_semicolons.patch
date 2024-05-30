@@ -1,0 +1,25 @@
+Removed erroneous semicolons in two function definitions:
+mxc_dma_config() and mxc_dma_enable() in the #else path of
+#ifdef CONFIG_MXC_SDMA_API.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/dma_sdma.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/dma_sdma.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/dma_sdma.c	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/dma_sdma.c	2007-04-25 17:37:45.000000000 -0600
+@@ -612,7 +612,7 @@ int mxc_dma_free(int channel_num)
+ }
+ 
+ int mxc_dma_config(int channel_num, mxc_dma_requestbuf_t * dma_buf,
+-		   int num_buf, mxc_dma_mode_t mode);
++		   int num_buf, mxc_dma_mode_t mode)
+ {
+ 	return -ENODEV;
+ }
+@@ -634,7 +634,7 @@ int mxc_dma_disable(int channel_num)
+ 	return -ENODEV;
+ }
+ 
+-int mxc_dma_enable(int channel_num);
++int mxc_dma_enable(int channel_num)
+ {
+ 	return -ENODEV;
+ }

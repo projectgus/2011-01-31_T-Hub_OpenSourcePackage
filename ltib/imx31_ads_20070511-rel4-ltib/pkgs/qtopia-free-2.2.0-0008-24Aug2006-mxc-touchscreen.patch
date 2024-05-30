@@ -1,0 +1,139 @@
+From: John Rigby <jrigby@freescale.com>
+Date: Thu, 24 Aug 2006 13:41:42 -0600
+Subject: [PATCH] mxc touchscreen
+
+Add support for MXC touchscreen.  This uses
+the QT_QWS_STANDARD_TS plus some MXC specifics.
+
+This is adapted from the old 2.3.10 mxc patch:
+	qt-embedded-2.3.10-mxc.patch
+Done by Alan Tull at Freescale.
+
+Signed-off-by: John Rigby <jrigby@freescale.com>
+
+---
+
+ qt2/src/kernel/qwsmouse_qws.cpp |   71 ++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 70 insertions(+), 1 deletions(-)
+
+0192743cc5775e678cf8e5e45c00183f40b7d67d
+diff --git a/qt2/src/kernel/qwsmouse_qws.cpp b/qt2/src/kernel/qwsmouse_qws.cpp
+index 7e953c6..67c9399 100644
+--- a/qt2/src/kernel/qwsmouse_qws.cpp
++++ b/qt2/src/kernel/qwsmouse_qws.cpp
+@@ -56,6 +56,10 @@ #include <termios.h>
+ #include <qgfx_qws.h>
+ #if !defined(_OS_QNX6_)
+ 
++#ifdef QT_QWS_MXC
++#define TOUCH_SCREEN_READ_INSTALL _IOWR('D', 4, int)
++#endif
++
+ #ifdef QT_QWS_CASSIOPEIA
+ #include <linux/tpanel.h>
+ #endif
+@@ -63,7 +67,7 @@ #ifdef QT_QWS_TSLIB
+ #include <tslib.h>
+ #endif
+ 
+-#if defined(QT_QWS_MPC5200) || defined(QT_QWS_MX21)
++#if defined(QT_QWS_MPC5200) || defined(QT_QWS_MX21) || defined(QT_QWS_MXC)
+ #define QT_QWS_STANDARD_TS
+ #endif
+ 
+@@ -1275,6 +1279,28 @@ QTPanelHandlerPrivate::QTPanelHandlerPri
+     numSamples(0), skipCount(0)
+ {
+     mouseFD = -1;
++#ifdef QT_QWS_MXC
++    if ((mouseFD = open( "/dev/ts", O_RDWR)) < 0) {
++        qWarning( "Cannot open /dev/ts (%s)", strerror(errno));
++	return;
++    } else {
++        sleep(1);
++    }
++
++    int ret;
++
++    ret = ioctl(mouseFD, TOUCH_SCREEN_READ_INSTALL, NULL);
++    if (ret != 0) {
++        qWarning("ADC Touch Screen Interface Error");
++        return;
++    }
++
++    QSocketNotifier *mouseNotifier;
++    mouseNotifier = new QSocketNotifier( mouseFD, QSocketNotifier::Read,
++					 this );
++    connect(mouseNotifier, SIGNAL(activated(int)),this, SLOT(readMouseData()));
++
++#else // !QT_QWS_MXC
+ #if defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_STANDARD_TS)
+     if ( dev.isEmpty() )
+ #if defined(QT_QWS_IPAQ)
+@@ -1306,6 +1332,8 @@ #endif
+ #else
+     Q_UNUSED(dev);
+ #endif
++
++#endif // QT_QWS_MXC
+ }
+ 
+ QTPanelHandlerPrivate::~QTPanelHandlerPrivate()
+@@ -1318,6 +1346,45 @@ #endif
+ 
+ void QTPanelHandlerPrivate::readMouseData()
+ {
++#ifdef QT_QWS_MXC
++    if(!qt_screen) {
++	    return;
++    }
++
++    int ret;
++    short buffer[4];
++
++    //
++	// Driver returns # of short's that it placed in the buffer (always 4).
++	// buffer will contain: resistence, x, y, 0
++	//
++    ret=read(mouseFD, buffer, sizeof(buffer));
++
++    if (ret > 0) {
++		//
++		// We are a touchpad so we are always in one of two conditions:
++		// 1. Finger down = report current position and that left button is dn
++		// 2. Finger up = report last good position because now tpad is
++		//    sending out wierd data that doesn't count.  left button is up.
++		//
++        if (buffer[0] > 0) {
++	        QPoint q;
++	        q.setX(buffer[1]);
++	        q.setY(buffer[2]);
++			mousePos = transform( q );
++			//printf("pen DN * (%3d)  %3d, %3d\n", buffer[0], mousePos.x(), mousePos.y());
++            emit mouseChanged(mousePos,Qt::LeftButton);
++        } else {
++			//printf("pen up   (%3d)  %3d, %3d\n", buffer[0], mousePos.x(), mousePos.y());
++            emit mouseChanged(mousePos,0);
++        }
++    } else {
++	    qDebug("Error %s",strerror(errno));
++        usleep(75);
++    }
++
++#else // !QT_QWS_MXC
++
+ #if defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_STANDARD_TS)
+     if(!qt_screen)
+ 	return;
+@@ -1416,6 +1483,8 @@ # endif
+ 	mouseBuf[i] = mouseBuf[idx+i];
+     mouseIdx = surplus;
+ #endif
++
++#endif // QT_QWS_MXC
+ }
+ 
+ // YOPY touch panel support based on changes contributed by Ron Victorelli
+-- 
+1.3.3
+

@@ -1,0 +1,47 @@
+Bug 443. Set the Focus 453 reset line high so that the chip can run.
+--- linux-2.6.19.2/drivers/video/mxc/fs453.c	2007-02-08 13:23:00.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/video/mxc/fs453.c	2007-02-08 20:11:17.000000000 -0700
+@@ -441,6 +441,11 @@
+ 		return fs453_write(client, FS453_PWR_MGNT, 0x3BFF, 2);
+ }
+ 
++#ifdef CONFIG_ARCH_MX27
++extern void gpio_fs453_reset_low(void);
++extern void gpio_fs453_reset_high(void);
++#endif
++
+ /*!
+  * @brief FS453 control routine
+  * @param	cmd	Control command
+@@ -449,6 +454,20 @@
+  */
+ int fs453_ioctl(unsigned int cmd, void *arg)
+ {
++	/* check for deferred I2C registration */
++	if (!fs453_client) {
++		int err;
++#ifdef CONFIG_ARCH_MX27
++		/* reset the FS453 via the CLS/GPIOA25 line */
++		gpio_fs453_reset_low();
++		gpio_fs453_reset_high();
++#endif
++
++		if ((err = i2c_add_driver(&fs453_driver))) {
++			pr_info("FS453: driver registration failed\n");
++		}
++	}
++	
+ 	if (!fs453_client)
+ 		return -ENODEV;
+ 
+@@ -465,10 +484,6 @@
+ 
+ 	pr_info("FS453/4 driver, (c) 2005 Freescale Semiconductor, Inc.\n");
+ 
+-	if ((err = i2c_add_driver(&fs453_driver))) {
+-		pr_info("FS453: driver registration failed\n");
+-		return err;
+-	}
+ 
+ 	return 0;
+ }

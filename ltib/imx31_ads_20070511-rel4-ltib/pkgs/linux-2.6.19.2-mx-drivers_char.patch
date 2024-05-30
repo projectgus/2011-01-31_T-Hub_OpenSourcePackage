@@ -1,0 +1,1288 @@
+--- linux-2.6.19.2/drivers/char/Kconfig	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/char/Kconfig	2007-01-10 16:12:43.000000000 -0700
+@@ -114,7 +114,7 @@ config ROCKETPORT
+ 	tristate "Comtrol RocketPort support"
+ 	depends on SERIAL_NONSTANDARD
+ 	help
+-	  This driver supports Comtrol RocketPort and RocketModem PCI boards.   
++	  This driver supports Comtrol RocketPort and RocketModem PCI boards.
+           These boards provide 2, 4, 8, 16, or 32 high-speed serial ports or
+           modems.  For information about the RocketPort/RocketModem  boards
+           and this driver read <file:Documentation/rocket.txt>.
+@@ -793,6 +793,13 @@ config DS1302
+ 	  will get access to the real time clock (or hardware clock) built
+ 	  into your computer.
+ 
++config MXC_RTC
++	bool "Freescale MXC Real Time Clock"
++	depends on ARCH_MXC
++	default y
++	---help---
++	  Support for Freescale MXC RTC
++
+ config COBALT_LCD
+ 	bool "Support for Cobalt LCD"
+ 	depends on MIPS_COBALT
+@@ -970,8 +977,8 @@ config RAW_DRIVER
+ 	tristate "RAW driver (/dev/raw/rawN) (OBSOLETE)"
+ 	depends on BLOCK
+ 	help
+-	  The raw driver permits block devices to be bound to /dev/raw/rawN. 
+-	  Once bound, I/O against /dev/raw/rawN uses efficient zero-copy I/O. 
++	  The raw driver permits block devices to be bound to /dev/raw/rawN.
++	  Once bound, I/O against /dev/raw/rawN uses efficient zero-copy I/O.
+ 	  See the raw(8) manpage for more details.
+ 
+           The raw driver is deprecated and will be removed soon.
+--- linux-2.6.19.2/drivers/char/Makefile	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/char/Makefile	2007-01-10 16:14:08.000000000 -0700
+@@ -69,6 +69,7 @@ obj-$(CONFIG_EFI_RTC)		+= efirtc.o
+ obj-$(CONFIG_SGI_DS1286)	+= ds1286.o
+ obj-$(CONFIG_SGI_IP27_RTC)	+= ip27-rtc.o
+ obj-$(CONFIG_DS1302)		+= ds1302.o
++obj-$(CONFIG_MXC_RTC)		+= mxc_rtc.o
+ ifeq ($(CONFIG_GENERIC_NVRAM),y)
+   obj-$(CONFIG_NVRAM)	+= generic_nvram.o
+ else
+--- linux-2.6.19.2/drivers/char/mxc_rtc.c	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/char/mxc_rtc.c	2007-01-10 17:09:58.000000000 -0700
+@@ -0,0 +1,665 @@
++/*
++ * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ */
++
++/*
++ * The code contained herein is licensed under the GNU General Public
++ * License. You may obtain a copy of the GNU General Public License
++ * Version 2 or later at the following locations:
++ *
++ * http://www.opensource.org/licenses/gpl-license.html
++ * http://www.gnu.org/copyleft/gpl.html
++ */
++
++#include <linux/module.h>
++#include <linux/fs.h>
++#include <linux/init.h>
++#include <linux/interrupt.h>
++#include <linux/rtc.h>
++#include <linux/platform_device.h>
++#include <asm/rtc.h>
++#include <asm/mach/time.h>
++#include <asm/uaccess.h>
++#include "mxc_rtc.h"
++
++/*!
++ * @file mxc_rtc.c
++ * @brief Real Time Clock interface
++ *
++ * This file contains Real Time Clock interface for Linux.
++ *
++ * @ingroup Timers
++ */
++
++#ifdef CONFIG_MXC_MC13783_RTC
++#include <asm/arch/pmic_rtc.h>
++#else
++#define pmic_rtc_get_time(args)	MXC_EXTERNAL_RTC_NONE
++#define pmic_rtc_set_time(args)	MXC_EXTERNAL_RTC_NONE
++#define pmic_rtc_loaded()		0
++#endif
++
++#define RTC_VERSION		"1.0"
++#define MXC_EXTERNAL_RTC_OK	0
++#define MXC_EXTERNAL_RTC_ERR	-1
++#define MXC_EXTERNAL_RTC_NONE	-2
++
++/*!
++ * This function reads the RTC value from some external source.
++ *
++ * @param  second       pointer to the returned value in second
++ *
++ * @return 0 if successful; non-zero otherwise
++ */
++int get_ext_rtc_time(u32 * second)
++{
++	int ret = 0;
++	struct timeval tmp;
++
++	if (!pmic_rtc_loaded()) {
++		return MXC_EXTERNAL_RTC_NONE;
++	}
++
++	ret = pmic_rtc_get_time(&tmp);
++
++	if (0 == ret)
++		*second = tmp.tv_sec;
++	else
++		ret = MXC_EXTERNAL_RTC_ERR;
++
++	return ret;
++}
++
++/*!
++ * This function sets external RTC
++ *
++ * @param  second       value in second to be set to external RTC
++ *
++ * @return 0 if successful; non-zero otherwise
++ */
++int set_ext_rtc_time(u32 second)
++{
++	int ret = 0;
++	struct timeval tmp;
++
++	if (!pmic_rtc_loaded()) {
++		return MXC_EXTERNAL_RTC_NONE;
++	}
++
++	tmp.tv_sec = second;
++
++	ret = pmic_rtc_set_time(&tmp);
++
++	if (0 != ret)
++		ret = MXC_EXTERNAL_RTC_ERR;
++
++	return ret;
++}
++
++static u32 rtc_freq = 2;	/* minimun value for PIE */
++static unsigned long rtc_status;
++
++static struct rtc_time g_rtc_alarm = {
++	.tm_year = 0,
++	.tm_mon = 0,
++	.tm_mday = 0,
++	.tm_hour = 0,
++	.tm_mon = 0,
++	.tm_sec = 0,
++};
++
++static DEFINE_SPINLOCK(rtc_lock);
++
++/*!
++ * This function is used to obtain the RTC time or the alarm value in
++ * second.
++ *
++ * @param  time_alarm   use MXC_RTC_TIME for RTC time value; MXC_RTC_ALARM for alarm value
++ *
++ * @return The RTC time or alarm time in second.
++ */
++static u32 get_alarm_or_time(int time_alarm)
++{
++	u32 day, hr, min, sec, hr_min;
++
++	if (time_alarm == MXC_RTC_TIME) {
++		day = *_reg_RTC_DAYR;
++		hr_min = *_reg_RTC_HOURMIN;
++		sec = *_reg_RTC_SECOND;
++	} else if (time_alarm == MXC_RTC_ALARM) {
++		day = *_reg_RTC_DAYALARM;
++		hr_min = (0x0000FFFF) & (*_reg_RTC_ALRM_HM);
++		sec = *_reg_RTC_ALRM_SEC;
++	} else {
++		panic("wrong value for time_alarm=%d\n", time_alarm);
++	}
++
++	hr = hr_min >> 8;
++	min = hr_min & 0x00FF;
++
++	return ((((day * 24 + hr) * 60) + min) * 60 + sec);
++}
++
++/*!
++ * This function sets the RTC alarm value or the time value.
++ *
++ * @param  time_alarm   the new alarm value to be updated in the RTC
++ * @param  time         use MXC_RTC_TIME for RTC time value; MXC_RTC_ALARM for alarm value
++ */
++static void set_alarm_or_time(int time_alarm, u32 time)
++{
++	u32 day, hr, min, sec, temp;
++
++	day = time / 86400;
++	time -= day * 86400;
++	/* time is within a day now */
++	hr = time / 3600;
++	time -= hr * 3600;
++	/* time is within an hour now */
++	min = time / 60;
++	sec = time - min * 60;
++
++	temp = (hr << 8) + min;
++
++	if (time_alarm == MXC_RTC_TIME) {
++		*_reg_RTC_DAYR = day;
++		*_reg_RTC_SECOND = sec;
++		*_reg_RTC_HOURMIN = temp;
++	} else if (time_alarm == MXC_RTC_ALARM) {
++		*_reg_RTC_DAYALARM = day;
++		*_reg_RTC_ALRM_SEC = sec;
++		*_reg_RTC_ALRM_HM = temp;
++	} else {
++		panic("wrong value for time_alarm=%d\n", time_alarm);
++	}
++}
++
++/*!
++ * This function updates the RTC alarm registers and then clears all the
++ * interrupt status bits.
++ *
++ * @param  alrm         the new alarm value to be updated in the RTC
++ *
++ * @return  0 if successful; non-zero otherwise.
++ */
++static int rtc_update_alarm(struct rtc_time *alrm)
++{
++	struct rtc_time alarm_tm, now_tm;
++	unsigned long now, time;
++	int ret;
++
++	now = get_alarm_or_time(MXC_RTC_TIME);
++	rtc_time_to_tm(now, &now_tm);
++	rtc_next_alarm_time(&alarm_tm, &now_tm, alrm);
++	ret = rtc_tm_to_time(&alarm_tm, &time);
++
++	/* clear all the interrupt status bits */
++	*_reg_RTC_RTCISR = *_reg_RTC_RTCISR;
++
++	set_alarm_or_time(MXC_RTC_ALARM, time);
++
++	return ret;
++}
++
++/*!
++ * This function is the RTC interrupt service routine.
++ *
++ * @param  irq          RTC IRQ number
++ * @param  dev_id       device ID which is not used
++ * @param  regs         pointer to a structure containing the processor
++ *                      registers and state prior to servicing the interrupt.
++ *                      It is not used in this function.
++ *
++ * @return IRQ_HANDLED as defined in the include/linux/interrupt.h file.
++ */
++static irqreturn_t mxc_rtc_interrupt(int irq, void *dev_id,
++				     struct pt_regs *regs)
++{
++	u32 status;
++	u32 events = 0;
++
++	spin_lock(&rtc_lock);
++
++	status = (*_reg_RTC_RTCISR) & (*_reg_RTC_RTCIENR);
++	/* clear interrupt sources */
++	*_reg_RTC_RTCISR = status;
++
++	/* clear alarm interrupt if it has occurred */
++	if (status & RTC_ALM_BIT) {
++		status &= ~RTC_ALM_BIT;
++	}
++
++	/* update irq data & counter */
++	if (status & RTC_ALM_BIT) {
++		events |= (RTC_AF | RTC_IRQF);
++	}
++	if (status & RTC_1HZ_BIT) {
++		events |= (RTC_UF | RTC_IRQF);
++	}
++	if (status & PIT_ALL_ON) {
++		events |= (RTC_PF | RTC_IRQF);
++	}
++
++	if ((status & RTC_ALM_BIT) && rtc_periodic_alarm(&g_rtc_alarm)) {
++		rtc_update_alarm(&g_rtc_alarm);
++	}
++
++	spin_unlock(&rtc_lock);
++
++	rtc_update(1, events);
++
++	return IRQ_HANDLED;
++}
++
++/*!
++ * This function is used to open the RTC driver by registering the RTC
++ * interrupt service routine.
++ *
++ * @return  0 if successful; non-zero otherwise.
++ */
++static int mxc_rtc_open(void)
++{
++	if (test_and_set_bit(1, &rtc_status))
++		return -EBUSY;
++	return 0;
++}
++
++/*!
++ * clear all interrupts and release the IRQ
++ */
++static void mxc_rtc_release(void)
++{
++	spin_lock_irq(&rtc_lock);
++	*_reg_RTC_RTCIENR = 0;	/* Disable all rtc interrupts */
++	*_reg_RTC_RTCISR = 0xFFFFFFFF;	/* Clear all interrupt status */
++	spin_unlock_irq(&rtc_lock);
++	rtc_status = 0;
++}
++
++/*!
++ * This function is used to support some ioctl calls directly.
++ * Other ioctl calls are supported indirectly through the
++ * arm/common/rtctime.c file.
++ *
++ * @param  cmd          ioctl command as defined in include/linux/rtc.h
++ * @param  arg          value for the ioctl command
++ *
++ * @return  0 if successful or negative value otherwise.
++ */
++static int mxc_rtc_ioctl(unsigned int cmd, unsigned long arg)
++{
++	int i;
++
++	switch (cmd) {
++	case RTC_PIE_OFF:
++		*_reg_RTC_RTCIENR &= ~PIT_ALL_ON;
++		return 0;
++	case RTC_IRQP_SET:
++		if (arg < 2 || arg > MAX_PIE_FREQ || (arg % 2) != 0)
++			return -EINVAL;	/* Also make sure a power of 2Hz */
++		if ((arg > 64) && (!capable(CAP_SYS_RESOURCE)))
++			return -EACCES;
++		rtc_freq = arg;
++		return 0;
++	case RTC_IRQP_READ:
++		return put_user(rtc_freq, (u32 *) arg);
++	case RTC_PIE_ON:
++		for (i = 0; i < MAX_PIE_NUM; i++) {
++			if (PIE_BIT_DEF[i][0] == rtc_freq) {
++				break;
++			}
++		}
++		if (i == MAX_PIE_NUM) {
++			return -EACCES;
++		}
++		spin_lock_irq(&rtc_lock);
++		*_reg_RTC_RTCIENR |= PIE_BIT_DEF[i][1];
++		spin_unlock_irq(&rtc_lock);
++		return 0;
++	case RTC_AIE_OFF:
++		spin_lock_irq(&rtc_lock);
++		*_reg_RTC_RTCIENR &= ~RTC_ALM_BIT;
++		spin_unlock_irq(&rtc_lock);
++		return 0;
++
++	case RTC_AIE_ON:
++		spin_lock_irq(&rtc_lock);
++		*_reg_RTC_RTCIENR |= RTC_ALM_BIT;
++		spin_unlock_irq(&rtc_lock);
++		return 0;
++
++	case RTC_UIE_OFF:	/* UIE is for the 1Hz interrupt */
++		spin_lock_irq(&rtc_lock);
++		*_reg_RTC_RTCIENR &= ~RTC_1HZ_BIT;
++		spin_unlock_irq(&rtc_lock);
++		return 0;
++
++	case RTC_UIE_ON:
++		spin_lock_irq(&rtc_lock);
++		*_reg_RTC_RTCIENR |= RTC_1HZ_BIT;
++		spin_unlock_irq(&rtc_lock);
++		return 0;
++	}
++
++	return -EINVAL;
++}
++
++/*!
++ * This function reads the current RTC time into tm in Gregorian date.
++ *
++ * @param  tm           contains the RTC time value upon return
++ *
++ * @return  0 if successful; non-zero otherwise.
++ */
++static int mxc_rtc_read_time(struct rtc_time *tm)
++{
++	u32 val;
++
++	/* Avoid roll-over from reading the different registers */
++	do {
++		val = get_alarm_or_time(MXC_RTC_TIME);
++	} while (val != get_alarm_or_time(MXC_RTC_TIME));
++
++	rtc_time_to_tm(val, tm);
++	return 0;
++}
++
++/*!
++ * This function sets the internal RTC time based on tm in Gregorian date.
++ *
++ * @param  tm           the time value to be set in the RTC
++ *
++ * @return  0 if successful; non-zero otherwise.
++ */
++static int mxc_rtc_set_time(struct rtc_time *tm)
++{
++	unsigned long time;
++	int ret;
++
++	ret = rtc_tm_to_time(tm, &time);
++	if (ret != 0) {
++		printk("Failed to set local RTC\n");
++		return ret;
++	}
++
++	/* Avoid roll-over from reading the different registers */
++	do {
++		set_alarm_or_time(MXC_RTC_TIME, time);
++	} while (time != get_alarm_or_time(MXC_RTC_TIME));
++
++	ret = set_ext_rtc_time(time);
++
++	if (ret != MXC_EXTERNAL_RTC_OK) {
++		if (ret == MXC_EXTERNAL_RTC_NONE) {
++			pr_info("No external RTC\n");
++			ret = 0;
++		} else
++			pr_info("Failed to set external RTC\n");
++	}
++
++	return ret;
++}
++
++/*!
++ * This function is the actual implementation of set_rtc() which is used
++ * by programs like NTPD to sync the internal RTC with some external clock
++ * source.
++ *
++ * @return 0 if successful; non-zero if there is pending alarm.
++ */
++static int mxc_set_rtc(void)
++{
++	unsigned long current_time = xtime.tv_sec;
++
++	if ((*_reg_RTC_RTCIENR & RTC_ALM_BIT) != 0) {
++		/* make sure not to forward the clock over an alarm */
++		unsigned long alarm = get_alarm_or_time(MXC_RTC_ALARM);
++		if (current_time >= alarm &&
++		    alarm >= get_alarm_or_time(MXC_RTC_TIME))
++			return -ERESTARTSYS;
++	}
++
++	set_alarm_or_time(MXC_RTC_TIME, current_time);
++	return 0;
++}
++
++/*!
++ * This function reads the current alarm value into the passed in \b alrm
++ * argument. It updates the \b alrm's pending field value based on the whether
++ * an alarm interrupt occurs or not.
++ *
++ * @param  alrm         contains the RTC alarm value upon return
++ *
++ * @return  0 if successful; non-zero otherwise.
++ */
++static int mxc_rtc_read_alarm(struct rtc_wkalrm *alrm)
++{
++	rtc_time_to_tm(get_alarm_or_time(MXC_RTC_ALARM), &alrm->time);
++	alrm->pending = (((*_reg_RTC_RTCISR) & RTC_ALM_BIT) != 0) ? 1 : 0;
++
++	return 0;
++}
++
++/*!
++ * This function sets the RTC alarm based on passed in alrm.
++ *
++ * @param  alrm         the alarm value to be set in the RTC
++ *
++ * @return  0 if successful; non-zero otherwise.
++ */
++static int mxc_rtc_set_alarm(struct rtc_wkalrm *alrm)
++{
++	struct rtc_time atm, ctm;
++	int ret;
++
++	spin_lock_irq(&rtc_lock);
++	if (rtc_periodic_alarm(&alrm->time)) {
++		if (alrm->time.tm_sec > 59 ||
++		    alrm->time.tm_hour > 23 || alrm->time.tm_min > 59) {
++			ret = -EINVAL;
++			goto out;
++		}
++		mxc_rtc_read_time(&ctm);
++		rtc_next_alarm_time(&atm, &ctm, &alrm->time);
++		ret = rtc_update_alarm(&atm);
++	} else {
++		if ((ret = rtc_valid_tm(&alrm->time)))
++			goto out;
++		ret = rtc_update_alarm(&alrm->time);
++	}
++
++	if (ret == 0) {
++		memcpy(&g_rtc_alarm, &alrm->time, sizeof(struct rtc_time));
++
++		if (alrm->enabled) {
++			*_reg_RTC_RTCIENR |= RTC_ALM_BIT;
++		} else {
++			*_reg_RTC_RTCIENR &= ~RTC_ALM_BIT;
++		}
++	}
++      out:
++	spin_unlock_irq(&rtc_lock);
++
++	return ret;
++}
++
++/*!
++ * This function is used to provide the content for the /proc/driver/rtc
++ * file.
++ *
++ * @param  buf          the buffer to hold the information that the driver wants to write
++ *
++ * @return  The number of bytes written into the rtc file.
++ */
++static int mxc_rtc_proc(char *buf)
++{
++	char *p = buf;
++
++	p += sprintf(p, "alarm_IRQ\t: %s\n",
++		     (((*_reg_RTC_RTCIENR) & RTC_ALM_BIT) != 0) ? "yes" : "no");
++	p += sprintf(p, "update_IRQ\t: %s\n",
++		     (((*_reg_RTC_RTCIENR) & RTC_1HZ_BIT) != 0) ? "yes" : "no");
++	p += sprintf(p, "periodic_IRQ\t: %s\n",
++		     (((*_reg_RTC_RTCIENR) & PIT_ALL_ON) != 0) ? "yes" : "no");
++	p += sprintf(p, "periodic_freq\t: %d\n", rtc_freq);
++
++	return p - buf;
++}
++
++/*!
++ * The RTC driver structure
++ */
++static struct rtc_ops mxc_rtc_ops = {
++	.owner = THIS_MODULE,
++	.open = mxc_rtc_open,
++	.release = mxc_rtc_release,
++	.ioctl = mxc_rtc_ioctl,
++	.read_time = mxc_rtc_read_time,
++	.set_time = mxc_rtc_set_time,
++	.read_alarm = mxc_rtc_read_alarm,
++	.set_alarm = mxc_rtc_set_alarm,
++	.proc = mxc_rtc_proc,
++};
++
++/*! MXC RTC Power management control */
++
++static struct timespec mxc_rtc_delta;
++
++static int __init mxc_rtc_probe(struct platform_device *pdev)
++{
++	struct timespec tv;
++	struct rtc_time temp_time;
++	u32 sec;
++	int ret;
++
++	mxc_clks_enable(RTC_CLK);
++	/* Configure and enable the RTC */
++	if ((ret =
++	     request_irq(INT_RTC, mxc_rtc_interrupt, 0, "rtc", NULL)) != 0) {
++		printk(KERN_ERR "rtc: IRQ%d already in use. \n", INT_RTC);
++		return ret;
++	}
++	ret = register_rtc(&mxc_rtc_ops);
++	if (ret < 0) {
++		printk(KERN_ERR "Unable to register_rtc \n");
++		free_irq(INT_RTC, NULL);
++		return ret;
++	}
++	ret = get_ext_rtc_time(&sec);
++
++	if (ret == MXC_EXTERNAL_RTC_OK) {
++		rtc_time_to_tm(sec, &temp_time);
++		mxc_rtc_set_time(&temp_time);
++	} else if (ret == MXC_EXTERNAL_RTC_NONE) {
++		pr_info("No external RTC clock\n");
++	} else {
++		pr_info("Reading external RTC failed\n");
++	}
++	tv.tv_nsec = 0;
++	tv.tv_sec = get_alarm_or_time(MXC_RTC_TIME);
++	do_settimeofday(&tv);
++
++	set_rtc = mxc_set_rtc;
++	*_reg_RTC_RTCCTL = RTC_INPUT_CLK | RTC_ENABLE_BIT;
++	if (((*_reg_RTC_RTCCTL) & RTC_ENABLE_BIT) == 0) {
++		printk(KERN_ALERT "rtc : hardware module can't be enabled!\n");
++		return -1;
++	}
++	printk("Real TIme clock Driver v%s \n", RTC_VERSION);
++	return ret;
++}
++static int __exit mxc_rtc_remove(struct device *dev)
++{
++	unregister_rtc(&mxc_rtc_ops);
++	free_irq(INT_RTC, NULL);
++	mxc_rtc_release();
++	return 0;
++}
++
++/*!
++ * This function is called to save the system time delta relative to
++ * the MXC RTC when enterring a low power state. This time delta is
++ * then used on resume to adjust the system time to account for time
++ * loss while suspended.
++ *
++ * @param   pdev  not used
++ * @param   state Power state to enter.
++ *
++ * @return  The function always returns 0.
++ */
++static int mxc_rtc_suspend(struct platform_device *pdev, pm_message_t state)
++{
++	struct timespec tv;
++
++	/* calculate time delta for suspend */
++	tv.tv_nsec = 0;
++	tv.tv_sec = get_alarm_or_time(MXC_RTC_TIME);
++	save_time_delta(&mxc_rtc_delta, &tv);
++
++	return 0;
++}
++
++/*!
++ * This function is called to correct the system time based on the
++ * current MXC RTC time relative to the time delta saved during
++ * suspend.
++ *
++ * @param   pdev  not used
++ *
++ * @return  The function always returns 0.
++ */
++static int mxc_rtc_resume(struct platform_device *pdev)
++{
++	struct timespec tv;
++
++	tv.tv_nsec = 0;
++	tv.tv_sec = get_alarm_or_time(MXC_RTC_TIME);
++	restore_time_delta(&mxc_rtc_delta, &tv);
++
++	return 0;
++}
++
++/*!
++ * Contains pointers to the power management callback functions.
++ */
++static struct platform_driver mxc_rtc_driver = {
++	.driver = {
++		   .name = "mxc_rtc",
++		   .bus = &platform_bus_type,
++		   },
++	.probe = mxc_rtc_probe,
++	.remove = __exit_p(mxc_rtc_remove),
++	.suspend = mxc_rtc_suspend,
++	.resume = mxc_rtc_resume,
++};
++
++/*!
++ * This function creates the /proc/driver/rtc file and registers the device RTC
++ * in the /dev/misc directory. It also reads the RTC value from external source
++ * and setup the internal RTC properly.
++ *
++ * @return  -1 if RTC is failed to initialize; 0 is successful.
++ */
++static int __init mxc_rtc_init(void)
++{
++	int ret;
++	ret = platform_driver_register(&mxc_rtc_driver);
++	return ret;
++}
++
++/*!
++ * This function removes the /proc/driver/rtc file and un-registers the
++ * device RTC from the /dev/misc directory.
++ */
++static void __exit mxc_rtc_exit(void)
++{
++	platform_driver_unregister(&mxc_rtc_driver);
++
++}
++
++module_init(mxc_rtc_init);
++module_exit(mxc_rtc_exit);
++
++MODULE_AUTHOR("Freescale Semiconductor, Inc.");
++MODULE_DESCRIPTION("Realtime Clock Driver (RTC)");
++MODULE_LICENSE("GPL");
+--- linux-2.6.19.2/drivers/char/mxc_rtc.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/char/mxc_rtc.h	2007-01-10 17:09:58.000000000 -0700
+@@ -0,0 +1,93 @@
++/*
++ * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ */
++
++/*
++ * The code contained herein is licensed under the GNU General Public
++ * License. You may obtain a copy of the GNU General Public License
++ * Version 2 or later at the following locations:
++ *
++ * http://www.opensource.org/licenses/gpl-license.html
++ * http://www.gnu.org/copyleft/gpl.html
++ */
++#ifndef __MXC_RTC_H__
++#define __MXC_RTC_H__
++
++#include <asm/hardware.h>
++#include <asm/arch/clock.h>
++#define RTC_INPUT_CLK_32768HZ
++/*
++#define RTC_INPUT_CLK_32000HZ
++#define RTC_INPUT_CLK_32768HZ
++*/
++
++#if defined(RTC_INPUT_CLK_32768HZ)
++#define RTC_INPUT_CLK   (0x00 << 5)
++#else
++#if defined(RTC_INPUT_CLK_32000HZ)
++#define RTC_INPUT_CLK   (0x01 << 5)
++#else				/* 38.4kHz */
++#define RTC_INPUT_CLK   (0x02 << 5)
++#endif
++#endif
++
++#define RTC_SW_BIT      (1 << 0)
++#define RTC_ALM_BIT     (1 << 2)
++#define RTC_1HZ_BIT     (1 << 4)
++#define RTC_2HZ_BIT     (1 << 7)
++#define RTC_SAM0_BIT    (1 << 8)
++#define RTC_SAM1_BIT    (1 << 9)
++#define RTC_SAM2_BIT    (1 << 10)
++#define RTC_SAM3_BIT    (1 << 11)
++#define RTC_SAM4_BIT    (1 << 12)
++#define RTC_SAM5_BIT    (1 << 13)
++#define RTC_SAM6_BIT    (1 << 14)
++#define RTC_SAM7_BIT    (1 << 15)
++#define PIT_ALL_ON      (RTC_2HZ_BIT | RTC_SAM0_BIT | RTC_SAM1_BIT | \
++                         RTC_SAM2_BIT | RTC_SAM3_BIT | RTC_SAM4_BIT | \
++			 RTC_SAM5_BIT | RTC_SAM6_BIT | RTC_SAM7_BIT)
++
++#define RTC_ENABLE_BIT	(1 << 7)
++
++#ifndef RTC_INPUT_CLK_32768HZ
++#error The PIE code has to be modified to support different input clock!
++#endif
++
++#define MAX_PIE_NUM     9
++#define MAX_PIE_FREQ	512
++const u32 PIE_BIT_DEF[MAX_PIE_NUM][2] = {
++	{2, RTC_2HZ_BIT},
++	{4, RTC_SAM0_BIT},
++	{8, RTC_SAM1_BIT},
++	{16, RTC_SAM2_BIT},
++	{32, RTC_SAM3_BIT},
++	{64, RTC_SAM4_BIT},
++	{128, RTC_SAM5_BIT},
++	{256, RTC_SAM6_BIT},
++	{MAX_PIE_FREQ, RTC_SAM7_BIT},
++};
++
++/* Those are the bits from a classic RTC we want to mimic */
++#define RTC_IRQF                0x80	/* any of the following 3 is active */
++#define RTC_PF                  0x40	/* Periodic interrupt */
++#define RTC_AF                  0x20	/* Alarm interrupt */
++#define RTC_UF                  0x10	/* Update interrupt for 1Hz RTC */
++
++#define MXC_RTC_TIME            0
++#define MXC_RTC_ALARM           1
++
++#define _reg_RTC_HOURMIN   ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x00)))	/*  32bit rtc hour/min counter reg */
++#define _reg_RTC_SECOND    ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x04)))	/*  32bit rtc seconds counter reg */
++#define _reg_RTC_ALRM_HM   ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x08)))	/*  32bit rtc alarm hour/min reg */
++#define _reg_RTC_ALRM_SEC  ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x0C)))	/*  32bit rtc alarm seconds reg */
++#define _reg_RTC_RTCCTL    ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x10)))	/*  32bit rtc control reg */
++#define _reg_RTC_RTCISR    ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x14)))	/*  32bit rtc interrupt status reg */
++#define _reg_RTC_RTCIENR   ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x18)))	/*  32bit rtc interrupt enable reg */
++#define _reg_RTC_STPWCH    ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x1C)))	/*  32bit rtc stopwatch min reg */
++#define _reg_RTC_DAYR      ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x20)))	/*  32bit rtc days counter reg */
++#define _reg_RTC_DAYALARM  ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x24)))	/*  32bit rtc day alarm reg */
++#define _reg_RTC_TEST1     ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x28)))	/*  32bit rtc test reg 1 */
++#define _reg_RTC_TEST2     ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x2C)))	/*  32bit rtc test reg 2 */
++#define _reg_RTC_TEST3     ((volatile u32 *)(IO_ADDRESS(RTC_BASE_ADDR + 0x30)))	/*  32bit rtc test reg 3 */
++
++#endif				/* __MXC_RTC_H__ */
+--- linux-2.6.19.2/drivers/char/watchdog/Kconfig	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/char/watchdog/Kconfig	2007-01-10 15:59:23.000000000 -0700
+@@ -183,6 +183,45 @@ config PNX4008_WATCHDOG
+ 
+ 	  Say N if you are unsure.
+ 
++config MXC_WATCHDOG
++	tristate "MXC watchdog"
++	depends on WATCHDOG && WATCHDOG_NOWAYOUT
++	depends on ARCH_MXC
++	help
++	  Watchdog timer embedded into MXC chips. This will
++	  reboot your system when timeout is reached.
++
++	  NOTE: once enabled, this timer cannot be disabled.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called mxc_wdt.
++
++config MXC_WATCHDOG
++	tristate "MXC watchdog"
++	depends on WATCHDOG && WATCHDOG_NOWAYOUT
++	depends on ARCH_MXC
++	help
++	  Watchdog timer embedded into MXC chips. This will
++	  reboot your system when timeout is reached.
++
++	  NOTE: once enabled, this timer cannot be disabled.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called mxc_wdt.
++
++config MXC_WATCHDOG
++	tristate "MXC watchdog"
++	depends on WATCHDOG && WATCHDOG_NOWAYOUT
++	depends on ARCH_MXC
++	help
++	  Watchdog timer embedded into MXC chips. This will
++	  reboot your system when timeout is reached.
++
++	  NOTE: once enabled, this timer cannot be disabled.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called mxc_wdt.
++
+ # X86 (i386 + ia64 + x86_64) Architecture
+ 
+ config ACQUIRE_WDT
+--- linux-2.6.19.2/drivers/char/watchdog/Makefile	2006-12-11 12:32:53.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/char/watchdog/Makefile	2007-01-10 16:14:55.000000000 -0700
+@@ -34,6 +34,7 @@ obj-$(CONFIG_SA1100_WATCHDOG) += sa1100_
+ obj-$(CONFIG_MPCORE_WATCHDOG) += mpcore_wdt.o
+ obj-$(CONFIG_EP93XX_WATCHDOG) += ep93xx_wdt.o
+ obj-$(CONFIG_PNX4008_WATCHDOG) += pnx4008_wdt.o
++obj-$(CONFIG_MXC_WATCHDOG) += mxc_wdt.o
+ 
+ # X86 (i386 + ia64 + x86_64) Architecture
+ obj-$(CONFIG_ACQUIRE_WDT) += acquirewdt.o
+--- linux-2.6.19.2/drivers/char/watchdog/mxc_wdt.c	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/char/watchdog/mxc_wdt.c	2007-01-10 17:09:58.000000000 -0700
+@@ -0,0 +1,377 @@
++/*
++ * linux/drivers/char/watchdog/mxc_wdt.c
++ *
++ * Watchdog driver for FSL MXC. It is based on omap1610_wdt.c
++ *
++ * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * 2005 (c) MontaVista Software, Inc.  All Rights Reserved.
++
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ *
++ * History:
++ *
++ * 20051207: <AKuster@mvista.com>
++ *	     	Full rewrite based on
++ *		linux-2.6.15-rc5/drivers/char/watchdog/omap_wdt.c
++ *	     	Add platform resource support
++ *
++ */
++
++/*!
++ * @file mxc_wdt.c
++ *
++ * @brief watch driver
++ *
++ * @ingroup Timers
++ */
++
++#include <linux/module.h>
++#include <linux/types.h>
++#include <linux/kernel.h>
++#include <linux/fs.h>
++#include <linux/mm.h>
++#include <linux/miscdevice.h>
++#include <linux/watchdog.h>
++#include <linux/reboot.h>
++#include <linux/smp_lock.h>
++#include <linux/init.h>
++#include <linux/err.h>
++#include <linux/platform_device.h>
++#include <linux/interrupt.h>
++#include <linux/moduleparam.h>
++
++#include <asm/io.h>
++#include <asm/uaccess.h>
++#include <asm/hardware.h>
++#include <asm/irq.h>
++#include <asm/bitops.h>
++
++#include <asm/hardware.h>
++#include "mxc_wdt.h"
++#define DVR_VER "2.0"
++
++#define WDOG_SEC_TO_COUNT(s)  ((s * 2) << 8)
++#define WDOG_COUNT_TO_SEC(c)  ((c >> 8) / 2)
++
++static u32 wdt_base_reg;
++static int mxc_wdt_users;
++
++static unsigned timer_margin = TIMER_MARGIN_DEFAULT;
++module_param(timer_margin, uint, 0);
++MODULE_PARM_DESC(timer_margin, "initial watchdog timeout (in seconds)");
++
++static unsigned dev_num = 0;
++
++static void mxc_wdt_ping(u32 base)
++{
++	/* issue the service sequence instructions */
++	__raw_writew(WDT_MAGIC_1, base + MXC_WDT_WSR);
++	__raw_writew(WDT_MAGIC_2, base + MXC_WDT_WSR);
++}
++
++static void mxc_wdt_config(u32 base)
++{
++	u16 val;
++
++	val = __raw_readw(base + MXC_WDT_WCR);
++	val |= 0xFF00 | WCR_WOE_BIT | WCR_WDA_BIT | WCR_SRS_BIT;
++	/* enable suspend WDT */
++	val |= WCR_WDZST_BIT | WCR_WDBG_BIT;
++	/* generate reset if wdog times out */
++	val &= ~WCR_WRE_BIT;
++
++	__raw_writew(val, base + MXC_WDT_WCR);
++}
++
++static void mxc_wdt_enable(u32 base)
++{
++	u16 val;
++
++	val = __raw_readw(base + MXC_WDT_WCR);
++	val |= WCR_WDE_BIT;
++	__raw_writew(val, base + MXC_WDT_WCR);
++}
++
++static void mxc_wdt_disable(u32 base)
++{
++	/* disable not supported by this chip */
++}
++
++static void mxc_wdt_adjust_timeout(unsigned new_timeout)
++{
++	if (new_timeout < TIMER_MARGIN_MIN)
++		new_timeout = TIMER_MARGIN_DEFAULT;
++	if (new_timeout > TIMER_MARGIN_MAX)
++		new_timeout = TIMER_MARGIN_MAX;
++	timer_margin = new_timeout;
++}
++
++static u16 mxc_wdt_get_timeout(u32 base)
++{
++	u16 val;
++
++	val = __raw_readw(base + MXC_WDT_WCR);
++	return WDOG_COUNT_TO_SEC(val);
++}
++
++static u16 mxc_wdt_get_bootreason(u32 base)
++{
++	u16 val;
++
++	val = __raw_readw(base + MXC_WDT_WRSR);
++	return val;
++}
++
++static void mxc_wdt_set_timeout(u32 base)
++{
++	u16 val;
++	val = __raw_readw(base + MXC_WDT_WCR);
++	val = (val & 0x00FF) | WDOG_SEC_TO_COUNT(timer_margin);
++	__raw_writew(val, base + MXC_WDT_WCR);
++	val = __raw_readw(base + MXC_WDT_WCR);
++	timer_margin = WDOG_COUNT_TO_SEC(val);
++}
++
++/*
++ *	Allow only one task to hold it open
++ */
++
++static int mxc_wdt_open(struct inode *inode, struct file *file)
++{
++
++	if (test_and_set_bit(1, (unsigned long *)&mxc_wdt_users))
++		return -EBUSY;
++
++	mxc_wdt_config(wdt_base_reg);
++	mxc_wdt_set_timeout(wdt_base_reg);
++	mxc_wdt_enable(wdt_base_reg);
++	mxc_wdt_ping(wdt_base_reg);
++
++	return 0;
++}
++
++static int mxc_wdt_release(struct inode *inode, struct file *file)
++{
++	/*
++	 *      Shut off the timer unless NOWAYOUT is defined.
++	 */
++#ifndef CONFIG_WATCHDOG_NOWAYOUT
++	mxc_wdt_disable(wdt_base_reg);
++
++#else
++	printk(KERN_CRIT "mxc_wdt: Unexpected close, not stopping!\n");
++#endif
++	mxc_wdt_users = 0;
++	return 0;
++}
++
++static ssize_t
++mxc_wdt_write(struct file *file, const char __user * data,
++	      size_t len, loff_t * ppos)
++{
++	/* Refresh LOAD_TIME. */
++	if (len)
++		mxc_wdt_ping(wdt_base_reg);
++	return len;
++}
++
++static int
++mxc_wdt_ioctl(struct inode *inode, struct file *file,
++	      unsigned int cmd, unsigned long arg)
++{
++	int new_margin;
++	int bootr;
++
++	static struct watchdog_info ident = {
++		.identity = "MXC Watchdog",
++		.options = WDIOF_SETTIMEOUT,
++		.firmware_version = 0,
++	};
++
++	switch (cmd) {
++	default:
++		return -ENOIOCTLCMD;
++	case WDIOC_GETSUPPORT:
++		return copy_to_user((struct watchdog_info __user *)arg, &ident,
++				    sizeof(ident));
++	case WDIOC_GETSTATUS:
++		return put_user(0, (int __user *)arg);
++	case WDIOC_GETBOOTSTATUS:
++		bootr = mxc_wdt_get_bootreason(wdt_base_reg);
++		return put_user(bootr, (int __user *)arg);
++	case WDIOC_KEEPALIVE:
++		mxc_wdt_ping(wdt_base_reg);
++		return 0;
++	case WDIOC_SETTIMEOUT:
++		if (get_user(new_margin, (int __user *)arg))
++			return -EFAULT;
++
++		mxc_wdt_adjust_timeout(new_margin);
++		mxc_wdt_disable(wdt_base_reg);
++		mxc_wdt_set_timeout(wdt_base_reg);
++		mxc_wdt_enable(wdt_base_reg);
++		mxc_wdt_ping(wdt_base_reg);
++		return 0;
++
++	case WDIOC_GETTIMEOUT:
++		mxc_wdt_ping(wdt_base_reg);
++		new_margin = mxc_wdt_get_timeout(wdt_base_reg);
++		return put_user(new_margin, (int __user *)arg);
++	}
++}
++
++static struct file_operations mxc_wdt_fops = {
++	.owner = THIS_MODULE,
++	.write = mxc_wdt_write,
++	.ioctl = mxc_wdt_ioctl,
++	.open = mxc_wdt_open,
++	.release = mxc_wdt_release,
++};
++
++static struct miscdevice mxc_wdt_miscdev = {
++	.minor = WATCHDOG_MINOR,
++	.name = "watchdog",
++	.fops = &mxc_wdt_fops
++};
++
++static int __init mxc_wdt_probe(struct platform_device *pdev)
++{
++	struct resource *res, *mem;
++	int ret;
++
++	/* reserve static register mappings */
++	res = platform_get_resource(pdev, IORESOURCE_MEM, dev_num);
++	if (!res)
++		return -ENOENT;
++
++	mem = request_mem_region(res->start, res->end - res->start + 1,
++				 pdev->name);
++	if (mem == NULL)
++		return -EBUSY;
++
++	platform_set_drvdata(pdev, mem);
++
++	wdt_base_reg = IO_ADDRESS(res->start);
++	mxc_wdt_disable(wdt_base_reg);
++	mxc_wdt_adjust_timeout(timer_margin);
++
++	mxc_wdt_users = 0;
++
++	mxc_wdt_miscdev.dev = &pdev->dev;
++
++	ret = misc_register(&mxc_wdt_miscdev);
++	if (ret)
++		goto fail;
++
++	pr_info("MXC Watchdog # %d Timer: initial timeout %d sec\n", dev_num,
++		timer_margin);
++
++	return 0;
++
++      fail:
++	release_resource(mem);
++	pr_info("MXC Watchdog Probe failed\n");
++	return ret;
++}
++
++static void mxc_wdt_shutdown(struct platform_device *pdev)
++{
++	struct resource *res = platform_get_drvdata(pdev);
++	mxc_wdt_disable(res->start);
++	pr_info("MXC Watchdog # %d shutdown\n", dev_num);
++}
++
++static int __exit mxc_wdt_remove(struct platform_device *pdev)
++{
++	struct resource *mem = platform_get_drvdata(pdev);
++	misc_deregister(&mxc_wdt_miscdev);
++	release_resource(mem);
++	pr_info("MXC Watchdog # %d removed\n", dev_num);
++	return 0;
++}
++
++#ifdef	CONFIG_PM
++
++/* REVISIT ... not clear this is the best way to handle system suspend; and
++ * it's very inappropriate for selective device suspend (e.g. suspending this
++ * through sysfs rather than by stopping the watchdog daemon).  Also, this
++ * may not play well enough with NOWAYOUT...
++ */
++
++static int mxc_wdt_suspend(struct platform_device *pdev, pm_message_t state)
++{
++	struct resource *res = platform_get_drvdata(pdev);
++
++	if (mxc_wdt_users) {
++		mxc_wdt_disable(res->start);
++	}
++	return 0;
++}
++
++static int mxc_wdt_resume(struct platform_device *pdev)
++{
++	struct resource *res = platform_get_drvdata(pdev);
++	if (mxc_wdt_users) {
++		mxc_wdt_enable(res->start);
++		mxc_wdt_ping(res->start);
++	}
++	return 0;
++}
++
++#else
++#define	mxc_wdt_suspend	NULL
++#define	mxc_wdt_resume		NULL
++#endif
++
++static struct platform_driver mxc_wdt_driver = {
++	.driver = {
++		   .owner = THIS_MODULE,
++		   .name = "mxc_wdt",
++		   },
++	.probe = mxc_wdt_probe,
++	.shutdown = mxc_wdt_shutdown,
++	.remove = __exit_p(mxc_wdt_remove),
++	.suspend = mxc_wdt_suspend,
++	.resume = mxc_wdt_resume,
++};
++
++static int __init mxc_wdt_init(void)
++{
++	pr_info("MXC WatchDog Driver %s\n", DVR_VER);
++
++	if ((timer_margin < TIMER_MARGIN_MIN) ||
++	    (timer_margin > TIMER_MARGIN_MAX)) {
++		pr_info("MXC watchdog error. wrong timer_margin %d\n",
++			timer_margin);
++		pr_info("    Range: %d to %d seconds\n", TIMER_MARGIN_MIN,
++			TIMER_MARGIN_MAX);
++		return -EINVAL;
++	}
++
++	return platform_driver_register(&mxc_wdt_driver);
++}
++
++static void __exit mxc_wdt_exit(void)
++{
++	platform_driver_unregister(&mxc_wdt_driver);
++	pr_info("MXC WatchDog Driver removed\n");
++}
++
++module_init(mxc_wdt_init);
++module_exit(mxc_wdt_exit);
++
++MODULE_AUTHOR("Freescale Semiconductor, Inc.");
++MODULE_LICENSE("GPL");
++MODULE_ALIAS_MISCDEV(WATCHDOG_MINOR);
+--- linux-2.6.19.2/drivers/char/watchdog/mxc_wdt.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/char/watchdog/mxc_wdt.h	2007-01-10 17:09:58.000000000 -0700
+@@ -0,0 +1,37 @@
++/*
++ *  linux/drivers/char/watchdog/mxc_wdt.h
++ *
++ *  BRIEF MODULE DESCRIPTION
++ *      MXC Watchdog timer register definitions
++ *
++ * Author: MontaVista Software, Inc.
++ *       <AKuster@mvista.com> or <source@mvista.com>
++ *
++ * 2005 (c) MontaVista Software, Inc.
++ * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
++ * This file is licensed under the terms of the GNU General Public License
++ * version 2. This program is licensed "as is" without any warranty of any
++ * kind, whether express or implied.
++ */
++
++#ifndef __MXC_WDT_H__
++#define __MXC_WDT_H__
++
++#define MXC_WDT_WCR             0x00
++#define MXC_WDT_WSR             0x02
++#define MXC_WDT_WRSR            0x04
++#define WCR_WOE_BIT             (1 << 6)
++#define WCR_WDA_BIT             (1 << 5)
++#define WCR_SRS_BIT             (1 << 4)
++#define WCR_WRE_BIT             (1 << 3)
++#define WCR_WDE_BIT             (1 << 2)
++#define WCR_WDBG_BIT            (1 << 1)
++#define WCR_WDZST_BIT           (1 << 0)
++#define WDT_MAGIC_1             0x5555
++#define WDT_MAGIC_2             0xAAAA
++
++#define TIMER_MARGIN_MAX    	127
++#define TIMER_MARGIN_DEFAULT	60	/* 60 secs */
++#define TIMER_MARGIN_MIN	1
++
++#endif				/* __MXC_WDT_H__ */

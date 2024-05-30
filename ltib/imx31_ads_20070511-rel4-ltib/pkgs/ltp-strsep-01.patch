@@ -1,0 +1,17 @@
+Index: lib/tst_kvercmp.c
+===================================================================
+RCS file: /cvsroot/ltp/ltp/lib/tst_kvercmp.c,v
+retrieving revision 1.4
+diff -u -r1.4 tst_kvercmp.c
+--- lib/tst_kvercmp.c	4 Jan 2005 21:00:35 -0000	1.4
++++ lib/tst_kvercmp.c	2 Sep 2005 23:13:30 -0000
+@@ -41,7 +41,9 @@
+ 	struct utsname uval;
+ 	char *kver;
+ 	char *r1, *r2, *r3;
++#if !defined(linux)
+ 	extern char *strsep();          /* shut up some compilers */
++#endif
+ 
+ 	uname(&uval);
+ 	kver = uval.release;

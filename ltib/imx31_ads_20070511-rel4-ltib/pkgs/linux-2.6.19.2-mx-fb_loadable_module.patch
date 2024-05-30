@@ -1,0 +1,23 @@
+Bug #256. Enable framebuffer to be loaded/unloaded as a module.
+Still warns that pins are already reserved.
+diff -uNpr linux-2.6.19.2/drivers/video/mxc/Kconfig linux-2.6.19.2.new/drivers/video/mxc/Kconfig
+--- linux-2.6.19.2/drivers/video/mxc/Kconfig	2007-02-09 19:49:10.000000000 -0700
++++ linux-2.6.19.2.new/drivers/video/mxc/Kconfig	2007-02-09 19:26:30.000000000 -0700
+@@ -19,7 +19,7 @@ config FB_MXC_SYNC_PANEL
+ 	default y
+ 
+ config FB_MXC_TVOUT
+-	bool "TV Out Encoder"
++	tristate "TV Out Encoder"
+ 	depends on FB_MXC_SYNC_PANEL
+ 	default n
+ 
+diff -uNpr linux-2.6.19.2/drivers/video/mxc/mxcfb_modedb.c linux-2.6.19.2.new/drivers/video/mxc/mxcfb_modedb.c
+--- linux-2.6.19.2/drivers/video/mxc/mxcfb_modedb.c	2007-02-09 19:49:10.000000000 -0700
++++ linux-2.6.19.2.new/drivers/video/mxc/mxcfb_modedb.c	2007-02-09 19:35:40.000000000 -0700
+@@ -58,3 +58,5 @@ const struct fb_videomode mxcfb_modedb[]
+ };
+ 
+ int mxcfb_modedb_sz = ARRAY_SIZE(mxcfb_modedb);
++EXPORT_SYMBOL(mxcfb_modedb);
++EXPORT_SYMBOL(mxcfb_modedb_sz);

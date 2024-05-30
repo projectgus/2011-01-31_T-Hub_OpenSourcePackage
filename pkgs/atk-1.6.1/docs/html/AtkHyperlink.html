@@ -1,0 +1,143 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkHyperlink</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkGObjectAccessible.html" title="AtkGObjectAccessible"><link rel="next" href="AtkHypertext.html" title="AtkHypertext"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkGObjectAccessible.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkHypertext.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkHyperlink"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkHyperlink</h2><p>AtkHyperlink &#8212; An ATK object which encapsulates a link or set of links in a hypertext document.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id255919"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkHyperlink.html#AtkHyperlink-struct">AtkHyperlink</a>;
+enum        <a href="AtkHyperlink.html#AtkHyperlinkStateFlags">AtkHyperlinkStateFlags</a>;
+gchar*      <a href="AtkHyperlink.html#atk-hyperlink-get-uri">atk_hyperlink_get_uri</a>           (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_,
+                                             gint i);
+<a href="AtkObject.html" title="AtkObject">AtkObject</a>*  <a href="AtkHyperlink.html#atk-hyperlink-get-object">atk_hyperlink_get_object</a>        (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_,
+                                             gint i);
+gint        <a href="AtkHyperlink.html#atk-hyperlink-get-end-index">atk_hyperlink_get_end_index</a>     (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);
+gint        <a href="AtkHyperlink.html#atk-hyperlink-get-start-index">atk_hyperlink_get_start_index</a>   (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);
+gboolean    <a href="AtkHyperlink.html#atk-hyperlink-is-valid">atk_hyperlink_is_valid</a>          (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);
+gboolean    <a href="AtkHyperlink.html#atk-hyperlink-is-inline">atk_hyperlink_is_inline</a>         (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);
+gint        <a href="AtkHyperlink.html#atk-hyperlink-get-n-anchors">atk_hyperlink_get_n_anchors</a>     (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);
+gboolean    <a href="AtkHyperlink.html#atk-hyperlink-is-selected-link">atk_hyperlink_is_selected_link</a>  (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GObject
+   +----AtkHyperlink
+</pre></div><div class="refsect1"><h2>Implemented Interfaces</h2><p>
+AtkHyperlink implements
+ <a href="AtkAction.html" title="AtkAction">AtkAction</a>.</p></div><div class="refsect1"><h2>Properties</h2><pre class="synopsis">
+
+  "<a href="AtkHyperlink.html#AtkHyperlink--end-index">end-index</a>"            gint                 : Read
+  "<a href="AtkHyperlink.html#AtkHyperlink--number-of-anchors">number-of-anchors</a>"    gint                 : Read
+  "<a href="AtkHyperlink.html#AtkHyperlink--selected-link">selected-link</a>"        gboolean             : Read
+  "<a href="AtkHyperlink.html#AtkHyperlink--start-index">start-index</a>"          gint                 : Read
+</pre></div><div class="refsect1"><h2>Signal Prototypes</h2><pre class="synopsis">
+
+"<a href="AtkHyperlink.html#AtkHyperlink-link-activated">link-activated</a>"
+            void        user_function      (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *atkhyperlink,
+                                            gpointer user_data);
+</pre></div><div class="refsect1"><h2>Description</h2><p>
+An ATK object which encapsulates a link or set of links in a hypertext document.
+It implements the AtkAction interface.
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkHyperlink-struct"></a>struct AtkHyperlink</h3><a class="indexterm" name="id258055"></a><pre class="programlisting">struct AtkHyperlink;</pre><p>
+The AtkHyperlink structure should not be accessed directly.
+
+</p></div><hr><div class="refsect2"><h3><a name="AtkHyperlinkStateFlags"></a>enum AtkHyperlinkStateFlags</h3><a class="indexterm" name="id258081"></a><pre class="programlisting">typedef enum 
+{
+  ATK_HYPERLINK_IS_INLINE = 1 &lt;&lt; 0
+} AtkHyperlinkStateFlags;
+</pre><p>
+Describes the type of link</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><tt>ATK_HYPERLINK_IS_INLINE</tt></span></td><td> Link is inline
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-hyperlink-get-uri"></a>atk_hyperlink_get_uri ()</h3><a class="indexterm" name="id258131"></a><pre class="programlisting">gchar*      atk_hyperlink_get_uri           (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_,
+                                             gint i);</pre><p>
+Get a the URI associated with the anchor specified 
+by <i><tt>i</tt></i> of <i><tt>link_</tt></i>. 
+</p><p>
+Multiple anchors are primarily used by client-side image maps.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>link_</tt></i> :</span></td><td> an <a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a>
+</td></tr><tr><td><span class="term"><i><tt>i</tt></i> :</span></td><td> a (zero-index) integer specifying the desired anchor
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a string specifying the URI 
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-hyperlink-get-object"></a>atk_hyperlink_get_object ()</h3><a class="indexterm" name="id258243"></a><pre class="programlisting"><a href="AtkObject.html" title="AtkObject">AtkObject</a>*  atk_hyperlink_get_object        (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_,
+                                             gint i);</pre><p>
+Returns the item associated with this hyperlinks nth anchor.
+For instance, the returned <a href="AtkObject.html" title="AtkObject">AtkObject</a> will implement <a href="AtkText.html" title="AtkText">AtkText</a>
+if <i><tt>link_</tt></i> is a text hyperlink, <a href="AtkImage.html" title="AtkImage">AtkImage</a> if <i><tt>link_</tt></i> is an image
+hyperlink etc. 
+</p><p>
+Multiple anchors are primarily used by client-side image maps.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>link_</tt></i> :</span></td><td> an <a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a>
+</td></tr><tr><td><span class="term"><i><tt>i</tt></i> :</span></td><td> a (zero-index) integer specifying the desired anchor
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> an <a href="AtkObject.html" title="AtkObject">AtkObject</a> associated with this hyperlinks i-th anchor
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-hyperlink-get-end-index"></a>atk_hyperlink_get_end_index ()</h3><a class="indexterm" name="id258409"></a><pre class="programlisting">gint        atk_hyperlink_get_end_index     (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);</pre><p>
+Gets the index with the hypertext document at which this link ends.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>link_</tt></i> :</span></td><td> an <a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> the index with the hypertext document at which this link ends
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-hyperlink-get-start-index"></a>atk_hyperlink_get_start_index ()</h3><a class="indexterm" name="id258486"></a><pre class="programlisting">gint        atk_hyperlink_get_start_index   (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);</pre><p>
+Gets the index with the hypertext document at which this link begins.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>link_</tt></i> :</span></td><td> an <a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> the index with the hypertext document at which this link begins
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-hyperlink-is-valid"></a>atk_hyperlink_is_valid ()</h3><a class="indexterm" name="id258564"></a><pre class="programlisting">gboolean    atk_hyperlink_is_valid          (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);</pre><p>
+Since the document that a link is associated with may have changed
+this method returns <tt>TRUE</tt> if the link is still valid (with
+respect to the document it references) and <tt>FALSE</tt> otherwise.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>link_</tt></i> :</span></td><td> an <a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> whether or not this link is still valid
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-hyperlink-is-inline"></a>atk_hyperlink_is_inline ()</h3><a class="indexterm" name="id258705"></a><pre class="programlisting">gboolean    atk_hyperlink_is_inline         (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);</pre><p>
+Indicates whether the link currently displays some or all of its
+          content inline.  Ordinary HTML links will usually return
+          <tt>FALSE</tt>, but an inline &amp;lt;src&amp;gt; HTML element will return
+          <tt>TRUE</tt>.
+a *</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>link_</tt></i> :</span></td><td> an <a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> whether or not this link displays its content inline.
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-hyperlink-get-n-anchors"></a>atk_hyperlink_get_n_anchors ()</h3><a class="indexterm" name="id258796"></a><pre class="programlisting">gint        atk_hyperlink_get_n_anchors     (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);</pre><p>
+Gets the number of anchors associated with this hyperlink.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>link_</tt></i> :</span></td><td> an <a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> the number of anchors associated with this hyperlink
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-hyperlink-is-selected-link"></a>atk_hyperlink_is_selected_link ()</h3><a class="indexterm" name="id258914"></a><pre class="programlisting">gboolean    atk_hyperlink_is_selected_link  (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *link_);</pre><p>
+Determines whether this AtkHyperlink is selected</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>link_</tt></i> :</span></td><td> an <a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> True is the AtkHyperlink is selected, False otherwise
+</td></tr></tbody></table></div></div></div><div class="refsect1"><h2>Properties</h2><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><a name="AtkHyperlink--end-index"></a>"<tt>end-index</tt>" (gint : Read)</span></td><td><p>The end index of the AtkHyperlink object.</p></td></tr><tr><td><span class="term"><a name="AtkHyperlink--number-of-anchors"></a>"<tt>number-of-anchors</tt>" (gint : Read)</span></td><td><p>The number of anchors associated with the AtkHyperlink object.</p></td></tr><tr><td><span class="term"><a name="AtkHyperlink--selected-link"></a>"<tt>selected-link</tt>" (gboolean : Read)</span></td><td><p>Specifies whether the AtkHyperlink object is selected.</p></td></tr><tr><td><span class="term"><a name="AtkHyperlink--start-index"></a>"<tt>start-index</tt>" (gint : Read)</span></td><td><p>The start index of the AtkHyperlink object.</p></td></tr></tbody></table></div></div><div class="refsect1"><h2>Signals</h2><div class="refsect2"><h3><a name="AtkHyperlink-link-activated"></a>The "link-activated" signal</h3><pre class="programlisting">void        user_function                  (<a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> *atkhyperlink,
+                                            gpointer user_data);</pre><p>
+The signal link-activated is emitted when a link is activated.
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>atkhyperlink</tt></i> :</span></td><td>the object which received the signal.
+
+</td></tr><tr><td><span class="term"><i><tt>user_data</tt></i> :</span></td><td>user data set when the signal handler was connected.</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkGObjectAccessible.html"><b>&lt;&lt; AtkGObjectAccessible</b></a></td><td align="right"><a accesskey="n" href="AtkHypertext.html"><b>AtkHypertext &gt;&gt;</b></a></td></tr></table></body></html>

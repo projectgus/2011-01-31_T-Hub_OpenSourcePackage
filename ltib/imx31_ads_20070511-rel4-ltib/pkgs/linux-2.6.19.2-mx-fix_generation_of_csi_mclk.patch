@@ -1,0 +1,188 @@
+CR: ENGR00028709
+Patch name: ENGR00028709_fix_PERDIV4_for_perclk4_to_generate_CSI_MCLK.patch
+Date: Tue Mar 20 07:55:28 2007 +0800
+Source: Freescale Semiconductor, Inc.
+Description: fix PERDIV4 for perclk4 to generate CSI MCLK. move
+accounting for csi clk to csi driver.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/clock.c linux-2.6.19.2/arch/arm/mach-mx27/clock.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/clock.c	2007-04-25 17:39:09.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/clock.c	2007-04-25 17:39:45.000000000 -0600
+@@ -874,7 +874,7 @@ static struct clk lcdc_clk[] = {
+ 
+ static struct clk csi_clk[] = {
+ 	{
+-	 .name = "csi_clk",
++	 .name = "csi_perclk",
+ 	 .parent = &per_clk[3],
+ 	 .secondary = &csi_clk[1],
+ 	 .round_rate = _clk_parent_round_rate,
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_csi.c linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_csi.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_csi.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_csi.c	2007-04-25 17:39:45.000000000 -0600
+@@ -21,12 +21,13 @@
+ #include <linux/types.h>
+ #include <linux/init.h>
+ #include <linux/device.h>
+-#include <linux/errno.h>
++#include <linux/err.h>
+ #include <linux/interrupt.h>
+ #include <linux/spinlock.h>
+ #include <linux/delay.h>
+ #include <linux/module.h>
+ #include <linux/clk.h>
++#include <asm/arch/clock.h>
+ #include <asm/arch/hardware.h>
+ 
+ #include "mx27_csi.h"
+@@ -36,6 +37,7 @@ static bool gcsi_mclk_on = false;
+ static int gcsi_mclk_source = 0;
+ static csi_irq_callback_t g_callback = 0;
+ static void *g_callback_data = 0;
++static struct clk csi_mclk;
+ 
+ static irqreturn_t csi_irq_handler(int irq, void *data)
+ {
+@@ -98,14 +100,6 @@ static void csihw_set_config(csi_config_
+ 	memcpy(&g_csi_cfg, cfg, sizeof(csi_config_t));
+ }
+ 
+-static void csihw_enable_mclk(bool flag)
+-{
+-	if (flag)
+-		__raw_writel(__raw_readl(CSI_CSICR1) | BIT_MCLKEN, CSI_CSICR1);
+-	else
+-		__raw_writel(__raw_readl(CSI_CSICR1) & ~BIT_MCLKEN, CSI_CSICR1);
+-}
+-
+ static void csihw_reset_frame_count(void)
+ {
+ 	__raw_writel(__raw_readl(CSI_CSICR3) | BIT_FRMCNT_RST, CSI_CSICR3);
+@@ -208,24 +202,16 @@ void csi_enable_prpif(uint32_t enable)
+  */
+ int32_t csi_enable_mclk(int src, bool flag, bool wait)
+ {
+-	if (flag == true)
+-		gcsi_mclk_source |= src;
+-	else
+-		gcsi_mclk_source &= ~src;
+-
+-	if (gcsi_mclk_on == flag)
+-		return 0;
+-
+ 	if (flag == true) {
+-		csihw_enable_mclk(true);
++		clk_enable(&csi_mclk);
+ 		if (wait == true)
+ 			msleep(10);
+ 		pr_debug("Enable csi clock from source %d\n", src);
+ 		gcsi_mclk_on = true;
+-	} else if (gcsi_mclk_source == 0) {
+-		csihw_enable_mclk(false);
++	} else {
++		clk_disable(&csi_mclk);
+ 		pr_debug("Disable csi clock from source %d\n", src);
+-		gcsi_mclk_on = flag;
++		gcsi_mclk_on = false;
+ 	}
+ 
+ 	return 0;
+@@ -238,7 +224,7 @@ int32_t csi_enable_mclk(int src, bool fl
+  */
+ int csi_read_mclk_flag(void)
+ {
+-	return gcsi_mclk_source;
++	return 0;
+ }
+ 
+ void csi_set_callback(csi_irq_callback_t callback, void *data)
+@@ -247,17 +233,75 @@ void csi_set_callback(csi_irq_callback_t
+ 	g_callback_data = data;
+ }
+ 
+-static struct clk *csi_clk;
++static void _mclk_recalc(struct clk *clk)
++{
++	u32 div;
++
++	div = (__raw_readl(CSI_CSICR1) & BIT_MCLKDIV) >> SHIFT_MCLKDIV;
++	div = (div + 1) * 2;
++
++	clk->rate = clk->parent->rate / div;
++}
++
++static unsigned long _mclk_round_rate(struct clk *clk, unsigned long rate)
++{
++	/* Keep CSI divider and change parent clock */
++	if (clk->parent->round_rate) {
++		return clk->parent->round_rate(clk->parent, rate * 2);
++	}
++	return 0;
++}
++
++static int _mclk_set_rate(struct clk *clk, unsigned long rate)
++{
++	int ret = -EINVAL;
++
++	/* Keep CSI divider and change parent clock */
++	if (clk->parent->set_rate) {
++		ret = clk->parent->set_rate(clk->parent, rate * 2);
++		if (ret == 0) {
++			clk->rate = clk->parent->rate / 2;
++		}
++	}
++
++	return ret;
++}
++
++static int _mclk_enable(struct clk *clk)
++{
++	__raw_writel(__raw_readl(CSI_CSICR1) | BIT_MCLKEN, CSI_CSICR1);
++	return 0;
++}
++
++static void _mclk_disable(struct clk *clk)
++{
++	__raw_writel(__raw_readl(CSI_CSICR1) & ~BIT_MCLKEN, CSI_CSICR1);
++}
++
++static struct clk csi_mclk = {
++	.name = "csi_clk",
++	.recalc = _mclk_recalc,
++	.round_rate = _mclk_round_rate,
++	.set_rate = _mclk_set_rate,
++	.enable = _mclk_enable,
++	.disable = _mclk_disable,
++};
+ 
+ int32_t __init csi_init_module(void)
+ {
+ 	int ret = 0;
++	struct clk *per_clk;
+ 
+-	csi_clk = clk_get(NULL, "csi_clk");
+-	clk_enable(csi_clk);
++	per_clk = clk_get(NULL, "csi_perclk");
++	if (IS_ERR(per_clk))
++		return PTR_ERR(per_clk);
++	clk_put(per_clk);
++	csi_mclk.parent = per_clk;
++	clk_register(&csi_mclk);
++	clk_enable(per_clk);
++	csi_mclk.recalc(&csi_mclk);
+ 
+ 	csihw_reset();
+-	csi_enable_mclk(0, 1, 0);
+ 
+ 	/* interrupt enable */
+ 	ret = request_irq(INT_CSI, csi_irq_handler, 0, "csi", 0);
+@@ -272,8 +316,7 @@ void __exit csi_cleanup_module(void)
+ 	/* free irq */
+ 	free_irq(INT_CSI, 0);
+ 
+-	clk_disable(csi_clk);
+-	clk_put(csi_clk);
++	clk_disable(&csi_mclk);
+ }
+ 
+ module_init(csi_init_module);

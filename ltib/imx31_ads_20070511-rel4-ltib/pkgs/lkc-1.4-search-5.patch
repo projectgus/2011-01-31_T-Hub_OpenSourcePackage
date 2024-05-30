@@ -1,0 +1,832 @@
+diff -bruN lkc-1.4/expr.h lkc-1.4-search/expr.h
+--- lkc-1.4/expr.h	2005-09-06 14:48:12.000000000 -0700
++++ lkc-1.4-search/expr.h	2005-08-30 15:03:56.000000000 -0700
+@@ -128,6 +128,7 @@
+ 
+ struct menu {
+ 	struct menu *next;
++	struct menu *prev;
+ 	struct menu *parent;
+ 	struct menu *list;
+ 	struct symbol *sym;
+@@ -138,6 +139,7 @@
+ 	struct file *file;
+ 	int lineno;
+ 	void *data;
++	int id;
+ };
+ 
+ #define MENU_CHANGED		0x0001
+diff -bruN lkc-1.4/lkc_defs.h lkc-1.4-search/lkc_defs.h
+--- lkc-1.4/lkc_defs.h	2005-09-06 14:48:12.000000000 -0700
++++ lkc-1.4-search/lkc_defs.h	2005-08-30 15:28:34.000000000 -0700
+@@ -11,6 +11,8 @@
+ #define menu_get_prompt (*menu_get_prompt_p)
+ #define menu_get_root_menu (*menu_get_root_menu_p)
+ #define menu_get_parent_menu (*menu_get_parent_menu_p)
++#define menu_assign_ids (*menu_assign_ids_p)
++#define menu_re_search (*menu_re_search_p)
+ 
+ /* symbol.c */
+ #define symbol_hash (*symbol_hash_p)
+@@ -19,6 +21,7 @@
+ #define sym_lookup (*sym_lookup_p)
+ #define sym_find (*sym_find_p)
+ #define sym_re_search (*sym_re_search_p)
++#define sym_re_search_page (*sym_re_search_page_p)
+ #define sym_type_name (*sym_type_name_p)
+ #define sym_calc_value (*sym_calc_value_p)
+ #define sym_get_type (*sym_get_type_p)
+diff -bruN lkc-1.4/lkc_proto.h lkc-1.4-search/lkc_proto.h
+--- lkc-1.4/lkc_proto.h	2005-09-06 14:48:12.000000000 -0700
++++ lkc-1.4-search/lkc_proto.h	2005-08-30 15:28:09.000000000 -0700
+@@ -11,6 +11,8 @@
+ P(menu_get_prompt,const char *,(struct menu *menu));
+ P(menu_get_root_menu,struct menu *,(struct menu *menu));
+ P(menu_get_parent_menu,struct menu *,(struct menu *menu));
++P(menu_assign_ids, void, ());
++P(menu_re_search,struct menu *,(const char *pattern, struct menu *menu, bool forward));
+ 
+ /* symbol.c */
+ P(symbol_hash,struct symbol *,[SYMBOL_HASHSIZE]);
+@@ -19,6 +21,7 @@
+ P(sym_lookup,struct symbol *,(const char *name, int isconst));
+ P(sym_find,struct symbol *,(const char *name));
+ P(sym_re_search,struct symbol **,(const char *pattern));
++P(sym_re_search_page,struct menu *,(const char *pattern, struct menu *menu, bool forward));
+ P(sym_type_name,const char *,(enum symbol_type type));
+ P(sym_calc_value,void,(struct symbol *sym));
+ P(sym_get_type,enum symbol_type,(struct symbol *sym));
+diff -bruN lkc-1.4/lxdialog/checklist.c lkc-1.4-search/lxdialog/checklist.c
+--- lkc-1.4/lxdialog/checklist.c	2005-09-06 14:47:48.000000000 -0700
++++ lkc-1.4-search/lxdialog/checklist.c	2005-09-06 14:34:36.000000000 -0700
+@@ -123,7 +123,7 @@
+ 
+ {
+     int i, x, y, box_x, box_y;
+-    int key = 0, button = 0, choice = 0, scroll = 0, max_choice, *status;
++    int key = 0, button = 0, choice = 0, scroll = 0, max_choice, *status, jump_key=0;
+     WINDOW *dialog, *list;
+ 
+     checkflag = flag;
+@@ -223,7 +223,7 @@
+     wnoutrefresh (dialog);
+     doupdate ();
+ 
+-    while (key != ESC) {
++    while (key != ESC && key != JUMP_DIALOG_FORWARD_KEY && key != JUMP_DIALOG_BACKWARD_KEY) {
+ 	key = wgetch (dialog);
+ 
+     	for (i = 0; i < max_choice; i++)
+@@ -320,8 +320,6 @@
+ 	    print_buttons(dialog, height, width, button);
+ 	    wrefresh (dialog);
+ 	    break;
+-	case 'S':
+-	case 's':
+ 	case ' ':
+ 	case '\n':
+ 	    if (!button) {
+@@ -359,6 +357,13 @@
+ 	    key = ESC;
+ 	case ESC:
+ 	    break;
++	case JUMP_DIALOG_FORWARD_KEY:
++	case JUMP_DIALOG_BACKWARD_KEY:
++	    jump_key = key;
++	    for (i = 0; i < item_no; i++)
++		items[i]->selected = 0;
++	    items[scroll + choice]->selected = 1;
++	    break;
+ 	}
+ 
+ 	/* Now, update everything... */
+@@ -368,5 +373,8 @@
+ 
+     delwin (dialog);
+     free (status);
++    /* see if a search key was pressed */
++    if (jump_key == 's') return 8;
++    if (jump_key == 'S') return 9;
+     return -1;			/* ESC pressed */
+ }
+diff -bruN lkc-1.4/lxdialog/dialog.h lkc-1.4-search/lxdialog/dialog.h
+--- lkc-1.4/lxdialog/dialog.h	2005-09-06 14:47:48.000000000 -0700
++++ lkc-1.4-search/lxdialog/dialog.h	2005-08-30 18:34:39.000000000 -0700
+@@ -26,6 +26,12 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++
++#define JUMP_DIALOG_FORWARD_KEY 's'
++#define JUMP_DIALOG_BACKWARD_KEY 'S'
++#define JUMP_FORWARD_KEY 's'
++#define JUMP_BACKWARD_KEY 'S'
++
+ #ifdef CURSES_LOC
+ #include CURSES_LOC
+ 
+diff -bruN lkc-1.4/lxdialog/menubox.c lkc-1.4-search/lxdialog/menubox.c
+--- lkc-1.4/lxdialog/menubox.c	2005-09-06 14:48:06.000000000 -0700
++++ lkc-1.4-search/lxdialog/menubox.c	2005-08-30 18:27:37.000000000 -0700
+@@ -59,6 +59,7 @@
+ #include "dialog.h"
+ 
+ static int menu_width, item_x;
++char exempt_str[100];
+ 
+ /*
+  * Print menu item
+@@ -71,7 +72,7 @@
+ 
+     strncpy(menu_item, item, menu_width);
+     menu_item[menu_width] = 0;
+-    j = first_alpha(menu_item, "YyNnMmHh");
++    j = first_alpha(menu_item, exempt_str);
+ 
+     /* Clear 'residue' of last item */
+     wattrset (win, menubox_attr);
+@@ -167,11 +168,16 @@
+ 		int menu_height, const char *current, int item_no,
+ 		struct dialog_list_item ** items)
+ {
++    
+     int i, j, x, y, box_x, box_y;
+     int key = 0, button = 0, scroll = 0, choice = 0, first_item = 0, max_choice;
++    int orig_key;
+     WINDOW *dialog, *menu;
+     FILE *f;
+ 
++    sprintf(exempt_str, "YyNnMmHh>%c%c", JUMP_DIALOG_FORWARD_KEY, JUMP_DIALOG_BACKWARD_KEY);
++    /* ,JUMP_FORWARD_KEY, JUMP_BACKWARD_KEY); */
++
+     max_choice = MIN (menu_height, item_no);
+ 
+     /* center dialog box on screen */
+@@ -275,6 +281,7 @@
+ 
+     while (key != ESC) {
+ 	key = wgetch(menu);
++	orig_key = key;
+ 
+ 	if (key < 256 && isalpha(key)) key = tolower(key);
+ 
+@@ -282,13 +289,13 @@
+ 		i = max_choice;
+ 	else {
+         for (i = choice+1; i < max_choice; i++) {
+-		j = first_alpha(items[scroll + i]->name, "YyNnMmHh>");
++		j = first_alpha(items[scroll + i]->name, exempt_str);
+ 		if (key == tolower(items[scroll + i]->name[j]))
+                 	break;
+ 	}
+ 	if (i == max_choice)
+        		for (i = 0; i < max_choice; i++) {
+-			j = first_alpha(items[scroll + i]->name, "YyNnMmHh>");
++			j = first_alpha(items[scroll + i]->name, exempt_str);
+ 			if (key == tolower(items[scroll + i]->name[j]))
+                 		break;
+ 		}
+@@ -383,7 +390,7 @@
+ 	    continue;		/* wait for another key press */
+         }
+ 
+-	switch (key) {
++	switch (orig_key) {
+ 	case KEY_LEFT:
+ 	case TAB:
+ 	case KEY_RIGHT:
+@@ -394,11 +401,14 @@
+ 	    wrefresh (menu);
+ 	    break;
+ 	case ' ':
+-	case 's':
+-	case 'y':
+-	case 'n':
+-	case 'm':
++	case 'y': case 'Y':
++	case 'n': case 'N':
++	case 'm': case 'M':
+ 	case '/':
++	case JUMP_DIALOG_FORWARD_KEY:
++	case JUMP_DIALOG_BACKWARD_KEY:
++	/*case JUMP_FORWARD_KEY:
++	case JUMP_BACKWARD_KEY:*/
+ 	    /* save scroll info */
+ 	    if ( (f=fopen("lxdialog.scrltmp","w")) != NULL ) {
+ 		fprintf(f,"%d\n",scroll);
+@@ -406,26 +416,31 @@
+ 	    }
+ 	    delwin (dialog);
+             items[scroll + choice]->selected = 1;
+-            switch (key) {
+-            case 's': return 3;
+-            case 'y': return 3;
+-            case 'n': return 4;
+-            case 'm': return 5;
++            switch (orig_key) {
++	    case 'y': case 'Y': return 3;
++	    case 'n': case 'N': return 4;
++	    case 'm': case 'M': return 5;
+             case ' ': return 6;
+ 	    case '/': return 7;
++	    case JUMP_DIALOG_FORWARD_KEY: return 8;
++	    case JUMP_DIALOG_BACKWARD_KEY: return 9;
++	    /*case JUMP_FORWARD_KEY: return 10;
++	    case JUMP_BACKWARD_KEY: return 11;*/
+             }
+ 	    return 0;
+-	case 'h':
++	case 'h': case 'H':
+ 	case '?':
+ 	    button = 2;
++	
+ 	case '\n':
+ 	    delwin (dialog);
+ 	    items[scroll + choice]->selected = 1;
+ 
+ 	    remove("lxdialog.scrltmp");
+ 	    return button;
+-	case 'e':
+-	case 'x':
++	
++	case 'e': case 'E':
++	case 'x': case 'X':
+ 	    key = ESC;
+ 	case ESC:
+ 	    break;
+diff -bruN lkc-1.4/Makefile lkc-1.4-search/Makefile
+--- lkc-1.4/Makefile	2005-09-06 14:48:00.000000000 -0700
++++ lkc-1.4-search/Makefile	2005-08-30 14:20:44.000000000 -0700
+@@ -70,11 +70,11 @@
+ 			$(gconf_SRC)))))
+ OBJ=$(conf_OBJ) $(mconf_OBJ) $(qconf_OBJ)
+ 
+-ifeq ($(MOC),)
++#ifeq ($(MOC),)
+ all: conf mconf
+-else
+-all: conf mconf qconf libkconfig.so
+-endif
++#else
++#all: conf mconf qconf libkconfig.so
++#endif
+ 
+ lkc_deps := lkc.h lkc_proto.h lkc_defs.h expr.h
+ 
+diff -bruN lkc-1.4/mconf.c lkc-1.4-search/mconf.c
+--- lkc-1.4/mconf.c	2005-09-06 14:48:12.000000000 -0700
++++ lkc-1.4-search/mconf.c	2005-09-06 14:43:53.000000000 -0700
+@@ -22,6 +22,8 @@
+ #include <string.h>
+ #include <termios.h>
+ #include <unistd.h>
++#include <regex.h>
++#include <stdio.h>
+ 
+ #include "lxdialog/dialog.h"
+ 
+@@ -94,8 +96,17 @@
+ 	"Shortcut: Press the option's highlighted letter (hotkey).\n"
+ 	"\n"
+ 	"You may also use the <PAGE UP> and <PAGE DOWN> keys to scroll\n"
+-	"unseen options into view.\n",
+-search_help[] =
++	"unseen options into view.\n"
++	"\n"
++	"'\\' allows you to search for all menu options that match a regular \n"
++	"expression.\n"
++	"'s' and 'S' allow you to jump to the next menu option that matches \n"
++	"a regular expression. \n"
++	"\n"
++	"For more search help, begin a search by typing the search or jump key \n"
++	"and select the help option."
++	"\n",
++slash_search_help[] =
+ 	"\n"
+ 	"Search for CONFIG_ symbols and display their relations.\n"
+ 	"Example: search for \"^FOO\"\n"
+@@ -132,9 +143,22 @@
+ 	"Examples: USB	=> find all CONFIG_ symbols containing USB\n"
+ 	"          ^USB => find all CONFIG_ symbols starting with USB\n"
+ 	"          USB$ => find all CONFIG_ symbols ending with USB\n"
++	"\n",
++jump_search_help[] = 
++	"\n"
++	"Jump to the next menu option whose name or label matches the given \n"
++	"regular expression pattern.\n"
++	"\n"
++	"Lower case 's' jumps forward while upper case 'S' jumps backward.\n"
++	"\n"
++	"Once you have entered a search pattern, hit 's' or 'S' again and the dialog \n"
++	"will remember the last pattern.\n"
++	"\n"
++	"The engine will wrap around as it searches for the next matching option.\n"
+ 	"\n";
+ 
+ 
++
+ static char filename[PATH_MAX+1] = ".config";
+ static int indent = 0;
+ static struct termios ios_org;
+@@ -225,6 +249,19 @@
+ 	return res;
+ }
+ 
++
++static int cprint_tag_menu(const char *fmt, struct menu *menu)
++{
++	int res;
++
++	if (!item_no)
++		cmake();
++	res = snprintf(items[item_no - 1]->tag, 32, fmt, menu);
++
++	menu->data = items[item_no-1]->tag;
++	return res;
++}
++
+ static int cprint_tag(const char *fmt, ...)
+ {
+ 	va_list ap;
+@@ -324,6 +361,45 @@
+ 	return res;
+ }
+ 
++
++int next_i(int i, bool forward)
++{
++	if (forward)
++		return (i == item_no-1) ? 0 : i + 1;
++	else 
++		return (i == 0) ? item_no-1 : i - 1;
++}
++
++char search_page_pattern[100] = "";
++
++static struct menu *search_page(struct menu *menu, bool forward)
++{
++	menu = menu_re_search(search_page_pattern, menu, forward);
++	
++	return menu;
++}
++
++static struct menu *search_page_dialog(struct menu *menu, bool forward)
++{
++	int stat;
++again:
++	stat = dialog_inputbox("Search Menu Pattern", "Enter Keyword", 10, 75, search_page_pattern);
++	switch (stat) {
++		case 0:
++			break;
++		case 1:
++			show_helptext("Search Menu", jump_search_help);
++			goto again;
++		default:
++			return menu;
++	}
++	strncpy(search_page_pattern, dialog_input_result, sizeof(search_page_pattern));
++	return search_page(menu, forward);
++}
++
++
++		
++				
+ static void search_conf(void)
+ {
+ 	struct symbol **sym_arr;
+@@ -332,13 +408,11 @@
+ 
+ again:
+ 	stat = dialog_inputbox("Search Configuration Parameter", "Enter Keyword", 10, 75, "");
+-	if (stat < 0)
+-		goto again;
+ 	switch (stat) {
+ 	case 0:
+ 		break;
+ 	case 1:
+-		show_helptext("Search Configuration", search_help);
++		show_helptext("Search Configuration", slash_search_help);
+ 		goto again;
+ 	default:
+ 		return;
+@@ -372,7 +446,7 @@
+ 			case P_MENU:
+ 				child_count++;
+ 				cmake();
+-				cprint_tag("m%p", menu);
++				cprint_tag_menu("m%p", menu);
+ 
+ 				if (single_menu_mode) {
+ 					cprint_name("%s%*c%s",
+@@ -389,7 +463,7 @@
+ 				if (prompt) {
+ 					child_count++;
+ 					cmake();
+-					cprint_tag(":%p", menu);
++					cprint_tag_menu(":%p", menu);
+ 					cprint_name("---%*c%s", indent + 1, ' ', prompt);
+ 				}
+ 			}
+@@ -412,7 +486,7 @@
+ 
+ 		val = sym_get_tristate_value(sym);
+ 		if (sym_is_changable(sym)) {
+-			cprint_tag("t%p", menu);
++			cprint_tag_menu("t%p", menu);
+ 			switch (type) {
+ 			case S_BOOLEAN:
+ 				cprint_name("[%c]", val == no ? ' ' : '*');
+@@ -427,7 +501,10 @@
+ 				break;
+ 			}
+ 		} else {
+-			cprint_tag("%c%p", def_menu ? 't' : ':', menu);
++			if (def_menu)
++				cprint_tag_menu("t%p", menu);
++			else	
++				cprint_tag_menu(":%p", menu);
+ 			cprint_name("   ");
+ 		}
+ 
+@@ -448,19 +525,19 @@
+ 		child_count++;
+ 		val = sym_get_tristate_value(sym);
+ 		if (sym_is_choice_value(sym) && val == yes) {
+-			cprint_tag(":%p", menu);
++			cprint_tag_menu(":%p", menu);
+ 			cprint_name("   ");
+ 		} else {
+ 			switch (type) {
+ 			case S_BOOLEAN:
+-				cprint_tag("t%p", menu);
++				cprint_tag_menu("t%p", menu);
+ 				if (sym_is_changable(sym))
+ 					cprint_name("[%c]", val == no ? ' ' : '*');
+ 				else
+ 					cprint_name("---");
+ 				break;
+ 			case S_TRISTATE:
+-				cprint_tag("t%p", menu);
++				cprint_tag_menu("t%p", menu);
+ 				switch (val) {
+ 				case yes: ch = '*'; break;
+ 				case mod: ch = 'M'; break;
+@@ -472,7 +549,7 @@
+ 					cprint_name("---");
+ 				break;
+ 			default:
+-				cprint_tag("s%p", menu);
++				cprint_tag_menu("s%p", menu);
+ 				tmp = cprint_name("(%s)", sym_get_string_value(sym));
+ 				tmp = indent - tmp + 4;
+ 				if (tmp < 0)
+@@ -499,6 +576,34 @@
+ 	indent -= doint;
+ }
+ 
++
++bool searching = false;
++struct menu *target_menu = NULL;
++
++/* given a menu, return how many parental links above target_menu, the parameter is.  If the menu argument
++ * is not an ancestor of target_menu then return -1
++ */
++struct menu *find_search_menu(struct menu *menu)
++{
++	struct menu* tmp=target_menu;
++	struct menu* last_menu=menu;
++	while (tmp != NULL)
++	{
++		if (tmp->parent == menu)
++			return last_menu;
++
++		tmp = tmp->parent;
++		if (tmp == NULL) return tmp;
++		
++		if ( (tmp->prompt != NULL && tmp->prompt->type == P_MENU) || 
++			(tmp->sym != NULL && sym_is_choice(tmp->sym)))
++			last_menu = tmp;
++	}
++	return tmp;
++}
++
++
++
+ static void conf(struct menu *menu)
+ {
+ 	struct dialog_list_item *active_item = NULL;
+@@ -511,11 +616,52 @@
+ 	unlink("lxdialog.scrltmp");
+ 	active_entry[0] = 0;
+ 	while (1) {
++	
++		/* if we're in search mode then we're still looking for the parent menu of the menu found by the search.
++		 * We don't even know if we're moving up the tree or down the tree at this point.  find_search_menu does
++		 * the work.  If it returns NULL then we need to move down the tree (closer to the root).  If it returns an actual
++		 * menu then that menu is either the child of this menu to call conf on or if it is this menu then we're at the parent
++		 * menu of the target_menu.  how confusing! - cabird@gmail.com
++		 */
++		if (searching)
++		{
++			struct menu *next_menu = find_search_menu(menu);
++			if (next_menu == NULL)
++				return;
++			else if (next_menu != menu)
++			{
++				if (next_menu->sym != NULL && sym_is_choice(next_menu->sym))
++					conf_choice(next_menu);
++				else
++					conf(next_menu);
++				/* we have no idea what the state is when returning from these.  A new search could
++				 * have been started, so just continue, effectivelyu jumping to the top of the while loop
++				 */
++				continue;
++			}
++			/* if neither of these were true then we're at the right place
++			 * so let execution fall through 
++			 */
++		}
++			
++		
+ 		indent = 0;
+ 		child_count = 0;
+ 		current_menu = menu;
+ 		cdone(); cinit();
+ 		build_conf(menu);
++		
++		/* set the correct active entry */
++		if (searching)
++		{		
++			/* we found the correct menu so stop the searching */
++			searching = false;
++			snprintf(active_entry, sizeof(active_entry), "%s", (char *)target_menu->data);
++			active_entry[sizeof(active_entry)-1] = 0;
++		}
++
++			
++			
+ 		if (!child_count)
+ 			break;
+ 		if (menu == &rootmenu) {
+@@ -605,6 +751,39 @@
+ 		case 7:
+ 			search_conf();
+ 			break;
++		case 8:
++			target_menu = search_page_dialog(submenu, true);
++			if (target_menu != submenu)
++				searching = true;
++			break;	
++		case 9:
++			target_menu = search_page_dialog(submenu, false);
++			if (target_menu != submenu)
++				searching = true;
++			break;	
++#ifdef PAGE_SEARCH
++		case 8:
++			submenu = search_page_dialog(submenu, true);
++			snprintf(active_entry, sizeof(active_entry), "%s", (char *)submenu->data);
++			active_entry[sizeof(active_entry)-1] = 0;
++			break;
++		case 9:
++			submenu = search_page_dialog(submenu, false);
++			snprintf(active_entry, sizeof(active_entry), "%s", (char *)submenu->data);
++			active_entry[sizeof(active_entry)-1] = 0;
++			break;
++#endif
++		case 10:
++			submenu = search_page(submenu, true);
++			snprintf(active_entry, sizeof(active_entry), "%s", (char *)submenu->data);
++			active_entry[sizeof(active_entry)-1] = 0;
++			break;
++		case 11:
++			submenu = search_page(submenu, false);
++			snprintf(active_entry, sizeof(active_entry), "%s", (char *)submenu->data);
++			active_entry[sizeof(active_entry)-1] = 0;
++			break;
++		
+ 		}
+ 	}
+ }
+@@ -660,21 +839,35 @@
+ 
+ 	active = sym_get_choice_value(menu->sym);
+ 	while (1) {
++		/* if we're in search mode and the target_menu's parent is not this menu then we're
++		 * in the wrong place.  As far as I know, there can only be one level of menu's below
++		 * a choice menu
++		 */
++		if (searching && target_menu->parent != menu)
++		{
++			return;
++		}
+ 		current_menu = menu;
+ 		cdone(); cinit();
+ 		for (child = menu->list; child; child = child->next) {
+ 			if (!menu_is_visible(child))
+ 				continue;
+ 			cmake();
+-			cprint_tag("%p", child);
++			cprint_tag_menu("%p", child);
+ 			cprint_name("%s", menu_get_prompt(child));
++		
++				/* set the enabled menu to 1 and the active menu to 2.  If we're in search mode and child is
++				 * the target menu then set it as active.
++				 */
+ 			if (child->sym == sym_get_choice_value(menu->sym))
+ 				items[item_no - 1]->selected = 1; /* ON */
+-			else if (child->sym == active)
++				else if ( (child->sym == active && !searching)  || (searching && child == target_menu))
+ 				items[item_no - 1]->selected = 2; /* SELECTED */
+ 			else
+ 				items[item_no - 1]->selected = 0; /* OFF */
+ 		}
++		/* we've done all of our searching specific stuff so return to normal mode */
++		searching = false;
+ 
+ 		switch (dialog_checklist(prompt ? prompt : "Main Menu",
+ 					radiolist_instructions, 15, 70, 6,
+@@ -691,6 +884,24 @@
+ 			} else
+ 			show_help(menu);
+ 			break;
++		/* these next two cases handle searching forwards and backwards
++		 * we get the currently highlighted node, then search to find the
++		 * first menu option after this that fits the search pattern
++		 */
++		case 8:
++			if (sscanf(first_sel_item(item_no, items)->tag, "%p", &child) != 1)
++				break;
++			target_menu = search_page_dialog(child, true);
++			if (target_menu != child)
++				searching = true;
++			break;	
++		case 9:
++			if (sscanf(first_sel_item(item_no, items)->tag, "%p", &child) != 1)
++				break;
++			target_menu = search_page_dialog(child, false);
++			if (target_menu != child)
++				searching = true;
++			break;	
+ 		case 255:
+ 			return;
+ 		}
+@@ -816,6 +1027,7 @@
+ 
+ 	conf_parse(av[1]);
+ 	conf_read(NULL);
++	menu_assign_ids();
+ 
+ 	//sym = sym_lookup("CONFIGURATION_NAME", 0);
+ 	//sym_calc_value(sym);
+Binary files lkc-1.4/.mconf.c.swp and lkc-1.4-search/.mconf.c.swp differ
+diff -bruN lkc-1.4/menu.c lkc-1.4-search/menu.c
+--- lkc-1.4/menu.c	2005-09-06 14:48:06.000000000 -0700
++++ lkc-1.4-search/menu.c	2005-09-06 14:32:59.000000000 -0700
+@@ -5,6 +5,7 @@
+ 
+ #include <stdlib.h>
+ #include <string.h>
++#include <regex.h>
+ 
+ #define LKC_DIRECT_LINK
+ #include "lkc.h"
+@@ -16,6 +17,13 @@
+ struct file *file_list;
+ struct file *current_file;
+ 
++
++/* after call to menu_assign_ids this will be an array of all the menus in the option tree in
++ * depth first traversal order */
++struct menu **menu_list;
++int num_menus;
++
++
+ void menu_init(void)
+ {
+ 	current_entry = current_menu = &rootmenu;
+@@ -253,7 +261,11 @@
+ 			menu->next = menu->list;
+ 			menu->list = NULL;
+ 		}
++		if (menu->next)
++			menu->next->prev = menu;
+ 	}
++	if (parent->list)
++		parent->list->prev = NULL;
+ 
+ 	if (sym && !(sym->flags & SYMBOL_WARNED)) {
+ 		struct symbol *sym2;
+@@ -355,3 +367,68 @@
+ 	return menu;
+ }
+ 
++/* call this first with addToList=false to set the ids of each menu
++ * then call this with addToList=true to add pointers to the menus
++ * to the menuList
++ */
++void menu_assign_ids_recursive(struct menu *menu, bool addToList)
++{
++	if (addToList)
++		menu_list[menu->id] = menu;
++	else
++		menu->id = num_menus++;
++	if (menu->list != NULL)
++		menu_assign_ids_recursive(menu->list, addToList);
++	if (menu->next != NULL)
++		menu_assign_ids_recursive(menu->next, addToList);
++}
++
++void menu_assign_ids()
++{
++	menu_assign_ids_recursive(&rootmenu, false);
++	menu_list = malloc(num_menus * sizeof(struct menu *));
++	menu_assign_ids_recursive(&rootmenu, true);
++}
++
++
++/* seems kinda dumb to separate this out, but it makes things easier */
++inline int next_id(int id, bool forward)
++{
++	if (forward)
++		return (id < num_menus-1 ? id + 1 : 0);
++	else
++		return (id > 0 ? id - 1: num_menus-1);	
++}
++
++struct menu *menu_re_search(const char *pattern, struct menu *menu, bool forward)
++{
++	struct menu *orig_menu = menu;
++	
++	int id;
++	regex_t re;
++
++	/* skip if empty */
++	if (strlen(pattern) == 0)
++		return orig_menu;
++	if (regcomp(&re, pattern, REG_EXTENDED|REG_NOSUB|REG_ICASE))
++		return orig_menu;
++
++	id = next_id(menu->id, forward);
++	menu = menu_list[id];
++	while (menu_list[id] != orig_menu)
++	{
++		if (menu_is_visible(menu))
++		{
++			if (menu->sym != NULL && menu->sym->name && !regexec(&re, menu->sym->name, 0, NULL, 0))
++				break;
++			if (menu->prompt != NULL && menu->prompt->text && !regexec(&re, menu->prompt->text, 0, NULL, 0))
++				break;
++		}
++		id = next_id(id, forward);
++		menu = menu_list[id];
++	}
++	regfree(&re);
++	return menu;
++}
++
++	
+Binary files lkc-1.4/.menu.c.swp and lkc-1.4-search/.menu.c.swp differ
+diff -bruN lkc-1.4/symbol.c lkc-1.4-search/symbol.c
+--- lkc-1.4/symbol.c	2005-09-06 14:48:12.000000000 -0700
++++ lkc-1.4-search/symbol.c	2005-08-30 15:29:13.000000000 -0700
+@@ -705,6 +704,38 @@
+        return sym_arr;
+ }
+ 
++struct menu *sym_re_search_page(const char *pattern, struct menu *menu, bool forward)
++{
++	struct menu *orig_menu = menu;
++	regex_t re;
++
++	/* Skip if empty */
++	if (strlen(pattern) == 0)
++		return orig_menu;
++	if (regcomp(&re, pattern, REG_EXTENDED|REG_NOSUB|REG_ICASE))
++		return orig_menu;
++
++
++	menu = (forward ? menu->next : menu->prev);
++	while(menu != orig_menu)
++	{
++		if (menu->sym != NULL && menu->sym->name && !regexec(&re, menu->sym->name, 0, NULL, 0))
++			break;
++		if ( (forward ? menu->next : menu->prev) != NULL)
++			menu = (forward ? menu->next : menu->prev);
++		else
++		{
++			menu = menu->parent->list;
++			//if we're searching backwards then go all the way to the end
++			if (!forward)
++				for (; menu->next != NULL; menu = menu->next);
++		}
++			  
++	}
++	regfree(&re);
++	return menu;
++}
++	   
+ 
+ struct symbol *sym_check_deps(struct symbol *sym);
+ 

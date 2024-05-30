@@ -1,0 +1,1305 @@
+diff -Naur dhcp-3.0.3b1.orig/client/clparse.c dhcp-3.0.3b1/client/clparse.c
+--- dhcp-3.0.3b1.orig/client/clparse.c	2004-11-24 23:09:14.000000000 +0530
++++ dhcp-3.0.3b1/client/clparse.c	2005-07-19 12:34:33.000000000 +0530
+@@ -43,6 +43,7 @@
+ 
+ struct client_config top_level_config;
+ 
++/*option 120 is added over here*/
+ u_int32_t default_requested_options [] = {
+ 	DHO_SUBNET_MASK,
+ 	DHO_BROADCAST_ADDRESS,
+@@ -51,6 +52,7 @@
+ 	DHO_DOMAIN_NAME,
+ 	DHO_DOMAIN_NAME_SERVERS,
+ 	DHO_HOST_NAME,
++	DHO_SIP_SERVERS,
+ 	0
+ };
+ 
+diff -Naur dhcp-3.0.3b1.orig/client/dhclient.c dhcp-3.0.3b1/client/dhclient.c
+--- dhcp-3.0.3b1.orig/client/dhclient.c	2005-03-03 22:25:22.000000000 +0530
++++ dhcp-3.0.3b1/client/dhclient.c	2005-07-19 12:34:33.000000000 +0530
+@@ -46,7 +45,7 @@
+ const char *path_dhclient_pid = _PATH_DHCLIENT_PID;
+ static char path_dhclient_script_array [] = _PATH_DHCLIENT_SCRIPT;
+ char *path_dhclient_script = path_dhclient_script_array;
+-
++char *path_seperate_log="temp"; /* The SIP server file path*/
+ int dhcp_max_agent_option_packet_length = 0;
+ 
+ int interfaces_requested = 0;
+@@ -56,6 +55,12 @@
+ struct in_addr inaddr_any;
+ struct sockaddr_in sockaddr_broadcast;
+ struct in_addr giaddr;
++/*variable is used to calculate the time stamp*/
++struct timeval tv1;
++struct timeval tv2;
++struct timezone tz1;
++struct timezone tz2;
++int no_entry_dhcpdiscover=0;
+ 
+ /* ASSERT_STATE() does nothing now; it used to be
+    assert (state_is == state_shouldbe). */
+@@ -74,8 +79,11 @@
+ int onetry=0;
+ int quiet=0;
+ int nowait=0;
+-
++int no_seperate_log=0;
++int no_mips_log=0;
++int in_mips_log=0;
+ static void usage PROTO ((void));
++time_t time_1,time_2;
+ 
+ void do_release(struct client_state *);
+ 
+@@ -159,7 +166,13 @@
+                                 usage ();
+                         path_dhclient_conf = argv [i];
+ 			no_dhclient_conf = 1;
+-                } else if (!strcmp (argv [i], "-lf")) {
++                }else if(!strcmp(argv [i],"-sl")){
++			/*This section parses the option required to create the sip server file*/
++			if(++i == argc)
++				usage();
++			path_seperate_log = argv[i];
++			no_seperate_log=1;
++		}else if (!strcmp (argv [i], "-lf")) {
+                         if (++i == argc)
+                                 usage ();
+                         path_dhclient_db = argv [i];
+@@ -169,7 +182,10 @@
+ 				usage ();
+                         path_dhclient_script = argv [i];
+ 			no_dhclient_script = 1;
+-		} else if (!strcmp (argv [i], "-1")) {
++		}else if(!strcmp(argv[i],"-dl")){
++			/*this is used to check the time stamp is required or not*/
++			no_mips_log=1; 
++		}else if (!strcmp (argv [i], "-1")) {
+ 			onetry = 1;
+ 		} else if (!strcmp (argv [i], "-q")) {
+ 			quiet = 1;
+@@ -476,9 +492,9 @@
+ 	log_info (arr);
+ 	log_info (url);
+ 
+-	log_error ("Usage: dhclient [-1dqr] [-nw] [-p <port>] %s",
++	log_error ("Usage: dhclient [-1dqr] [-dl] [-nw] [-p <port>] %s",
+ 		   "[-s server]");
+-	log_error ("                [-cf config-file] [-lf lease-file]%s",
++	log_error ("    [-sl sip-server-file]  [-cf config-file] [-lf lease-file]%s",
+ 		   "[-pf pid-file] [-e VAR=val]");
+ 	log_fatal ("                [-sf script-file] [interface]");
+ }
+@@ -890,7 +902,22 @@
+ 	/* Set up a timeout to start the renewal process. */
+ 	add_timeout (client -> active -> renewal,
+ 		     state_bound, client, 0, 0);
+-
++	/*this is used to calculate the time stamp*/
++	if(no_mips_log)
++	{
++		/*calculate the time*/
++		time(&time_2);
++		gettimeofday(&tv2,&tz2);
++		/* if the time is not in seconds then calculate the time in microseconds*/
++		if(time_2-time_1)
++		{
++			log_info("the time taken for this activity is %ld seconds",time_2-time_1); 
++		}
++		else
++		{
++			log_info("the time taken for this activity is %d micro seconds",tv2.tv_usec-tv1.tv_usec);
++		}
++	}
+ 	log_info ("bound to %s -- renewal in %ld seconds.",
+ 	      piaddr (client -> active -> address),
+ 	      (long)(client -> active -> renewal - cur_time));
+@@ -1358,7 +1385,11 @@
+ 	int result;
+ 	int interval;
+ 	int increase = 1;
+-
++	if(!in_mips_log)
++	{		
++		time(&time_1);
++		no_entry_dhcpdiscover=1;
++	}	
+ 	/* Figure out how long it's been since we started transmitting. */
+ 	interval = cur_time - client -> first_sending;
+ 
+@@ -1569,7 +1600,16 @@
+ 	int interval;
+ 	struct sockaddr_in destination;
+ 	struct in_addr from;
+-
++	/* find the time when its send a request for time stamp calculation*/
++	if(in_mips_log||!no_entry_dhcpdiscover)
++	{
++		time(&time_1);
++		gettimeofday(&tv1,&tz1);
++	}
++	else
++	{
++		in_mips_log=1;
++	}
+ 	/* Figure out how long it's been since we started transmitting. */
+ 	interval = cur_time - client -> first_sending;
+ 
+@@ -2203,9 +2243,9 @@
+ {
+ 	const char *name, *dot;
+ 	struct data_string ds;
+-	int status;
++	int status,fd,tmp_var=1;
+ 	struct client_state *client;
+-
++	char tmp[120];
+ 	memset (&ds, 0, sizeof ds);
+ 
+ 	if (u != &dhcp_universe) {
+@@ -2217,6 +2257,32 @@
+ 	}
+ 	if (evaluate_option_cache (&ds, packet, lease, client_state,
+ 				   in_options, cfg_options, scope, oc, MDL)) {
++		/*compare and check if the sip server option is send or not*/
++		if(!strcasecmp(oc->option->name,"SIP-Servers"))
++		{
++			/*if the option contains -sl store the sip server option in a sip file*/
++			if(no_seperate_log==1)
++			{
++				remove(path_seperate_log);
++				fd=open(path_seperate_log,O_WRONLY|O_CREAT,S_IRWXU|S_IRWXG|S_IRWXO);
++				if(fd<0)
++				{
++					printf("Auxiliary file open failed");
++				}
++				strncpy(tmp,pretty_print_option(oc->option,ds.data,ds.len,1,1),ds.len+2);
++				tmp[ds.len+3]='\0';
++				while(tmp_var<ds.len+2)
++				{
++					if(tmp[tmp_var]==',')
++					{
++						tmp[tmp_var]='\n';
++					}
++					tmp_var++;
++				}
++				write(fd,tmp+1,ds.len);
++				close(fd);
++			}			
++		}		
+ 		fprintf (leaseFile,
+ 			 "  option %s%s%s %s;\n",
+ 			 name, dot, oc -> option -> name,
+diff -Naur dhcp-3.0.3b1.orig/common/Makefile.dist dhcp-3.0.3b1/common/Makefile.dist
+--- dhcp-3.0.3b1.orig/common/Makefile.dist	2004-09-22 02:03:35.000000000 +0530
++++ dhcp-3.0.3b1/common/Makefile.dist	2005-07-19 12:34:33.000000000 +0530
+@@ -39,7 +39,7 @@
+ 
+ libdhcp.a:	$(OBJ)
+ 	rm -f libdhcp.a
+-	ar cruv libdhcp.a $(OBJ)
++	$(CROSS)ar cruv libdhcp.a $(OBJ)
+ 	$(RANLIB) libdhcp.a
+ 
+ install: all
+diff -Naur dhcp-3.0.3b1.orig/common/tables.c dhcp-3.0.3b1/common/tables.c
+--- dhcp-3.0.3b1.orig/common/tables.c	2004-09-01 22:36:35.000000000 +0530
++++ dhcp-3.0.3b1/common/tables.c	2005-07-19 12:34:33.000000000 +0530
+@@ -210,7 +210,7 @@
+ 	{ "unknown-117", "X",				&dhcp_universe, 117 },
+ 	{ "subnet-selection", "X",			&dhcp_universe, 118 },
+ 	{ "unknown-119", "X",				&dhcp_universe, 119 },
+-	{ "unknown-120", "X",				&dhcp_universe, 120 },
++	{ "SIP-Servers", "t",				&dhcp_universe, 120 },
+ 	{ "unknown-121", "X",				&dhcp_universe, 121 },
+ 	{ "unknown-122", "X",				&dhcp_universe, 122 },
+ 	{ "unknown-123", "X",				&dhcp_universe, 123 },
+diff -Naur dhcp-3.0.3b1.orig/configure dhcp-3.0.3b1/configure
+--- dhcp-3.0.3b1.orig/configure	2004-09-11 02:32:30.000000000 +0530
++++ dhcp-3.0.3b1/configure	2005-07-19 12:34:33.000000000 +0530
+@@ -19,7 +19,7 @@
+     copts=$2
+     shift
+   elif [ x$sysname = x ]; then
+-    sysname=$1
++    sysname=$1;
+   else
+     echo "Unexpected argument: $1"
+   fi
+diff -Naur dhcp-3.0.3b1.orig/dhcpctl/Makefile.dist dhcp-3.0.3b1/dhcpctl/Makefile.dist
+--- dhcp-3.0.3b1.orig/dhcpctl/Makefile.dist	2005-03-03 22:25:23.000000000 +0530
++++ dhcp-3.0.3b1/dhcpctl/Makefile.dist	2005-07-19 12:34:34.000000000 +0530
+@@ -44,7 +44,7 @@
+ 
+ libdhcpctl.a:	$(OBJ)
+ 	rm -f libdhcpctl.a
+-	ar cruv libdhcpctl.a $(OBJ)
++	$(CROSS)ar cruv libdhcpctl.a $(OBJ)
+ 	$(RANLIB) libdhcpctl.a
+ 
+ install: all $(CATMANPAGES)
+diff -Naur dhcp-3.0.3b1.orig/dst/Makefile.dist dhcp-3.0.3b1/dst/Makefile.dist
+--- dhcp-3.0.3b1.orig/dst/Makefile.dist	2004-06-10 23:29:28.000000000 +0530
++++ dhcp-3.0.3b1/dst/Makefile.dist	2005-07-19 12:34:34.000000000 +0530
+@@ -34,7 +34,7 @@
+ 
+ libdst.a:	$(OBJ)
+ 	rm -f dst.a
+-	ar cruv libdst.a $(OBJ)
++	$(CROSS)ar cruv libdst.a $(OBJ)
+ 	$(RANLIB) libdst.a
+ 
+ depend:
+diff -Naur dhcp-3.0.3b1.orig/includes/dhcp.h dhcp-3.0.3b1/includes/dhcp.h
+--- dhcp-3.0.3b1.orig/includes/dhcp.h	2004-06-10 23:29:29.000000000 +0530
++++ dhcp-3.0.3b1/includes/dhcp.h	2005-07-19 12:34:34.000000000 +0530
+@@ -149,6 +149,8 @@
+ #define DHO_USER_CLASS			77
+ #define DHO_FQDN			81
+ #define DHO_DHCP_AGENT_OPTIONS		82
++/*option 120 for sip servers is added over here*/
++#define DHO_SIP_SERVERS			120
+ #define DHO_SUBNET_SELECTION		118 /* RFC3011! */
+ /* The DHO_AUTHENTICATE option is not a standard yet, so I've
+    allocated an option out of the "local" option space for it on a
+diff -Naur dhcp-3.0.3b1.orig/INSTALL dhcp-3.0.3b1/INSTALL
+--- dhcp-3.0.3b1.orig/INSTALL	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/INSTALL	2005-07-21 16:48:41.000000000 +0530
+@@ -0,0 +1,8 @@
++#These are the instructions for building and installing dhcp.
++1) ./configure
++2) make
++3) make install prefix=$BUILD_ROOT
++	After this step, we can deploy the image onto the target board and test.
++
++ To remove the binary and object files use the command
++4) make clean  prefix=$BUILD_ROOT
+diff -Naur dhcp-3.0.3b1.orig/Makefile dhcp-3.0.3b1/Makefile
+--- dhcp-3.0.3b1.orig/Makefile	2004-06-10 23:29:10.000000000 +0530
++++ dhcp-3.0.3b1/Makefile	2005-07-21 12:16:41.000000000 +0530
+@@ -35,6 +35,7 @@
+ 	else \
+ 	   (cd work.$$sysname; make all); \
+ 	fi
++	$(CROSS)gcc -g -o tests/parser/parse tests/parser/parse.c
+ 
+ install:
+ 	@sysname=`./configure --print-sysname`; \
+@@ -43,6 +44,31 @@
+ 	else \
+ 	   (cd work.$$sysname; make install); \
+ 	fi
++	cp tests/config_script/dhclient.conf  $(prefix)/etc/
++	cp tests/config_script/dhcpd.conf $(prefix)/etc/
++	install -c -m 777 tests/config_script/dhclient-exit-hooks $(prefix)/etc/
++	mkdir $(prefix)/etc/rc.d/
++	install -d  $(prefix)/etc/rc.d/init.d/
++	install -c -m 444 tests/startup_script/S30dhclient $(prefix)/sbin/
++	install -c -m 444 tests/startup_script/S30dhclient $(prefix)/etc/rc.d/init.d/
++	install -c -m 444 tests/startup_script/S31dhcpd $(prefix)/etc/rc.d/init.d/
++	chmod a+x $(prefix)/sbin/S30dhclient
++	chmod a+x $(prefix)/etc/rc.d/init.d/S30dhclient
++	chmod a+x $(prefix)/etc/rc.d/init.d/S31dhcpd
++	install -d $(prefix)/var/state/
++	install -d $(prefix)/var/state/dhcp/
++	install -c -m 666 tests/config_script/dhcpd.leases  $(prefix)/var/state/dhcp/dhcpd.leases
++	install -c -m 666 tests/config_script/dhclient.leases $(prefix)/var/state/dhcp/dhclient.leases
++	mkdir $(prefix)/etc/test
++	mkdir $(prefix)/etc/test/test_script/
++	mkdir $(prefix)/etc/test/config_script/
++	cp -rf tests/config_script/* $(prefix)/etc/test/config_script/
++	cp -rf tests/test_script/* $(prefix)/etc/test/test_script/
++	chmod a+x $(prefix)/etc/test/test_script/*
++	install -d  $(prefix)/bin/
++	install  -c -m 444 tests/parser/parse $(prefix)/bin/
++	chmod a+x $(prefix)/bin/parse
++
+ 
+ depend:
+ 	@sysname=`./configure --print-sysname`; \
+@@ -59,6 +85,7 @@
+ 	else \
+ 	   (cd work.$$sysname; make clean); \
+ 	fi
++	rm -f tests/parser/parse 
+ 
+ realclean:
+ 	@sysname=`./configure --print-sysname`; \
+diff -Naur dhcp-3.0.3b1.orig/Makefile.conf dhcp-3.0.3b1/Makefile.conf
+--- dhcp-3.0.3b1.orig/Makefile.conf	2004-11-24 23:09:13.000000000 +0530
++++ dhcp-3.0.3b1/Makefile.conf	2005-07-19 12:34:33.000000000 +0530
+@@ -23,31 +23,31 @@
+ 
+ ## Defaults...
+ SCRIPT = none
+-USERBINDIR = /usr/bin
+-BINDIR = /usr/sbin
+-CLIENTBINDIR=/sbin
+-ADMMANDIR = /usr/share/man/cat8
++USERBINDIR =${prefix}/usr/bin
++BINDIR = ${prefix}/usr/sbin
++CLIENTBINDIR=${prefix}/sbin
++ADMMANDIR = ${prefix}/usr/share/man/cat8
+ ADMMANEXT = .0
+-FFMANDIR = /usr/share/man/cat5
++FFMANDIR = ${prefix}/usr/share/man/cat5
+ FFMANEXT = .0
+-LIBMANDIR = /usr/share/man/cat3
++LIBMANDIR = ${prefix}/usr/share/man/cat3
+ LIBMANEXT = .0
+-USRMANDIR = /usr/share/man/cat1
++USRMANDIR = ${prefix}/usr/share/man/cat1
+ USRMANEXT = .0
+ MANCAT = cat
+ INSTALL = install -c -m 444
+ MANINSTALL = install -c
+ CHMOD = chmod
+ CATMANPAGES =
+-ETC = /etc
+-VARRUN = /var/run
+-VARDB = /var/db
+-LIBDIR=/usr/local/lib
+-INCDIR=/usr/local/include
++ETC = ${prefix}/etc
++VARRUN = ${prefix}/var/run
++VARDB = ${prefix}/var/db
++LIBDIR=${prefix}/usr/local/lib
++INCDIR=${prefix}/usr/local/include
+ LIBS =
+ COPTS = $(BINDDEF) $(CC_OPTIONS)
+-DEBUG = -g
+-RANLIB = ranlib
++DEBUG = 
++RANLIB = $(CROSS)ranlib
+ MKDEP = mkdep
+ CLIENT_PATH = '"PATH=/usr/ucb:/usr/bin:/usr/sbin:/bin:/sbin"'
+ 
+@@ -92,7 +93,7 @@
+ ## NEXTSTEP 3.x,4.x
+ ##--nextstep--
+ #CF = cf/nextstep.h
+-#CC=cc
++CC=$(CROSS)gcc
+ #COPTS = -Wall $(BINDDEF) $(CC_OPTIONS)
+ #BINDIR=/usr/etc
+ #ADMMANDIR = /usr/local/man/cat8
+@@ -314,17 +315,17 @@
+ #COPTS = -DLINUX_MAJOR=$(MAJORVERSION) -DLINUX_MINOR=$(MINORVERSION) \
+ #        $(BINDDEF) $(CC_OPTIONS)
+ #CF = cf/linux.h
+-#ADMMANDIR = /usr/man/man8
++#ADMMANDIR = ${prefix}/usr/man/man8
+ #ADMMANEXT = .8
+-#FFMANDIR = /usr/man/man5
++#FFMANDIR = ${prefix}/usr/man/man5
+ #FFMANEXT = .5
+-#LIBMANDIR = /usr/man/man3
++#LIBMANDIR = ${prefix}/usr/man/man3
+ #LIBMANEXT = .3
+-#USRMANDIR = /usr/man/man1
++#USRMANDIR = ${prefix}/usr/man/man1
+ #USRMANEXT = .1
+ #MANCAT = man
+-#VARRUN = /var/run
+-#VARDB = /var/state/dhcp
++#VARRUN = ${prefix}/var/run
++#VARDB = ${prefix}/var/state/dhcp
+ #SCRIPT=linux
+ ##--linux-2.2--
+ 
+diff -Naur dhcp-3.0.3b1.orig/minires/Makefile.dist dhcp-3.0.3b1/minires/Makefile.dist
+--- dhcp-3.0.3b1.orig/minires/Makefile.dist	2004-06-10 23:29:40.000000000 +0530
++++ dhcp-3.0.3b1/minires/Makefile.dist	2005-07-19 12:34:34.000000000 +0530
+@@ -40,7 +40,7 @@
+ 
+ libres.a:	$(OBJ)
+ 	rm -f res.a
+-	ar cruv libres.a $(OBJ)
++	$(CROSS)ar cruv libres.a $(OBJ)
+ 	$(RANLIB) libres.a
+ 
+ depend:
+diff -Naur dhcp-3.0.3b1.orig/omapip/Makefile.dist dhcp-3.0.3b1/omapip/Makefile.dist
+--- dhcp-3.0.3b1.orig/omapip/Makefile.dist	2004-09-22 02:03:13.000000000 +0530
++++ dhcp-3.0.3b1/omapip/Makefile.dist	2005-07-19 12:34:34.000000000 +0530
+@@ -48,7 +48,7 @@
+ 
+ libomapi.a:	$(OBJ)
+ 	rm -f libomapi.a
+-	ar cruv libomapi.a $(OBJ)
++	$(CROSS)ar cruv libomapi.a $(OBJ)
+ 	$(RANLIB) libomapi.a
+ 
+ install: all
+diff -Naur dhcp-3.0.3b1.orig/README_sip dhcp-3.0.3b1/README_sip
+--- dhcp-3.0.3b1.orig/README_sip	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/README_sip	2005-07-20 18:06:34.000000000 +0530
+@@ -0,0 +1,17 @@
++This README specifies new functionality added to dhclient
++1) The option "-sl <filename>" is used to specify the SIP server file path. 
++	where 
++		filename - the name of the SIP server file.
++
++
++2) The option "-dl" is included to obtain the IP renewal time.
++
++
++3) The default configuration file is tests/config_script/dhclient.conf.  Necessary changes such as default IP address, dns server address, and lease time must be added to this file before running test scripts.
++
++
++4) The test shell script is installed in etc/test/test_script/ directory on the target board , the same can be used to evaluate the test cases.
++
++5) Request for a SIP server option by using a request tag in dhclient.conf file
++	
++	Example: request subnet-mask,broadcast-address,time-offset,routers,domain-name,domain-name-servers,host-name,SIP-Servers;
+diff -Naur dhcp-3.0.3b1.orig/README_RFC3361 dhcp-3.0.3b1/README_RFC3361
+--- dhcp-3.0.3b1.orig/README_RFC3361	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/README_RFC3361	2005-07-19 17:56:07.000000000 +0530
+@@ -0,0 +1,10 @@
++The README specifies the new functionality added to the dhclient
++1)The default configuration file(dhclient.conf)  resides in tests/config_script/dhclient.conf necessary changes such as default ip address,dns server address and lease time required should be added here before running MAKE install.
++
++3) option SIP code 120=string; in dhclient.conf  will enable the sip server option.
++
++2) On system startup dhclient will query for SIP servers and returned data will be placed in $new_SIP environmental variable.
++
++4) /bin/parse will parse the $new_SIP data and write to the file passed as an argument to it.
++
++5) /bin/parse will be called in the /etc/dhclient-exit-hooks and dhclient-exit-hooks will be called on successful IP renewal.
+diff -Naur dhcp-3.0.3b1.orig/tests/config_script/dhclient1.conf dhcp-3.0.3b1/tests/config_script/dhclient1.conf
+--- dhcp-3.0.3b1.orig/tests/config_script/dhclient1.conf	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/config_script/dhclient1.conf	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,32 @@
++timeout 1;
++retry 60;
++reboot 10;
++select-timeout 5;
++initial-interval 2;
++reject 192.33.137.209;
++option SIP code 120=string;
++interface "eth0" {
++           send host-name "dhcphost";
++           send dhcp-client-identifier 00:04:9f:96:9c:4d;
++	   send dhcp-lease-time 60;
++           supersede domain-name "emsys.net";
++           prepend domain-name-servers 203.145.184.13;
++           request subnet-mask, broadcast-address, time-offset, routers,
++                domain-name, domain-name-servers, host-name,SIP;
++           require subnet-mask, domain-name-servers;
++      }
++
++
++lease {
++  interface "eth0";
++  fixed-address 192.168.1.168;
++  medium "eth0 link0 link1";
++  option host-name "dhcphost";
++  option subnet-mask 255.255.255.0;
++  option broadcast-address 192.168.1.255;
++  option routers 192.168.1.1;
++  option domain-name-servers 203.145.184.13;
++  renew 2 2005/1/12 00:00:01;
++  rebind 2 2005/1/12 00:00:01;
++  expire 2 2005/7/12 00:00:01;
++}
+diff -Naur dhcp-3.0.3b1.orig/tests/config_script/dhclient2.conf dhcp-3.0.3b1/tests/config_script/dhclient2.conf
+--- dhcp-3.0.3b1.orig/tests/config_script/dhclient2.conf	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/config_script/dhclient2.conf	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,32 @@
++timeout 1;
++retry 60;
++reboot 10;
++select-timeout 5;
++initial-interval 2;
++reject 192.33.137.209;
++option SIP code 120=string;
++interface "eth0" {
++           send host-name "dhcphost";
++           send dhcp-client-identifier 00:04:9f:96:9c:4d;
++	   send dhcp-lease-time 360;
++           supersede domain-name "emsys.net";
++           prepend domain-name-servers 203.145.184.13;
++           request subnet-mask, broadcast-address, time-offset, routers,
++                domain-name, domain-name-servers, host-name,SIP;
++           require subnet-mask, domain-name-servers;
++      }
++
++
++lease {
++  interface "eth0";
++  fixed-address 192.168.1.168;
++  medium "eth0 link0 link1";
++  option host-name "dhcphost";
++  option subnet-mask 255.255.255.0;
++  option broadcast-address 192.168.1.255;
++  option routers 192.168.1.1;
++  option domain-name-servers 203.145.184.13;
++  renew 2 2005/1/12 00:00:01;
++  rebind 2 2005/1/12 00:00:01;
++  expire 2 2005/7/12 00:00:01;
++}
+diff -Naur dhcp-3.0.3b1.orig/tests/config_script/dhclient3.conf dhcp-3.0.3b1/tests/config_script/dhclient3.conf
+--- dhcp-3.0.3b1.orig/tests/config_script/dhclient3.conf	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/config_script/dhclient3.conf	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,32 @@
++timeout 1;
++retry 60;
++reboot 10;
++select-timeout 5;
++initial-interval 2;
++reject 192.33.137.209;
++option SIP code 120=string;
++interface "eth0" {
++           send host-name "dhcphost";
++           send dhcp-client-identifier 00:04:9f:96:9c:4d;
++	   send dhcp-lease-time 9090;
++           supersede domain-name "emsys.net";
++           prepend domain-name-servers 203.145.184.13;
++           request subnet-mask, broadcast-address, time-offset, routers,
++                domain-name, domain-name-servers, host-name,SIP;
++           require subnet-mask, domain-name-servers;
++      }
++
++
++lease {
++  interface "eth0";
++  fixed-address 192.168.1.168;
++  medium "eth0 link0 link1";
++  option host-name "dhcphost";
++  option subnet-mask 255.255.255.0;
++  option broadcast-address 192.168.1.255;
++  option routers 192.168.1.1;
++  option domain-name-servers 203.145.184.13;
++  renew 2 2005/1/12 00:00:01;
++  rebind 2 2005/1/12 00:00:01;
++  expire 2 2005/7/12 00:00:01;
++}
+diff -Naur dhcp-3.0.3b1.orig/tests/config_script/dhclient4.conf dhcp-3.0.3b1/tests/config_script/dhclient4.conf
+--- dhcp-3.0.3b1.orig/tests/config_script/dhclient4.conf	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/config_script/dhclient4.conf	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,32 @@
++timeout 1;
++retry 60;
++reboot 10;
++select-timeout 5;
++initial-interval 2;
++reject 192.33.137.209;
++option SIP code 120=string;
++interface "eth0" {
++           send host-name "dhcphost";
++           send dhcp-client-identifier 00:04:9f:96:9c:4d;
++	   send dhcp-lease-time 0xffffffff;
++           supersede domain-name "emsys.net";
++           prepend domain-name-servers 203.145.184.13;
++           request subnet-mask, broadcast-address, time-offset, routers,
++                domain-name, domain-name-servers, host-name,SIP;
++           require subnet-mask, domain-name-servers;
++      }
++
++
++lease {
++  interface "eth0";
++  fixed-address 192.168.1.168;
++  medium "eth0 link0 link1";
++  option host-name "dhcphost";
++  option subnet-mask 255.255.255.0;
++  option broadcast-address 192.168.1.255;
++  option routers 192.168.1.1;
++  option domain-name-servers 203.145.184.13;
++  renew 2 2005/1/12 00:00:01;
++  rebind 2 2005/1/12 00:00:01;
++  expire 2 2005/7/12 00:00:01;
++}
+diff -Naur dhcp-3.0.3b1.orig/tests/config_script/dhclient.conf dhcp-3.0.3b1/tests/config_script/dhclient.conf
+--- dhcp-3.0.3b1.orig/tests/config_script/dhclient.conf	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/config_script/dhclient.conf	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,32 @@
++timeout 1;
++retry 60;
++reboot 10;
++select-timeout 5;
++initial-interval 2;
++reject 192.33.137.209;
++option SIP code 120=string;
++interface "eth0" {
++           send host-name "dhcphost";
++           send dhcp-client-identifier 00:04:9f:96:9c:4d;
++	   send dhcp-lease-time 3600;
++           supersede domain-name "emsys.net";
++           prepend domain-name-servers 203.145.184.13;
++           request subnet-mask, broadcast-address, time-offset, routers,
++                domain-name,domain-name-servers, host-name,SIP;
++           require subnet-mask, domain-name-servers;
++      }
++
++
++lease {
++  interface "eth0";
++  fixed-address 192.168.1.168;
++  medium "eth0 link0 link1";
++  option host-name "dhcphost";
++  option subnet-mask 255.255.255.0;
++  option broadcast-address 192.168.1.255;
++  option routers 192.168.1.1;
++  option domain-name-servers 203.145.184.13;
++  renew 2 2005/1/12 00:00:01;
++  rebind 2 2005/1/12 00:00:01;
++  expire 2 2005/7/12 00:00:01;
++}
+diff -Naur dhcp-3.0.3b1.orig/tests/config_script/dhclient-exit-hooks dhcp-3.0.3b1/tests/config_script/dhclient-exit-hooks
+--- dhcp-3.0.3b1.orig/tests/config_script/dhclient-exit-hooks	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/config_script/dhclient-exit-hooks	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,2 @@
++FILEPATH=/var/sip_server
++/bin/parse $new_SIP $FILEPATH
+diff -Naur dhcp-3.0.3b1.orig/tests/config_script/dhclient.leases dhcp-3.0.3b1/tests/config_script/dhclient.leases
+--- dhcp-3.0.3b1.orig/tests/config_script/dhclient.leases	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/config_script/dhclient.leases	2005-07-21 11:22:48.000000000 +0530
+@@ -0,0 +1,3 @@
++
++
++
+diff -Naur dhcp-3.0.3b1.orig/tests/config_script/dhcpd.conf dhcp-3.0.3b1/tests/config_script/dhcpd.conf
+--- dhcp-3.0.3b1.orig/tests/config_script/dhcpd.conf	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/config_script/dhcpd.conf	2005-07-19 16:51:29.000000000 +0530
+@@ -0,0 +1,46 @@
++ddns-update-style interim;
++ignore client-updates;
++option SIP code 120 = string;
++subnet 192.168.2.0  netmask 255.255.255.0 {
++
++# --- default gateway
++	option routers			192.168.2.1,192.168.2.2,192.168.2.3;
++	option subnet-mask		255.255.255.0;
++	option nis-domain		"domain.org";
++	option domain-name		"domain.org";
++#	option SIP			0:7:65:78:61:6d:70:6c:65:3:63:6f:6d:0:7:65:78:61:6d:70:6c:65:3:6e:65:74;
++	option SIP			1:24:45:67:89;
++	option domain-name-servers	203.145.184.13;
++	option broadcast-address	192.168.1.255;
++	option time-offset		-18000;	# Eastern Standard Time
++#	option ntp-servers		192.168.1.1;
++#	option netbios-name-servers	192.168.1.1;
++# --- Selects point-to-point node (default is hybrid). Don't change this unless
++# -- you understand Netbios very well
++#	option netbios-node-type 2;
++
++	range dynamic-bootp 192.168.2.3 192.168.2.254;
++	
++	
++	#default-lease-time 1000;
++	default-lease-time 21600;
++	#max-lease-time 1200;
++	max-lease-time 6000;
++
++	# we want the nameserver to appear at a fixed address
++	host ns {
++		next-server marvin.redhat.com;
++		hardware ethernet 12:34:56:78:AB:CD;
++		fixed-address 207.175.42.254;
++	}
++	host anand {
++			hardware ethernet 00:11:11:07:80:68;
++			fixed-address 192.168.2.155;
++			option host-name "anand";
++	}
++	host dhcphost {
++			hardware ethernet 00:04:9f:96:9c:4d;
++			fixed-address 192.168.2.168;
++			option host-name "dhcphost";
++	}
++}
+diff -Naur dhcp-3.0.3b1.orig/tests/config_script/dhcpd.leases dhcp-3.0.3b1/tests/config_script/dhcpd.leases
+--- dhcp-3.0.3b1.orig/tests/config_script/dhcpd.leases	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/config_script/dhcpd.leases	2005-07-21 11:21:30.000000000 +0530
+@@ -0,0 +1,3 @@
++
++
++
+diff -Naur dhcp-3.0.3b1.orig/tests/parser/parse.c dhcp-3.0.3b1/tests/parser/parse.c
+--- dhcp-3.0.3b1.orig/tests/parser/parse.c	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/parser/parse.c	2005-07-19 13:35:42.000000000 +0530
+@@ -0,0 +1,126 @@
++/*
++ * Parser program
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ *
++ * Copyright (C) 2005 Metrowerks , a freescale semiconductor , Inc . company.
++ * ALL Rights Reserved.
++ *
++ */
++/********************************************************************
++ *			Includes
++ ********************************************************************/
++ #include <stdio.h>
++ #include <string.h>
++ #include <fcntl.h>
++/********************************************************************
++ *    			Main function
++ *******************************************************************/
++ int main(int argc,char *argv[])
++ {
++	
++	char *token;
++	char ip_address[16];
++	int loop=0,size,i;
++	FILE *fd ;
++	char octets[5];
++        ip_address[0]='\0';
++	/* usage */
++	if(argc==1)
++	{
++		printf("\n Usage : parse [SIP server data] [ file name] \n");
++		
++		return 0;		
++	}
++	/* open file which should contain sip server data */
++	if((fd=fopen(argv[2],"w+"))==NULL)
++	{
++		return 0;
++	}
++	token=strtok(argv[1],":");
++	if(!strcmp(token,"1"))
++	{
++	
++		while((token=strtok(NULL,":"))!=NULL)
++        	{							
++			
++                	fprintf(fd,"%d",strtol(token,NULL,16));
++			loop++;
++			if(loop==4)
++			{
++				fprintf(fd,"\n");
++				loop=0;
++			}
++			else
++			{
++				fprintf(fd,".");
++			}
++	       	}		
++
++	}
++	else
++	{
++		while((token=strtok(NULL,":"))!=NULL)
++                {
++			size=strtol(token,NULL,16);
++			for(i=0;i<size;i++)
++			{                
++				if((token=strtok(NULL,":"))!=NULL)
++				{
++                        		fprintf(fd,"%c",strtol(token,NULL,16));
++				}
++				else
++				{
++					fclose(fd);
++					return 0;
++				}
++			}					
++			fprintf(fd,".");
++			if((token=strtok(NULL,":"))==NULL)
++                        {
++                                break;
++                        }
++			size=strtol(token,NULL,16);
++                        for(i=0;i<size;i++)
++                        {
++                                if((token=strtok(NULL,":"))!=NULL)
++                                {
++                                        fprintf(fd,"%c",strtol(token,NULL,16));
++                                }
++                                else
++                                {
++                                        fclose(fd);
++                                        return 0;
++                                }
++                        }
++			fprintf(fd,"\n");
++			if((token=strtok(NULL,":"))==NULL)
++			{
++				break;
++			}
++			size=strtol(token,NULL,16);
++			if((size=strtol(token,NULL,16))!=0)
++			{
++				/*close file*/
++				fclose(fd);
++				return(0);
++			}
++                }
++
++	}
++	/*close file*/
++	fclose(fd);	
++	return 0;
++ }
+diff -Naur dhcp-3.0.3b1.orig/tests/startup_script/S30dhclient dhcp-3.0.3b1/tests/startup_script/S30dhclient
+--- dhcp-3.0.3b1.orig/tests/startup_script/S30dhclient	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/startup_script/S30dhclient	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,72 @@
++# /bin/sh
++#
++# /etc/rc.d/init.d/S30dhcpd - Start/Stop/restart  the DHCP Client daemon(s).
++#
++#Description : dhclient provides a mechanism for requesting the dynamic ip address from the dhcp server
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf  		: The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid		: The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script		: The script specify the different names and /or locations for these files
++KILLWAIT=3
++DAEMON="dhclient"       
++
++if [ ! -x /sbin/dhclient ]; then
++	echo "dhclient not installed check it out"
++	exit 1
++fi	
++
++if [ ! -x /sbin/ip ]; then
++        echo "$0: Missing /sbin/ip"
++        exit 1
++fi
++
++if [ ! -f /etc/dhclient.conf ]; then
++	echo "$0:Missing /etc/dhclient.conf file"
++	exit 1
++fi
++
++if [ ! -f /sbin/dhclient-script ]; then
++	echo "$0:Missing /sbin/dhclient-script file"
++	exit 1
++fi
++
++case "$1" in
++                                                                                                                             
++    start)
++        # Ensure eth0 device is there
++        if ! ip link | grep -q 'eth0'; then
++                echo "$0: Network interface eth0 not present" >&2
++                exit 2;
++        fi
++        echo "Starting ${DAEMON}"	
++        ${DAEMON}
++        if [ "$?" = "0" ]; then echo "Done"
++        else                    echo "FAILED"; fi
++        sleep 1
++        ;;
++                                                                                                                             
++    stop)
++        echo "Stopping ${DAEMON}"
++        killall -9 ${DAEMON}
++        sleep ${KILLWAIT}
++        if [ "$?" = "0" ]; then echo "Done"
++        else                    echo "FAILED"; fi
++        ;;
++                                                                                                                             
++    restart)
++        $0 stop
++        sleep 1
++        $0 start
++        ;;
++ *)
++        echo "Usage: $0 (start|stop|restart)"
++        exit 1
++        ;;
++                                                                                                                             
++esac
++                                                                                                                             
++exit 0
++
+diff -Naur dhcp-3.0.3b1.orig/tests/startup_script/S31dhcpd dhcp-3.0.3b1/tests/startup_script/S31dhcpd
+--- dhcp-3.0.3b1.orig/tests/startup_script/S31dhcpd	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/startup_script/S31dhcpd	2005-07-19 16:58:43.000000000 +0530
+@@ -0,0 +1,58 @@
++#! /bin/sh
++
++#
++# /etc/rc.d/init.d/S31dhcpd - Start/Stop the DHCP server daemon(s).
++#
++
++# Comment out the following exit line to enable this script.
++# Before doing so, you need to edit the /etc/dhcpd.conf file.
++exit 0
++
++KILLWAIT=3
++DAEMON="dhcpd"
++
++if [ ! -x /sbin/ip ]; then
++	echo "$0: Missing /sbin/ip"
++	exit 1
++fi
++
++case "$1" in
++
++    start)
++	# Ensure eth0 device is there
++	if ! ip link | grep -q 'eth0'; then
++		echo "$0: Network interface eth0 not present" >&2
++		exit 2
++	fi
++
++	echo "Starting ${DAEMON}"
++	${DAEMON}
++	if [ "$?" = "0" ]; then echo "Done"
++	else                    echo "FAILED"; fi
++	sleep 1
++	;;
++
++    stop)
++	echo "Stopping ${DAEMON}"
++	killall ${DAEMON}
++	sleep ${KILLWAIT}
++	killall -9 ${DAEMON}
++	if [ "$?" = "0" ]; then echo "Done"
++	else                    echo "FAILED"; fi
++	;;
++
++    restart)
++	$0 stop
++	sleep 1
++	$0 start
++	;;
++
++    *)
++	echo "Usage: $0 (start|stop|restart)"
++	exit 1
++	;;
++
++esac
++
++exit 0
++
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_background dhcp-3.0.3b1/tests/test_script/test_background
+--- dhcp-3.0.3b1.orig/tests/test_script/test_background	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_background	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,23 @@
++# /bin/sh
++#
++#Description : This tests runs the dhclient in the background and check the performance on the other process
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf             : The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid          : The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script          : The script specify the different names and/or locations for these files
++SCRIPT="dhclient"
++if [ ! -x /sbin/dhclient ]; then
++        echo "dhclient not installed check it out"
++        exit 1
++fi
++echo "Running dhclient in the background"
++echo "press control-c or controll-Z whenever u want to exit"
++rm -f /var/state/dhcp/dhclient.leases
++touch /var/state/dhcp/dhclient.leases
++cp -f ../config_script/dhclient1.conf /etc/dhclient.conf
++sleep 1
++${SCRIPT} &
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_dhclient_exit_hooks_enc0 dhcp-3.0.3b1/tests/test_script/test_dhclient_exit_hooks_enc0
+--- dhcp-3.0.3b1.orig/tests/test_script/test_dhclient_exit_hooks_enc0	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_dhclient_exit_hooks_enc0	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,11 @@
++# /bin/sh
++#
++#Description : This tests the simulates the dhclient sip server option for a encode bit set to 0
++#
++SCRIPT="/etc/dhclient-exit-hooks"
++echo "test sip server option with encode bit set to 0"
++export new_SIP="0:7:65:78:61:6d:70:6c:65:3:63:6f:6d:0:7:65:78:61:6d:70:6c:65:3:6e:65:74"
++sleep 1
++${SCRIPT}
++echo "now check the file /var/sip_server for sip-server data"
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_dhclient_exit_hooks_enc1 dhcp-3.0.3b1/tests/test_script/test_dhclient_exit_hooks_enc1
+--- dhcp-3.0.3b1.orig/tests/test_script/test_dhclient_exit_hooks_enc1	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_dhclient_exit_hooks_enc1	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,11 @@
++# /bin/sh
++#
++#Description : This tests the simulates the dhclient sip server option for a encode bit set to 1
++#
++SCRIPT="/etc/dhclient-exit-hooks"
++echo "test sip server option with encode bit set to 0"
++export new_SIP="1:34:56:99:01:34:56:56:67"
++sleep 1
++${SCRIPT}
++echo "now check the file /var/sip_server for sip-server data"
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_leasetime dhcp-3.0.3b1/tests/test_script/test_leasetime
+--- dhcp-3.0.3b1.orig/tests/test_script/test_leasetime	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_leasetime	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,23 @@
++# /bin/sh
++#
++#Description : This tests the dhclient with a default lease time of 10 seconds 
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf             : The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid          : The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script          : The script specify the different names and/or locations for these files
++SCRIPT="dhclient"
++if [ ! -x /sbin/dhclient ]; then
++        echo "dhclient not installed check it out"
++        exit 1
++fi
++echo "Running dhclient with a default lease time of 10 seconds"
++echo "press control-c or controll-Z whenever u want to exit"
++rm -f /var/state/dhcp/dhclient.leases
++touch /var/state/dhcp/dhclient.leases
++cp -f ../config_script/dhclient1.conf /etc/dhclient.conf
++sleep 1
++${SCRIPT} -d
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_leasetime_15minutes dhcp-3.0.3b1/tests/test_script/test_leasetime_15minutes
+--- dhcp-3.0.3b1.orig/tests/test_script/test_leasetime_15minutes	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_leasetime_15minutes	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,23 @@
++# /bin/sh
++#
++#Description : This tests the dhclient with a lease time of 15 minutes
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf             : The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid          : The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script          : The script specify the different names and/or locations for these files
++SCRIPT="dhclient"
++if [ ! -x /sbin/dhclient ]; then
++        echo "dhclient not installed check it out"
++        exit 1
++fi
++echo "Running dhclient with a default lease time of 15 minutes"
++echo "press control-c or controll-Z whenever u want to exit"
++rm -f /var/state/dhcp/dhclient.leases
++touch /var/state/dhcp/dhclient.leases
++cp -f ../config_script/dhclient3.conf /etc/dhclient.conf
++sleep 1
++${SCRIPT} -d
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_leasetime_6minutes dhcp-3.0.3b1/tests/test_script/test_leasetime_6minutes
+--- dhcp-3.0.3b1.orig/tests/test_script/test_leasetime_6minutes	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_leasetime_6minutes	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,23 @@
++# /bin/sh
++#
++#Description : This tests the dhclient with a lease time of 6 minutes 
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf             : The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid          : The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script          : The script specify the different names and/or locations for these files
++SCRIPT="dhclient"
++if [ ! -x /sbin/dhclient ]; then
++        echo "dhclient not installed check it out"
++        exit 1
++fi
++echo "Running dhclient with a default lease time of  6 minutes"
++echo "press control-c or controll-Z whenever u want to exit"
++rm -f /var/state/dhcp/dhclient.leases
++touch /var/state/dhcp/dhclient.leases
++cp -f ../config_script/dhclient2.conf /etc/dhclient.conf
++sleep 1
++${SCRIPT} -d
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_leasetime_infinity dhcp-3.0.3b1/tests/test_script/test_leasetime_infinity
+--- dhcp-3.0.3b1.orig/tests/test_script/test_leasetime_infinity	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_leasetime_infinity	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,24 @@
++# /bin/sh
++#
++#Description : This tests the dhclient with a lease time of infinity
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf             : The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid          : The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script          : The script specify the different names and/or locations for these files
++SCRIPT="dhclient"
++if [ ! -x /sbin/dhclient ]; then
++        echo "dhclient not installed check it out"
++        exit 1
++fi
++echo "Running dhclient with a default lease time of infinity"
++echo "but check that the server is configured with a max lease time of infinity"
++echo "press control-c or controll-Z whenever u want to exit"
++rm -f /var/state/dhcp/dhclient.leases
++touch /var/state/dhcp/dhclient.leases
++cp -f ../config_script/dhclient4.conf /etc/dhclient.conf
++sleep 1
++${SCRIPT} -d
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_mips_mhz dhcp-3.0.3b1/tests/test_script/test_mips_mhz
+--- dhcp-3.0.3b1.orig/tests/test_script/test_mips_mhz	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_mips_mhz	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,24 @@
++# /bin/sh
++#
++#Description : This tests the dhclient to calculate the mips/mhz requirement
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf             : The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid          : The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script          : The script specify the different names and/or locations for these files
++SCRIPT="dhclient"
++if [ ! -x /sbin/dhclient ]; then
++        echo "dhclient not installed check it out"
++        exit 1
++fi
++echo "Running dhclient with a default lease time of 10 seconds"
++echo "the time stamps give the time consumed for request i.e MIPS and MHZ"
++echo "press control-c or controll-Z whenever u want to exit"
++rm -f /var/state/dhcp/dhclient.leases
++touch /var/state/dhcp/dhclient.leases
++cp -f ../config_script/dhclient1.conf /etc/dhclient.conf
++sleep 1
++${SCRIPT} -dl -d
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_sip_server dhcp-3.0.3b1/tests/test_script/test_sip_server
+--- dhcp-3.0.3b1.orig/tests/test_script/test_sip_server	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_sip_server	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,24 @@
++# /bin/sh
++#
++#Description : This dhclient is tested for option 120 sip servers
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf             : The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid          : The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script          : The script specify the different names and/or locations for these files
++SCRIPT="dhclient"
++if [ ! -x /sbin/dhclient ]; then
++        echo "dhclient not installed check it out"
++        exit 1
++fi
++echo "Running dhclient with a default lease time of 10 seconds"
++echo "the sip server list is found in the file /var/state/dhcp/sip_server"
++echo "press control-c or controll-Z whenever u want to exit"
++rm -f /var/state/dhcp/dhclient.leases
++touch /var/state/dhcp/dhclient.leases
++cp -f ../config_script/dhclient1.conf /etc/dhclient.conf
++sleep 1
++${SCRIPT} -sl /var/state/dhcp/sip_server -d
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_startup_restart dhcp-3.0.3b1/tests/test_script/test_startup_restart
+--- dhcp-3.0.3b1.orig/tests/test_script/test_startup_restart	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_startup_restart	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,27 @@
++# /bin/sh
++#
++#Description : This tests the dhclient start up script with an option restart
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf             : The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid          : The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script          : The script specify the different names and/or locations for these files
++SCRIPT="S30dhclient"
++if [ ! -x /sbin/dhclient ]; then
++        echo "dhclient not installed check it out"
++        exit 1
++fi
++if [ ! -x /sbin/S30dhclient ]; then
++        echo "dhclient system-V startup script does not exists"
++        exit 1
++fi
++echo "Running dhclient system-V startup script with a RESTART option"
++echo "press control-c or controll-Z whenever u want to exit"
++rm -f /var/state/dhcp/dhclient.leases
++touch /var/state/dhcp/dhclient.leases
++cp -f ../config_script/dhclient1.conf /etc/dhclient.conf
++sleep 1
++${SCRIPT} restart -d
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_startup_start dhcp-3.0.3b1/tests/test_script/test_startup_start
+--- dhcp-3.0.3b1.orig/tests/test_script/test_startup_start	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_startup_start	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,27 @@
++# /bin/sh
++#
++#Description : This tests the dhclient start up script with an option start
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf             : The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid          : The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script          : The script specify the different names and/or locations for these files
++SCRIPT="S30dhclient"
++if [ ! -x /sbin/dhclient ]; then
++        echo "dhclient not installed check it out"
++        exit 1
++fi
++if [ ! -x /sbin/S30dhclient ]; then
++        echo "dhclient system-V startup script does not exists"
++        exit 1
++fi
++echo "Running dhclient system-V startup script with a START option"
++echo "press control-c or controll-Z whenever u want to exit" 
++rm -f /var/state/dhcp/dhclient.leases
++touch /var/state/dhcp/dhclient.leases
++cp -f ../config_script/dhclient1.conf /etc/dhclient.conf
++sleep 1
++${SCRIPT} start -d
++exit 0
+diff -Naur dhcp-3.0.3b1.orig/tests/test_script/test_startup_stop dhcp-3.0.3b1/tests/test_script/test_startup_stop
+--- dhcp-3.0.3b1.orig/tests/test_script/test_startup_stop	1970-01-01 05:30:00.000000000 +0530
++++ dhcp-3.0.3b1/tests/test_script/test_startup_stop	2005-07-19 12:34:34.000000000 +0530
+@@ -0,0 +1,27 @@
++# /bin/sh
++#
++#Description : This tests the dhclient start up script with an option stop
++#
++#The following files is necessary for running the dhclient daemon(s)
++#
++#/etc/dhclient.conf             : The DHCP  client  normally  gets  its  configuration  information  from this file.
++#/var/lib/dhcp/dhclient.leases  : The DHCP client stores its lease database in this file.
++#/var/run/dhclient.pid          : The DHCP client stores its process ID in this file.
++#/sbin/dhclient-script          : The script specify the different names and/or locations for these files
++SCRIPT="S30dhclient"
++if [ ! -x /sbin/dhclient ]; then
++        echo "dhclient not installed check it out"
++        exit 1
++fi
++if [ ! -x /sbin/S30dhclient ]; then
++        echo "dhclient system-V startup script does not exists"
++        exit 1
++fi
++echo "Running dhclient system-V startup script with a STOP option"
++echo "press control-c or controll-Z whenever u want to exit"
++rm -f /var/state/dhcp/dhclient.leases
++touch /var/state/dhcp/dhclient.leases
++cp -f ../config_script/dhclient1.conf /etc/dhclient.conf
++sleep 1
++${SCRIPT} stop -d
++exit 0

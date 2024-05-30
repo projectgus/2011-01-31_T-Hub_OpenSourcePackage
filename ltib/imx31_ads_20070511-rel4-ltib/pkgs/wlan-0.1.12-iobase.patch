@@ -1,0 +1,20 @@
+diff -rpbBuN linux-wlan-ng-0.1.12/src/prism2/driver/hfa384x.c linux-wlan-ng-0.1.12.patched/src/prism2/driver/hfa384x.c
+--- linux-wlan-ng-0.1.12/src/prism2/driver/hfa384x.c	2001-12-12 12:29:43.000000000 -0700
++++ linux-wlan-ng-0.1.12.patched/src/prism2/driver/hfa384x.c	2004-03-23 16:34:12.000000000 -0700
+@@ -3070,6 +3070,16 @@ void hfa384x_interrupt(int irq, void *de
+ 	int			ev_read = 0;
+ 	DBFENTER;
+ 
++	/*
++	 * If we get an interrupt before hfa384x_create()
++	 * is called, then hw->iobase isn't set up.
++	 * Protect ourselves against that, and the off
++	 * chance that 'hw' isn't set up either, by
++	 * ignoring this interrupt.
++	 */
++	if( !hw || !hw->iobase)
++		return;
++
+ 	/* Check swsupport reg magic # for card presence */
+ 	reg = hfa384x_getreg(hw, HFA384x_SWSUPPORT0);
+ 	if ( reg != HFA384x_DRVR_MAGIC) {

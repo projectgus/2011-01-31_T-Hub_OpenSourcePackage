@@ -1,0 +1,32 @@
+CR: TLSbo87330
+Patch name: TLSbo87330_V4L2_LoopBack_Demo_Fail.patch
+Date: Thu Mar 8 15:32:28 2007 +0800
+Source: Freescale Semiconductor, Inc.
+Description: Can not run V4L2 loopback demo repeatedly on i.MX27/i.MX31
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_v4l2_capture.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-04-25 17:37:08.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-04-25 17:38:46.000000000 -0600
+@@ -124,6 +124,9 @@ static void mxc_free_frames(cam_data * c
+ 
+ 	cam->enc_counter = 0;
+ 	cam->skip_frame = 0;
++	INIT_LIST_HEAD(&cam->ready_q);
++	INIT_LIST_HEAD(&cam->working_q);
++	INIT_LIST_HEAD(&cam->done_q);
+ }
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.c linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.c	2007-04-25 17:28:15.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.c	2007-04-25 17:38:46.000000000 -0600
+@@ -139,6 +139,9 @@ static void mxc_free_frames(cam_data * c
+ 
+ 	cam->enc_counter = 0;
+ 	cam->skip_frame = 0;
++	INIT_LIST_HEAD(&cam->ready_q);
++	INIT_LIST_HEAD(&cam->working_q);
++	INIT_LIST_HEAD(&cam->done_q);
+ }
+ 
+ /*!

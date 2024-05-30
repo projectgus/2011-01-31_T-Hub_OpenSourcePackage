@@ -1,0 +1,23 @@
+diff --exclude CVS -uNr skell-1.12/etc/rc.d/init.d/smb skell-1.12.modified/etc/rc.d/init.d/smb
+--- skell-1.12/etc/rc.d/init.d/smb	1969-12-31 19:00:00.000000000 -0500
++++ skell-1.12.modified/etc/rc.d/init.d/smb	2006-04-07 11:18:23.382729184 -0400
+@@ -0,0 +1,19 @@
++#!/bin/sh
++
++case "$1" in
++  start)
++    echo -n "Starting SMB services: "
++    nmbd $NMBD_ARGS
++    sleep 1
++    smbd $SMBD_ARGS
++    ;;
++  stop)
++    echo -n "Shutting down SMB services: "
++    killall smbd
++    killall nmbd
++    ;;
++  *)
++    echo "Usage: smb {start|stop}"
++    exit 1
++esac
++

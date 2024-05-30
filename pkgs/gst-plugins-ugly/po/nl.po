@@ -1,0 +1,61 @@
+# translation of gst-plugins-ugly to Dutch
+# Copyright (C) 2004, 2007 Free Software Foundation, Inc.
+#
+# Freek de Kruijf <f.de.kruijf@hetnet.nl>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-ugly-0.10.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-06-13 12:52+0200\n"
+"PO-Revision-Date: 2007-03-20 11:05+0100\n"
+"Last-Translator: Freek de Kruijf <f.de.kruijf@hetnet.nl>\n"
+"Language-Team: Dutch <vertaling@vrijschrift.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.2\n"
+"Plural-Forms:  nplurals=2; plural=(n != 1);\n"
+
+#: ext/dvdread/dvdreadsrc.c:228 ext/dvdread/dvdreadsrc.c:235
+msgid "Could not open DVD"
+msgstr "Kan DVD niet openen"
+
+#: ext/dvdread/dvdreadsrc.c:242 ext/dvdread/dvdreadsrc.c:594
+#: ext/dvdread/dvdreadsrc.c:601
+#, c-format
+msgid "Could not open DVD title %d"
+msgstr "Kan DVD-titel %d niet openen"
+
+#: ext/dvdread/dvdreadsrc.c:248
+#, c-format
+msgid "Failed to go to chapter %d of DVD title %d"
+msgstr "Kan niet naar hoofdstuk %d van DVD-titel %d gaan"
+
+#: ext/dvdread/dvdreadsrc.c:608
+#, c-format
+msgid ""
+"Could not open DVD title %d. Interactive titles are not supported by this "
+"element"
+msgstr ""
+"Kan de DVD-titel %d niet openen. Interactieve titels worden door dit element "
+"niet ondersteund"
+
+#: ext/lame/gstlame.c:560
+msgid "Failed to configure LAME encoder. Check your encoding parameters."
+msgstr ""
+"Kan de LAME-encoder niet configureren. Controleer uw encodingparameters."
+
+#: ext/lame/gstlame.c:691
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#: gst/asfdemux/gstasfdemux.c:322
+msgid "This stream contains no data."
+msgstr ""
+
+#: gst/asfdemux/gstasfdemux.c:2936
+msgid "This file is encrypted and cannot be played."
+msgstr "Dit bestand is geëncrypt en kan niet afgespeeld worden."

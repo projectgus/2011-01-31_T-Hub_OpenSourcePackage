@@ -1,0 +1,161 @@
+Wed May  2 15:56:22 BST 2007, Stuart Hughes <stuarth at freescale dot com>
+
+This is a patch derived from:
+http://mail.gnome.org/archives/gtk-devel-list/2002-June/msg00124.html
+by Ali Harlow.  
+
+On Windows machines, the prefix in .pc files is automatically replaced
+with the basename of the directory the .pc file is found in.
+This patch extends that to work on non-windows platforms.  This
+is needed for cross compilation where the rootfilesystem will
+be built in a staging directory.
+
+Note that I've shown the patch you'd need for configure.in, but 
+I didn't run autoconfig/autoheader as you get too many spurious
+changes.  Instead I directly patched configure and config.h.in
+
+
+diff -uNr pkg-config-0.21/config.h.in pkg-config-0.21.mod/config.h.in
+--- pkg-config-0.21/config.h.in	2006-08-16 20:10:25.000000000 +0100
++++ pkg-config-0.21.mod/config.h.in	2007-05-02 15:32:34.000000000 +0100
+@@ -13,6 +13,9 @@
+ /* Link library to all dependent libraries, not only directly needed ones */
+ #undef ENABLE_INDIRECT_DEPS
+ 
++/* Replace prefix with guestimated value */
++#undef ENABLE_PREFIX_MUNGLING
++
+ /* Define to 1 if you have `alloca', as a function or macro. */
+ #undef HAVE_ALLOCA
+ 
+diff -uNr pkg-config-0.21/configure pkg-config-0.21.mod/configure
+--- pkg-config-0.21/configure	2006-08-16 20:10:18.000000000 +0100
++++ pkg-config-0.21.mod/configure	2007-05-02 15:30:08.000000000 +0100
+@@ -19471,6 +19508,12 @@
+ *) : ;;
+ esac
+ 
++
++cat >>confdefs.h <<\_ACEOF
++#define ENABLE_PREFIX_MUNGLING 1
++_ACEOF
++
++
+ if test x$native_win32 = xyes; then
+   # On Win32, use the normal installed GLib.  Yes, this is a circular
+   # dependency. But then, only experienced hackers that presumably can
+diff -uNr pkg-config-0.21/configure.in pkg-config-0.21.mod/configure.in
+--- pkg-config-0.21/configure.in	2006-08-16 20:09:30.000000000 +0100
++++ pkg-config-0.21.mod/configure.in	2007-05-02 14:49:04.000000000 +0100
+@@ -89,6 +89,8 @@
+ *) : ;;
+ esac
+ 
++AC_DEFINE(ENABLE_PREFIX_MUNGLING, 1, [Replace prefix with guestimated value])
++
+ if test x$native_win32 = xyes; then
+   # On Win32, use the normal installed GLib.  Yes, this is a circular
+   # dependency. But then, only experienced hackers that presumably can
+diff -uNr pkg-config-0.21/main.c pkg-config-0.21.mod/main.c
+--- pkg-config-0.21/main.c	2006-08-16 18:54:56.000000000 +0100
++++ pkg-config-0.21.mod/main.c	2007-05-02 14:52:34.000000000 +0100
+@@ -257,12 +257,14 @@
+       "show verbose information about missing or conflicting packages" },
+     { "errors-to-stdout", 0, POPT_ARG_NONE, &want_stdout_errors, 0,
+       "print errors from --print-errors to stdout not stderr" },
+-#ifdef G_OS_WIN32
++#if defined(G_OS_WIN32) || defined(ENABLE_PREFIX_MUNGLING)
+     { "dont-define-prefix", 0, POPT_ARG_NONE, &dont_define_prefix, 0,
+       "don't try to override the value of prefix for each .pc file found with "
+       "a guesstimated value based on the location of the .pc file" },
+     { "prefix-variable", 0, POPT_ARG_STRING, &prefix_variable, 0,
+       "set the name of the variable that pkg-config automatically sets", "PREFIX" },
++#endif
++#ifdef G_OS_WIN32
+     { "msvc-syntax", 0, POPT_ARG_NONE, &msvc_syntax, 0,
+       "output -l and -L flags for the Microsoft compiler (cl)" },
+ #endif
+diff -uNr pkg-config-0.21/parse.c pkg-config-0.21.mod/parse.c
+--- pkg-config-0.21/parse.c	2006-08-16 19:45:45.000000000 +0100
++++ pkg-config-0.21.mod/parse.c	2007-05-02 15:19:51.000000000 +0100
+@@ -33,9 +33,12 @@
+ #endif
+ #include <sys/types.h>
+ 
+-#ifdef G_OS_WIN32
++#if defined(G_OS_WIN32) || defined(ENABLE_PREFIX_MUNGLING)
+ int dont_define_prefix = FALSE;
+ char *prefix_variable = "prefix";
++#endif
++
++#ifdef G_OS_WIN32
+ int msvc_syntax = FALSE;
+ #endif
+ 
+@@ -990,7 +993,7 @@
+       if (pkg->vars == NULL)
+         pkg->vars = g_hash_table_new (g_str_hash, g_str_equal);
+ 
+-#ifdef G_OS_WIN32
++#if defined(G_OS_WIN32) || defined(ENABLE_PREFIX_MUNGLING)
+       if (!dont_define_prefix && strcmp (tag, prefix_variable) == 0)
+ 	{
+ 	  /* This is the prefix variable. Try to guesstimate a value for it
+@@ -999,12 +1002,20 @@
+ 
+ 	  gchar *prefix = pkg->pcfiledir;
+ 	  const int prefix_len = strlen (prefix);
++#ifdef G_OS_WIN32
+ 	  const char *const lib_pkgconfig = "\\lib\\pkgconfig";
++#else
++	  const char *const lib_pkgconfig = "/lib/pkgconfig";
+ 	  const int lib_pkgconfig_len = strlen (lib_pkgconfig);
+-
++#endif
+ 	  if (strlen (prefix) > lib_pkgconfig_len &&
++#ifdef G_OS_WIN32
+ 	      g_ascii_strcasecmp (prefix + prefix_len - lib_pkgconfig_len,
+ 				  lib_pkgconfig) == 0)
++#else
++	      strcmp (prefix + prefix_len - lib_pkgconfig_len,
++				  lib_pkgconfig) == 0)
++#endif
+ 	    {
+ 	      /* It ends in lib\pkgconfig. Good. */
+ 	      
+@@ -1013,6 +1024,7 @@
+ 	      prefix = g_strdup (prefix);
+ 	      prefix[prefix_len - lib_pkgconfig_len] = '\0';
+ 	      
++#ifdef G_OS_WIN32
+ 	      /* Turn backslashes into slashes or
+ 	       * poptParseArgvString() will eat them when ${prefix}
+ 	       * has been expanded in parse_libs().
+@@ -1024,6 +1036,7 @@
+ 		    *p = '/';
+ 		  p++;
+ 		}
++#endif
+ 	      varname = g_strdup (tag);
+ 	      debug_spew (" Variable declaration, '%s' overridden with '%s'\n",
+ 			  tag, prefix);
+diff -uNr pkg-config-0.21/pkg.h pkg-config-0.21.mod/pkg.h
+--- pkg-config-0.21/pkg.h	2006-08-16 18:05:30.000000000 +0100
++++ pkg-config-0.21.mod/pkg.h	2007-05-02 14:53:31.000000000 +0100
+@@ -123,13 +123,15 @@
+ /* If TRUE, do not automatically prefer uninstalled versions */
+ extern gboolean disable_uninstalled;
+ 
+-#ifdef G_OS_WIN32
++#if defined(G_OS_WIN32) || defined(ENABLE_PREFIX_MUNGLING)
+ /* If TRUE, do not automatically define "prefix"  while
+  * parsing each .pc file */
+ extern int dont_define_prefix;
+ /* The name of the variable that acts as prefix, unless it is "prefix" */
+ extern char *prefix_variable;
++#endif
+ 
++#ifdef G_OS_WIN32
+ /* If TRUE, output flags in MSVC syntax. */
+ extern int msvc_syntax;
+ #endif

@@ -1,0 +1,17 @@
+if KERNEL_DIR_BUILD
+
+config PKG_KERNEL_PATH_PRECONFIG
+    string "Enter your Linux source directory"
+    default "/usr/src/linux"
+    help
+       If you are building the Linux kernel using a local Linux
+       source tree, specify the absolute path to the tree here
+
+config PKG_KERNEL_KBUILD_PRECONFIG
+    string "KBUILD_OUTPUT path"
+    default "$PKG_KERNEL_PATH_PRECONFIG/../kbuild/$PLATFORM"
+    help
+       If you are building the Linux kernel using a local Linux
+       tree, specify the absolute path to set KBUILD_OUTPUT to.
+
+endif

@@ -1,0 +1,17 @@
+Sat Jan 06 2007 Kurt Mahan <kmahan@freescale.com>
+
+This fixed compilation issues with dqt trying to use freetype, opengl, sql,
+X11SM, xinerama and xrandr.
+
+diff -uNr qtopia-free-2.2.0/configure qtopia-free-2.2.0.jkm/configure
+--- qtopia-free-2.2.0/configure	2007-01-06 16:05:01.000000000 -0700
++++ qtopia-free-2.2.0.jkm/configure	2007-01-06 16:05:55.000000000 -0700
+@@ -181,7 +181,7 @@
+ 
+ # default configuration variables
+ DEFAULT_QT2_CFG="-no-opengl -no-xft -no-sm"
+-DEFAULT_DQT_CFG="-thread -qt-gif -fast"
++DEFAULT_DQT_CFG="-thread -qt-gif -fast -no-xft -disable-opengl -disable-sql -no-cups -no-sm  -no-xinerama -no-xcursor -no-xrandr -no-xrender"
+ 
+ DEFAULT_QTE_KEYPAD_CFG="-embedded -no-xft -qconfig qpe -qvfb -depths 4,8,16,32 -keypad-mode -system-jpeg -gif"
+ DEFAULT_QTE_NOKEYPAD_CFG="-embedded -no-xft -qconfig qpe -qvfb -depths 4,8,16,32 -system-jpeg -gif -D QT_TRANSFORM_VFB"

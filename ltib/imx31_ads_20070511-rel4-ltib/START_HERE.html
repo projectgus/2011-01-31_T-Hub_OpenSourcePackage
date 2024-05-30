@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <title>MX31ADS BSP Configuration Quick Start</title>
+  <style>
+  
+  <!-- Copyright 2005, Metrowerks, Inc. All rights reserved 
+    -- Copyright 2006, Freescale Seminconductor, Inc. All rights reserved -->
+<!--
+.style3
+	{font-size:12.0pt;
+	font-family:"Times New Roman";
+	color:#666666;}
+.style4
+	{font-size:12.0pt;
+	font-family:"Courier New";}
+.style5
+	{font-size:12.0pt;
+	font-family:"Times New Roman";
+	color:white;}
+.style31
+	{color:#666666;}
+.Section1
+	{page:Section1;}
+-->
+  </style>
+</head>
+<body style="background-color: rgb(255, 255, 255);" class="Normal"
+ alink="#ee0000" lang="EN-US" link="#0000ee" vlink="#993399">
+<div class="Section1">
+<table style="width: 760px;" border="0" cellpadding="0"
+ cellspacing="3">
+  <tbody>
+
+    <tr>
+<!-- This row contains the logo image and the page title only --> <td
+ style="width: 760px;" colspan="2" class="Normal">
+      <h1 style="text-align: center;" align="center"><img
+ src="Freescale_Logo.jpg" alt="Freescale Semiconductor"
+ style="border: 0px solid ; width: 466px; height: 162px;"></h1>
+      <h1 style="text-align: center;" align="center"><span
+ style="color: rgb(128, 153, 102);">MX31ADS System Documentation Overview</span></h1>
+<!--		<div style="text-align: center;"> </div> --> </td>
+    </tr>
+    <tr>
+<!-- This row is just a green separator bar --> <td colspan="2"
+ class="Normal"
+ style="vertical-align: top; background-color: rgb(128, 153, 102); width: 760px;">&nbsp;</td>
+
+    </tr>
+    <tr>
+<!-- This row contains the getting started and basic instructions for the BSP -->
+      <td style="width: 380px;" class="Normal" valign="top"><span
+ style="color: rgb(128, 153, 102);">Getting Started...</span>
+
+<p style="margin-left: 40px;"> <i> <span
+ style="color: rgb(102, 102, 102);">Instructions for connecting the i.MX31ADS board to a host system and building a project that can be used for program development.</span> </i> </p>
+
+          </td>
+<!-- Basic instructions to install the BSP --> <td class="Normal"
+ style="background-color: rgb(155, 155, 155); width: 380px;" width="50%">
+      <h4><span style="color: white;">Basic Instructions</span></h4>
+      <ol start="1" type="1">
+        <li style="color: white;">Install LTIB and the MX31ADS BSP</li>
+        <li style="color: white;">Connect i.MX31ADS eth0 to network</li>
+        <li style="color: white;">Connect UART0 to host computer COM port</li>
+
+        <li style="color: white;">Configure and build LTIB project for the board</li>
+        <li style="color: white;">Download and run built images on the target board</li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+
+<!-- Another green separator bar --> <td colspan="2" class="Normal"
+ style="vertical-align: top; background-color: rgb(128, 153, 102); width: 760px;">&nbsp;</td>
+    </tr>
+    <tr bgcolor="#ffffff">
+<!-- Column headers for software and hardware in green on white --> <td
+ style="width: 380px;" class="Normal" valign="top">
+      <h3><span style="color: rgb(128, 153, 102);">Software</span></h3>
+      </td>
+      <td style="width: 380px;" class="Normal" valign="top" width="50%">
+      <h3><span style="color: rgb(128, 153, 102);">Hardware</span></h3>
+
+      </td>
+    </tr>
+    <tr>
+<!-- One cell, divided into several sections. Each is separated by a white on green bar -->
+      <td style="width: 380px;" class="Normal" valign="top">
+      <h4
+ style="background: rgb(128, 153, 102) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-origin: initial; -moz-background-inline-policy: initial;"><span
+ style="color: white;">BSP notes</span></h4>
+      <ul type="disc">
+								<li>Linux BSP References</li>
+								<ul>
+									<li>BSP User Manual (<a
+ href="help/software/User_Manual_MX31ADS_LTIB_BSP.pdf">pdf</a>)</li>
+          <li> Release notes (<a href="help/software/Release_Notes_MX31ADS.txt">txt</a>)
+          </li>
+
+								</ul>
+								<li>Additional Documentation</li>
+								<ul>
+          <li>Linux BSP Reference Manual (<a href="help/software/mx31_linux.pdf">pdf</a>)
+          <li>USB (<a href="help/software/usb.pdf">pdf</a>)
+          <li>Power Managment (<a href="help/software/mx31_pm.howto">txt</a>)
+          <li>PCMIA  (<a href="help/software/pcmcia.pdf">pdf</a>)
+          <li>ATA (<a href="help/software/ata.pdf">pdf</a>)
+	  <li>ALSA Sound (<a href="help/software/alsa.pdf">pdf</a>)
+          <li>TV-Out (<a href="help/software/TV-OUT.pdf">pdf</a>)
+          <li>MBX documentation can be found at <a href="http://www.pvrdev.com">www.pvrdev.com</a>
+          <li>BSP Revision History (<a href="help/software/MX31ADS_Linux_BSP_Release_History.pdf">pdf</a>)
+          </li>
+
+          <li>Freescale EULA (<a href="EULA">txt</a>)
+          </li>
+	<li>Porting Guide from 2.6.16 to 2.6.19 kernel (<a href="help/software/PortingGuide.html">html</a>)</li>
+        </ul>
+</ul>
+
+      <h4
+ style="background: rgb(128, 153, 102) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-origin: initial; -moz-background-inline-policy: initial;"><span
+ style="color: white;">Other references</span></h4>
+      <ul type="disc">
+        <li><a href="http://www.freescale.com">Freescale Semiconductor </a></li>
+        <li><a href="http://www.kernel.org">Kernel.org</a></li>
+      </ul>
+      </td>
+      <td style="width: 380px;" class="Normal" valign="top" width="50%">
+      <h4
+ style="background: rgb(128, 153, 102) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-origin: initial; -moz-background-inline-policy: initial;"><span
+ style="color: white;">Board documentation</span></h4>
+      <h4><span class="style31">Check in your kit for the latest hardware documentation or on the web at <a href="http://www.freescale.com/imx31">www.freescale.com/imx31<a></span></code></h4>
+
+       </td>
+    </tr>    
+<tr>
+
+<!-- Another green separator bar --> <td colspan="2" class="Normal"
+ style="vertical-align: top; background-color: rgb(128, 153, 102); width: 760px;">&nbsp;</td>
+    </tr>
+
+   
+    <tr>
+<!-- A nice earthtone bar  with revision date, copyright notice and link to tech support. -->
+      <td style="width: 760px;" colspan="2" class="Normal"
+ bgcolor="#e6ccb3" valign="top">
+      <p style="text-align: center;" align="center">Revised: 10-MAY-2007<br>
+Technical Support: <a href="http://www.freescale.com/support">http://www.freescale.com/support</a><br>
+
+      <i><span style="color: rgb(102, 102, 102);">Copyright &copy;
+2005-2007 &nbsp; Freescale Semiconductor.&nbsp; All rights reserved.</span></i></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</body>
+</html>
+

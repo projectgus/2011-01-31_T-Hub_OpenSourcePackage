@@ -1,0 +1,236 @@
+From nobody Mon Sep 17 00:00:00 2001
+From: John Rigby <jrigby@freescale.com>
+Date: Tue, 29 Aug 2006 12:15:43 -0600
+Subject: [PATCH] gcc 4.1.1
+
+Fixes to make qtopia compile with gcc 4.1.1.
+
+These are all one or two liners that deal with gcc 4.1.1 being
+more true to ISO C++ standards.
+
+Two of the fixes came via email from David Boosalis at Trolltech.
+The rest were done by John Rigby at Freescale.
+
+Signed-off-by: John Rigby <jrigby@freescale.com>
+(cherry picked from bf1900d9b990814a9f79d1d6718f1ab4a9045302 commit)
+
+---
+
+ qt2/src/kernel/qwindowsystem_qws.h                 |    2 ++
+ qt2/src/tools/qvaluestack.h                        |    2 +-
+ qtopia/src/applications/addressbook/ablabel.h      |    2 +-
+ qtopia/src/games/minesweep/minefield.h             |    4 ++--
+ qtopia/src/libraries/mediaplayer/videoviewer.cpp   |    2 +-
+ qtopia/src/libraries/qtopia/backend/event.cpp      |    2 +-
+ qtopia/src/libraries/qtopia/qdawg.cpp              |    2 +-
+ qtopia/src/libraries/qtopia2/thumbnailview_p.h     |    2 +-
+ qtopia/src/libraries/qtopiapim/abtable_p.h         |    2 +-
+ qtopia/src/libraries/qtopiapim/numberentry_p.h     |    2 +-
+ qtopia/src/plugins/decorations/polished/polished.h |    2 +-
+ .../src/plugins/inputmethods/keyboard/keyboard.h   |    2 +-
+ qtopia/src/server/inputmethods.cpp                 |    2 +-
+ .../src/settings/buttoneditor/buttoneditordialog.h |    2 +-
+ qtopia/src/settings/qipkg/packagewizard.h          |    2 +-
+ 15 files changed, 17 insertions(+), 15 deletions(-)
+
+4ee187fc3534505fd386d41946f2fb8fddb0f1a1
+diff --git a/qt2/src/kernel/qwindowsystem_qws.h b/qt2/src/kernel/qwindowsystem_qws.h
+index 191405c..4e1a503 100644
+--- a/qt2/src/kernel/qwindowsystem_qws.h
++++ b/qt2/src/kernel/qwindowsystem_qws.h
+@@ -167,6 +167,8 @@ #endif
+ 
+ class QWSMouseHandler;
+ struct QWSCommandStruct;
++class QWSInputMethod;
++class QWSGestureMethod;
+ 
+ #ifndef QT_NO_QWS_MULTIPROCESS
+ class QWSServer : public QWSServerSocket
+diff --git a/qt2/src/tools/qvaluestack.h b/qt2/src/tools/qvaluestack.h
+index 64eb739..0ba59e8 100644
+--- a/qt2/src/tools/qvaluestack.h
++++ b/qt2/src/tools/qvaluestack.h
+@@ -54,7 +54,7 @@ public:
+     {
+ 	T elem( this->last() );
+ 	if ( !this->isEmpty() )
+-	    remove( this->fromLast() );
++	    QValueList<T>::remove( this->fromLast() );
+ 	return elem;
+     }
+     T& top() { return this->last(); }
+diff --git a/qtopia/src/applications/addressbook/ablabel.h b/qtopia/src/applications/addressbook/ablabel.h
+index 36426b3..c8d7096 100644
+--- a/qtopia/src/applications/addressbook/ablabel.h
++++ b/qtopia/src/applications/addressbook/ablabel.h
+@@ -75,7 +75,7 @@ public:
+ 
+     virtual void setSource( const QString& name );
+ 
+-    bool AbLabel::decodeHref(const QString& href, ServiceRequest* req, QString* pm) const;
++    bool decodeHref(const QString& href, ServiceRequest* req, QString* pm) const;
+     PimContact entry() const;
+ 
+ public slots:
+diff --git a/qtopia/src/games/minesweep/minefield.h b/qtopia/src/games/minesweep/minefield.h
+index e131b19..4a747f3 100644
+--- a/qtopia/src/games/minesweep/minefield.h
++++ b/qtopia/src/games/minesweep/minefield.h
+@@ -102,8 +102,8 @@ #ifdef QTOPIA_PHONE
+     bool mAlreadyHeld; // true if we've already taken action for holding down on the current key press
+ #endif
+     State stat;
+-    void MineField::setState( State st );
+-    void MineField::placeMines();
++    void setState( State st );
++    void placeMines();
+     enum FlagAction { NoAction, FlagOn, FlagNext };
+     FlagAction flagAction;
+     bool ignoreClick;
+diff --git a/qtopia/src/libraries/mediaplayer/videoviewer.cpp b/qtopia/src/libraries/mediaplayer/videoviewer.cpp
+index 8c7b107..9f94dbf 100644
+--- a/qtopia/src/libraries/mediaplayer/videoviewer.cpp
++++ b/qtopia/src/libraries/mediaplayer/videoviewer.cpp
+@@ -49,7 +49,7 @@ #include <qtopia/resource.h>
+ 
+ class SimpleVideoWidget : public ControlWidgetBase {
+ public:
+-    SimpleVideoWidget::SimpleVideoWidget(QWidget *parent);
++    SimpleVideoWidget(QWidget *parent);
+     ~SimpleVideoWidget() { }
+     void makeVisible() { }
+     void updateVolume() { }
+diff --git a/qtopia/src/libraries/qtopia/backend/event.cpp b/qtopia/src/libraries/qtopia/backend/event.cpp
+index d55a19d..2c666fb 100644
+--- a/qtopia/src/libraries/qtopia/backend/event.cpp
++++ b/qtopia/src/libraries/qtopia/backend/event.cpp
+@@ -415,7 +415,7 @@ int Event::occurrence( const QDate& date
+ int Event::dayOfWeek( char day )
+ {
+     int dayOfWeek = 1;
+-    char i = Event::MON;
++    unsigned int i = Event::MON;
+     while ( !( i & day ) && i <= Event::SUN ) {
+ 	i <<= 1;
+ 	++dayOfWeek;
+diff --git a/qtopia/src/libraries/qtopia/qdawg.cpp b/qtopia/src/libraries/qtopia/qdawg.cpp
+index 130e8af..11bb877 100644
+--- a/qtopia/src/libraries/qtopia/qdawg.cpp
++++ b/qtopia/src/libraries/qtopia/qdawg.cpp
+@@ -291,7 +291,7 @@ public:
+ 
+     bool ok() const { return node; }
+ 
+-    QDawgPrivate::~QDawgPrivate()
++    ~QDawgPrivate()
+     {
+ 	delete memoryFile;
+     }
+diff --git a/qtopia/src/libraries/qtopia2/thumbnailview_p.h b/qtopia/src/libraries/qtopia2/thumbnailview_p.h
+index 5cdbad4..6cbcc00 100644
+--- a/qtopia/src/libraries/qtopia2/thumbnailview_p.h
++++ b/qtopia/src/libraries/qtopia2/thumbnailview_p.h
+@@ -78,7 +78,7 @@ public:
+     void reload() { _loaded = loading = false; }
+     
+ protected:
+-    void ThumbnailItem::paintItem( QPainter*, const QColorGroup& );
++    void paintItem( QPainter*, const QColorGroup& );
+ 
+ private:
+     int _size;
+diff --git a/qtopia/src/libraries/qtopiapim/abtable_p.h b/qtopia/src/libraries/qtopiapim/abtable_p.h
+index f4ec28c..394caed 100644
+--- a/qtopia/src/libraries/qtopiapim/abtable_p.h
++++ b/qtopia/src/libraries/qtopiapim/abtable_p.h
+@@ -273,7 +273,7 @@ signals:
+     void selected(PimContact::ContactFields);
+ private:
+     //QString verboseIfEmpty( const QString &number );
+-    QListViewItem* PhoneTypeSelector::addType(QListViewItem* prevItem,
++    QListViewItem* addType(QListViewItem* prevItem,
+         QString number, const char* pixmapName, PimContact::ContactFields phoneType);
+ 
+     bool mShowEmpty;
+diff --git a/qtopia/src/libraries/qtopiapim/numberentry_p.h b/qtopia/src/libraries/qtopiapim/numberentry_p.h
+index 0cceef0..e88eefd 100644
+--- a/qtopia/src/libraries/qtopiapim/numberentry_p.h
++++ b/qtopia/src/libraries/qtopiapim/numberentry_p.h
+@@ -103,7 +103,7 @@ public:
+ 
+     virtual ~NumberEntryDialog();
+         
+-    bool NumberEntryDialog::eventFilter(QObject *o, QEvent *e);
++    bool eventFilter(QObject *o, QEvent *e);
+     
+     QStringList numberList();
+     QString number();
+diff --git a/qtopia/src/plugins/decorations/polished/polished.h b/qtopia/src/plugins/decorations/polished/polished.h
+index c04ab78..859fe9d 100644
+--- a/qtopia/src/plugins/decorations/polished/polished.h
++++ b/qtopia/src/plugins/decorations/polished/polished.h
+@@ -55,7 +55,7 @@ public:
+     Q_REFCOUNT
+ 
+ protected:
+-    void PolishedDecoration::drawBlend( QPainter *, const QRect &r, const QColor &c1, const QColor&c2 ) const;
++    void drawBlend( QPainter *, const QRect &r, const QColor &c1, const QColor&c2 ) const;
+ 
+ private:
+     ulong ref;
+diff --git a/qtopia/src/plugins/inputmethods/keyboard/keyboard.h b/qtopia/src/plugins/inputmethods/keyboard/keyboard.h
+index bd8aab8..d42131f 100644
+--- a/qtopia/src/plugins/inputmethods/keyboard/keyboard.h
++++ b/qtopia/src/plugins/inputmethods/keyboard/keyboard.h
+@@ -57,7 +57,7 @@ class KeyboardPicks : public PickboardPi
+ public:
+     KeyboardPicks(QWidget* parent=0, const char* name=0, WFlags f=0)
+ 	: PickboardPicks(parent, name, f), dc(0) { }
+-    KeyboardPicks::~KeyboardPicks();
++    ~KeyboardPicks();
+     void initialise();
+     virtual QSize sizeHint() const;
+     KeyboardConfig *dc;
+diff --git a/qtopia/src/server/inputmethods.cpp b/qtopia/src/server/inputmethods.cpp
+index af95527..f70d709 100644
+--- a/qtopia/src/server/inputmethods.cpp
++++ b/qtopia/src/server/inputmethods.cpp
+@@ -83,7 +83,7 @@ static const int inputWidgetStyle = QWid
+ class IMToolButton : public QToolButton
+ {
+ public:
+-    IMToolButton::IMToolButton( QWidget *parent ) : QToolButton( parent )
++    IMToolButton( QWidget *parent ) : QToolButton( parent )
+     { setWFlags( WStyle_Tool ); }
+     QSize sizeHint() const {
+ 	if (pixmap() && ! pixmap()->isNull()) {
+diff --git a/qtopia/src/settings/buttoneditor/buttoneditordialog.h b/qtopia/src/settings/buttoneditor/buttoneditordialog.h
+index 2fa9154..807878f 100644
+--- a/qtopia/src/settings/buttoneditor/buttoneditordialog.h
++++ b/qtopia/src/settings/buttoneditor/buttoneditordialog.h
+@@ -53,7 +53,7 @@ protected:
+     virtual void done(int r);
+ private:
+     void populate(QComboBox* comboBox, const ServiceRequest& current);
+-    ServiceRequest ButtonEditorDialog::actionFor(int cur) const;
++    ServiceRequest actionFor(int cur) const;
+     void initAppList();
+     void buildGUI();
+ 
+diff --git a/qtopia/src/settings/qipkg/packagewizard.h b/qtopia/src/settings/qipkg/packagewizard.h
+index 2ca531b..15a4d5a 100644
+--- a/qtopia/src/settings/qipkg/packagewizard.h
++++ b/qtopia/src/settings/qipkg/packagewizard.h
+@@ -103,7 +103,7 @@ private:
+ 
+     QStringList findPackages( const QRegExp& re );
+     void selectPackages( const QStringList& l );
+-    PackageItem* PackageWizard::current() const;
++    PackageItem* current() const;
+ 
+     bool commitWithIpkg();
+ 
+-- 
+1.3.3
+

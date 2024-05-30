@@ -1,0 +1,149 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkAction</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="atk.html" title="ATK Library"><link rel="next" href="AtkComponent.html" title="AtkComponent"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="atk.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkComponent.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkAction"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkAction</h2><p>AtkAction &#8212; The ATK interface provided by UI components which the user can
+activate/interact with,</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id231492"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkAction.html#AtkAction-struct">AtkAction</a>;
+gboolean    <a href="AtkAction.html#atk-action-do-action">atk_action_do_action</a>            (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i);
+gint        <a href="AtkAction.html#atk-action-get-n-actions">atk_action_get_n_actions</a>        (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action);
+G_CONST_RETURN gchar* <a href="AtkAction.html#atk-action-get-description">atk_action_get_description</a>
+                                            (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i);
+G_CONST_RETURN gchar* <a href="AtkAction.html#atk-action-get-name">atk_action_get_name</a>   (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i);
+G_CONST_RETURN gchar* <a href="AtkAction.html#atk-action-get-localized-name">atk_action_get_localized_name</a>
+                                            (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i);
+G_CONST_RETURN gchar* <a href="AtkAction.html#atk-action-get-keybinding">atk_action_get_keybinding</a>
+                                            (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i);
+gboolean    <a href="AtkAction.html#atk-action-set-description">atk_action_set_description</a>      (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i,
+                                             const gchar *desc);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GInterface
+   +----AtkAction
+</pre></div><div class="refsect1"><h2>Known Implementations</h2><p>
+AtkAction is implemented by
+ <a href="AtkHyperlink.html" title="AtkHyperlink">AtkHyperlink</a> and  <a href="AtkNoOpObject.html" title="AtkNoOpObject">AtkNoOpObject</a>.</p></div><div class="refsect1"><h2>Description</h2><p>
+<a href="AtkAction.html" title="AtkAction">AtkAction</a> should be implemented by instances of <a href="AtkObject.html" title="AtkObject">AtkObject</a> classes with
+which the user can interact directly, i.e. buttons, checkboxes,
+scrollbars,  e.g. components which are not "passive"
+providers of UI information.
+</p><p>
+Exceptions: when the user interaction is already covered by
+another appropriate interface such as <a href="AtkEditableText.html" title="AtkEditableText">AtkEditableText</a> (insert/delete
+test, etc.) or <a href="AtkValue.html" title="AtkValue">AtkValue</a> (set value) then these actions should not be
+exposed by <a href="AtkAction.html" title="AtkAction">AtkAction</a> as well.  
+</p><p>
+Also note that the <a href="AtkAction.html" title="AtkAction">AtkAction</a> API is limited in that parameters may not
+be passed to the object being activated; thus the action must be
+self-contained and specifiable via only a single "verb".  Concrete
+examples include "press", "release", "click" for buttons, "drag"
+(meaning initiate drag) and "drop" for drag sources and drop targets,
+etc.  
+</p><p>
+Though most UI interactions on components should be invocable via
+keyboard as well as mouse, there will generally be a close mapping
+between "mouse actions" that are possible on a component and the
+AtkActions.  Where mouse and keyboard actions are redundant in effect,
+<a href="AtkAction.html" title="AtkAction">AtkAction</a> should expose only one action rather than exposing redundant
+actions if possible.  By convention we have been using "mouse centric"
+terminology for <a href="AtkAction.html" title="AtkAction">AtkAction</a> names.
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkAction-struct"></a>struct AtkAction</h3><a class="indexterm" name="id177002"></a><pre class="programlisting">struct AtkAction;</pre><p>
+The AtkAction structure does not contain any fields.
+</p></div><hr><div class="refsect2"><h3><a name="atk-action-do-action"></a>atk_action_do_action ()</h3><a class="indexterm" name="id177024"></a><pre class="programlisting">gboolean    atk_action_do_action            (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i);</pre><p>
+Perform the specified action on the object.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>action</tt></i> :</span></td><td> a GObject instance that implements AtkActionIface
+</td></tr><tr><td><span class="term"><i><tt>i</tt></i> :</span></td><td> the action index corresponding to the action to be performed 
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> <tt>TRUE</tt> if success, <tt>FALSE</tt> otherwise
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-action-get-n-actions"></a>atk_action_get_n_actions ()</h3><a class="indexterm" name="id177139"></a><pre class="programlisting">gint        atk_action_get_n_actions        (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action);</pre><p>
+Gets the number of accessible actions available on the object.
+If there are more than one, the first one is considered the
+"default" action of the object.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>action</tt></i> :</span></td><td> a GObject instance that implements AtkActionIface
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a the number of actions, or 0 if <i><tt>action</tt></i> does not
+implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-action-get-description"></a>atk_action_get_description ()</h3><a class="indexterm" name="id177213"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_action_get_description
+                                            (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i);</pre><p>
+Returns a description of the specified action of the object.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>action</tt></i> :</span></td><td> a GObject instance that implements AtkActionIface
+</td></tr><tr><td><span class="term"><i><tt>i</tt></i> :</span></td><td> the action index corresponding to the action to be performed 
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td>a description string, or <tt>NULL</tt>
+if <i><tt>action</tt></i> does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-action-get-name"></a>atk_action_get_name ()</h3><a class="indexterm" name="id177348"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_action_get_name   (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i);</pre><p>
+Returns the name of the specified action of the object.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>action</tt></i> :</span></td><td> a GObject instance that implements AtkActionIface
+</td></tr><tr><td><span class="term"><i><tt>i</tt></i> :</span></td><td> the action index corresponding to the action to be performed 
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td>a name string, or <tt>NULL</tt>
+if <i><tt>action</tt></i> does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-action-get-localized-name"></a>atk_action_get_localized_name ()</h3><a class="indexterm" name="id177448"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_action_get_localized_name
+                                            (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i);</pre><p>
+Returns the localized name of the specified action of the object.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>action</tt></i> :</span></td><td> a GObject instance that implements AtkActionIface
+</td></tr><tr><td><span class="term"><i><tt>i</tt></i> :</span></td><td> the action index corresponding to the action to be performed 
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td>a name string, or <tt>NULL</tt>
+if <i><tt>action</tt></i> does not implement this interface.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-action-get-keybinding"></a>atk_action_get_keybinding ()</h3><a class="indexterm" name="id245445"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_action_get_keybinding
+                                            (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i);</pre><p>
+Returns a keybinding associated with this action, if one exists.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>action</tt></i> :</span></td><td> a GObject instance that implements AtkActionIface
+</td></tr><tr><td><span class="term"><i><tt>i</tt></i> :</span></td><td> the action index corresponding to the action to be performed 
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td>a string representing the keybinding, or <tt>NULL</tt>
+if there is no keybinding for this action.
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-action-set-description"></a>atk_action_set_description ()</h3><a class="indexterm" name="id245577"></a><pre class="programlisting">gboolean    atk_action_set_description      (<a href="AtkAction.html" title="AtkAction">AtkAction</a> *action,
+                                             gint i,
+                                             const gchar *desc);</pre><p>
+Sets a description of the specified action of the object.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>action</tt></i> :</span></td><td> a GObject instance that implements AtkActionIface
+</td></tr><tr><td><span class="term"><i><tt>i</tt></i> :</span></td><td> the action index corresponding to the action to be performed 
+</td></tr><tr><td><span class="term"><i><tt>desc</tt></i> :</span></td><td> the description to be assigned to this action
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a gboolean representing if the description was successfully set;
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="atk.html"><b>&lt;&lt; ATK Library</b></a></td><td align="right"><a accesskey="n" href="AtkComponent.html"><b>AtkComponent &gt;&gt;</b></a></td></tr></table></body></html>

@@ -1,0 +1,26 @@
+Source: linux-arm-kernel mailing list, posted by Gilles Maigne on 11/17/06.
+
+arm926_dma_flush_range write the content of dcache in memory when linux
+is configured with CONFIG_CPU_DCACHE_WRITETHROUGH ( cache in
+write-through) and does not invalidate the virtual address range.
+This is wrong for two reasons :
+1/ the cache line does not need to be written because the cache is
+write-through
+2/ the cache line is not invalidated, so next read at this address may
+come from the cache, which is wrong because main memory may contain
+valid data resulting of a DMA transaction.
+This patch applies to linux 2.6.18
+
+Signed-off-by: Gilles Maigne <Gilles.Maigne@virtuallogix.com>
+---
+--- arch/arm/mm/proc-arm926.S.orig      2006-11-16 14:24:20.000000000 +0100
++++ arch/arm/mm/proc-arm926.S   2006-11-16 14:25:36.000000000 +0100
+@@ -291,7 +291,7 @@ ENTRY(arm926_dma_flush_range)
+ #ifndef CONFIG_CPU_DCACHE_WRITETHROUGH
+ 	mcr	p15, 0, r0, c7, c14, 1		@ clean+invalidate D entry
+ #else
+-	mcr	p15, 0, r0, c7, c10, 1		@ clean D entry
++	mcr	p15, 0, r0, c7, c6, 1		@ invalidate D entry
+ #endif
+ 	add	r0, r0, #CACHE_DLINESIZE
+ 	cmp	r0, r1

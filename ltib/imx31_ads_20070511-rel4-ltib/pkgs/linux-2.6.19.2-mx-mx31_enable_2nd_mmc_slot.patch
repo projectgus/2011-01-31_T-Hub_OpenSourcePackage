@@ -1,0 +1,15 @@
+Bug 422.  Enable second MMC/SD slot for MX31.
+========================================================================
+--- linux-2.6.19/arch/arm/mach-mx3/devices.c	30 Mar 2007 23:04:03 -0000	1.6
++++ linux-2.6.19-mx/arch/arm/mach-mx3/devices.c	11 Apr 2007 16:50:27 -0000	1.7
+@@ -407,9 +407,7 @@ static inline void mxc_init_mmc(void)
+ 		mxcsdhc1_device.resource[2].start = cd_irq;
+ 		mxcsdhc1_device.resource[2].end = cd_irq;
+ 	}
+-	cd_irq = 0;
+-	/* set cd_irq = 0 here to disable sdhc2 */
+-	/* cd_irq = sdhc_init_card_det(1); */
++	cd_irq = sdhc_init_card_det(1);
+ 	if (cd_irq) {
+ 		mxcsdhc2_device.resource[2].start = cd_irq;
+ 		mxcsdhc2_device.resource[2].end = cd_irq;

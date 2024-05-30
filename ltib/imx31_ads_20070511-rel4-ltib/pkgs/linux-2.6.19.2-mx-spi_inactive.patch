@@ -1,0 +1,74 @@
+CR: ENGR00030367
+Patch name: ENGR00030367_fix_invalid_gpio_mode_for_cspi_on_imx31ads.patch
+Date: Fri Apr 20 10:08:57 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: This patch fixes invalid GPIO mode settings for CSPI pins on
+i.MX31ADS. Since the CSPI pins on i.MX31ADS doesnot support GPIO mode, the
+gpio_spi_inactive() function does nothing. As a result, the CSPI pins retain
+its primary functional mode even after they are set to inactivate.
+
+ mx31ads_gpio.c |   51 +--------------------------------------------------
+ 1 files changed, 1 insertion(+), 50 deletions(-)
+
+Index: linux-2.6.18/arch/arm/mach-mx3/mx31ads_gpio.c
+diff -u linux-2.6.18/arch/arm/mach-mx3/mx31ads_gpio.c:1.7 linux-2.6.18/arch/arm/mach-mx3/mx31ads_gpio.c:1.8
+--- linux-2.6.18/arch/arm/mach-mx3/mx31ads_gpio.c	Thu Mar 22 16:22:05 2007
++++ linux-2.6.18/arch/arm/mach-mx3/mx31ads_gpio.c	Thu Apr 19 23:56:13 2007
+@@ -454,56 +454,7 @@
+  */
+ void gpio_spi_inactive(int cspi_mod)
+ {
+-	switch (cspi_mod) {
+-	case 0:
+-		/* SPI1 */
+-		mxc_request_iomux(MX31_PIN_CSPI1_MISO, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI1_MOSI, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI1_SCLK, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI1_SPI_RDY, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI1_SS0, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI1_SS1, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI1_SS2, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		break;
+-	case 1:
+-		/* SPI2 */
+-		mxc_request_iomux(MX31_PIN_CSPI2_MISO, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI2_MOSI, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI2_SCLK, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI2_SPI_RDY, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI2_SS0, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI2_SS1, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		mxc_request_iomux(MX31_PIN_CSPI2_SS2, OUTPUTCONFIG_GPIO,
+-				  INPUTCONFIG_GPIO);
+-		break;
+-	case 2:
+-		/* SPI3 */
+-		/*
+-		   mxc_request_iomux(MX31_PIN_CSPI2_MISO, OUTPUTCONFIG_GPIO, INPUTCONFIG_GPIO);
+-		   mxc_request_iomux(MX31_PIN_CSPI2_MOSI, OUTPUTCONFIG_GPIO, INPUTCONFIG_GPIO);
+-		   mxc_request_iomux(MX31_PIN_CSPI2_SCLK, OUTPUTCONFIG_GPIO, INPUTCONFIG_GPIO);
+-		   mxc_request_iomux(MX31_PIN_CSPI2_SPI_RDY, OUTPUTCONFIG_GPIO, INPUTCONFIG_GPIO);
+-		   mxc_request_iomux(MX31_PIN_CSPI2_SS0, OUTPUTCONFIG_GPIO, INPUTCONFIG_GPIO);
+-		   mxc_request_iomux(MX31_PIN_CSPI2_SS1, OUTPUTCONFIG_GPIO, INPUTCONFIG_GPIO);
+-		   mxc_request_iomux(MX31_PIN_CSPI2_SS2, OUTPUTCONFIG_GPIO, INPUTCONFIG_GPIO);
+-		 */
+-		break;
+-	default:
+-		break;
+-	}
++	/* Do nothing as CSPI pins doesn't have/support GPIO mode */
+ }
+ 
+ /*!

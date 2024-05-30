@@ -1,0 +1,117 @@
+From: John Rigby <jrigby@freescale.com>
+Date: Thu, 24 Aug 2006 13:35:30 -0600
+Subject: [PATCH] stardard touchscreen
+
+Original qt2 has touchscreen support that will work with
+mx21 and media5200 touch screens with just a change of
+ifdefs.  Historically when adding support for a new platform
+an additional "|| defined(QT_QWS_WHATEVER) was added to
+each #if through out the file.  With each additional platform
+the code gets more ugly.
+
+This patch defines QT_QWS_STANDARD_TS once at the top
+of the file for MX21 and MPC5200.  This define is then
+used through out the file.
+
+Signed-off-by: John Rigby <jrigby@freescale.com>
+
+---
+
+ qt2/src/kernel/qwsmouse_qws.cpp |   23 +++++++++++++----------
+ 1 files changed, 13 insertions(+), 10 deletions(-)
+
+acd1da31482c42cd4a2ffd91032185d5b8e0a88e
+diff --git a/qt2/src/kernel/qwsmouse_qws.cpp b/qt2/src/kernel/qwsmouse_qws.cpp
+index d74fa52..7e953c6 100644
+--- a/qt2/src/kernel/qwsmouse_qws.cpp
++++ b/qt2/src/kernel/qwsmouse_qws.cpp
+@@ -63,10 +63,11 @@ #ifdef QT_QWS_TSLIB
+ #include <tslib.h>
+ #endif
+ 
++#if defined(QT_QWS_MPC5200) || defined(QT_QWS_MX21)
++#define QT_QWS_STANDARD_TS
++#endif
+ 
+-//#define QT_QWS_K2
+-
+-#if defined(QT_QWS_IPAQ) || defined(QT_QWS_K2)
++#if defined(QT_QWS_IPAQ) || defined(QT_QWS_STANDARD_TS)
+ #define QT_QWS_IPAQ_RAW
+ typedef struct {
+         unsigned short pressure;
+@@ -592,7 +593,7 @@ void QAutoMouseHandler::openDevices()
+ 	sub[nsub++] = new QAutoMouseSubHandler_intellimouse(fd);
+ 	notify(fd);
+     }
+-#if !defined(QT_QWS_IPAQ) && !defined(QT_QWS_SL5XXX) && !defined(QT_QWS_K2)
++#if !defined(QT_QWS_IPAQ) && !defined(QT_QWS_SL5XXX) && !defined(QT_QWS_STANDARD_TS)
+     char fn[] = "/dev/ttyS?";
+     for (int ch='0'; ch<='3'; ch++) {
+ 	fn[9] = ch;
+@@ -1274,7 +1275,7 @@ QTPanelHandlerPrivate::QTPanelHandlerPri
+     numSamples(0), skipCount(0)
+ {
+     mouseFD = -1;
+-#if defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_K2)
++#if defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_STANDARD_TS)
+     if ( dev.isEmpty() )
+ #if defined(QT_QWS_IPAQ)
+ #ifdef QT_QWS_IPAQ_RAW
+@@ -1283,7 +1284,7 @@ #else
+     dev = "/dev/h3600_ts";
+ #endif
+ 
+-#elif defined(QT_QWS_SL5XXX) || defined(QT_QWS_K2)
++#elif defined(QT_QWS_SL5XXX) || defined(QT_QWS_STANDARD_TS)
+ //# ifdef QT_QWS_SL5XXX_TSRAW
+ # if 0
+     dev = "/dev/tsraw";
+@@ -1309,7 +1310,7 @@ #endif
+ 
+ QTPanelHandlerPrivate::~QTPanelHandlerPrivate()
+ {
+-#if defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_K2)
++#if defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_STANDARD_TS)
+     if (mouseFD >= 0)
+ 	close(mouseFD);
+ #endif
+@@ -1317,7 +1318,7 @@ #endif
+ 
+ void QTPanelHandlerPrivate::readMouseData()
+ {
+-#if defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_K2)
++#if defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_STANDARD_TS)
+     if(!qt_screen)
+ 	return;
+ 
+@@ -1355,7 +1356,7 @@ #endif
+ 
+ 		mousePos = totalMousePos / (sampleCount - 1);
+ 
+-# if defined(QT_QWS_IPAQ_RAW) || defined(QT_QWS_SL5XXX_RAW)
++# if defined(QT_QWS_IPAQ_RAW) || defined(QT_QWS_SL5XXX_RAW) || defined(QT_QWS_STANDARD_TS)
+ 		mousePos = transform( mousePos );
+ # endif
+ 		if(!waspressed)
+@@ -1641,6 +1642,8 @@ #ifndef QT_NO_QWS_VFB
+ 	mouseNotifier = new QSocketNotifier( mouseFD, QSocketNotifier::Read, this );
+ 	connect(mouseNotifier, SIGNAL(activated(int)),this, SLOT(readMouseData()));
+     }
++#else
++    Q_UNUSED(mouseDev);
+ #endif
+ }
+ 
+@@ -2017,7 +2020,7 @@ #elif defined(QT_QWS_TSLIB)
+ 	    handler = new QTSLibHandlerPrivate(mouseProtocol,mouseDev);
+ #elif defined(QT_QWS_YOPY)
+ 	    handler = new QYopyTPanelHandlerPrivate(mouseProtocol,mouseDev);
+-#elif defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_K2)
++#elif defined(QT_QWS_IPAQ) || defined(QT_QWS_SL5XXX) || defined(QT_QWS_STANDARD_TS)
+ 	    handler = new QTPanelHandlerPrivate(mouseProtocol,mouseDev);
+ #elif defined(QT_QWS_CASSIOPEIA)
+ 	    handler = new QVrTPanelHandlerPrivate( mouseProtocol, mouseDev );
+-- 
+1.3.3
+

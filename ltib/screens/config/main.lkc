@@ -1,0 +1,24 @@
+config CONFIG_TITLE
+    string
+    default "GNU/Linux Target Image Builder : Platform Selection"
+
+mainmenu "GNU/Linux Target Image Builder main menu"
+
+choice
+    prompt "Platform choice"
+    help
+       This menu will let you choose from a list of boards
+
+    config PLATFORM_host
+        bool "Host support packages"
+    config PLATFORM_imx31ads
+        bool "Freescale IMX31 ADS reference board"
+    config PLATFORM_imx31homescreen
+        bool "Sagem Communications IMX31 Homescreen board"
+endchoice
+
+config PLATFORM_DIR
+    string
+    default "config/platform/imx31homescreen" if PLATFORM_imx31homescreen
+    default "config/platform/imx31ads" if PLATFORM_imx31ads
+    default "config/platform/host" if PLATFORM_host

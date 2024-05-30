@@ -1,0 +1,12 @@
+diff --exclude CVS -uNr cksum-19990607/cksum.c cksum-19990607.modified/cksum.c
+--- cksum-19990607/cksum.c	1999-06-06 11:50:47.000000000 +0100
++++ cksum-19990607.modified/cksum.c	2005-08-02 15:46:43.000000000 +0100
+@@ -151,7 +151,7 @@
+ static void
+ usage()
+ {
+-	(void)fprintf(stderr, "usage: cksum [-b] [-o 1 | 2] [file ...]\n");
++	(void)fprintf(stderr, "usage: uc-cksum [-b] [-o 1 | 2] [file ...]\n");
+ 	(void)fprintf(stderr, "       sum [file ...]\n");
+ 	exit(1);
+ }

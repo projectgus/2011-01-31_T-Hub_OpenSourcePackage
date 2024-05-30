@@ -1,0 +1,159 @@
+diff -urN php-5.0.4.orig/configure php-5.0.4/configure
+--- php-5.0.4.orig/configure	Sun Apr  3 17:42:50 2005
++++ php-5.0.4/configure	Tue Nov 22 11:01:15 2005
+@@ -5454,6 +5454,7 @@
+   fi
+ 
+   $APXS -q CFLAGS >/dev/null 2>&1
++#  echo ' ' >/dev/null 2>&1
+   if test "$?" != "0"; then
+     echo "$ac_t""" 1>&6
+     echo "$ac_t""" 1>&6
+@@ -5494,8 +5495,10 @@
+   APACHE_CFLAGS="$APACHE_CPPFLAGS -I$APXS_INCLUDEDIR $APR_CFLAGS $APU_CFLAGS"
+ 
+   # Test that we're trying to configure with apache 2.x
+-  
+-  ac_output=`$APXS_HTTPD -v 2>&1`
++ 
++#hacked by jason 
++#  ac_output=`$APXS_HTTPD -v 2>&1`
++  ac_output='Server version: Apache/2.0.54'
+   ac_IFS=$IFS
+ IFS="- /.
+ "
+@@ -15724,7 +15727,7 @@
+ 
+ 		
+ 		if test "$cross_compiling" = yes; then
+-    { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
++    { echo "Hacked by Jason to let cookie_io_functions_use_off64_t=yes " 1>&2;cookie_io_functions_use_off64_t=yes ; }
+ else
+   cat > conftest.$ac_ext <<EOF
+ #line 15731 "configure"
+@@ -16981,7 +16984,7 @@
+ if { (eval echo configure:16982: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+   rm -rf conftest*
+   if test "$cross_compiling" = yes; then
+-    { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
++    { echo "Hacked by Jason to let ac_cv_func_getaddrinfo=yes" 1>&2; ac_cv_func_getaddrinfo=yes ; }
+ else
+   cat > conftest.$ac_ext <<EOF
+ #line 16988 "configure"
+@@ -17478,7 +17481,7 @@
+   rm -fr conftest*
+   
+   if test "$cross_compiling" = yes; then
+-    { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
++    { echo "Hacked by Jason to let ac_cv_time_r_type=POSIX " 1>&2; ac_cv_time_r_type=POSIX; }
+ else
+   cat > conftest.$ac_ext <<EOF
+ #line 17485 "configure"
+@@ -18561,6 +18564,12 @@
+ 
+             echo $ac_n "checking whether libxml build works""... $ac_c" 1>&6
+ echo "configure:18564: checking whether libxml build works" >&5
++
++if test "$cross_compiling" = yes; then
++   echo "Hacked by Jason,set php_cv_libxml_build_works=yes" 1>&2;   
++   php_cv_libxml_build_works=yes
++fi
++
+ if eval "test \"`echo '$''{'php_cv_libxml_build_works'+set}'`\" = set"; then
+   echo $ac_n "(cached) $ac_c" 1>&6
+ else
+@@ -20577,6 +20586,12 @@
+   echo $ac_n "checking for gzgets in -lz""... $ac_c" 1>&6
+ echo "configure:20579: checking for gzgets in -lz" >&5
+ ac_lib_var=`echo z'_'gzgets | sed 'y%./+-%__p_%'`
++
++if test "$cross_compiling" = yes; then
++ echo "Hacked by Jason,set ac_cv_lib_$ac_lib_var=yes" 1>&2;   
++ eval "ac_cv_lib_$ac_lib_var=yes"
++fi
++
+ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+   echo $ac_n "(cached) $ac_c" 1>&6
+ else
+@@ -20602,6 +20617,8 @@
+   cat conftest.$ac_ext >&5
+   rm -rf conftest*
+   eval "ac_cv_lib_$ac_lib_var=no"
++#  eval "ac_cv_lib_$ac_lib_var=yes"
++
+ fi
+ rm -f conftest*
+ LIBS="$ac_save_LIBS"
+@@ -40716,6 +40733,13 @@
+ 
+         if test "$PHP_ICONV" = "yes"; then
+     echo $ac_n "checking for iconv""... $ac_c" 1>&6
++
++if test "$cross_compiling" = yes; then
++ echo "Hacked by Jason,set ac_cv_func_iconv=yes" 1>&2;   
++ eval "ac_cv_func_iconv=yes"
++fi
++
++    
+ echo "configure:40720: checking for iconv" >&5
+ if eval "test \"`echo '$''{'ac_cv_func_iconv'+set}'`\" = set"; then
+   echo $ac_n "(cached) $ac_c" 1>&6
+@@ -41307,8 +41331,13 @@
+   echo "configure: failed program was:" >&5
+   cat conftest.$ac_ext >&5
+   rm -rf conftest*
+-  
+-        echo "$ac_t""no" 1>&6
++
++  if test "$cross_compiling" = yes; then
++     echo "Hacked by Jason,set iconv_impl_name="glibc"" 1>&2;   
++     echo "$ac_t""yes" 1>&6
++     iconv_impl_name="glibc"
++  fi
++  #      echo "$ac_t""no" 1>&6
+       
+ fi
+ rm -f conftest*
+@@ -41405,7 +41434,13 @@
+     echo $ac_n "checking if iconv supports errno""... $ac_c" 1>&6
+ echo "configure:41407: checking if iconv supports errno" >&5
+     if test "$cross_compiling" = yes; then
+-    { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
++    { echo "hacked by Jason,set #define ICONV_SUPPORTS_ERRNO 0" 1>&2;
++    echo "$ac_t""no" 1>&6      
++    echo "#define ICONV_SUPPORTS_ERRNO 0" > ext/iconv/php_iconv_supports_errno.h
++      cat >> confdefs.h <<\EOF
++#define ICONV_SUPPORTS_ERRNO 1
++EOF
++}
+ else
+   cat > conftest.$ac_ext <<EOF
+ #line 41412 "configure"
+@@ -56609,6 +56644,13 @@
+   echo $ac_n "checking for mysql_close in -lmysqlclient""... $ac_c" 1>&6
+ echo "configure:56611: checking for mysql_close in -lmysqlclient" >&5
+ ac_lib_var=`echo mysqlclient'_'mysql_close | sed 'y%./+-%__p_%'`
++
++if test "$cross_compiling" = yes; then
++   echo "Hacked by Jason,set ac_cv_lib_mysqlclient_mysql_close=yes" 1>&2;   
++   ac_cv_lib_mysqlclient_mysql_close=yes
++   ac_cv_lib_mysqlclient_mysql_error=yes
++fi
++
+ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+   echo $ac_n "(cached) $ac_c" 1>&6
+ else
+@@ -57616,6 +57658,13 @@
+   echo $ac_n "checking for mysql_set_server_option in -lmysqlclient""... $ac_c" 1>&6
+ echo "configure:57618: checking for mysql_set_server_option in -lmysqlclient" >&5
+ ac_lib_var=`echo mysqlclient'_'mysql_set_server_option | sed 'y%./+-%__p_%'`
++
++ if test "$cross_compiling" = yes; then
++   echo "Hacked by Jason,set mysqlclient_mysql_set_server_option mysql_stmt_field_count " 1>&2;   
++   ac_cv_lib_mysqlclient_mysql_set_server_option=yes
++   ac_cv_lib_mysqlclient_mysql_stmt_field_count=yes
++ fi
++ 
+ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+   echo $ac_n "(cached) $ac_c" 1>&6
+ else

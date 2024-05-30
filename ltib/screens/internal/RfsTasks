@@ -1,0 +1,206 @@
+[[TableOfContents]]
+
+= Introduction =
+
+Freescale needs to consolidate its Linux infrastructure components.  These
+include toolchains, bootloaders, kernels and BSPs.  It has been decided
+to provide a simpler BSP format that doesn't require Platform Creation Suite.
+The purpose is to enable the simple deployment of Linux to Freescale
+platforms.
+
+
+= Requirements =
+
+ * A simple free to download tool that enables non-novices to deploy
+ stand-alone Linux BSPs to freescale platforms.
+
+ * Support for the main freescale chip architectures (with MMUs).
+
+ * The first BSP using this methodology should be realisable by end
+ of July 2005.
+
+ * Common source level components (kernel and packages) across BSPs.
+ This does not mean that all BSPs should use the same kernel source, but
+ it would be expected that a family of processors like the 85xx should
+ share kernel sources and the same toolchain.  It is expected that 
+ when this is done, the specific configuration for the platform will
+ be controlled by a kernel configuration file.
+
+ * Basic configuration system (like buildroot) using the 2.6 lkc system.
+
+ * Must use standard toolchains that can be run stand-alone.
+
+ * BSPs must be pre-built, with the option to rebuilt some/all components.
+
+ * Target packages will be managed (using rpm).
+
+ * The root filesystem should be scalable from small devices to sub-desktop.
+ Full desktops would be expected to be supported using a standard distribution,
+ such as Yellowdog.
+
+ * Must be usable at the command prompt. 
+
+ * Initially no GUI, but the design must allow the possibility of wrapping
+ a GUI around the command line tool at a later date.
+
+ * Deployment will be very basic, there will be documentation to assist
+ the end user, but the onus is on the end user to have some knowledge
+ of how to do this (they must have basic sysadmin skills).  The built
+ root filesystem image will be blown-out and will be NFS root mounted
+ by the target.
+ 
+ * It must be possible to configure/rebuild the kernel and save the new
+ configuration
+
+ * It must be possible to save the complete  state of a modified BSP.  This
+ must be achieved in an efficient manner (e.g meta-data only).
+
+ 
+= Tasks for Lightweight BSP development/runtime environment =
+
+== Toolchains ==
+
+ * Optimised toolchains
+  * glibc based toolchains:
+   * PPC variants
+    * 8xx (no FPU)
+    * 82xx (Full FPU ?)
+    * 83xx (Full FPU)
+    * 85xx - PQIII (Single precision FPU)
+    * 52xx - (Full FPU)
+    * Desktop/Altivec
+   * 68k/Coldfire (MMU versions only?)
+   * i.MX - ARM (MMU, no FPU)
+  * uclibc based toolchains (this list may need trimming back):
+   * PPC variants
+    * 8xx (no FPU)
+    * 82xx (Full FPU ?)
+    * 83xx (Full FPU)
+    * 85xx - PQIII (Single precision FPU)
+    * 52xx - (Full FPU)
+    * Desktop/Altivec
+   * 68k/Coldfire (MMU versions only?)
+   * i.MX - ARM (MMU, no FPU)
+ * Auto-build (using the board farm)
+ * Auto-testing (using the board farm)
+ * Supply the same sets of toolchains (or a sub-set) to be hosted on PPC
+
+
+== Sandbox ==
+
+ * Sandbox (not mandatory for customers, mandatory for internal development)
+  * Separation into development/runtime sets (strip out man pages etc from RT)
+  * Review/cleanup
+  * PPC hosted version of the sandbox
+
+
+== Linux Kernel ==
+
+ * Common kernel sources
+  * Linux tiny trees
+  * CELF trees
+  * Freescale trees (Sourceforge linuxppc tree, i.MX ARM tree, Coldfire ?)
+  * Real-time enhancements ??
+
+
+== Common root filesystem ==
+
+ * Common root filesystem cross rpm package sets
+  * Small embedded tree (minimal)
+   * glibc variant
+   * uclibc variant
+  * Specialist packages (e.g for automotive, handheld etc)
+   * glibc variant
+   * uclibc variant 
+  * Fedora core 2 (general packages for larger systems)
+   * glibc only ?
+
+== BSP development/delivery tool(s) ==
+
+ * BSP tool
+  * Configuration utility (BSP meta-data)
+   * BSP kernel configurations
+   * Package configurations (on/off at least)
+  * Root filesystem builder
+  * Deployment
+   * Blown out root filesystem only to be NFS mounted
+
+ * Conversion/update of existing PCS BSPs to the simpler system (tool assist?)
+
+ * BSP auto-builds (on the board farm)
+
+ * BSP auto-testing (on the board farm)
+
+ * User documentation
+  * Installing the tool
+  * How to configure a Linux kernel
+  * How to configure/select BSP/Platform type
+  * How to select (configure?) packages
+  * How to build
+  * How to deploy
+   * Bootloader deployment
+   * Kernel tftp downloading
+   * NFS root filesystem 
+   * Hints on other deploy methods (Flash using JFFS2, but not supported)
+
+
+== Miscellaneous infrastructure support ==
+
+ * Sourceforge infrastructure management
+  * kernels
+  * toolchains
+  * BSP tool
+  * Package meta-data?
+
+
+= Initial staffing suggestions =
+
+ * Toolchain foundry:
+  * Michael Camp (board farm integration/support)
+  * Stuart Hughes
+  * Steve Papa (lead)
+  * Edmar Weinstock
+  * Kristy Morton 
+
+ * BSP overall architecture design:
+  * Chris Bird
+  * John Faith
+  * Stuart Hughes
+  * Bernhard Kuhn
+  * Steve Papa
+  * Ross Willie 
+
+ * BSP configuration system:
+  * Chris Bird (part-time contractor)
+  * John Faith
+
+ * Linux kernels:
+  * PPC
+   * Kumar Gala (lead)
+  * Automotive Linux (AGL) enhancements
+   * Bernhard Kuhn ?
+  * i.MX
+   * Ross Willie (lead)
+  * Coldfire
+   * TBD ??
+
+ * Root filesystem packages
+  * minimal:
+   * Stuart Hughes (lead)
+   * Bernhard Kuhn
+  * Specialist packages
+   * Bernhard Kuhn (automotive)
+   * Ross Willie's team (i.mx)
+  * Fedora core 2
+   * Steve Papa
+   * TBD x n
+
+ * BSP build system:
+  * Stuart Hughes (lead)
+  * Steve Papa
+
+ * Documentation:
+  * TBD
+
+
+----

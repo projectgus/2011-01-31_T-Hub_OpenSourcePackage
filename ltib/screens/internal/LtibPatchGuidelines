@@ -1,0 +1,86 @@
+%TOPICTITLE%
+---
+
+%TOC%
+
+---+ Guidelines for changes to Open Source code (patches)
+
+---++ General
+
+   * Never remove/change an existing copyright.
+
+   * You cannot use a patch to change the terms of a license.  You must
+   go back to the original file and make the change there.  This can
+   only be done if you have the legal right/permission to make this 
+   change.  The reason for this is that people can cherry pick patches.
+   If they choose not to take a patch that is intended to fix up a 
+   license, then a source tree with an inappropriate license may be
+   propagated.
+
+   * Never remove a maintainer/author citation/credit.
+
+   * You may only change your own email addresses in a patch
+
+   * Any change of more than a couple of lines requires you to add a
+   copyright notice entry for Freescale.  You should also add a
+   changelog entry that cites the person making the change, email addr,
+   date and purpose  of the change.
+
+   * You should never include proprietary code in open source patches/files.
+
+   * You should never put in license notices into patches/files that are
+   incompatible with the license of the code base it is patching.
+
+
+   * Copyright and Licenses are entirely different things.  You should
+   understand the difference.
+
+   * If you copy a file and use it as the basis for your new file, you
+   should retain all the existing copyright notices and update notices.
+   You should clearly say that this file is based on xxxx and say where
+   it came from.  You should also state in the description what the
+   new purpose is.
+
+   * New files should include Freescale's copyright notice, along with
+   a citation for author, date that include a description of what the file
+   does.  An empty changelog section should be placed in the file.  The brief
+   form of the GPL license (example below) should be included).
+
+
+---+++ Example file header that was Freescale originated, with updates
+
+<verbatim>
+
+/*
+ * Copyright (C) Freescale Semiconductor, Inc. 2006. All rights reserved.
+ *
+ * Author: Stuart Hughes, stuarth@freescale.com, Thur Apr 21 2006
+ *
+ * Description:
+ * This file does xxxx, yyyy, zzz
+ *
+ * Changelog: 
+ * Sat Apr 23 2006 Stuart Hughes <stuarth@freescale.com>
+ * - fix functions xxxx
+ *
+ * This file is part of the Linux kernel
+ *
+ * This is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+</verbatim>
+
+
+
+---++ Linux kernel
+
+   * Be familiar with best practices.  Read the notes on:
+   http://lwn.net/Articles/160191/ and 
+   http://www.zip.com.au/~akpm/linux/patches/stuff/tpp.txt
+
+   * Make sure your indenting/formating is acceptable, run lindent
+   (see http://linux.about.com/library/bl/open/newbie/blnewbie7.1indent.htm)

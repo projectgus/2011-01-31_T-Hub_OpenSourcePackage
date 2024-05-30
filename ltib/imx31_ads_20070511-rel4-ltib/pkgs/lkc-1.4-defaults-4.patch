@@ -1,0 +1,160 @@
+diff -bruN lkc-1.4.orig/conf.c lkc-1.4/conf.c
+--- lkc-1.4.orig/conf.c	2003-06-06 15:00:50.000000000 -0700
++++ lkc-1.4/conf.c	2005-08-30 14:15:27.000000000 -0700
+@@ -467,7 +467,7 @@
+ 
+ 	sym = menu->sym;
+ 	if (sym) {
+-		if (sym_is_changable(sym) && !sym_has_value(sym)) {
++		if (sym_is_changable(sym) && !sym_has_value(sym) && !sym_is_default(sym)) {
+ 			if (!conf_cnt++)
+ 				printf("*\n* Restart config...\n*\n");
+ 			rootEntry = menu_get_parent_menu(menu);
+diff -bruN lkc-1.4.orig/confdata.c lkc-1.4/confdata.c
+--- lkc-1.4.orig/confdata.c	2005-08-30 14:13:31.000000000 -0700
++++ lkc-1.4/confdata.c	2005-08-30 14:15:27.000000000 -0700
+@@ -80,6 +80,7 @@
+ 	struct property *prop;
+ 	struct expr *e;
+ 	int i;
++	bool newFlag;
+ 
+ 	if (name) {
+ 		in = zconf_fopen(name);
+@@ -225,11 +226,43 @@
+ 	}
+ 	fclose(in);
+ 
++	newFlag = false;
+ 	for_all_symbols(i, sym) {
+ 		sym_calc_value(sym);
+ 		if (sym_has_value(sym)) {
+ 			if (sym->visible == no)
++			{
+ 				sym->flags |= SYMBOL_NEW;
++			}
++			/* To avoid Stuart's stickiness issue, we check to see if the value read in for a symbol
++		 	* matches any of it's defaults and if so, set SYMBOL_NEW.  When SYMBOL_NEW is set, the conf
++		 	* system doesn't think the user has touched the value so defaults will change.
++			* 
++			* FIXTHIS - for now just check against string, int, and hex values.  Not sure if it's safe
++			* to do this for other types. */
++			else if (!(sym->flags & SYMBOL_NEW) && 
++					(sym->type == S_STRING || sym->type == S_INT || sym->type == S_HEX))
++			{
++				for_all_defaults(sym, prop) {
++					if (prop->expr->type == E_SYMBOL && 
++						!strcmp(prop->expr->left.sym->name, sym->curr.val))
++					{
++						sym->flags |= SYMBOL_NEW;
++						sym->flags |= SYMBOL_DEFAULT;
++						newFlag = true;
++					}
++				}
++			}
++			/* it's possible that the default doesn't currently match what the symbol depends on.
++			 * recalculate the symbol's value so that it gets the correct default*/
++			if (newFlag)
++			{
++				sym->flags &= ~SYMBOL_VALID;
++				sym_calc_value(sym);
++				newFlag = false;
++			}
++				
++			
+ 			switch (sym->type) {
+ 			case S_STRING:
+ 			case S_INT:
+diff -bruN lkc-1.4.orig/expr.h lkc-1.4/expr.h
+--- lkc-1.4.orig/expr.h	2005-08-30 14:13:38.000000000 -0700
++++ lkc-1.4/expr.h	2005-08-30 14:15:27.000000000 -0700
+@@ -95,6 +95,7 @@
+ #define SYMBOL_CHECKED		0x2000
+ #define SYMBOL_CHECK_DONE	0x4000
+ #define SYMBOL_WARNED		0x8000
++#define SYMBOL_DEFAULT		0x00010000
+ 
+ #define SYMBOL_MAXLENGTH	256
+ #define SYMBOL_HASHSIZE		257
+diff -bruN lkc-1.4.orig/lkc_defs.h lkc-1.4/lkc_defs.h
+--- lkc-1.4.orig/lkc_defs.h	2005-08-30 14:13:38.000000000 -0700
++++ lkc-1.4/lkc_defs.h	2005-08-30 14:15:27.000000000 -0700
+@@ -29,6 +29,7 @@
+ #define sym_string_within_range (*sym_string_within_range_p)
+ #define sym_set_string_value (*sym_set_string_value_p)
+ #define sym_is_changable (*sym_is_changable_p)
++#define sym_is_default (*sym_is_default_p)
+ #define sym_get_choice_prop (*sym_get_choice_prop_p)
+ #define sym_get_default_prop (*sym_get_default_prop_p)
+ #define sym_get_string_value (*sym_get_string_value_p)
+diff -bruN lkc-1.4.orig/lkc_proto.h lkc-1.4/lkc_proto.h
+--- lkc-1.4.orig/lkc_proto.h	2005-08-30 14:13:38.000000000 -0700
++++ lkc-1.4/lkc_proto.h	2005-08-30 14:15:27.000000000 -0700
+@@ -29,6 +29,7 @@
+ P(sym_string_within_range,bool,(struct symbol *sym, const char *str));
+ P(sym_set_string_value,bool,(struct symbol *sym, const char *newval));
+ P(sym_is_changable,bool,(struct symbol *sym));
++P(sym_is_default,bool,(struct symbol *sym));
+ P(sym_get_choice_prop,struct property *,(struct symbol *sym));
+ P(sym_get_default_prop,struct property *,(struct symbol *sym));
+ P(sym_get_string_value,const char *,(struct symbol *sym));
+diff -bruN lkc-1.4.orig/mconf.c lkc-1.4/mconf.c
+--- lkc-1.4.orig/mconf.c	2005-08-30 14:13:38.000000000 -0700
++++ lkc-1.4/mconf.c	2005-08-30 14:15:27.000000000 -0700
+@@ -478,13 +478,13 @@
+ 				if (tmp < 0)
+ 					tmp = 0;
+ 				cprint_name("%*c%s%s", tmp, ' ', menu_get_prompt(menu),
+-					(sym_has_value(sym) || !sym_is_changable(sym)) ?
++					( sym_has_value(sym) || !sym_is_changable(sym) || sym_is_default(sym) ) ?
+ 					"" : " (NEW)");
+ 				goto conf_childs;
+ 			}
+ 		}
+ 		cprint_name("%*c%s%s", indent + 1, ' ', menu_get_prompt(menu),
+-			(sym_has_value(sym) || !sym_is_changable(sym)) ?
++			( sym_has_value(sym) || !sym_is_changable(sym) || sym_is_default(sym) ) ?
+ 			"" : " (NEW)");
+ 		if (menu->prompt->type == P_MENU) {
+ 			cprint_name("  --->");
+diff -bruN lkc-1.4.orig/symbol.c lkc-1.4/symbol.c
+--- lkc-1.4.orig/symbol.c	2005-08-30 14:13:38.000000000 -0700
++++ lkc-1.4/symbol.c	2005-08-30 14:15:55.000000000 -0700
+@@ -542,15 +542,22 @@
+ 		sym->user.val = val = malloc(size);
+ 		*val++ = '0';
+ 		*val++ = 'x';
+-	} else if (!oldval || strcmp(oldval, newval))
++	} else {
+ 		sym->user.val = val = malloc(size);
+-	else
+-		return true;
++	}
+ 
+ 	strcpy(val, newval);
+ 	free((void *)oldval);
+ 	sym_clear_all_valid();
+ 
++	if (sym->type == S_STRING && !strcmp(val, ""))
++	{
++		sym->flags |= SYMBOL_NEW;
++		sym->flags |= SYMBOL_DEFAULT;
++		sym_calc_value(sym);
++		sym_clear_all_valid();
++	}
++
+ 	return true;
+ }
+ 
+@@ -582,6 +589,11 @@
+ 	return sym->visible > sym->rev_dep.tri;
+ }
+ 
++bool sym_is_default(struct symbol *sym)
++{
++	return (sym->flags & SYMBOL_DEFAULT ? true : false);
++}
++
+ struct symbol *sym_lookup(const char *name, int isconst)
+ {
+ 	struct symbol *symbol;

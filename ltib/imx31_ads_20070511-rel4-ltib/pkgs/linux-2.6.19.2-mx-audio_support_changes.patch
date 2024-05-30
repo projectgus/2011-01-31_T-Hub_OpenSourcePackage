@@ -1,0 +1,283 @@
+CR: TLSbo91715
+Patch name: TLSbo91715_audio_support.patch
+Date: Wed Mar 7 16:37:25 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: audio support changes
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_audio.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_audio.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_audio.c	2007-04-25 17:37:11.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_audio.c	2007-04-25 17:38:39.000000000 -0600
+@@ -1702,7 +1702,7 @@ PMIC_STATUS pmic_audio_digital_filter_re
+ 
+ 	if ((handle == stDAC.handle) && (stDAC.handleState == HANDLE_IN_USE)) {
+ 		reg_mask = SET_BITS(regST_DAC, STDCRESET, 1);
+-		if (pmic_write_reg(REG_AUDIO_STEREO_DAC, 1,
++		if (pmic_write_reg(REG_AUDIO_STEREO_DAC, reg_mask,
+ 				   reg_mask) != PMIC_SUCCESS) {
+ 			rc = PMIC_ERROR;
+ 		} else {
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/ssi/ssi.c linux-2.6.19.2/drivers/mxc/ssi/ssi.c
+--- linux-2.6.19.2.orig/drivers/mxc/ssi/ssi.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/ssi/ssi.c	2007-04-25 17:38:39.000000000 -0600
+@@ -24,6 +24,7 @@
+ #include <linux/init.h>
+ #include <linux/slab.h>
+ #include <asm/uaccess.h>
++#include <asm/arch/clock.h>
+ 
+ #include "registers.h"
+ #include "ssi.h"
+@@ -95,6 +96,14 @@ EXPORT_SYMBOL(ssi_tx_prescaler_modulus);
+ EXPORT_SYMBOL(ssi_tx_shift_direction);
+ EXPORT_SYMBOL(ssi_tx_word_length);
+ 
++unsigned int get_ssi_base_addr(unsigned int ssi)
++{
++	unsigned int base_addr;
++	base_addr = (ssi == SSI1) ? IO_ADDRESS(SSI1_BASE_ADDR) :
++	    IO_ADDRESS(SSI2_BASE_ADDR);
++	return base_addr;
++}
++
+ void set_register_bits(unsigned int mask, unsigned int data,
+ 		       unsigned int offset, unsigned int ssi)
+ {
+@@ -103,8 +112,7 @@ void set_register_bits(unsigned int mask
+ 	unsigned long flags = 0;
+ 
+ 	spin_lock_irqsave(&ssi_lock, flags);
+-	base_addr = (ssi == SSI1) ? IO_ADDRESS(SSI1_BASE_ADDR) :
+-	    IO_ADDRESS(SSI2_BASE_ADDR);
++	base_addr = get_ssi_base_addr(ssi);
+ 	reg = __raw_readl(base_addr + offset);
+ 	reg = (reg & (~mask)) | data;
+ 	__raw_writel(reg, base_addr + offset);
+@@ -118,8 +126,7 @@ unsigned long getreg_value(unsigned int 
+ 	unsigned long flags = 0;
+ 
+ 	spin_lock_irqsave(&ssi_lock, flags);
+-	base_addr = (ssi == SSI1) ? IO_ADDRESS(SSI1_BASE_ADDR) :
+-	    IO_ADDRESS(SSI2_BASE_ADDR);
++	base_addr = get_ssi_base_addr(ssi);
+ 	reg = __raw_readl(base_addr + offset);
+ 	spin_unlock_irqrestore(&ssi_lock, flags);
+ 
+@@ -132,8 +139,7 @@ void set_register(unsigned int data, uns
+ 	unsigned long flags = 0;
+ 
+ 	spin_lock_irqsave(&ssi_lock, flags);
+-	base_addr = (ssi == SSI1) ? IO_ADDRESS(SSI1_BASE_ADDR) :
+-	    IO_ADDRESS(SSI2_BASE_ADDR);
++	base_addr = get_ssi_base_addr(ssi);
+ 	__raw_writel(data, base_addr + offset);
+ 	spin_unlock_irqrestore(&ssi_lock, flags);
+ 
+diff -uNpr linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.c linux-2.6.19.2/sound/arm/mxc-alsa-pmic.c
+--- linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/sound/arm/mxc-alsa-pmic.c	2007-04-25 17:38:39.000000000 -0600
+@@ -78,7 +78,9 @@
+ 
+ #define AUD_MUX_CONF 				0x0031010
+ #define MASK_2_TS				0xfffffffc
+-#define MASK_1_TS				0xfffffffe
++#define MASK_1_TS				0xfffffffd
++#define MASK_1_TS_STDAC				0xfffffffe
++#define MASK_1_TS_REC				0xfffffffe
+ #define SOUND_CARD_NAME				"MXC"
+ 
+ /*!
+@@ -503,6 +505,8 @@ void configure_ssi_rx(snd_pcm_substream_
+ 		ssi_tx_clock_prescaler(ssi, 0);
+ 		ssi_tx_frame_rate(ssi, 2);
+ 	}
++	/* OJO */
++	ssi_tx_frame_rate(ssi, 1);
+ 
+ 	ssi_tx_early_frame_sync(ssi, ssi_frame_sync_one_bit_before);
+ 	ssi_tx_frame_sync_length(ssi, ssi_frame_sync_one_bit);
+@@ -538,7 +542,8 @@ void configure_ssi_rx(snd_pcm_substream_
+ 	 * transfer rate. In Network mode, this ration sets
+ 	 * the number of words per frame.
+ 	 */
+-	ssi_rx_frame_rate(ssi, 2);
++	ssi_tx_frame_rate(ssi, 4);
++	ssi_rx_frame_rate(ssi, 4);
+ 
+ 	ssi_enable(ssi, true);
+ }
+@@ -581,7 +586,11 @@ void configure_ssi_tx(snd_pcm_substream_
+ 	ssi_synchronous_mode(ssi, true);
+ 
+ 	if (runtime->channels == 1) {
+-		ssi_network_mode(ssi, false);
++		if (stream_id == 2) {
++			ssi_network_mode(ssi, true);
++		} else {
++			ssi_network_mode(ssi, false);
++		}
+ 	} else {
+ 		ssi_network_mode(ssi, true);
+ 	}
+@@ -606,7 +615,11 @@ void configure_ssi_tx(snd_pcm_substream_
+ 	ssi_tx_clock_direction(ssi, ssi_tx_rx_externally);
+ 
+ 	if (runtime->channels == 1) {
+-		ssi_tx_frame_rate(ssi, 1);
++		if (stream_id == 2) {
++			ssi_tx_frame_rate(ssi, 4);
++		} else {
++			ssi_tx_frame_rate(ssi, 1);
++		}
+ 	} else {
+ 		ssi_tx_frame_rate(ssi, 2);
+ 	}
+@@ -765,17 +778,33 @@ void set_pmic_channels(snd_pcm_substream
+ 	mxc_pmic_audio_t *chip;
+ 	audio_stream_t *s;
+ 	snd_pcm_runtime_t *runtime;
++	int device = -1, stream_id = -1;
+ 
+ 	chip = snd_pcm_substream_chip(substream);
+-	s = &chip->s[substream->pstr->stream];
++	device = substream->pcm->device;
++
++	if (device == 0) {
++		if (substream->pstr->stream == 1) {
++			stream_id = 1;
++		} else {
++			stream_id = 0;
++		}
++	} else {
++		stream_id = 2;
++	}
++	s = &chip->s[stream_id];
+ 	runtime = substream->runtime;
+ 
+ 	if (runtime->channels == 2) {
+ 		ssi_tx_mask_time_slot(s->ssi, MASK_2_TS);
+-		ssi_rx_mask_time_slot(s->ssi, MASK_2_TS);
++		ssi_rx_mask_time_slot(s->ssi, MASK_1_TS_REC);
+ 	} else {
+-		ssi_tx_mask_time_slot(s->ssi, MASK_1_TS);
+-		ssi_rx_mask_time_slot(s->ssi, MASK_1_TS);
++		if (stream_id == 2) {
++			ssi_tx_mask_time_slot(s->ssi, MASK_1_TS);
++		} else {
++			ssi_tx_mask_time_slot(s->ssi, MASK_1_TS_STDAC);
++		}
++		ssi_rx_mask_time_slot(s->ssi, MASK_1_TS_REC);
+ 	}
+ 
+ }
+@@ -1279,7 +1308,7 @@ void configure_codec(snd_pcm_substream_t
+ 	ssi_bus = (pmic->ssi == SSI1) ? AUDIO_DATA_BUS_1 : AUDIO_DATA_BUS_2;
+ 
+ 	pmic_audio_vcodec_set_rxtx_timeslot(handle, USE_TS0);
+-	pmic_audio_vcodec_enable_mixer(handle, USE_TS1, VCODEC_NO_MIX,
++	pmic_audio_vcodec_enable_mixer(handle, USE_TS1, VCODEC_MIX_IN_0DB,
+ 				       VCODEC_MIX_OUT_0DB);
+ 	pmic_audio_set_protocol(handle, ssi_bus, pmic->protocol, pmic->mode,
+ 				USE_4_TIMESLOTS);
+@@ -1289,7 +1318,6 @@ void configure_codec(snd_pcm_substream_t
+ 				    pmic->sample_rate, NO_INVERT);
+ 	msleep(20);
+ 	pmic_audio_vcodec_set_config(handle, VCODEC_MASTER_CLOCK_OUTPUTS);
+-	pmic_audio_enable(handle);
+ 	pmic_audio_digital_filter_reset(handle);
+ 	pmic_audio_output_enable_phantom_ground(handle);
+ 	msleep(15);
+@@ -1303,6 +1331,7 @@ void configure_codec(snd_pcm_substream_t
+ 		set_mixer_input_device(handle, IP_NODEV, 1);
+ 		set_mixer_input_gain(handle, audio_mixer_control.input_volume);
+ 	}
++	pmic_audio_enable(handle);
+ }
+ 
+ /*!
+@@ -1341,7 +1370,6 @@ void configure_stereodac(snd_pcm_substre
+ 	}
+ 
+ 	ssi_bus = (pmic->ssi == SSI1) ? AUDIO_DATA_BUS_1 : AUDIO_DATA_BUS_2;
+-
+ 	pmic_audio_stdac_set_rxtx_timeslot(handle, USE_TS0_TS1);
+ 	pmic_audio_stdac_enable_mixer(handle, USE_TS2_TS3, STDAC_NO_MIX,
+ 				      STDAC_MIX_OUT_0DB);
+@@ -1351,7 +1379,6 @@ void configure_stereodac(snd_pcm_substre
+ 				   pmic->sample_rate, NO_INVERT);
+ 
+ 	pmic_audio_stdac_set_config(handle, STDAC_MASTER_CLOCK_OUTPUTS);
+-	pmic_audio_enable(handle);
+ 	pmic_audio_output_enable_mixer(handle);
+ 	audio_mixer_control.stdac_out_to_mixer = 1;
+ 	pmic_audio_digital_filter_reset(handle);
+@@ -1363,6 +1390,7 @@ void configure_stereodac(snd_pcm_substre
+ 					    audio_mixer_control.
+ 					    mixer_mono_adder);
+ 	set_mixer_output_device(handle, MIXER_OUT, OP_NODEV, 1);
++	pmic_audio_enable(handle);
+ }
+ 
+ /*!
+@@ -2179,7 +2207,6 @@ static int snd_mxc_audio_playback_prepar
+ 	ssi = s->ssi;
+ 
+ 	normalize_speed_for_pmic(substream);
+-	set_pmic_channels(substream);
+ 
+ 	configure_dam_pmic_master(ssi);
+ 
+@@ -2193,7 +2220,8 @@ static int snd_mxc_audio_playback_prepar
+ 	/*
+ 	   ssi_transmit_enable(ssi, true);
+ 	 */
+-
++	msleep(20);
++	set_pmic_channels(substream);
+ 	s->period = 0;
+ 	s->periods = 0;
+ 
+@@ -2362,7 +2390,12 @@ static int snd_card_mxc_audio_playback_o
+ 			chip->s[stream_id].pmic_audio_device.handle =
+ 			    temp_handle;
+ 		} else {
+-			return -EBUSY;
++			if (audio_mixer_control.codec_capture_active) {
++				temp_handle =
++				    audio_mixer_control.voice_codec_handle;
++			} else {
++				return -EBUSY;
++			}
+ 		}
+ 	}
+ 
+@@ -2563,7 +2596,6 @@ static int snd_mxc_audio_capture_prepare
+ 	ssi = s->ssi;
+ 
+ 	normalize_speed_for_pmic(substream);
+-	set_pmic_channels(substream);
+ 
+ 	pr_debug("substream->pstr->stream %d\n", substream->pstr->stream);
+ 	pr_debug("SSI %d\n", ssi + 1);
+@@ -2579,6 +2611,9 @@ static int snd_mxc_audio_capture_prepare
+ 	ssi_interrupt_enable(ssi, ssi_rx_fifo_0_full);
+ 	ssi_receive_enable(ssi, true);
+ 
++	msleep(20);
++	set_pmic_channels(substream);
++
+ 	s->period = 0;
+ 	s->periods = 0;
+ 
+@@ -2613,7 +2648,11 @@ static int snd_card_mxc_audio_capture_op
+ 		chip->s[SNDRV_PCM_STREAM_CAPTURE].pmic_audio_device.handle =
+ 		    temp_handle;
+ 	} else {
+-		return -EBUSY;
++		if (audio_mixer_control.codec_playback_active) {
++			temp_handle = audio_mixer_control.voice_codec_handle;
++		} else {
++			return -EBUSY;
++		}
+ 	}
+ 	pmic_audio_antipop_enable(ANTI_POP_RAMP_SLOW);
+ 

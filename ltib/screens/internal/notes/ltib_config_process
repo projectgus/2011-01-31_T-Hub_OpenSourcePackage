@@ -1,0 +1,19 @@
+= ltib configuration process =
+
+ * choose a board
+  * list must be auto-generated
+
+ * choose linux kernel (2.0/2.4/2.6)
+
+ * choose clibrary
+  * This implies the toolchain
+
+ * choose distribution (uclinux, custom, fedora) ?
+
+ * choose device profile (e.g minimal/maximal/accespoint/firewall/nas)
+
+ * choose packages
+  * (re)build
+  * install
+
+

@@ -1,0 +1,25 @@
+Weds May 3 2006 Stuart Hughes <stuarth@freescale.com>
+
+Fix the install patch for pidof
+Fix the install permissions for utmpdump wall so we can strip them.
+
+diff --exclude CVS -uNr sysvinit-2.85/src/Makefile sysvinit-2.85.modified/src/Makefile
+--- sysvinit-2.85/src/Makefile	2001-11-06 11:58:16.000000000 +0000
++++ sysvinit-2.85.modified/src/Makefile	2006-05-03 17:52:51.000000000 +0100
+@@ -89,14 +89,14 @@
+ 			runlevel shutdown $(ROOT)/sbin
+ 		# These are not installed by default
+ ifeq ($(DEBIAN),)
+-		$(INSTALL) -m 555 utmpdump wall $(ROOT)/usr/bin
++		$(INSTALL) -m 755 utmpdump wall $(ROOT)/usr/bin
+ endif
+ 		# $(INSTALL) -m 755 etc/initscript.sample $(ROOT)/etc
+ 		$(INSTALL) -m 755 mesg last $(ROOT)/usr/bin
+ 		cd $(ROOT)/sbin; ln -sf halt reboot; chown $(BIN_COMBO) reboot
+ 		cd $(ROOT)/sbin; ln -sf halt poweroff; chown $(BIN_COMBO) poweroff
+ 		cd $(ROOT)/sbin; ln -sf init telinit; chown $(BIN_COMBO) telinit
+-		cd $(ROOT)/bin; ln -sf ../sbin/killall5 pidof; chown $(BIN_COMBO) pidof
++		cd $(ROOT)/sbin; ln -sf killall5 pidof; chown $(BIN_COMBO) pidof
+ 		cd $(ROOT)/usr/bin; ln -sf last lastb; chown $(BIN_COMBO) lastb
+ 		$(INSTALL) -m 644 initreq.h $(ROOT)/usr/include
+ 		$(INSTALL) -m 644 ../man/*.8 $(ROOT)$(MANDIR)/man8

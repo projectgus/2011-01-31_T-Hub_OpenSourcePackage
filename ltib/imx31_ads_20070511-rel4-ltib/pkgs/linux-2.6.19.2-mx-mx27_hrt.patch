@@ -1,0 +1,102 @@
+diff -uNpr linux-2.6.19.2/arch/arm/mach-mx27/time.c linux-2.6.19.2-hrt/arch/arm/mach-mx27/time.c
+--- linux-2.6.19.2/arch/arm/mach-mx27/time.c	2007-01-16 15:12:20.000000000 -0700
++++ linux-2.6.19.2-hrt/arch/arm/mach-mx27/time.c	2007-01-23 08:56:50.000000000 -0700
+@@ -29,6 +29,7 @@
+ #include <linux/init.h>
+ #include <linux/interrupt.h>
+ #include <linux/irq.h>
++#include <linux/clocksource.h>
+ #include <asm/hardware.h>
+ #include <asm/io.h>
+ #include <asm/mach/time.h>
+@@ -113,6 +114,64 @@ static unsigned long __noinstrument mxc_
+ 	return usec;
+ }
+ 
++cycle_t mx27_hrt_get_cycles(void)
++{
++	unsigned long t = __raw_readl(MXC_GPT_TCN_HRT);
++	return t;
++}
++
++static struct clocksource clocksource_mx27_hrt = {
++	.name 		= "mx27_hrt",
++	.rating		= 200,
++	.read		= mx27_hrt_get_cycles,
++	.mask		= CLOCKSOURCE_MASK(32),
++	/*
++	 * Choose a shift value for the denominator that
++	 * will give the lowest error when converting
++	 * the 13.3 MHz clock to nanoseconds.  A value of
++	 * 22 results in an error of about .000317 Hz,
++	 * which is far less than the crystal stability.
++	 */
++	.shift 		= 22,
++	.is_continuous 	= 1,
++};
++
++static int __init mx27_hrt_clocksource_init(void)
++{
++	int ret;
++	u32 reg, v;
++
++	mxc_clks_enable(MXC_GPT_CLOCK_HRT);
++	__raw_writel(0, MXC_GPT_TCTL_HRT);
++	__raw_writel(GPT_TCTL_SWR, MXC_GPT_TCTL_HRT);
++
++	while ((__raw_readl(MXC_GPT_TCTL_HRT) & GPT_TCTL_SWR) != 0) {
++		mb();
++	}
++	__raw_writel(GPT_TCTL_FRR | GPT_TCTL_COMPEN | GPT_TCTL_SRC_PER1,
++		     MXC_GPT_TCTL_HRT);
++
++	v = mxc_get_clocks(MXC_GPT_INT_HRT);
++	__raw_writel((v / CLOCK_TICK_RATE) - 1, MXC_GPT_TPRER_HRT);
++
++	if ((v % CLOCK_TICK_RATE) != 0) {
++		pr_info("\nWARNING1: Can't generate HRT CLOCK_TICK_RATE at %d Hz\n",
++			CLOCK_TICK_RATE);
++	}
++	pr_info("Actual HRT CLOCK_TICK_RATE is %d Hz\n",
++		v / ((__raw_readl(MXC_GPT_TPRER_HRT) & 0x7FF) + 1));
++
++	clocksource_mx27_hrt.mult =
++		clocksource_hz2mult(CLOCK_TICK_RATE,
++				    clocksource_mx27_hrt.shift);
++	ret = clocksource_register(&clocksource_mx27_hrt);
++
++	reg = __raw_readl(MXC_GPT_TCTL_HRT) | GPT_TCTL_TEN;
++	__raw_writel(reg, MXC_GPT_TCTL_HRT);
++
++	return ret;
++}
++
+ /*!
+  * The OS tick timer interrupt structure.
+  */
+@@ -159,9 +218,14 @@ void __init mxc_init_time(void)
+ 
+ 	reg = __raw_readl(MXC_GPT_TCTL_TICK) | GPT_TCTL_TEN;
+ 	__raw_writel(reg, MXC_GPT_TCTL_TICK);
++
++	mx27_hrt_clocksource_init();
++
+ }
+ 
+ struct sys_timer mxc_timer = {
+ 	.init = mxc_init_time,
++#ifndef CONFIG_GENERIC_TIME
+ 	.offset = mxc_gettimeoffset,
++#endif
+ };
+diff -uNpr linux-2.6.19.2/arch/arm/plat-mxc/Kconfig linux-2.6.19.2-hrt/arch/arm/plat-mxc/Kconfig
+--- linux-2.6.19.2/arch/arm/plat-mxc/Kconfig	2007-01-14 22:44:48.000000000 -0700
++++ linux-2.6.19.2-hrt/arch/arm/plat-mxc/Kconfig	2007-01-15 16:41:31.000000000 -0700
+@@ -14,6 +14,7 @@ config ARCH_MX3
+ config ARCH_MX27
+ 	bool "MX27-based"
+ 	select MXC_EMMA
++	select GENERIC_TIME
+ 	help
+ 	  This enables support for systems based on Freescale i.MX27
+ 

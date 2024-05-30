@@ -1,0 +1,13 @@
+diff -ruN tinylogin-1.4.orig/getty.c tinylogin-1.4/getty.c
+--- tinylogin-1.4.orig/getty.c	2002-06-23 06:09:07.000000000 +0300
++++ tinylogin-1.4/getty.c	2004-03-23 17:49:46.000000000 +0200
+@@ -300,7 +300,8 @@
+ 
+ 		iv = getpid();
+ 		if (ioctl(0, TIOCSPGRP, &iv) < 0)
+-			perror_msg("ioctl() TIOCSPGRP call failed");
++			;
++			/*perror_msg("ioctl() TIOCSPGRP call failed");*/
+ 	}
+ #endif
+ 	/* Initialize the termio settings (raw mode, eight-bit, blocking i/o). */

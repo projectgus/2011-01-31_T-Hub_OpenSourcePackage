@@ -1,0 +1,106 @@
+#
+# AUDIO_BRIDGE configuration
+#
+
+choice
+	prompt "Audio bridge selection"
+	depends on USB
+	default DECTUSB_TO_PMIC
+
+config SND_AUDIO_BRIDGE
+	tristate "Dectusb to pmic"
+	depends on USB
+        help
+	  Bridge between dect USB driver and pmic.
+
+
+
+endchoice
+
+
+config DELAY_COMPENSATION
+       bool "Enable delay compensation"
+       depends on SND_AUDIO_BRIDGE
+       default y
+       help 
+       	   Enable delay monitoring and compensation in audio
+	   the audio bridge 
+
+
+config AUDIO_BRIDGE_CONSOLE_TRACES
+	bool "Enable Stream Recording in Audio Bridge"
+	depends on SND_AUDIO_BRIDGE
+	default y
+        help
+	   Enable Stream recording on playback and/or capture 
+	   buffer ports
+
+
+
+config RELAY_TO_DEBUGFS
+	bool "Enable Stream Recording in Audio Bridge"
+	depends on SND_AUDIO_BRIDGE
+	default n
+        help
+	   Enable Stream recording on playback and/or capture 
+	   buffer ports
+
+
+config RELAY_DECT_CAPTURE
+       bool "Capute samples recieved from DECT"
+       depends on RELAY_TO_DEBUGFS
+       default y
+       help
+	    This will activate the capture of samples posted
+	    by the DECT driver
+       
+config RELAY_DECT_PLAYBACK
+       bool "Capute samples sent to DECT"
+       depends on RELAY_TO_DEBUGFS
+       default y
+       help
+	    This will activate the capture of samples posted
+	    by the PMIC driver
+
+
+config RELAY_PMIC_CAPTURE
+       bool "Capute samples received from PMIC"
+       depends on RELAY_TO_DEBUGFS
+       default y
+       help
+	    This will activate the capture of samples posted
+	    by the DECT driver
+
+
+config RELAY_PMIC_PLAYBACK
+       bool "Capute samples sent to PMIC"
+       depends on RELAY_TO_DEBUGFS
+       default y
+       help
+	    This will activate the capture of samples posted
+	    by the DECT driver
+
+
+
+config DUMP_SIN_BRIDGE
+	bool "Override capture stream with a sinus wave form"
+	depends on SND_AUDIO_BRIDGE
+	default n
+        help
+	  Override capture stream with a sinus wave form
+
+config DUMP_SIN_FROM_DECT
+       bool "Prove to the bridge a sin wave instead of DECT data"
+       depends on DUMP_SIN_BRIDGE
+       default y
+       help
+	   Replace data provided by the DECT to the audio bridge
+	   by a sin wave
+
+config DUMP_SIN_FROM_PMIC
+       bool "Prove to the bridge a sin wave instead of PMIC data"
+       depends on DUMP_SIN_BRIDGE
+       default y
+       help
+	   Replace data provided by the DECT to the audio bridge
+	   by a sin wave

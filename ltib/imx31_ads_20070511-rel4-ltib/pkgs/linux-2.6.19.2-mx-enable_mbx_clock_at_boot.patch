@@ -1,0 +1,17 @@
+CR: ENGR00029515
+Patch name: ENGR00029515_enable_mbx_clock.patch
+Date: Thu Mar 22 08:00:41 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: enable mbx clock during imx31 boot up.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/clock.c linux-2.6.19.2/arch/arm/mach-mx3/clock.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/clock.c	2007-04-25 17:39:28.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/clock.c	2007-04-25 17:39:51.000000000 -0600
+@@ -1118,6 +1118,7 @@ int __init mxc_clocks_init(void)
+ 	clk_enable(&gpt_clk);
+ 	clk_enable(&emi_clk);
+ 	clk_enable(&iim_clk);
++	clk_enable(&mbx_clk);
+ 
+ 	return 0;
+ }

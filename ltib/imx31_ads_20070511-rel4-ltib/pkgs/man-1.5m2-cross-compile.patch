@@ -1,0 +1,13 @@
+diff -uNr man-1.5m2.orig/src/Makefile.in man-1.5m2/src/Makefile.in
+--- man-1.5m2.orig/src/Makefile.in	2003-09-05 10:48:13.000000000 +0100
++++ man-1.5m2/src/Makefile.in	2004-11-22 10:04:13.000000000 +0000
+@@ -37,6 +37,9 @@
+ man: $(MANOBJS) $(LIBOBJS)
+ 	$(CC) $(LDFLAGS) $(GS) -o man $(MANOBJS) $(LIBOBJS) $(LIBS)
+ 
++makemsg: makemsg.c
++	$(CC_FOR_BUILD) -o $@ $(CWARNNP) $(CFLAGS) -I. $(DEFS) $<
++
+ msg.c gripedefs.h: ../msgs/mess.en makemsg
+ 	./makemsg ../msgs/mess.en gripedefs.h msg.c
+ 

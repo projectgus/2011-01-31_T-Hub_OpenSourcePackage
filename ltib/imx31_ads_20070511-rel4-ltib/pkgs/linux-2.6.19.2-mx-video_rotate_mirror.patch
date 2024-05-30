@@ -1,0 +1,416 @@
+TLSbo88349_Video_RoatMirror_SameTime.patch
+
+Support image rotation and mirroring at the same time for video overlay
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_prpsw.c linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_prpsw.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_prpsw.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_prpsw.c	2007-04-25 17:37:08.000000000 -0600
+@@ -123,6 +123,8 @@ static int set_ch1_addr(emma_prp_cfg * c
+ 		cfg->ch1_ptr = (unsigned int)cam->rot_vf_bufs[0];
+ 		cfg->ch1_ptr2 = (unsigned int)cam->rot_vf_bufs[1];
+ 		if ((cam->rotation == V4L2_MXC_ROTATE_90_RIGHT)
++		    || (cam->rotation == V4L2_MXC_ROTATE_90_RIGHT_VFLIP)
++		    || (cam->rotation == V4L2_MXC_ROTATE_90_RIGHT_HFLIP)
+ 		    || (cam->rotation == V4L2_MXC_ROTATE_90_LEFT))
+ 			cfg->ch1_stride = cam->win.w.height;
+ 		else
+@@ -199,6 +201,8 @@ static int prp_v4l2_cfg(emma_prp_cfg * c
+ 			break;
+ 		}
+ 		if ((cam->rotation == V4L2_MXC_ROTATE_90_RIGHT)
++		    || (cam->rotation == V4L2_MXC_ROTATE_90_RIGHT_VFLIP)
++		    || (cam->rotation == V4L2_MXC_ROTATE_90_RIGHT_HFLIP)
+ 		    || (cam->rotation == V4L2_MXC_ROTATE_90_LEFT)) {
+ 			cfg->ch1_width = cam->win.w.height;
+ 			cfg->ch1_height = cam->win.w.width;
+@@ -786,6 +790,8 @@ static void rotation(unsigned long priva
+ 	size = cam->rot_vf_buf_size[g_rotbuf];
+ 
+ 	if ((cam->rotation == V4L2_MXC_ROTATE_90_RIGHT)
++	    || (cam->rotation == V4L2_MXC_ROTATE_90_RIGHT_VFLIP)
++	    || (cam->rotation == V4L2_MXC_ROTATE_90_RIGHT_HFLIP)
+ 	    || (cam->rotation == V4L2_MXC_ROTATE_90_LEFT)) {
+ 		width = cam->win.w.height;
+ 		height = cam->win.w.width;
+@@ -833,6 +839,15 @@ static void rotation(unsigned long priva
+ 	case V4L2_MXC_ROTATE_90_RIGHT:
+ 		opl_rotate90_u16(src, s_stride, width, height, dst, d_stride);
+ 		break;
++	case V4L2_MXC_ROTATE_90_RIGHT_VFLIP:
++		opl_rotate90_vmirror_u16(src, s_stride, width, height, dst,
++					 d_stride);
++		break;
++	case V4L2_MXC_ROTATE_90_RIGHT_HFLIP:
++		/* ROTATE_90_RIGHT_HFLIP = ROTATE_270_RIGHT_VFLIP */
++		opl_rotate270_vmirror_u16(src, s_stride, width, height, dst,
++					  d_stride);
++		break;
+ 	case V4L2_MXC_ROTATE_90_LEFT:
+ 		opl_rotate270_u16(src, s_stride, width, height, dst, d_stride);
+ 		break;
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_v4l2_capture.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-04-25 17:37:00.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mx27_v4l2_capture.c	2007-04-25 17:37:08.000000000 -0600
+@@ -263,6 +263,8 @@ static int verify_preview(cam_data * cam
+ 	 * width according to PrP limitations.
+ 	 */
+ 	if ((cam->rotation == V4L2_MXC_ROTATE_90_RIGHT)
++	    || (cam->rotation == V4L2_MXC_ROTATE_90_RIGHT_VFLIP)
++	    || (cam->rotation == V4L2_MXC_ROTATE_90_RIGHT_HFLIP)
+ 	    || (cam->rotation == V4L2_MXC_ROTATE_90_LEFT))
+ 		win->w.height &= ~0x1;
+ 	else
+@@ -513,6 +515,8 @@ static int mxc_set_v42l_control(cam_data
+ 		case V4L2_MXC_ROTATE_HORIZ_FLIP:
+ 		case V4L2_MXC_ROTATE_180:
+ 		case V4L2_MXC_ROTATE_90_RIGHT:
++		case V4L2_MXC_ROTATE_90_RIGHT_VFLIP:
++		case V4L2_MXC_ROTATE_90_RIGHT_HFLIP:
+ 		case V4L2_MXC_ROTATE_90_LEFT:
+ 			cam->rotation = c->value;
+ 			break;
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/opl.h linux-2.6.19.2/drivers/media/video/mxc/opl/opl.h
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/opl.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/opl.h	2007-04-25 17:37:08.000000000 -0600
+@@ -98,7 +98,7 @@ int opl_rotate270_u16(const u8 * src, in
+ 		      int height, u8 * dst, int dst_line_stride);
+ 
+ /*!
+- * @brief Mirror a 16bpp buffer horizontaly
++ * @brief Mirror a 16bpp buffer horizontally
+  *
+  * @param src             Pointer to the input buffer
+  * @param src_line_stride Length in bytes of a raster line of the input buffer
+@@ -127,4 +127,36 @@ int opl_hmirror_u16(const u8 * src, int 
+ int opl_vmirror_u16(const u8 * src, int src_line_stride, int width, int height,
+ 		    u8 * dst, int dst_line_stride);
+ 
++/*!
++ * @brief Rotate a 16bbp buffer 90 degrees clockwise and mirror vertically
++ *	  It is equivalent to rotate 270 degree and mirror horizontally
++ *
++ * @param src             Pointer to the input buffer
++ * @param src_line_stride Length in bytes of a raster line of the input buffer
++ * @param width           Width in pixels of the region in the input buffer
++ * @param height          Height in pixels of the region in the input buffer
++ * @param dst             Pointer to the output buffer
++ * @param dst_line_stride Length in bytes of a raster line of the output buffer
++ *
++ * @return Standard OPL error code. See enumeration for possible result codes.
++ */
++int opl_rotate90_vmirror_u16(const u8 * src, int src_line_stride, int width,
++			     int height, u8 * dst, int dst_line_stride);
++
++/*!
++ * @brief Rotate a 16bbp buffer 270 degrees clockwise and mirror vertically
++ *	  It is equivalent to rotate 90 degree and mirror horizontally
++ *
++ * @param src             Pointer to the input buffer
++ * @param src_line_stride Length in bytes of a raster line of the input buffer
++ * @param width           Width in pixels of the region in the input buffer
++ * @param height          Height in pixels of the region in the input buffer
++ * @param dst             Pointer to the output buffer
++ * @param dst_line_stride Length in bytes of a raster line of the output buffer
++ *
++ * @return Standard OPL error code. See enumeration for possible result codes.
++ */
++int opl_rotate270_vmirror_u16(const u8 * src, int src_line_stride, int width,
++			      int height, u8 * dst, int dst_line_stride);
++
+ #endif				/* __OPL_H__ */
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate270_u16.c linux-2.6.19.2/drivers/media/video/mxc/opl/rotate270_u16.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate270_u16.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/rotate270_u16.c	2007-04-25 17:37:08.000000000 -0600
+@@ -16,14 +16,33 @@
+ 
+ static int opl_rotate270_u16_by16(const u8 * src, int src_line_stride,
+ 				  int width, int height, u8 * dst,
+-				  int dst_line_stride);
++				  int dst_line_stride, int vmirror);
+ static int opl_rotate270_u16_by4(const u8 * src, int src_line_stride, int width,
+-				 int height, u8 * dst, int dst_line_stride);
++				 int height, u8 * dst, int dst_line_stride,
++				 int vmirror);
++static int opl_rotate270_vmirror_u16_both(const u8 * src, int src_line_stride,
++					  int width, int height, u8 * dst,
++					  int dst_line_stride, int vmirror);
+ int opl_rotate270_u16_qcif(const u8 * src, u8 * dst);
+ 
+ int opl_rotate270_u16(const u8 * src, int src_line_stride, int width,
+ 		      int height, u8 * dst, int dst_line_stride)
+ {
++	return opl_rotate270_vmirror_u16_both(src, src_line_stride, width,
++					      height, dst, dst_line_stride, 0);
++}
++
++int opl_rotate270_vmirror_u16(const u8 * src, int src_line_stride, int width,
++			      int height, u8 * dst, int dst_line_stride)
++{
++	return opl_rotate270_vmirror_u16_both(src, src_line_stride, width,
++					      height, dst, dst_line_stride, 1);
++}
++
++static int opl_rotate270_vmirror_u16_both(const u8 * src, int src_line_stride,
++					  int width, int height, u8 * dst,
++					  int dst_line_stride, int vmirror)
++{
+ 	const int BLOCK_SIZE_PIXELS = CACHE_LINE_WORDS * BYTES_PER_WORD
+ 	    / BYTES_PER_PIXEL;
+ 	const int BLOCK_SIZE_PIXELS_BY4 = CACHE_LINE_WORDS * BYTES_PER_WORD
+@@ -36,18 +55,21 @@ int opl_rotate270_u16(const u8 * src, in
+ 	    || dst_line_stride == 0)
+ 		return OPLERR_BAD_ARG;
+ 
+-	if (width == QCIF_Y_WIDTH && height == QCIF_Y_HEIGHT
++	/* The QCIF algorithm doesn't support vertical mirroring */
++	if (vmirror == 0 && width == QCIF_Y_WIDTH && height == QCIF_Y_HEIGHT
+ 	    && src_line_stride == QCIF_Y_WIDTH * 2
+ 	    && src_line_stride == QCIF_Y_HEIGHT * 2)
+ 		return opl_rotate270_u16_qcif(src, dst);
+ 	else if (width % BLOCK_SIZE_PIXELS == 0
+ 		 && height % BLOCK_SIZE_PIXELS == 0)
+ 		return opl_rotate270_u16_by16(src, src_line_stride, width,
+-					      height, dst, dst_line_stride);
++					      height, dst, dst_line_stride,
++					      vmirror);
+ 	else if (width % BLOCK_SIZE_PIXELS_BY4 == 0
+ 		 && height % BLOCK_SIZE_PIXELS_BY4 == 0)
+ 		return opl_rotate270_u16_by4(src, src_line_stride, width,
+-					     height, dst, dst_line_stride);
++					     height, dst, dst_line_stride,
++					     vmirror);
+ 	else
+ 		return OPLERR_BAD_ARG;
+ }
+@@ -87,17 +109,20 @@ int opl_rotate270_u16(const u8 * src, in
+  * Each row of block:
+  * in_block_ptr -= RGB_WIDTH_BYTES * BLOCK_SIZE_PIXELS - 2
+  * out_block_ptr -= RGB_HEIGHT_PIXELS * BYTES_PER_PIXEL + 2 * BLOCK_SIZE_PIXELS;
++ *
++ * It may perform vertical mirroring too depending on the vmirror flag.
+  */
+ static int opl_rotate270_u16_by16(const u8 * src, int src_line_stride,
+ 				  int width, int height, u8 * dst,
+-				  int dst_line_stride)
++				  int dst_line_stride, int vmirror)
+ {
+ 	const int BLOCK_SIZE_PIXELS = CACHE_LINE_WORDS * BYTES_PER_WORD
+ 	    / BYTES_PER_PIXEL;
+ 	const int IN_INDEX = src_line_stride * BLOCK_SIZE_PIXELS
+ 	    - BYTES_PER_PIXEL;
+-	const int OUT_INDEX = dst_line_stride + BYTES_PER_PIXEL
+-	    * BLOCK_SIZE_PIXELS;
++	const int OUT_INDEX = vmirror ?
++	    -dst_line_stride + BYTES_PER_PIXEL * BLOCK_SIZE_PIXELS
++	    : dst_line_stride + BYTES_PER_PIXEL * BLOCK_SIZE_PIXELS;
+ 	const u8 *in_block_ptr;
+ 	u8 *out_block_ptr;
+ 	int i, k;
+@@ -108,6 +133,14 @@ static int opl_rotate270_u16_by16(const 
+ 		out_block_ptr = dst + (((height / BLOCK_SIZE_PIXELS) - k)
+ 				       * BLOCK_SIZE_PIXELS * BYTES_PER_PIXEL) +
+ 		    (width - 1) * dst_line_stride;
++
++		/*
++		* For vertical mirroring the writing starts from the
++		* first line
++		*/
++		if (vmirror)
++			out_block_ptr -= dst_line_stride * (width - 1);
++
+ 		for (i = width; i > 0; i--) {
+ 			__asm__ volatile (
+ 				"ldrh	r2, [%0], %4\n\t"
+@@ -193,16 +226,20 @@ static int opl_rotate270_u16_by16(const 
+  * Each row of block:
+  * in_block_ptr -= RGB_WIDTH_BYTES * BLOCK_SIZE_PIXELS - 2
+  * out_block_ptr -= RGB_HEIGHT_PIXELS * BYTES_PER_PIXEL + 2 * BLOCK_SIZE_PIXELS;
++ *
++ * It may perform vertical mirroring too depending on the vmirror flag.
+  */
+ static int opl_rotate270_u16_by4(const u8 * src, int src_line_stride, int width,
+-				 int height, u8 * dst, int dst_line_stride)
++				 int height, u8 * dst, int dst_line_stride,
++				 int vmirror)
+ {
+ 	const int BLOCK_SIZE_PIXELS = CACHE_LINE_WORDS * BYTES_PER_WORD
+ 	    / BYTES_PER_PIXEL / 4;
+ 	const int IN_INDEX = src_line_stride * BLOCK_SIZE_PIXELS
+ 	    - BYTES_PER_PIXEL;
+-	const int OUT_INDEX = dst_line_stride + BYTES_PER_PIXEL
+-	    * BLOCK_SIZE_PIXELS;
++	const int OUT_INDEX = vmirror ?
++	    -dst_line_stride + BYTES_PER_PIXEL * BLOCK_SIZE_PIXELS
++	    : dst_line_stride + BYTES_PER_PIXEL * BLOCK_SIZE_PIXELS;
+ 	const u8 *in_block_ptr;
+ 	u8 *out_block_ptr;
+ 	int i, k;
+@@ -213,6 +250,14 @@ static int opl_rotate270_u16_by4(const u
+ 		out_block_ptr = dst + (((height / BLOCK_SIZE_PIXELS) - k)
+ 				       * BLOCK_SIZE_PIXELS * BYTES_PER_PIXEL)
+ 		    + (width - 1) * dst_line_stride;
++
++		/*
++		* For vertical mirroring the writing starts from the
++		* first line
++		*/
++		if (vmirror)
++			out_block_ptr -= dst_line_stride * (width - 1);
++
+ 		for (i = width; i > 0; i--) {
+ 			__asm__ volatile (
+ 				"ldrh	r2, [%0], %4\n\t"
+@@ -237,3 +282,4 @@ static int opl_rotate270_u16_by4(const u
+ }
+ 
+ EXPORT_SYMBOL(opl_rotate270_u16);
++EXPORT_SYMBOL(opl_rotate270_vmirror_u16);
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate90_u16.c linux-2.6.19.2/drivers/media/video/mxc/opl/rotate90_u16.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/opl/rotate90_u16.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/opl/rotate90_u16.c	2007-04-25 17:37:08.000000000 -0600
+@@ -15,14 +15,34 @@
+ #include "opl.h"
+ 
+ static int opl_rotate90_u16_by16(const u8 * src, int src_line_stride, int width,
+-				 int height, u8 * dst, int dst_line_stride);
++				 int height, u8 * dst, int dst_line_stride,
++				 int vmirror);
+ static int opl_rotate90_u16_by4(const u8 * src, int src_line_stride, int width,
+-				int height, u8 * dst, int dst_line_stride);
++				int height, u8 * dst, int dst_line_stride,
++				int vmirror);
++static int opl_rotate90_vmirror_u16_both(const u8 * src, int src_line_stride,
++					 int width, int height, u8 * dst,
++					 int dst_line_stride, int vmirror);
+ int opl_rotate90_u16_qcif(const u8 * src, u8 * dst);
+ 
+ int opl_rotate90_u16(const u8 * src, int src_line_stride, int width, int height,
+ 		     u8 * dst, int dst_line_stride)
+ {
++	return opl_rotate90_vmirror_u16_both(src, src_line_stride, width,
++					    height, dst, dst_line_stride, 0);
++}
++
++int opl_rotate90_vmirror_u16(const u8 * src, int src_line_stride, int width,
++			    int height, u8 * dst, int dst_line_stride)
++{
++	return opl_rotate90_vmirror_u16_both(src, src_line_stride, width,
++					    height, dst, dst_line_stride, 1);
++}
++
++static int opl_rotate90_vmirror_u16_both(const u8 * src, int src_line_stride,
++					 int width, int height, u8 * dst,
++					 int dst_line_stride, int vmirror)
++{
+ 	const int BLOCK_SIZE_PIXELS = CACHE_LINE_WORDS * BYTES_PER_WORD
+ 	    / BYTES_PER_PIXEL;
+ 	const int BLOCK_SIZE_PIXELS_BY4 = CACHE_LINE_WORDS * BYTES_PER_WORD
+@@ -35,35 +55,41 @@ int opl_rotate90_u16(const u8 * src, int
+ 	    || dst_line_stride == 0)
+ 		return OPLERR_BAD_ARG;
+ 
+-	if (width == QCIF_Y_WIDTH && height == QCIF_Y_HEIGHT
++	/* The QCIF algorithm doesn't support vertical mirroring */
++	if (vmirror == 0 && width == QCIF_Y_WIDTH && height == QCIF_Y_HEIGHT
+ 	    && src_line_stride == QCIF_Y_WIDTH * 2
+ 	    && src_line_stride == QCIF_Y_HEIGHT * 2)
+ 		return opl_rotate90_u16_qcif(src, dst);
+ 	else if (width % BLOCK_SIZE_PIXELS == 0
+ 		 && height % BLOCK_SIZE_PIXELS == 0)
+ 		return opl_rotate90_u16_by16(src, src_line_stride, width,
+-					     height, dst, dst_line_stride);
++					     height, dst, dst_line_stride,
++					     vmirror);
+ 	else if (width % BLOCK_SIZE_PIXELS_BY4 == 0
+ 		 && height % BLOCK_SIZE_PIXELS_BY4 == 0)
+ 		return opl_rotate90_u16_by4(src, src_line_stride, width, height,
+-					    dst, dst_line_stride);
++					    dst, dst_line_stride, vmirror);
+ 	else
+ 		return OPLERR_BAD_ARG;
+ }
+ 
+ /*
+- * Performs clockwise rotation using block sizes of 16x16
++ * Performs clockwise rotation (and possibly vertical mirroring depending
++ * on the vmirror flag) using block sizes of 16x16
+  * The algorithm is similar to 270 degree clockwise rotation algorithm
+  */
+ static int opl_rotate90_u16_by16(const u8 * src, int src_line_stride, int width,
+-				 int height, u8 * dst, int dst_line_stride)
++				 int height, u8 * dst, int dst_line_stride,
++				 int vmirror)
+ {
+ 	const int BLOCK_SIZE_PIXELS = CACHE_LINE_WORDS * BYTES_PER_WORD
+ 	    / BYTES_PER_PIXEL;
+ 	const int BLOCK_SIZE_BYTES = BYTES_PER_PIXEL * BLOCK_SIZE_PIXELS;
+ 	const int IN_INDEX = src_line_stride * BLOCK_SIZE_PIXELS
+ 	    + BYTES_PER_PIXEL;
+-	const int OUT_INDEX = dst_line_stride - BLOCK_SIZE_BYTES;
++	const int OUT_INDEX = vmirror ?
++	    -dst_line_stride - BLOCK_SIZE_BYTES
++	    : dst_line_stride - BLOCK_SIZE_BYTES;
+ 	const u8 *in_block_ptr;
+ 	u8 *out_block_ptr;
+ 	int i, k;
+@@ -74,6 +100,14 @@ static int opl_rotate90_u16_by16(const u
+ 		       (height / BLOCK_SIZE_PIXELS - k));
+ 		out_block_ptr = dst + BYTES_PER_PIXEL * BLOCK_SIZE_PIXELS *
+ 		    ((height / BLOCK_SIZE_PIXELS) - k);
++
++		/*
++		 * For vertical mirroring the writing starts from the
++		 * bottom line
++		 */
++		if (vmirror)
++			out_block_ptr += dst_line_stride * (width - 1);
++
+ 		for (i = width; i > 0; i--) {
+ 			__asm__ volatile (
+ 				"ldrh	r2, [%0], -%4\n\t"
+@@ -125,18 +159,22 @@ static int opl_rotate90_u16_by16(const u
+ }
+ 
+ /*
+- * Performs clockwise rotation using block sizes of 4x4
++ * Performs clockwise rotation (and possibly vertical mirroring depending
++ * on the vmirror flag) using block sizes of 4x4
+  * The algorithm is similar to 270 degree clockwise rotation algorithm
+  */
+ static int opl_rotate90_u16_by4(const u8 * src, int src_line_stride, int width,
+-				int height, u8 * dst, int dst_line_stride)
++				int height, u8 * dst, int dst_line_stride,
++				int vmirror)
+ {
+ 	const int BLOCK_SIZE_PIXELS = CACHE_LINE_WORDS * BYTES_PER_WORD
+ 	    / BYTES_PER_PIXEL / 4;
+ 	const int BLOCK_SIZE_BYTES = BYTES_PER_PIXEL * BLOCK_SIZE_PIXELS;
+ 	const int IN_INDEX = src_line_stride * BLOCK_SIZE_PIXELS
+ 	    + BYTES_PER_PIXEL;
+-	const int OUT_INDEX = dst_line_stride - BLOCK_SIZE_BYTES;
++	const int OUT_INDEX = vmirror ?
++	    -dst_line_stride - BLOCK_SIZE_BYTES
++	    : dst_line_stride - BLOCK_SIZE_BYTES;
+ 	const u8 *in_block_ptr;
+ 	u8 *out_block_ptr;
+ 	int i, k;
+@@ -147,6 +185,14 @@ static int opl_rotate90_u16_by4(const u8
+ 		       (height / BLOCK_SIZE_PIXELS - k));
+ 		out_block_ptr = dst + BYTES_PER_PIXEL * BLOCK_SIZE_PIXELS
+ 		    * ((height / BLOCK_SIZE_PIXELS) - k);
++
++		/*
++		 * For horizontal mirroring the writing starts from the
++		 * bottom line
++		 */
++		if (vmirror)
++			out_block_ptr += dst_line_stride * (width - 1);
++
+ 		for (i = width; i > 0; i--) {
+ 			__asm__ volatile (
+ 				"ldrh	r2, [%0], -%4\n\t"
+@@ -171,3 +217,4 @@ static int opl_rotate90_u16_by4(const u8
+ }
+ 
+ EXPORT_SYMBOL(opl_rotate90_u16);
++EXPORT_SYMBOL(opl_rotate90_vmirror_u16);

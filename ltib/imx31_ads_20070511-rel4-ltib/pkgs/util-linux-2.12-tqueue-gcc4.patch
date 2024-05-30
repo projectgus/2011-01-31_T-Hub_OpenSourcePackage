@@ -1,0 +1,37 @@
+Steve Papacharalambous, stevep@freescale.com, 08 May 2006
+
+This patch is to fix the error:
+
+gcc -pipe -O2 -fsigned-char -fomit-frame-pointer -I../lib -Wall  -Wstrict-prototypes -I/usr/include/ncurses -DNCH=0   -D_FILE_OFFSET_BITS=64 -DSBINDIR=\"/sbin\" -DUSRSBINDIR=\"/usr/sbin\" -DLOGDIR=\"/var/log\" -DVARPATH=\"/var\" -DLOCALEDIR=\"/home/stevep/work/ltib/rootfs/usr/share/locale\" -O2 -c cytune.c -o cytune.o
+cytune.c:58:80: error: linux/tqueue.h: No such file or directory
+In file included from cytune.c:61:
+/opt/freescale/usr/local/gcc-4.1.0-glibc-2.4-8/arm-none-linux-gnueabi/lib/gcc/arm-none-linux-gnueabi/4.1.0/../../../../arm-none-linux-gnueabi/sys-include/linux/cyclades.h:514: error: expected ':', ',', ';', '}' or '__attribute__' before '*' token
+make[1]: *** [cytune.o] Error 1
+make[1]: Leaving directory `/home/stevep/work/ltib/rpm/BUILD/util-linux-2.12/sys-utils'
+make: *** [all] Error 1
+
+Patch derived from: http://www.ussg.iu.edu/hypermail/linux/kernel/0410.3/0823.html
+
+==============================================================================
+diff --exclude CVS -uNr util-linux-2.12/configure util-linux-2.12.modified/configure
+--- util-linux-2.12/configure	2003-07-05 21:06:55.000000000 +0100
++++ util-linux-2.12.modified/configure	2006-05-08 08:23:36.000000000 +0100
+@@ -360,6 +360,7 @@
+ #
+ echo "
+ #include <sys/types.h>
++#include <linux/compiler.h>
+ #include <linux/cyclades.h>
+ int main(){ exit(0); }
+ " > conftest.c
+diff --exclude CVS -uNr util-linux-2.12/sys-utils/cytune.c util-linux-2.12.modified/sys-utils/cytune.c
+--- util-linux-2.12/sys-utils/cytune.c	2002-03-08 23:04:30.000000000 +0000
++++ util-linux-2.12.modified/sys-utils/cytune.c	2006-05-08 08:25:45.000000000 +0100
+@@ -58,6 +58,7 @@
+ #include <linux/tqueue.h>	/* required for old kernels (for struct tq_struct) */
+ 				/* compilation errors on other kernels */
+ #endif
++#include <linux/compiler.h>
+ #include <linux/cyclades.h>
+ 
+ #if 0

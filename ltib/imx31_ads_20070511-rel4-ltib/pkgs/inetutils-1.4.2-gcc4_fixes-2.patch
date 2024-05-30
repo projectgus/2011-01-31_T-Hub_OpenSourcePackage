@@ -1,0 +1,56 @@
+Steve Papacharalambous <stevep@freescale.com>, 01 June 2006
+Downloaded this patch from:
+http://www.linuxfromscratch.org/patches/downloads/inetutils/
+
+Downloaded patch has a bug which causes ftp to crash.  Fixed bug and
+this is the original patch + the fix.
+==============================================================================
+Submitted By: Matthew Burgess <matthew@linuxfromscratch.org>
+Date: 2005-07-28
+Initial Package Version: 1.4.2
+Upstream Status: Submitted Upstream
+Origin: Greg Schafer <gschafer@zip.com.au> (http://www.diy-linux.org/downloads/patches/GCC4/inetutils-1.4.2-gcc4-fixes-1.patch)
+Description: Fix compilation issues with gcc4
+diff --exclude CVS -uNr inetutils-1.4.2/ftp/cmdtab.c inetutils-1.4.2.modified/ftp/cmdtab.c
+--- inetutils-1.4.2/ftp/cmdtab.c	Thu Jul  6 05:21:07 2000
++++ inetutils-1.4.2.modified/ftp/cmdtab.c	Thu Jun  1 11:39:32 2006
+@@ -109,7 +109,7 @@
+ char	userhelp[] =	"send new user information";
+ char	verbosehelp[] =	"toggle verbose mode";
+ 
+-struct cmd cmdtab[] = {
++struct cmd cmdtab_[] = {
+ 	{ "!",		shellhelp,	0,	0,	0,	shell },
+ 	{ "$",		domachelp,	1,	0,	0,	domacro },
+ 	{ "account",	accounthelp,	0,	1,	1,	account},
+@@ -185,4 +185,5 @@
+ 	{ 0 },
+ };
+ 
+-int	NCMDS = (sizeof (cmdtab) / sizeof (cmdtab[0])) - 1;
++int	NCMDS = (sizeof (cmdtab_) / sizeof (cmdtab_[0])) - 1;
++struct cmd *cmdtab = cmdtab_;
+diff --exclude CVS -uNr inetutils-1.4.2/ftp/extern.h inetutils-1.4.2.modified/ftp/extern.h
+--- inetutils-1.4.2/ftp/extern.h	Wed Aug  9 06:44:23 2000
++++ inetutils-1.4.2.modified/ftp/extern.h	Thu Jun  1 11:29:54 2006
+@@ -137,7 +137,7 @@
+ 
+ extern jmp_buf	abortprox;
+ extern int	abrtflag;
+-extern struct	cmd cmdtab[];
++extern struct	cmd *cmdtab;
+ extern FILE	*cout;
+ extern int	data;
+ extern char    *home;
+diff --exclude CVS -uNr inetutils-1.4.2/libinetutils/ttymsg.c inetutils-1.4.2.modified/libinetutils/ttymsg.c
+--- inetutils-1.4.2/libinetutils/ttymsg.c	Thu Nov  1 15:52:19 2001
++++ inetutils-1.4.2.modified/libinetutils/ttymsg.c	Thu Jun  1 11:29:54 2006
+@@ -132,7 +132,7 @@
+ 	    }
+ 	  if (wret)
+ 	    {
+-	      (char *)iov->iov_base += wret;
++	      iov->iov_base = (char *)iov->iov_base + wret;
+ 	      iov->iov_len -= wret;
+ 	    }
+ 	  continue;

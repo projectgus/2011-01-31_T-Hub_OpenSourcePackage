@@ -1,0 +1,18 @@
+Fri Oct 20 2006 Stuart Hughes <stuarth@freescale.com>
+
+This patch fixes build failures with gcc4.
+
+This was originated by me.
+
+diff --exclude CVS -uNr samba-3.0.2a/source/include/popt_common.h samba-3.0.2a.modified/source/include/popt_common.h
+--- samba-3.0.2a/source/include/popt_common.h	2003-08-15 21:39:52.000000000 +0100
++++ samba-3.0.2a.modified/source/include/popt_common.h	2006-10-20 16:11:00.000000000 +0100
+@@ -21,6 +21,8 @@
+ #ifndef _POPT_COMMON_H
+ #define _POPT_COMMON_H
+ 
++#include "popt.h"
++
+ /* Common popt structures */
+ extern struct poptOption popt_common_samba[];
+ extern struct poptOption popt_common_connection[];

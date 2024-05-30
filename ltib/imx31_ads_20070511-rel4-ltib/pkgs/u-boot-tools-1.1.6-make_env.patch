@@ -1,0 +1,18 @@
+Fri Dev 1 2006 Stuart Hughes <stuarth@freescale.com>
+
+This prevents accidental leakage of environment variables into the
+makefile (as we don't use config.mk
+
+diff --exclude CVS -uNr u-boot-tools-1.1.6/tools/Makefile u-boot-tools-1.1.6.modified/tools/Makefile
+--- u-boot-tools-1.1.6/tools/Makefile	2006-11-23 16:17:52.000000000 +0000
++++ u-boot-tools-1.1.6.modified/tools/Makefile	2006-12-01 09:47:49.000000000 +0000
+@@ -110,6 +110,9 @@
+ # so that we can act intelligently.
+ #
+ #include $(TOPDIR)/config.mk
++src=
++obj=
++SFX=
+ 
+ # now $(obj) is defined
+ SRCS	:= $(addprefix $(obj),$(OBJ_LINKS:.o=.c)) $(OBJ_FILES:.o=.c)

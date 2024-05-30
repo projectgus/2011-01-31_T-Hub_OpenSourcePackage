@@ -1,0 +1,76 @@
+# constants (forced values)
+config CONFIG_TITLE
+    string
+    default "LTIB: Host support packages"
+
+config PLATFORM_COMMENT
+    string
+    default "Host support packages"
+
+config VENDOR
+    string
+    default "Freescale"
+
+config PLATFORM
+    string
+    default host
+
+config GNUTARCH
+    string
+    default buildarch
+
+config LINTARCH
+    string
+    default buildarch
+
+config CFGHOST
+    string
+    default buildarch
+
+# capabilities if different from defaults.lkc
+config CAP_UCLIBC
+    bool
+    default n
+
+source ../../userspace/endian.lkc
+source ../../userspace/libc_type.lkc
+
+comment "Choose your toolchain"
+choice
+    prompt "Toolchain"
+    default TOOLCHAIN_CUSTOM
+    help
+        This menu will help you choose the cross toolchain to use to build
+        your packages with.  If you choose none, you can enter the
+        path to your toolchain by hand
+
+    config TOOLCHAIN_CUSTOM
+        bool "custom"
+endchoice
+
+config TOOLCHAIN
+    string
+    default "TODO" if TOOLCHAIN1
+
+config TOOLCHAIN_PATH
+    string
+    default "/usr"
+    string "Supply your toolchain path" if TOOLCHAIN_CUSTOM
+
+config TOOLCHAIN_PREFIX
+    string
+    default  "" if TOOLCHAIN_CUSTOM
+
+config TOOLCHAIN_CFLAGS
+    string
+    default ""
+    string "Enter any CFLAGS for gcc/g++"
+    help
+        This option lets you set flags that will be passed to gcc/g++
+        These will be injected by the spoofing mechanism, so they
+        only work if you reference the compiler as gcc/g++ in your
+        rpm spec files (you cannot say for instance powerpc-linux-gcc)
+
+source ../../userspace/distro.lkc
+source ../../userspace/packages.lkc
+source ../../userspace/defaults.lkc

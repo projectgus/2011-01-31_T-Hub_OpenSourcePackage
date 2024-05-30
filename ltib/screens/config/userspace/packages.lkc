@@ -1,0 +1,1971 @@
+comment 'Package selection'
+
+menu "Package list"
+
+config PKG_APPTRK_M54X5
+   depends LINTARCH = m68k
+   bool "Apptrk for m68k with mmu"
+   help
+     Target interface for CodeWarrior debugging system.
+
+config PKG_APPTRK_M68K
+   depends LINTARCH = m68knommu
+   bool "Apptrk for m68k"
+   help
+     Target interface for CodeWarrior debugging system.
+
+config PKG_APPTRK_PPCBIN
+   depends LINTARCH = ppc || LINTARCH = powerpc
+   bool "apptrk binary package for powerpc"
+   help
+     AppTRK is the userspace debug agent for CodeWarrior
+
+config PKG_ATK
+   bool "atk"
+   default n
+   help
+     Needed for GTK+.
+
+config PKG_AUTOCONF
+    bool "autoconf"
+    help
+       GNU's Autoconf is a tool for configuring source code and Makefiles.
+       Using Autoconf, programmers can create portable and configurable
+       packages, since the person building the package is allowed to specify
+       various configuration options.
+       
+       You should install Autoconf if you are developing software and you
+       would like to use it to create shell scripts that will configure your
+       source code packages. If you are installing Autoconf, you will also
+       need to install the GNU m4 package.
+       
+       Note that the Autoconf package is not required for the end-user who
+       may be configuring software with an Autoconf-generated script;
+       Autoconf is only required for the generation of the scripts, not their
+       use.
+
+config PKG_AUTOMAKE
+    bool "automake"
+    help
+       Automake is an experimental Makefile generator. Automake was inspired
+       by the 4.4BSD make and include files, but aims to be portable and to
+       conform to the GNU standards for Makefile variables and targets.
+
+       You should install Automake if you are developing software and would
+       like to use its ability to automatically generate GNU standard
+       Makefiles. If you install Automake, you will also need to install
+       GNU's Autoconf package.
+
+       This fails on debian as autoconf is not on the host
+
+config LIBC_WANTED
+    bool "Include C library"
+    help
+       You need to include this unless you are going to manually copy
+       your C library components to the target
+    default y
+if LIBC_WANTED
+config PKG_LIBC
+    string "C library package"
+    default "base_libs"
+    help
+       Normally the components of the C library are expected to be copied
+       out of the cross compiler toolchain.  This is done using the package
+       "base_libs" (which is the default).  If you really want to build 
+       your C library, this can be done by entering the appropriate
+       spec file name (e.g. "glibc" or "uclibc").  
+
+config PKG_LIBC_WANT_CF
+    depends PKG_LIBC != base_libs
+    bool "Configure the C library"
+    help
+       Setting this value will let you tune the configuration of your 
+       C library (where applicable)
+
+config PKG_LIBC_WANT_LOCALES
+    bool "Include libc locale files ?"
+
+config PKG_LIBC_WANT_HEADERS
+    bool "Include header files from toolchain ?"
+
+config PKG_LIBC_WANT_STATIC_LIBS
+    bool "Include static libc libraries ?"
+endif
+
+config PKG_ALSA_LIB
+    bool "alsa-lib"
+    help
+       The Advanced Linux Sound Architecture (ALSA) provides audio and MIDI
+       functionality to the Linux operating system.  The alsa-lib user-space
+       library simplifies application programming and provides a higher level
+       of audio functionality compared to OSS.
+
+config PKG_ALSA_UTILS
+    select PKG_ALSA_LIB
+    bool "alsa-utils"
+    help
+       This package contains the command line utilities for the ALSA project.
+       The package can be compiled only with the installed ALSA driver and
+       the ALSA C library.  Utilities include: alsaconf, alsactl, aplay/arecord,
+       amixer, alsamixer, amidi, and iecset.
+
+config PKG_BASH
+    bool "bash"
+    help
+       The GNU project Bourne Again shell (bash) is a shell or command 
+       language interpreter that is compatible with the Bourne shell (sh).
+       Bash incorporates useful features from the Korn shell (ksh) and 
+       the C shell (csh) and most sh scripts can be run by bash without 
+       modification.
+
+config PKG_BASH_WANT_NO_SH_SYMLINK
+    depends PKG_BASH
+    bool "Don't link bash to /bin/sh"
+    default n
+    help
+       Select y if you will have more than one shell and bash will not be
+       the default.
+       Select n if you want bash to be your default shell.  
+       If in doubt, select n
+
+config PKG_BIND
+    select PKG_OPENSSL
+    bool "bind"
+    help
+       ISC's Domain Name System BIND implementation contains a DNS server
+       (named), a DNS resolver library, and DNS testing tools.
+       See: http://www.isc.org/sw/bind/
+
+config PKG_BINUTILS
+    bool "binutils"
+    help
+       Binutils is a collection of binary utilities, including ar (for
+       creating, modifying and extracting from archives), as (a family of GNU
+       assemblers), gprof (for displaying call graph profile data), ld (the
+       GNU linker), nm (for listing symbols from object files), objcopy (for
+       copying and translating object files), objdump (for displaying
+       information from object files), ranlib (for generating an index for
+       the contents of an archive), size (for listing the section sizes of an
+       object or archive file), strings (for listing printable strings from
+       files), strip (for discarding symbols), and addr2line (for converting
+       addresses to file and line).
+
+config PKG_BISON
+    bool "bison"
+    help
+       Bison is a general purpose parser generator that converts a grammar
+       description for an LALR(1) context-free grammar into a C program to
+       parse that grammar. Bison can be used to develop a wide range of
+       language parsers, from ones used in simple desk calculators to complex
+       programming languages. Bison is upwardly compatible with Yacc, so any
+       correctly written Yacc grammar should work with Bison without any
+       changes. If you know Yacc, you should not have any trouble using
+       Bison. You do need to be proficient in C programming to be able
+       to use Bison. Bison is only needed on systems that are used for
+       development.
+       
+       If your system will be used for C development, you should install
+       Bison.
+
+config PKG_BLUEZ_HCIDUMP
+    bool "bluez-hcidump"
+    select PKG_BLUEZ_LIBS
+    help
+	The hcidump utility allows the monitoring of Bluetooth activity.
+	It provides a disassembly of the Bluetooth traffic and can display
+	packets from higher level protocols such as RFCOMM, SDP and BNEP.
+	It is not required for normal Bluetooth operation, but may be
+	helpful for debugging.
+
+	hcidump is part of the BlueZ Bluetooth Linux project.
+	See http://www.bluez.org
+
+config PKG_BLUEZ_LIBS
+    bool "bluez-libs"
+    help
+        User space libraries for the BlueZ bluetooth APIs.
+
+	BlueZ is the official Linux Bluetooth protocol stack. It is an
+	Open Source project distributed under GNU General Public License (GPL).
+	See http://www.bluez.org
+
+config PKG_BLUEZ_UTILS
+    bool "bluez-utils"
+    select PKG_BLUEZ_LIBS
+    help
+	This package contains tools and system daemons for using Bluetooth
+	devices.  It is part of the BlueZ Bluetooth Linux project.
+	See http://www.bluez.org
+
+config PKG_BOA
+    bool "boa"
+    help
+      Boa is a single-tasking HTTP server. That means that unlike 
+      traditional web servers, it does not fork for each incoming connection,
+      nor does it fork many copies of itself to handle multiple connections. 
+      It internally multiplexes all of the ongoing HTTP connections, and 
+      forks only for CGI programs (which must be separate processes), 
+      automatic directory generation, and automatic file gunzipping.
+      The primary design goals of Boa are speed and security. Security,
+      in the sense of "can't be subverted by a malicious user," not "fine 
+      grained access control and encrypted communications". Boa is not 
+      intended as a feature-packed server.
+
+      Available rpmbuild rebuild options :
+      --with : debug access poll
+      --without : gzip sendfile
+       
+config PKG_BONNIE_PLUS_PLUS
+    bool "bonnie++"
+    help
+      Bonnie++ is a benchmark suite that is aimed at performing a number of
+      simple tests of hard drive and file system performance. Then you can
+      decide which test is important and decide how to compare different
+      systems after running it.
+       
+config PKG_BRIDGE_UTILS
+    bool "bridge-utils"
+    help
+      The bridge-utils package contains the bridge utility brctl which
+      is used to control bridge configuration.
+       
+config PKG_BUSYBOX
+    bool "busybox"
+    help
+      Busybox is a single binary which includes versions of a large number
+      of system commands, including a shell. This package can be very
+      useful for recovering from certain types of system failures,
+      particularly those involving broken shared libraries.
+
+
+config PKG_BUSYBOX_PRECONFIG
+    depends PKG_BUSYBOX
+    string "busybox preconfig filename"
+    default ""
+    help
+      Put in the name of the busybox configuration file to use, this
+      must exist under the platform's configuration directory, for 
+      instance: config/platform/mpc5200/busybox.config.
+      Setting this to the empty string will make busybox use it's
+      own internal default configuration. 
+
+config PKG_BUSYBOX_WANT_CF
+    depends PKG_BUSYBOX
+    bool "Configure busybox at build time"
+    help
+      Select this if you want to interactively configure busybox during
+      the build.  A copy of the configured value will be put back
+      into the platforms configuration directory, with the suffix .dev
+
+config PKG_BZIP2
+    bool "bzip2"
+    help
+      Bzip2 is a freely available, patent-free, high-quality data compressor
+      that uses the same command line flags as gzip.
+
+config PKG_CAIRO
+    select PKG_PIXMAN
+    bool "cairo"
+    help
+      2D library
+
+config PKG_CAN4LINUX
+    bool "can4linux"
+    help
+      Userspace CANbus test programs
+
+config PKG_CLAMAV
+    select PKG_ZLIB
+    bool "clamav"
+    help
+      Clam AntiVirus is a GPL anti-virus toolkit for UNIX.
+
+config PKG_CLUTTER
+    select PKG_GLIB2
+    select PKG_TSLIB
+    select PKG_PANGO
+    select PKG_GTK2
+    select PKG_FONTS
+    select PKG_FONTS_LIBERATION_PRECONFIG
+#    select PKG_FONTS_APPLE_GARAMOND_PRECONFIG
+    bool "clutter"
+    default n
+    help
+      Framework for OpenGL animation.
+
+config PKG_COREUTILS
+    bool "coreutils"
+    help
+      This package contains the GNU core utilities and includes the contents
+      of the old GNU fileutils, sh-utils, and textutils packages.
+
+config PKG_CPIO
+    bool "cpio"
+    help
+      GNU cpio copies files into or out of a cpio or tar archive.
+
+config PKG_CRACKLIB
+    bool "cracklib"
+    help
+      A Password-Checking Library.
+
+config PKG_CRAMFS
+    select PKG_ZLIB
+    bool "cramfs"
+    help
+      A Linux filesystem designed to be simple, small, and to compress things well.
+
+config PKG_DAEMONIZER
+    bool "daemonizer"
+    help
+      Starting apptrk using the daemonizer allows it to run and
+      debug applications from CodeWarrior without having to login
+      into the target and to start apptrk manually.  Path to executable
+      must be fully qualified, ie.- daemon /usr/bin/apptrk :1000
+
+config PKG_DEVMEM2
+    bool "devmem2"
+    help
+      Simple program to read/write from/to any location in memory.
+      Writing or reading memory locations may corrupt your system
+      so please use this utility with extreme caution!
+
+config PKG_DHCP
+    select PKG_BASH
+    bool "dhcp"
+    help
+      ISC's Dynamic Host Configuration Protocol distribution provides
+      a DHCP server, a DHCP client, and a DHCP relay agent.
+      See: http://www.isc.org/sw/dhcp/
+
+config PKG_DHCP_WANT_SERVER
+    depends PKG_DHCP
+    bool "Include DHCP server"
+    default y
+    help
+        Include DHCP server support.  
+        Note busybox includes a DHCP server
+
+config PKG_DHCP_WANT_CLIENT
+    depends PKG_DHCP
+    bool "Include DHCP client support"
+    default n
+    help
+        Include DHCP client support, including SIP support.
+        Note busybox includes a DHCP client
+
+config PKG_DSPI
+    depends PLATFORM = 'mcf547x_8x'
+    bool "dspi"
+    help
+      Connect two FireEngine boards using DSPI. Use pins:
+          DSPI_CS0 - DSPI_CS0,
+          DSPISCK - DSPISCK,
+          DSPI_DOUT - DSPI_DIN,
+          DSPI_DIN - DSPI_DOUT,
+          GND - GND.
+      Execute dspi_read on the first board than execute dspi_write on
+      the other board.  dspi_read should return the following result:
+          0 1 2 3 4 5 6 7 8 9
+
+config PKG_DB1
+    bool "db1"
+    help
+      DB provides routines for creating simple database indexes. It is 
+      used by many applications, including Python and Perl, so this should 
+      be installed on all systems. This is version 1 only. It should be 
+      used for building apps that require v1 support only. All new apps 
+      should be written to use version 2 from glibc.
+
+choice
+    prompt "device nodes"
+    default PKG_DEV
+    help
+      This option allow you to select static modules, or dynamic module
+      loading.  For dynamic module loading, you need to have the appropriate
+      options set in your kernel
+
+    config PKG_DEV
+        bool "Static device files"
+        help
+           These are the base device nodes, say yes
+    
+    config PKG_DEVFSD
+        select PKG_KERNEL_WANT_HEADERS
+        select SYSCFG_START_DEVFSD
+        bool "devfsd dynamic device file daemon"
+        help
+          Use this when runing a kernel that uses devfs
+    config PKG_DEV_NONE
+        bool "don't install any device files/nodes"
+endchoice
+
+config PKG_DIFFUTILS
+    bool "diffutils"
+    help
+      The diffutils package includes four utilities: diff, cmp, diff3, and
+      sdiff.
+
+      The diff command compares two files and shows the differences, line by
+      line. The cmp command shows the offset and line numbers where two
+      files differ, or cmp can show the characters that differ between the
+      two files. The diff3 command shows the differences between three
+      files. Diff3 can be used when two people have made independent changes
+      to a common original; it can produce a merged file that contains both
+      sets of changes and warnings about conflicts. The sdiff command can be
+      used to merge two files interactively.
+
+      Install diffutils if you need to compare text files.
+
+config PKG_DIRECTFB
+    select PKG_LIBJPEG
+    select PKG_LIBPNG
+    select PKG_FREETYPE
+    select PKG_ZLIB
+    select PKG_KERNEL_WANT_HEADERS
+    bool "DirectFB"
+    help
+      The DirectFB graphics acceleration library.
+
+config PKG_DIRECTFB_EXAMPLES
+    depends PKG_DIRECTFB
+    bool "DirectFB-examples"
+    help
+      Example applications and tests for DirectFB.
+
+config PKG_DISTCC
+    bool "distcc"
+    default n
+    help
+        distcc is a program that intercepts the calls to a compiler and
+        farms the compile requests out to a group of volunteer hosts.
+        For more details see: http://distcc.samba.org/
+
+config PKG_DOSFSTOOLS
+    bool "dosfstools"
+    help
+      The dosfstools package includes the mkdosfs and dosfsck utilities, 
+      which make and check MS-DOS FAT filesystems.
+
+config PKG_DROPBEAR
+    select PKG_ZLIB
+    bool "dropbear ssh client/server"
+    help
+      Dropbear is a relatively small SSH 2 server that can be linked 
+      against the uClibc C runtime library. It supports the following 
+      features:
+
+      * X11 forwarding, and authentication-agent forwarding 
+        for OpenSSH clients
+      * Can run from inetd or standalone
+      * Compatible with OpenSSH ~/.ssh/authorized_keys public key 
+        authentication
+      * The daemon, keygen, key converter, and client can be compiled 
+        into a single binary
+      * TCP forwarding support
+      * Features can easily be disabled when compiling to save space
+
+config PKG_DROPBEAR_WANT_URANDOM_DEV
+    depends PKG_DROPBEAR
+    bool "non-blocking random device"
+    default y
+    help
+       Only set this if your system doesn't have enough entropy to
+       output from the /dev/random device.  Symptom are things like
+       dbclient hangs (use strace to confirm it's /dev/random).  A
+       non-blocking alternative is /dev/urandom, but this is less
+       secure.  Use this option with caution.
+
+config PKG_DROPBEAR_WANT_NO_REV_DNS
+    depends PKG_DROPBEAR
+    bool "disable reverse host lookups"
+    default y
+    help
+       This option will disable reverse DNS lookups of hosts.  These
+       will cause logins to be slow unless your DNS server is working
+       properly.
+
+config PKG_DROPBEAR_WANT_NO_X11FWD
+     depends PKG_DROPBEAR
+     bool "disable X11 forwarding"
+     default y
+     help
+        This option disables X11 port forwarding.
+
+config PKG_DTC
+    bool "dtc"
+    help
+       This is the device tree compiler for flat device trees.
+
+config PKG_E2FSPROGS
+    bool "e2fsprogs"
+    help
+      The e2fsprogs package contains a number of utilities for creating,
+      checking, modifying, and correcting any inconsistencies in second
+      extended (ext2) filesystems. E2fsprogs contains e2fsck (used to
+      repair filesystem inconsistencies after an unclean shutdown), mke2fs
+      (used to initialize a partition to contain an empty ext2 filesystem),
+      debugfs (used to examine the internal structure of a filesystem, to
+      manually repair a corrupted filesystem, or to create test cases for
+      e2fsck), tune2fs (used to modify filesystem parameters), and most of
+      the other core ext2fs filesystem utilities.
+
+      You should install the e2fsprogs package if you need to manage the
+      performance of an ext2 filesystem.
+
+config PKG_ED
+    bool "ed"
+    help
+      Ed is a line-oriented text editor, used to create, display, and modify
+      text files (both interactively and via shell scripts). For most
+      purposes, ed has been replaced in normal usage by full-screen editors
+      (Emacs and vi, for example).
+
+      Ed was the original UNIX editor and may be used by some programs.
+      However, the more modern text editors are recommended for general use.
+
+
+config PKG_ETHTOOL
+    bool "ethtool"
+    help
+      This utility allows querying and changing of ethernet card settings,
+      such as speed, port, auto-negotiation, and PCI locations.
+
+
+config PKG_EXPAT
+    bool "expat"
+    help
+      Expat is a C library for parsing XML. Expat is a stream-oriented XML
+      parser; handlers are registered with the parser prior to starting the
+      parse. These handlers are then called when the parser discovers the
+      associated structures in the document being parsed. A start tag is an
+      example of the kind of structure for which handlers can be
+      registered.
+
+config PKG_FAKEROOT
+    bool "fakeroot"
+    help
+      This package is intended to enable something like: fakeroot rpm
+      --rebuild i.e. to remove the need to become root for a package
+      build. This is done by setting LD_PRELOAD to a \"libfakeroot.so.0.0\",
+      that provides wrappers around chown, chmod, mknod, stat, etc.
+      
+      If you don\'t understand any of this, you do not need this!
+
+config PKG_FAKE_PROVIDES
+    bool
+    default y
+
+config PKG_FBSET
+    bool "fbset"
+    help
+      The fbset utility is used for controling framebuffer devices.
+
+config PKG_FFMPEG
+    bool "ffmpeg"
+    help
+      Huge set of audio/video decoders and demuxer.
+
+config PKG_FILE
+    depends ON_THE_IMPOSSIBLE
+    bool "file : needs fixing, inter exes"
+    help
+      The file command is used to identify a file according to the type of
+      data it contains. File can identify many different file types,
+      including ELF binaries, system libraries, RPM packages, and different
+      graphics formats.
+
+config PKG_FINDUTILS
+    bool "findutils"
+    help
+      The findutils package contains programs which will help you locate
+      files on your system. The find utility searches through a hierarchy
+      of directories looking for files which match a certain set of criteria
+      (such as a filename pattern). The xargs utility builds and executes
+      command lines from standard input arguments (usually lists of file
+      names generated by the find command).
+
+
+config PKG_FLEX
+    bool "flex"
+    help
+      The flex program generates scanners. Scanners are programs which can
+      recognize lexical patterns in text. Flex takes pairs of regular
+      expressions and C code as input and generates a C source file as
+      output. The output file is compiled and linked with a library to
+      produce an executable. The executable searches through its input for
+      occurrences of the regular expressions. When a match is found, it
+      executes the corresponding C code.
+
+      Flex was designed to work with both Yacc and Bison, and is used by many
+      programs as part of their build process.
+
+config PKG_FONTCONFIG
+    select PKG_EXPAT
+    bool "fontconfig"
+    default n
+    help
+      Needed for Pango.
+
+config PKG_FREETYPE
+    bool "freetype"
+    default n
+    help
+      The FreeType engine is a free and portable TrueType font rendering
+      engine, developed to provide TrueType support for a variety of
+      platforms and environments. FreeType is a library that can open and
+      manage font files, as well as efficiently load, hint, and render
+      individual glyphs. FreeType is not a font server or a complete
+      text-rendering library.
+
+
+config PKG_GAWK
+    bool "gawk"
+    help
+      The gawk packages contains the GNU version of awk, a text processing
+      utility. Awk interprets a special-purpose programming language to do
+      quick and easy text pattern matching and reformatting jobs.
+
+      Install the gawk package if you need a text processing utility. Gawk 
+      is considered to be a standard Linux tool for processing text.
+
+config PKG_GCC
+    select PKG_BINUTILS
+    select PKG_LIBC_WANT_HEADERS
+    bool "gcc"
+    help
+      The gcc package includes the cc and gcc GNU compilers for compiling C
+      code.
+
+config PKG_GDB
+    bool "gdb"
+    help
+      GDB, the GNU debugger, allows you to debug programs written in C, C++,
+      and other languages, by executing them in a controlled fashion and
+      printing their data.
+
+config PKG_GDB_NATIVE_WANT_ED
+    depends PKG_GDB
+    select PKG_LIBTERMCAP
+    select PKG_NCURSES
+    bool "gdb to run natively on the target"
+    help
+        Select this if you want to build a full gdb to run on the target.
+        This will be built and placed in the 'bin' directory within ltib.
+
+config PKG_GDB_CROSS_WANT_ED
+    depends PKG_GDB
+    bool "cross gdb (runs on build machine)"
+    help
+        Select this if you want to build a cross gdb that will run on
+        the build machine.  To use this, you need to run gdbserver
+        on the target and attach to it
+
+config PKG_GDB_SERVER_WANT_ED
+    depends PKG_GDB
+    bool "gdbserver to run natively on the target"
+    help
+        Select this if you want to build a gdbserver to run on the target.
+        This requires the support of a cross-gdb on the host to actually
+        query the executable files symbol table and do the display.
+
+config PKG_GDB_M68K_BDM_WANT_ED
+    depends PKG_GDB
+    bool "gdb-bdm (gdb interface to BDM device)"
+    help
+         This package prepares gdb to run on the build machine and connect
+         to the target via a parallel port BDM dongle.  Includes host device
+         drivers for /dev/bdmcf0.  This is only valid for Coldfire platforms
+         with a parallel port BDM device.
+
+config PKG_GENEXT2FS
+    bool "genext2fs"
+    help
+        Utility to produce ext2 images without having to be root
+
+config PKG_GENROMFS
+    bool "genromfs"
+    help
+        Utility for creating romfs filesystems without having to be root
+
+config PKG_GETTEXT
+    bool "gettext"
+    help
+      The GNU gettext package provides a set of tools and documentation for
+      producing multi-lingual messages in programs. Tools include a set of
+      conventions about how programs should be written to support message
+      catalogs, a directory and file naming organization for the message
+      catalogs, a runtime library which supports the retrieval of translated
+      messages, and stand-alone programs for handling the translatable and
+      the already translated strings. Gettext provides an easy to use
+      library and tools for creating, using, and modifying natural language
+      catalogs and is a powerful and simple method for internationalizing
+      programs.
+
+config PKG_GLIB2
+    select PKG_LIBICONV if UCLIBC
+    bool "glib2"
+    default n
+    help
+      This library provides various Gnome and common functions.
+
+config PKG_GMP
+    bool "gmp"
+    help
+      GNU Multiple Precision Arithmetic Library
+
+      GMP is a free library for arbitrary precision arithmetic, operating 
+      on signed integers, rational numbers, and floating point numbers. 
+      There is no practical limit to the precision except the ones implied
+      by the available memory in the machine GMP runs on. GMP has a rich set 
+      of functions, and the functions have a regular interface.
+
+      The main target applications for GMP are cryptography applications 
+      and research, Internet security applications, algebra systems, 
+      computational algebra research, etc. 
+
+config PKG_GREP
+    bool "grep"
+    help
+      The GNU versions of commonly used grep utilities. Grep searches
+      through textual input for lines which contain a match to a specified
+      pattern and then prints the matching lines. GNU's grep utilities
+      include grep, egrep, and fgrep.
+
+      You should install grep on your system, because it is a very useful
+      utility for searching text.
+
+
+config PKG_GROFF
+    bool "groff"
+    help
+      Groff is a document formatting system. Groff takes standard text and
+      formatting commands as input and produces formatted output. The
+      created documents can be shown on a display or printed on a printer.
+      Groff's formatting commands allow you to specify font type and size,
+      bold type, italic type, the number and size of columns on a page, and
+      more.
+
+      Groff can also be used to format man pages. If you are going to use
+      groff with the X Window System, you will also need to install the
+      groff-gxditview package.
+
+config PKG_GRUB
+    depends ON_THE_IMPOSSIBLE
+    bool "grub : TBD"
+    help
+      GRUB (Grand Unified Boot Loader) is a boot loader capable of booting
+      into most free operating systems - Linux, FreeBSD, NetBSD, GNU Mach,
+      and others as well as most commercial operating systems.
+
+config PKG_GSTREAMER_CORE
+    select PKG_GLIB2
+    select PKG_LIBXML2
+    select PKG_LIBOIL
+    bool "gstreamer"
+    default n
+    help
+      This package provides the GStreamer audio/video Framework.
+
+config PKG_GST_PLUGINS_BASE
+    select PKG_ALSA_LIB
+    depends PKG_GSTREAMER_CORE
+    bool "gstreamer-plugins-base"
+    default n
+    help
+	This package provides the GStreamer Plugins Base and is
+	necessary for alsa interfaces
+
+config PKG_GST_PLUGINS_GOOD
+    select PKG_GST_PLUGINS_BASE
+    depends PKG_GSTREAMER_CORE
+    bool "gstreamer-plugins-good"
+    help
+          This package provides the Good GStreamer Plugins.
+
+config PKG_GST_PLUGINS_BAD
+    select PKG_GST_PLUGINS_BASE
+    depends PKG_GSTREAMER_CORE
+    bool "gstreamer-plugins-bad"
+    default n
+    help
+      Gstreamer plugins necessary for AAC decoding (with faad)
+
+config PKG_GST_FFMPEG
+    select PKG_GST_PLUGINS_BASE
+    select PKG_FFMPEG
+    depends PKG_GSTREAMER_CORE
+    bool "gstffmpeg"
+    default n
+    help
+      Gstreamer plugins necessary ffmpeg utilities
+
+config PKG_GST_PLUGINS_UGLY
+    depends PKG_GSTREAMER_CORE
+    bool "gst-plugins-ugly"
+    default n
+    help
+      Gstreamer plugins necessary for MP3 decoding (with mad)
+
+config PKG_GTK2
+    select PKG_GLIB2
+    select PKG_LIBPNG
+    select PKG_LIBJPEG
+    select PKG_LIBTIFF
+    select PKG_ATK
+    select PKG_PANGO
+    bool "GTK+"
+    default n
+    help
+      GTK+ is a framework to create easly MMI.
+
+config PKG_GX200_BU_98000
+    bool "GX200-BU-98000"
+    depends PLATFORM = 'imx31ads'
+    help
+      This package provides proprietary binary kernel modules, libraries, and
+      test code built from the MBX OpenGL ES (GX200) DDK. The Linux OpenGL ES
+      DDK implements OpenGL-ES for MBX and variants along with 2D acceleration
+      via MBX within the Linux operating system. The target kernel version for
+      the DDK is Linux 2.6. The OpenGL-ES driver is ported from the reference
+      OpenGL-ES for MBX and variants. Hardware 2D acceleration is achieved
+      implementing the freedesktop.org KDrive X server in terms of the PVR2D
+      loadable module for MBX.  Requires a system built with an eABI toolchain
+      and 16bpp framebuffer depth.
+
+config PKG_HANTRO_BINARY
+    bool "hantro-binary"
+    depends PLATFORM = 'imx31ads'
+    help
+      The Hantro binary package provides libraries, header files
+      and API documentation to assist with MPEG4 encoding and decoding.
+ 
+config PKG_HARDWARETEST_IMX
+    bool "hardwaretest-imx"
+    depends PLATFORM = 'imx21ads'
+    help
+      Demos, tests and utilities for iMX platforms.  Combines these packages
+      from the PCS BSP: dma-demo, gw-demo, tvout-demo, perftest,
+      screentest-0.4, dpm_utils, imx21_download-1.3.
+
+config PKG_HDPARM
+    bool "hdparm"
+    help
+      Hdparm is a useful system utility for setting (E)IDE hard drive
+      parameters. For example, hdparm can be used to tweak hard drive
+      performance and to spin down hard drives for power conservation.
+
+
+config PKG_HELLOWORLD
+    bool "hello world"
+    help
+        simple hello world test program
+
+config PKG_HESIOD
+    depends GLIBC
+    bool "hesiod"
+    help
+      Hesiod libraries and sample programs.
+
+config PKG_HOTPLUG
+    bool "hotplug"
+    help
+      The term "hotplugging" refers to the dynamic reconfiguration performed
+      after a device has been attached to a running system. This package
+      contains the application which is called by the kernel when a USB
+      device is added; hotplug then loads the required modules for that
+      device.
+
+config PKG_HTTPD
+   select PKG_EXPAT
+   bool "httpd (apache) web server"
+   help
+     Apache is a powerful, full-featured, efficient, and freely-available
+     Web server. Apache is also the most popular Web server on the
+     Internet.
+
+config PKG_I2C_TOOLS
+    bool "i2c-tools"
+    help
+      This package contains all the basic i2c code, as well as a few bus 
+      drivers (both the algorithm and the adapter drivers). There are no 
+      real chip drivers, so on its own it is not very useful. Lots of chip 
+      drivers, as well as more bus drivers and some additional basic code
+      (for SMBus emulation over i2c) and some i2c debugging tools
+      are found in the lm_sensors package at http://www.lm-sensors.nu.
+      Another place at which I2C is used is the video4linux project.
+
+config PKG_IPROUTE
+    select PKG_KERNEL_WANT_HEADERS
+    bool "iproute(2)"
+    help
+       The iproute package contains networking utilities (ip and rtmon, for
+       example) which are designed to use the advanced networking
+       capabilities of the Linux kernel.
+
+config PKG_PIDENTD
+    bool "pidentd"
+    help
+      The identd server imiplements the TCP/IP IDENT user identification
+      protocol as specified in the RFC 1413 document.  If you make a 
+      connection to a service on another machine, that server can 
+      retrieve your user name by contacting the identd daemon running
+      on your machine.
+      
+
+config PKG_INETUTILS
+    bool "inetutils"
+    help
+      InetUtils is a collection of common network programs. It includes
+      (amongst others):
+        An ftp client and server.
+        A telnet client and server.
+        An rsh client and server.
+        An rlogin client and server.
+        A tftp client and server.
+      These are improved versions of programs originally from BSD.
+
+config PKG_IPERF
+    bool "iperf"
+    help
+      Iperf is a tool to measure IP bandwidth using UDP or TCP. It allows 
+      for tuning various parameters, and reports bandwidth, delay jitter,
+      and packet loss. It supports IPv6 and multicast.
+
+config PKG_IPSEC_TOOLS
+    select PKG_FLEX
+    select PKG_OPENSSL
+    select PKG_KERNEL_WANT_HEADERS
+    bool "ipsec-tools"
+    help
+      IPsec is a set of protocols developed to support the secure exchange of
+      network traffic.  The ipsec-tools package contains the following
+      components:
+
+      - libipsec -- A PFKeyV2 library
+      - setkey -- A program to directly manipulate policies and SAs
+      - racoon -- An IKEv1 key management daemon
+
+
+config PKG_IPSECADM
+    bool "ipsecadm"
+    help
+      ipsec_tunnel provides support for IPSec IPv4 tunnels utilizing 
+      CryptoAPI. The IPsec tunnel implementation is divided into two parts,
+      one kernel module called ipsec_tunnel.o, and a tool to administrate 
+      security associations and tunnels, called ipsecadm. This package 
+      contains ipsecadm, helper scripts and documentation.
+
+config PKG_IPTABLES
+    select PKG_KERNEL_WANT_HEADERS
+    bool "iptables"
+    help
+      This framework enables packet filtering, network address [and port] 
+      translation (NA[P]T) and other packet mangling.
+
+config PKG_IPUTILS
+    bool "iputils"
+    help
+      Utilities for converting IP addresses and masks between various formats.
+
+config PKG_IRATTACH
+    bool "irattach"
+    help
+      IrDA(TM) (Infrared Data Association) is an industry standard for
+      wireless, infrared communication between devices. IrDA speeds range
+      from 9600 bps to 4 Mbps, and IrDA can be used by many modern devices
+      including laptops, LAN adapters, PDAs, printers, and mobile phones.
+
+      The Linux-IrDA project is a GPL'd implementation, written from
+      scratch, of the IrDA protocols. Supported IrDA protocols include
+      IrLAP, IrLMP, IrIAP, IrTTP, IrLPT, IrLAN, IrCOMM and IrOBEX.
+
+      The irda-utils package contains a collection of programs that enable
+      the use of IrDA protocols. Most IrDA features are implemented in the
+      kernel, so IrDA support must be enabled in the kernel before any IrDA
+      tools or programs can be used. Some configuration outside the kernel
+      is required, however, and some IrDA features, like IrOBEX, are
+      actually implemented outside the kernel.
+
+config PKG_KBD
+    bool "kbd : TBD"
+    help
+      Keytable files and keyboard utilities
+
+      The kbd package contains tools for managing a Linux
+      system's console's behavior, including the keyboard, the screen
+      fonts, the virtual terminals and font files.
+
+
+config PKG_LESS
+    select PKG_LIBTERMCAP
+    bool "less"
+    help
+      The less utility is a text file browser that resembles more, but has
+      more capabilities. Less allows you to move backwards in the file as
+      well as forwards. Since less does not have to read the entire input
+      file before it starts, less starts up more quickly than text editors.
+
+config PKG_LFS_UTILS
+    bool "LFS utilities"
+    help
+      The Lfs-Utils package contains some miscellaneous programs used 
+      by various packages, but are not large enough to warrant their 
+      own individual package.
+
+      Installed programs: mktemp, tempfile, http-get and iana-net
+
+      Installed files: protocols, services
+
+config PKG_LIBICONV
+    bool "libiconv"
+    help
+       This library is part of glibc and so is normally only need for 
+       uClibc when building some packages such as glib2
+
+config PKG_LIBID3TAG
+    select PKG_ZLIB
+    bool "libid3tag"
+    help
+      This library provides support for reading and (eventually) writing
+      ID3 tags, both ID3v1 and the various versions of ID3v2.
+
+config PKG_LIBMAD
+    select PKG_LIBID3TAG
+    bool "libmad"
+    help
+      This library provides a high-quality MPEG audio decoder.
+      It currently supports MPEG-1 and the MPEG-2 extension to
+      Lower Sampling Frequencies, as well as the so-called MPEG 2.5
+      format. All three audio layers (Layer I, Layer II, and Layer III
+      a.k.a. MP3) are fully implemented.
+
+config PKG_LIBMMS
+    select PKG_GLIB2
+    bool "libmms"
+    help
+      This library the streaming lib libmms
+
+config PKG_LIBJPEG
+    bool "libjpeg"
+    help
+      This library contains the sixth public release of the
+      Independent JPEG Group's free JPEG software.
+
+
+config PKG_LIBELF
+    bool "libelf"
+    help
+      This library gives you access to the internals of the ELF object 
+      file format. It lets you poke around in the various different 
+      sections of an ELF file, check out the symbols, etc.
+
+config PKG_LIBPCAP
+    bool "libpcap"
+    help
+      user-level packet capture
+      Libpcap provides a portable framework for low-level network
+      monitoring. Libpcap can provide network statistics collection,
+      security monitoring and network debugging. Since almost every system
+      vendor provides a different interface for packet capture, the libpcap
+      authors created this system-independent API to ease in porting and to
+      alleviate the need for several system-dependent packet capture modules
+      in each application.
+
+      Install libpcap if you need to do low-level network traffic monitoring
+      on your network.
+
+config PKG_LIBPNG
+    select PKG_ZLIB
+    bool "libpng"
+    help
+      This library contains functions for PNG graphics.
+
+config PKG_LIBOIL
+    bool "liboil"
+    help
+      This package contains a library of optimized inner loops.
+      Liboil is a collection of functions that often benefit from
+      having special implementations on various architectures or CPUs.
+      The fastest implementation is automatically chosen at runtime.
+
+config PKG_LIBTERMCAP
+    bool "libtermcap"
+    help
+      The libtermcap package contains a basic system library needed to
+      access the termcap database. The termcap library supports easy access
+      to the termcap database, so that programs can output character-based
+      displays in a terminal-independent manner.
+
+config PKG_LIBTIFF
+    bool "libtiff"
+    help
+      This library contains functions for TIFF.
+
+config PKG_LIBTOOL
+    bool "libtool"
+    help
+      The libtool package contains the GNU libtool, a set of shell scripts
+      which automatically configure UNIX and UNIX-like architectures to
+      generically build shared libraries. Libtool provides a consistent,
+      portable interface which simplifies the process of using shared
+      libraries.
+
+config PKG_LIBUSB
+    bool "libusb"
+    help
+      This package provides a way for applications to access USB devices.
+
+config PKG_LIBXML2
+    bool "libxml2"
+    default n
+    help
+      This library lets you manipulate XML files. It includes support to
+      read, modify, and write XML and HTML files. It has DTD support,
+      including parsing and validation, even with complex DTDs.
+
+config PKG_LINUX_ATM
+    select PKG_FLEX
+    bool "linux-atm"
+    help
+      Drivers and tools to support ATM networking under Linux.
+
+config PKG_LINUX_WLAN
+    bool "linux-wlan"
+    help
+      IEEE 802.11 wireless LAN support.
+
+config PKG_LKC
+    bool "lkc"
+    help
+       Linux Kernel Config parser
+
+config PKG_LTP
+    bool "ltp : Linux Test Project"
+    help
+       Test suite for Linux systems
+
+config PKG_LMBENCH
+    bool "lmbench"
+    help
+       Performance test tools.  See http://lmbench.sourceforge.net
+
+config PKG_LOGOGEN
+   bool "logogen"
+   default y
+   help 
+      SAGEM boot logo Generator.
+
+choice
+   depends on PKG_LOGOGEN
+   prompt "Boot Logo Customization"
+   default PKG_LOGOGEN_SAGEM_PRECONFIG
+config PKG_LOGOGEN_SAGEM_PRECONFIG
+   bool "SAGEM Customization"
+config PKG_LOGOGEN_TELSTRA_PRECONFIG
+   bool "Telstra Customization"
+endchoice
+
+config PKG_LRZSZ
+    bool "lrzsz"
+    help
+       rx, rb, rz, sx, sb, sz - XMODEM, YMODEM, ZMODEM file receive and
+       transmit.
+
+config PKG_M4
+    bool "m4"
+    help
+      M4 is a GNU implementation of the traditional UNIX macro processor.
+      M4 is useful for writing text files that can be logically parsed and
+      is used by many programs as part of their build process. M4 has
+      built-in functions for including files, running shell commands, doing
+      arithmetic, etc. The autoconf program needs m4 for generating
+      configure scripts, but not for running configure scripts.
+
+config PKG_MADPLAY
+    select PKG_LIBMAD
+    bool "madplay"
+    help
+      A command-line MPEG audio decoder and player based on the MAD
+      library (libmad). For details about MAD, see the libmad package.
+
+config PKG_MAKE
+    bool "make"
+    help
+      A GNU tool for controlling the generation of executables and other
+      non-source files of a program from the program's source files. Make
+      allows users to build and install packages without any significant
+      knowledge about the details of the build process. The details about
+      how the program should be built are provided for make in the program's
+      makefile.
+
+      The GNU make tool should be installed on your system because it is
+      commonly used to simplify the process of installing programs.
+
+config PKG_MAN
+    select PKG_GROFF
+    bool "man"
+    help
+      The man package includes three tools for finding information and/or
+      documentation about your Linux system: man, apropos, and whatis. The
+      man system formats and displays on-line manual pages about commands or
+      functions on your system. Apropos searches the whatis database
+      (containing short descriptions of system commands) for a string.
+      Whatis searches its own database for a complete word.
+
+      The man package should be installed on your system because it is the
+      primary way to find documentation on a Linux system.
+
+config PKG_MDADM
+    bool "mdadm"
+    help
+      mdadm is a tool for creating, managing and monitoring device arrays
+      using the "md" driver in Linux, also known as Software RAID arrays.
+
+config PKG_MERGE
+    depends GNUTARCH != buildarch
+    bool
+    default y
+    help
+      User provided files in merge/.
+
+config PKG_MICROWINDOWS
+    bool "microwindows"
+    help
+      Microwindows (also known as nano-x) is a very small frame buffer
+      based X server. Its aim is to bring the features of modern windowing
+      environments to smaller devices and platforms. Also included are
+      several utility and demo programs.
+
+config PKG_MKSPOOFLINKS
+    depends GNUTARCH = buildarch
+    bool
+    default y
+
+choice
+    prompt "module loading"
+    default MODUTILS_NONE
+    help
+      The modutils package includes various programs needed for automatic
+      loading and unloading of modules under 2.2 and later kernels, as well
+      as other module management programs. Device drivers and filesystems
+      are two examples of loaded and unloaded modules.
+
+      Choose the module loading tools (insmod/depmod etc).  For
+      2.2/2.4 kernels, use modutils, for 2.6 use module-init-tools.
+      You may choose 'none' if you want to use the busybox versions
+
+    config PKG_MODUTILS
+        bool "modutils"
+    config PKG_MODULE_INIT_TOOLS
+        bool "module-init-tools"
+    config MODUTILS_NONE
+        bool "use busybox utilites"
+endchoice
+
+config PKG_MPC8555AMC_DSPUTILS
+    bool "mpc8555amc-dsputils"
+    depends PLATFORM = 'mpc8555amc'
+    help
+      Demos, tests and utilities for MPC8555AMC platform.
+      Contains a number of dsp srec binaries and download utility.
+
+config PKG_MTD_UTILS
+    select PKG_ZLIB
+    bool "mtd-utils"
+    help
+      mkfs.jffs2
+
+config PKG_MXC_MISC
+    depends PLATFORM = 'imx31ads' || PLATFORM = 'imx27ads' || PLATFORM = 'imx31homescreen'
+    select PKG_KERNEL_LEAVESRC
+    bool "mxc-misc"
+    default n
+    help
+      This package provides unit tests and libraries that are specific to
+      the mxc platform.
+
+config PKG_MYSQL
+    select PKG_NCURSES
+    bool "mysql"
+    help
+      MySQL is a multi-user, multi-threaded SQL database server. MySQL is a
+      client/server implementation consisting of a server daemon (mysqld)
+      and many different client programs and libraries
+
+config PKG_NCURSES
+    bool "ncurses"
+    help
+      The curses library routines are a terminal-independent method of
+      updating character screens with reasonable optimization. The ncurses
+      (new curses) library is a freely distributable replacement for the
+      discontinued 4.4BSD classic curses library.
+
+config PKG_NCURSES_WANT_REDUCED_SET
+    depends PKG_NCURSES
+    bool "Install only a subset of terminal types"
+    default y
+    help
+       This installs only a small set of essential terminal emulations
+       which saves > 5MB of space.  For most embedded system select this
+       option.
+     
+config PKG_NET_TOOLS
+    bool "net-tools"
+    help
+      The net-tools package contains basic networking tools, including
+      ifconfig, netstat, route, and others.
+
+config PKG_NETPERF
+    bool "netperf"
+    help
+       Netperf is a benchmark that can be used to measure the performance 
+       of many different types of networking. It provides tests for 
+       both unidirecitonal throughput, and end-to-end latency. The 
+       environments currently measureable by netperf include:
+
+       * TCP and UDP via BSD Sockets
+       * DLPI
+       * Unix Domain Sockets
+       * Fore ATM API
+       * HP HiPPI Link Level Access 
+
+config PKG_NTPCLIENT
+    bool "ntpclient"
+    default y
+    help
+       This is used to set the system time.  Later versions of busybox
+       include this.
+
+config PKG_OPENSSH
+    select PKG_OPENSSL
+    bool "openssh"
+    help
+      This is the full blown openssh package.  Normally dropbear is sufficient
+      and smaller.
+
+config PKG_OPENSSL
+    bool "openssl"
+    help
+      The OpenSSL toolkit provides support for secure communications between
+      machines. OpenSSL includes a certificate management tool and shared
+      libraries which provide various cryptographic algorithms and
+      protocols.
+
+config PKG_OPENSSL_WANT_SEC
+    depends PKG_OPENSSL
+    bool "Request the use hardware acceleration (needs driver support)"
+    help
+      You can use this to request crypto operations on the crypto
+      hardware accelerator (SEC) if available.  Selecting
+      this option does not require you to specify an engine to openssl; 
+      the SEC's availability will be checked and used by default.
+
+      This requires the SEC driver be configured in the kernel.
+
+      THIS IS ONLY A REQUEST, IT MAY NOT BE AVAILABLE ON YOUR TARGET
+
+config PKG_OPENSWAN
+    select PKG_IPSEC_TOOLS
+    select PKG_GMP
+    select PKG_IPTABLES
+    select PKG_PERL
+    bool "openswan"
+    help
+      Openswan is an Open Source implementation of IPsec for the Linux 
+      operating system. Is it a code fork of the FreeS/WAN project, 
+      started by a few of the developers who were growing frustrated 
+      with the politics surrounding the FreeS/WAN project.
+
+config PKG_OPROFILE
+    select PKG_BASH
+    select PKG_BINUTILS
+    select PKG_POPT
+    bool "oprofile"
+    help
+      OProfile is a profiling system for Linux.  Profiling runs 
+      transparently in the background, and profile data can be collected 
+      at any time. OProfile makes use of hardware performance counters 
+      provided by many processors, and can use the RTC for profiling on 
+      other processor types.
+
+config PKG_PANGO
+    select PKG_FREETYPE
+    select PKG_FONTCONFIG
+    select PKG_CAIRO
+    bool "pango"
+    default n
+    help
+      Pango is a font loader created for GTK+ project. Needed for clutter.
+
+config PKG_PATCH
+    bool "patch"
+    help
+      The patch program applies diff files to originals. The diff command is
+      used to compare an original to a changed file. Diff lists the changes
+      made to the file. A person who has the original file can then use the
+      patch command with the diff file to add the changes to their original
+      file (patching the file).
+
+      Patch should be installed because it is a common way of upgrading
+      applications.
+
+
+config PKG_PCIUTILS
+    bool "pciutils"
+    help
+      The pciutils package contains various utilities for inspecting and
+      setting devices connected to the PCI bus. The utilities provided
+      require kernel version 2.1.82 or newer (which support the
+      /proc/bus/pci interface).
+
+config PKG_PCMCIA_CS
+    select PKG_KERNEL_LEAVESRC
+    select PKG_WIRELESS_TOOLS
+    bool "pcmcia-cs"
+    help
+      This package contains the user space utilies for PCMCIA device
+      management, like cardmgr, cardctl, dump_cis, etc.  This package
+      does *not* contain any PCMCIA device drivers.  Those must be
+      configured and built in the kernel.
+
+config PKG_PCMCIAUTILS
+    depends PLATFORM = 'imx31ads'
+    select PKG_SYSFSUTILS
+    select PKG_UDEV
+    bool "pcmciautils"
+    help
+      This package contains the user space utilies for PCMCIA device
+      management, suitable for use in kernels newer than 2.6.13.
+      See http://kernel.org/pub/linux/utils/kernel/pcmcia/pcmcia.html
+
+config PKG_PCRE
+    bool "pcre"
+    help
+      The PCRE library is a set of functions that implement regular 
+      expression pattern matching using the same syntax and semantics 
+      as Perl 5. PCRE has its own native API, as well as a set of wrapper 
+      functions that correspond to the POSIX regular expression API.
+
+config PKG_PERL
+    bool "perl"
+    help
+      Perl is a high-level programming language with roots in C, sed, awk
+      and shell scripting.  Perl is good at handling processes and files,
+      and is especially good at handling text.  Perl's hallmarks are
+      practicality and efficiency.  While it is used to do a lot of
+      different things, Perl's most common applications are system
+      administration utilities and web programming.  A large proportion of
+      the CGI scripts on the web are written in Perl.  You need the perl
+      package installed on your system so that your system can handle Perl
+      scripts.
+
+      Install this package if you want to program in Perl or enable your
+      system to handle Perl scripts.
+
+config PKG_PEAKCANLINUX
+    depends PLATFORM = 'mpc5200'
+    bool "peak-can-linux"
+    help
+      CAN driver and libraries from Peak systems for MSCAN ports
+      on mpc5200 based platforms.
+
+
+config PKG_PHP
+    select PKG_LIBXML2
+    select PKG_HTTPD
+    select PKG_MYSQL
+    select PKG_ZLIB
+    bool "php"
+    help
+      PHP is an HTML-embedded scripting language. PHP attempts to make it
+      easy for developers to write dynamically generated webpages. PHP also
+      offers built-in database integration for several commercial and
+      non-commercial database management systems, so writing a
+      database-enabled webpage with PHP is fairly simple
+
+config PKG_PIXMAN
+    bool "pixman"
+    help
+      Helper library for cairo
+
+config PKG_POPT
+    bool "popt"
+    help
+      Popt is a C library for parsing command line parameters. Popt was
+      heavily influenced by the getopt() and getopt_long() functions, but it
+      improves on them by allowing more powerful argument expansion. Popt
+      can parse arbitrary argv[] style arrays and automatically set
+      variables based on command line arguments. Popt allows command line
+      arguments to be aliased via configuration files and includes utility
+      functions for parsing arbitrary strings into argv[] arrays using
+      shell-like rules.
+
+
+config PKG_PORTMAP
+    select PKG_TCP_WRAPPERS
+    bool "portmap"
+    help
+      The portmapper program is a security tool that prevents theft of NIS
+      (YP), NFS, and other sensitive information via the portmapper. A
+      portmapper manages RPC connections, which are used by protocols like
+      NFS and NIS.
+
+      The portmap package should be installed on any machine which acts as a
+      server for protocols using RPC.
+
+config PKG_PPP
+    bool "ppp"
+    help
+      The ppp package contains the PPP (Point-to-Point Protocol) daemon and
+      documentation for PPP support. The PPP protocol provides a method for
+      transmitting datagrams over serial point-to-point links. PPP is
+      usually used to dial in to an ISP (Internet Service Provider) or other
+      organization over a modem and phone line.
+
+
+config PKG_PROCINFO
+    select PKG_LIBTERMCAP
+    bool "procinfo"
+    help
+      The procinfo command gets system data from the /proc directory 
+      (the kernel filesystem), formats it and displays it on standard 
+      output. You can use procinfo to acquire information about your 
+      system from the kernel as it is running. Install procinfo if 
+      you'd like to use it to gather and display system data.
+
+config PKG_PROCPS
+    select PKG_NCURSES
+    select PKG_LIBTERMCAP
+    bool "procps"
+    help
+      The procps package contains a set of system utilities that provide
+      system information. Procps includes ps, free, skill, snice, tload,
+      top, uptime, vmstat, w, and watch. The ps command displays a snapshot
+      of running processes. The top command provides a repetitive update of
+      the statuses of running processes. The free command displays the
+      amounts of free and used memory on your system. The skill command
+      sends a terminate command (or another specified signal) to a specified
+      set of processes. The snice command is used to change the scheduling
+      priority of specified processes. The tload command prints a graph of
+      the current system load average to a specified tty. The uptime command
+      displays the current time, how long the system has been running, how
+      many users are logged on, and system load averages for the past one,
+      five, and fifteen minutes. The w command displays a list of the users
+      who are currently logged on and what they are running. The watch
+      program watches a running program. The vmstat command displays virtual
+      memory statistics about processes, memory, paging, block I/O, traps,
+      and CPU activity.
+
+config PKG_PSMISC
+    bool "psmisc"
+    help
+      The psmisc package contains utilities for managing processes on your
+      system: pstree, killall, and fuser. The pstree command displays a tree
+      structure of all of the running processes on your system. The killall
+      command sends a specified signal (SIGTERM if nothing is specified) to
+      processes identified by name. The fuser command identifies the PIDs of
+      processes that are using specified files or filesystems.
+
+config PKG_PTPD
+    bool "ptpd"
+    help
+       The PTP daemon (PTPd) implements the Precision Time protocol (PTP) as 
+       defined by the IEEE 1588 standard. PTP was developed to provide very 
+       precise time coordination of LAN connected computers.
+
+config PKG_PYTHON
+    depends TOOLCHAIN_TYPE != 64
+    bool "Python"
+    help
+       Python is an interpreted, interactive, object-oriented programming lan-
+       guage  that  combines  remarkable power with very clear syntax.  For an
+       introduction to programming in Python you are referred  to  the  Python
+       Tutorial.  The Python Library Reference documents built-in and standard
+       types, constants, functions and modules.  Finally, the Python Reference
+       Manual describes the syntax and semantics of the core language in (per-
+       haps too) much detail.
+
+config PKG_QTOPIA
+    select PKG_LIBJPEG
+    select PKG_E2FSPROGS
+    select PKG_TIMEZONE
+    bool "qtopia"
+    help
+       The qtopia  palmtop environment version 2.2.0.  Self contained so it
+       does not need seperate qtembedded or tmake.
+       Currently this is only supported on mpc5200 based platforms.
+
+config PKG_QTOPIA_WANT_MOUSE
+    depends PKG_QTOPIA
+    bool "Use usb mouse instead of touchscreen in qtopia by default"
+    default n
+    help
+       Select y here if you want to use usb mouse for qtopia by default.
+
+config PKG_QTOPIA_WANT_CACHE_HOST_TOOLS
+    depends PKG_QTOPIA
+    bool "Cache the host tools (Warning: read the help section!)"
+    default n
+    help
+       Enable to save the Qtopia host tools (moc, uic, etc.) in
+       ~/.qtopia_220_cache after the first full build.  This will save
+       build time later since the host tools will be reused, not rebuilt
+       from source.  Note that these tools will take about 76MB in $HOME.
+
+config PKG_RPM
+    select PKG_ZLIB
+    bool "rpm"
+    help
+      The RPM Package Manager (RPM) is a powerful command line driven
+      package management system capable of installing, uninstalling,
+      verifying, querying, and updating software packages. Each software
+      package consists of an archive of files along with information about
+      the package like its version, a description, etc.
+
+config PKG_RNG_TOOLS
+    bool "rng-tools"
+    help
+       This daemon feeds data from a random number generator to the kernel's
+       random  number  entropy  pool,  after first checking the data to ensure
+       that it is properly random.
+
+config PKG_RSYNC
+    bool "rsync"
+    help
+      Rsync uses a reliable algorithm to bring remote and host files into
+      sync very quickly. Rsync is fast because it just sends the differences
+      in the files over the network instead of sending the complete
+      files. Rsync is often used as a very powerful mirroring process or
+      just as a more capable replacement for the rcp command. A technical
+      report which describes the rsync algorithm is included in this
+      package.
+
+config PKG_SAMBA
+    bool "samba"
+    help
+      Samba is a suite that provides file and print services to all manor
+      of SMB/CIFS clients, including the numerous versions of Microsoft
+      Windows operating systems. 
+
+config PKG_SASH
+    bool "sash"
+    help
+      Sash (Stand Alone SHell) is a same self contained shell used primarily 
+      in the uClinux environment.  It also includes a few utilities (like
+      reboot and ps) that weren't part of the original sash.
+
+config PKG_SCHEDUTILS
+    bool "schedutils"
+    help
+      Utilities for manipulating process scheduler attributes.
+
+config PKG_SCREEN
+    select PKG_LIBELF
+    bool "screen"
+    help
+      The screen utility allows you to have multiple logins on just one
+      terminal. Screen is useful for users who telnet into a machine or are
+      connected via a dumb terminal, but want to use more than just one
+      login.
+
+config PKG_SED
+    bool "sed"
+    help
+      Sed (Stream EDitor) is a stream or batch (non-interactive) editor.
+      Sed takes text as input, performs an operation or set of operations on
+      the text, and outputs the modified text. The operations that sed
+      performs (substitutions, deletions, insertions, etc.) can be specified
+      in a script file or from the command line.
+
+config PKG_SEQ
+    bool "seq (from coreutils)"
+    help
+       This builds only the full seq utility from coreutils, which prints a
+       sequence of numbers
+
+config PKG_SETSERIAL
+    bool "setserial"
+    help
+      A utility for configuring serial ports.
+
+config PKG_SKELL
+    bool "Skeleton base files"
+    default y
+    help
+        These are the base files and directories, say yes
+
+config PKG_SKELL_WANT_TERMINFO
+    depends PKG_SKELL
+    bool "Include terminfo"
+
+config PKG_STRACE
+    bool "strace"
+    help
+      The strace program intercepts and records the system calls called and
+      received by a running process. Strace can print a record of each
+      system call, its arguments, and its return value. Strace is useful for
+      diagnosing problems and debugging, as well as for instructional
+      purposes.
+
+config PKG_SYSCONFIG
+    depends GNUTARCH != buildarch
+    bool
+    default y
+    help
+      This package is used to capture the selections made in the sysconfig.lkc
+      menu.  This menu lets you set things such as hostname and ip address.
+      All values here get stored as SYSCFG entries in .config.  When
+      These all get exported by ltib and used by the package specfile 
+      'sysconfig.spec', this then writes out a single file: /etc/rc.d/rc.conf, 
+      which is used to control the target board's statup (it replaces 
+      the default version which comes from skell).
+
+config PKG_SYSFSUTILS
+    bool "sysfsutils"
+    help
+      These are a set of utilites built upon sysfs, a new virtual filesystem
+      in Linux kernel versions 2.5+ that exposes a system's device tree.
+      This version of sysfsutils includes the libsysfs library and the
+      systool utility. See http://linux-diag.sourceforge.net/Sysfsutils.html
+
+config PKG_SYSKLOGD
+    bool "sysklogd"
+    help
+      The sysklogd package contains two system utilities (syslogd and klogd)
+      that provide support for system logging. Syslogd and klogd run as
+      daemons and log system messages to different places, like sendmail
+      logs, security logs, and error logs.
+
+
+config PKG_SYSVINIT
+    bool "sysvinit"
+    help
+      The SysVinit package contains a group of processes that control
+      the very basic functions of your system. SysVinit includes the init
+      program, the first program started by the Linux kernel when the
+      system boots. Init then controls the startup, running and shutdown
+      of all other programs.
+
+config PKG_TAR
+    bool "tar"
+    help
+      The GNU tar program saves many files together in one archive and can
+      restore individual files (or all of the files) from that archive. Tar
+      can also be used to add supplemental files to an archive and to update
+      or list files in the archive. Tar includes multivolume support,
+      automatic archive compression/decompression, the ability to perform
+      remote archives, and the ability to perform incremental and full
+      backups.
+
+      If you want to use tar for remote backups, you also need to install
+      the rmt package.
+
+
+config PKG_TCPDUMP
+    select PKG_LIBPCAP
+    bool "tcpdump"
+    help
+      Network packet capture/analyser tool
+
+      Tcpdump is a command-line tool for monitoring network traffic.
+      Tcpdump can capture and display the packet headers on a particular
+      network interface or on all interfaces. Tcpdump can display all of the
+      packet headers, or just the ones that match particular criteria.
+
+
+config PKG_TCP_WRAPPERS
+    bool "tcp_wrappers"
+    help
+      The tcp_wrappers package provides small daemon programs that can
+      monitor and filter incoming requests for systat, finger, FTP, telnet,
+      rlogin, rsh, exec, tftp, talk, and other network services.
+      
+      Install the tcp_wrappers program if you need a security tool for
+      filtering incoming network services requests.
+
+
+config PKG_TEXINFO
+    select PKG_NCURSES
+    bool "texinfo"
+    help
+      Texinfo is a documentation system that can produce both online
+      information and printed output from a single source file. The GNU
+      Project uses the Texinfo file format for most of its documentation.
+      
+      Install texinfo if you want a documentation system for producing both
+      online and print documentation from the same source file and/or if you
+      are going to write documentation for the GNU Project.
+
+
+config PKG_TIME
+    bool "time"
+    help
+      The GNU time utility runs another program, collects information about
+      the resources used by that program while it is running, and displays
+      the results.
+
+      utility for monitoring a programs use of system resources. This
+      is available in busybox
+
+config PKG_TIMEZONE
+    bool "timezone"
+    help
+      These are the famous "Olson Tables" with the offset to the
+      international standard time ("UTC") for any country in the world.
+      This package contains the data files and programs Linux needs to
+      handle timezones properly.  From ftp://elsie.nci.nih.gov/pub
+
+config PKG_TIMEZONE_WANT_TZCODE
+    depends PKG_TIMEZONE
+    bool "tzselect, zdump, zic"
+
+config PKG_TIMEZONE_WANT_LIBTZ
+    depends PKG_TIMEZONE
+    bool "libtz"
+
+config PKG_TINYLOGIN
+    bool "tinylogin"
+    help
+      TinyLogin is a suite of tiny Unix utilities for handling logging 
+      into, being authenticated by, changing one's password for, and 
+      otherwise maintaining users and groups on an embedded system. 
+      It also provides shadow password support to enhance system security.
+      TinyLogin is, as the name implies, very small, and makes an 
+      excellent complement to BusyBox on an embedded system (though it 
+      can of course be used without).
+
+config PKG_TSLIB
+    bool "tslib"
+    help
+      A library to abstract touchscreen events
+
+config PKG_TVOUT_TEST_MX31
+    depends PLATFORM = 'imx31ads'
+    bool "tvout-test-mx31"
+    help
+      tvout-test-mx31 is a package to test the i.MX31 ADS TV-Out encoder card.
+
+config PKG_UDEV
+    bool "udev"
+#    select PKG_HOTPLUG
+    help
+      Userspace /dev manager.
+
+config PKG_USBUTILS
+    select PKG_LIBUSB
+    bool "usbutils"
+    help
+      This package contains utilities for inspecting devices connected to a
+      USB bus.
+
+config PKG_UCLINUX_CKSUM
+    bool "uclinux-cksum"
+    help
+      uCLinux cksum is a utility used by the uClilnux build tools in the
+      creation of the final image for some uCLinux architectures.
+      The utility is built from the source archive cksum-19990607.tar.gz
+      which is available from the uCLinux website, http://www.uclinux.org
+      The standard cksum utility available in most host distributions in
+      the coreutils package cannot be used as it has different command line
+      options, and some of these options are used by the uCLinux build
+      process.
+      The name of the final executable is changed to uc-cksum to prevent
+      confusion with the cksum available with the host distribution.
+
+config PKG_UTIL_LINUX
+    bool "util-linux"
+    help
+      The util-linux package contains a large variety of low-level system
+      utilities that are necessary for a Linux system to function. Among
+      others, Util-linux contains the fdisk configuration tool and the login
+      program.
+
+
+config PKG_U_BOOT_TOOLS
+    bool "u-boot tools"
+    help
+        Build and install (on your target) the utilities that come with
+        u-boot (such as mkimage, img2srec, gen_eth_addr etc)
+
+config PKG_UNZIP
+    bool "unzip"
+    help 
+      UnZip will list, test, or extract files from a .zip archive,
+      commonly found on MS-DOS systems.
+        
+
+config PKG_VIM
+    select PKG_NCURSES
+    bool "vim"
+    help
+      Vim is a highly configurable text editor built to enable efficient 
+      text editing. It is an improved version of the vi editor distributed 
+      with most UNIX systems.
+
+config PKG_VSFTPD
+    bool "vsftpd"
+    help
+      vsftpd is a Very Secure FTP daemon. It was written completely from
+      scratch.
+
+      It is configured to not allow write access or non-anonymous user
+      login.
+
+config PKG_VSC7385_FIRMWARE_MPC8313ERDB
+    depends PLATFORM = 'mpc8313erdb'
+    bool "vsc7385-firmware-mpc8313erdb"
+    help
+      The VSC7385 Gigabit Ethernet Unmanaged Switch firmware load for MPC8313ERDB.
+
+config PKG_WATCHDOG
+    depends PLATFORM = 'mcf547x_8x'
+    bool "watchdog"
+    help
+      A simple program to demonstrate usage of the watchdog timer.  Installs
+      as /root/watchdog.
+          # /root/watchdog
+          Sleeping for 25 sec...
+          Timeout=30
+          Sleeping for 25 sec more...
+
+config PKG_WGET
+    bool "wget"
+    help
+      GNU Wget is a file retrieval utility which can use either the HTTP or
+      FTP protocols. Wget features include the ability to work in the
+      background while you are logged out, recursive retrieval of
+      directories, file name wildcard matching, remote file timestamp
+      storage and comparison, use of Rest with FTP servers and Range with
+      HTTP servers to retrieve files over slow or unstable connections,
+      support for Proxy servers, and configurability.
+
+
+config PKG_WHICH
+    bool "which"
+    help
+      The which command shows the full pathname of a specified program, if
+      the specified program is in your PATH.
+
+
+config PKG_WIRELESS_TOOLS
+    bool "wireless-tools"
+    help
+      This package contain the Wireless tools used to manipulate the
+      Wireless Extension. The Wireless Extension is an interface allowing
+      you to set Wireless LAN specific parameters and get specific
+      statistics for wireless networking equipment.
+
+config PKG_YAFFS_UTILS
+    bool "yaffs_utils"
+    help
+      This package contains YAFFS file system utilities to create YAFFS 
+      image and partition.
+
+config PKG_ZLIB
+    bool "zlib"
+    help
+      Zlib is a general-purpose, patent-free, lossless data compression
+      library which is used by many different programs.
+
+endmenu

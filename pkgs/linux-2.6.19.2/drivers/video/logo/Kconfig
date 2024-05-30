@@ -1,0 +1,43 @@
+#
+# Logo configuration
+#
+
+menu "Logo configuration"
+
+config LOGO
+	bool "Bootup logo"
+	depends on FB || SGI_NEWPORT_CONSOLE
+	help
+	  Enable and select frame buffer bootup logos.
+
+config LOGO_LINUX_MONO
+	bool "Standard black and white Linux logo"
+	depends on LOGO
+	default y
+
+config LOGO_LINUX_VGA16
+	bool "Standard 16-color Linux logo"
+	depends on LOGO
+	default y
+
+config LOGO_LINUX_CLUT224
+	bool "Standard 224-color Linux logo"
+	depends on LOGO
+	default y
+
+choice
+	depends on LOGO_LINUX_CLUT224
+	prompt "Logo selection"
+	default LOGO_DEFAULT_CLUT224
+
+config LOGO_DEFAULT_CLUT224
+	bool "Default 224 color logo"
+	depends on LOGO
+
+config LOGO_CUSTOM_CLUT224
+	bool "Standard 224-color custom logo (Sagem customization)"
+	depends on LOGO
+
+endchoice
+
+endmenu

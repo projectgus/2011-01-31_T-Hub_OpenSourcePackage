@@ -1,0 +1,78 @@
+# Template = kernel-common.tmpl
+
+%define pfx /opt/freescale/rootfs/%{_target_cpu}
+%define dversion 2.6.10
+%define pkg_name linux
+
+Summary         : Linux kernel (core of the Linux operating system)
+Name            : kernel
+Version         : 2.6.11
+Release         : 0
+License         : GPL
+Vendor          : kernel.org
+Packager        : Stuart Hughes
+Group           : System Environment/Kernel
+Source          : %{pkg_name}-%{dversion}.tar.bz2
+Patch0          : patch-2.6.11.bz2
+Patch1          : linux-fsl-2.6.11-PQ3_General.patch
+Patch2          : linux-fsl-2.6.11-PQ3_platforms.patch
+Patch3          : linux-fsl-2.6.11-PQ38_MPC8548CDS.patch
+Patch4          : linux-fsl-2.6.11-PQ3_FEC.patch
+Patch5          : linux-fsl-2.6.11-PQ3_CPM2.patch
+Patch6          : linux-fsl-2.6.11-PQ3_VIA.patch
+Patch7          : linux-fsl-2.6.11-PQ3_PCI-agent.patch
+Patch8          : linux-fsl-2.6.11-PQ3_RapidIO.patch
+Patch9          : linux-fsl-2.6.11-PQ3_SEC.patch
+Patch10         : linux-fsl-2.6.11-PQ3_USB.patch
+Patch11         : linux-fsl-2.6.11-PQ38_PCI.patch
+Patch12         : linux-fsl-2.6.11-PQ38_SEC2x.patch
+Patch13         : linux-fsl-2.6.11-PQ38_SEC2xTEST.patch
+Patch14         : linux-fsl-2.6.11-PQ38_ETSEC.patch
+Patch15         : linux-fsl-2.6.11-PQ38_EEPROM512.patch
+Patch16         : linux-fsl-2.6.11-PQ38_GPL.patch
+Patch17         : linux-fsl-2.6.11-PQ38_SEC2x_v1.5.patch
+Patch18         : linux-fsl-2.6.11-PQ38_SEC2xTEST_v1.5.patch
+Patch19         : linux-fsl-2.6.11-PQ38_PEX.patch
+Patch20         : linux-sk98lin_v8.28.1.3_2.6.11.patch
+Patch21         : linux-fsl-2.6.11-PQ38_PCIB.patch
+Patch22         : linux-fsl-2.6.11-PQ38_CT43.patch
+Patch23         : linux-fsl-2.6.11-PQ38_CW.patch
+Patch24         : linux-fsl-2.6.11-PQ38_VIA.patch
+Patch25         : kernel-2.6.11-post-reboot-freeze.patch
+BuildRoot       : %{_tmppath}/%{name}
+Prefix          : %{pfx}
+
+%Description
+%{summary}
+
+From kernel.org plus Freescale patches
+
+%Prep
+%setup -n %{pkg_name}-%{dversion}
+%patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
+%patch14 -p0
+%patch15 -p0
+%patch16 -p1
+%patch17 -p1
+%patch18 -p1
+%patch19 -p1
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
+%patch23 -p1
+%patch24 -p1
+%patch25 -p1
+

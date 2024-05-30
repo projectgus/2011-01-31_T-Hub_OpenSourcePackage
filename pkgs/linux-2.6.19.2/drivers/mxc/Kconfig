@@ -1,0 +1,64 @@
+# drivers/video/mxc/Kconfig
+
+if ARCH_MXC
+
+menu "MXC support drivers"
+
+source "drivers/mxc/ipu/Kconfig"
+source "drivers/mxc/ssi/Kconfig"
+source "drivers/mxc/dam/Kconfig"
+source "drivers/mxc/pmic/Kconfig"
+source "drivers/mxc/pm/Kconfig"
+source "drivers/mxc/security/Kconfig"
+source "drivers/mxc/hmp4e/Kconfig"
+
+if ARCH_MX27
+source "drivers/mxc/vpu/Kconfig"
+source "drivers/mxc/pwrmngt/Kconfig"
+endif
+
+if ARCH_MX3
+
+menu "MXC MBX PowerVR OpenGL-ES"
+
+config MXC_MBX
+       bool "MBX Support"
+       help
+	Enable OpenGL-ES on broad.       
+
+choice
+       prompt "MBX size"
+       depends on MXC_MBX
+       default MXC_MBX_SIZE3
+
+       config MXC_MBX_SIZE1
+       	      bool "4 Mo"
+
+       config MXC_MBX_SIZE2
+       	      bool "8 Mo"
+
+       config MXC_MBX_SIZE3
+       	      bool "16 Mo"
+
+       config MXC_MBX_SIZE4
+       	      bool "32 Mo"
+
+       config MXC_MBX_SIZE5
+       	      bool "64 Mo"
+endchoice
+
+config MXC_MBX_SIZE
+       int
+       default 4 if MXC_MBX_SIZE1
+       default 8 if MXC_MBX_SIZE2
+       default 16 if MXC_MBX_SIZE3
+       default 32 if MXC_MBX_SIZE4
+       default 64 if MXC_MBX_SIZE5
+
+endmenu
+
+endif
+
+endmenu
+
+endif

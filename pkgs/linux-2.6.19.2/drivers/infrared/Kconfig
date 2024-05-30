@@ -1,0 +1,9 @@
+menu "Infrared Drivers"
+
+config IRMOD
+	depends on !SND_MXC_DECT
+	bool "Infrared support (EXPERIMENTAL)"
+	help
+	  Infrared GPIO controler.
+
+endmenu

@@ -1,0 +1,109 @@
+eval 'LANG=C exec perl -w -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+$running_under_some_shell = 0;
+
+######################################################################
+#
+# Copyright © Freescale Semiconductor, Inc. 2004-2005. All rights reserved.
+#
+# Stuart Hughes, stuarth@freescale.com,  29th May 2006
+#
+# This file is part of LTIB.
+# LTIB is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# LTIB is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with LTIB; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#
+######################################################################
+$exclude = { m520xevb => 1, m532xevb => 1};
+$build_log = 'build.log';
+
+foreach $dir ( glob("*") ) {
+    next unless -d $dir;
+    $tgt = '';
+    $grab_line = 0;
+    open(MCF, "$dir/.config") or warn("no main config for $dir\n"), next;
+    while(<MCF>) {
+        if(m,^CONFIG_PLATFORM_DIR="[^\s]+/([^/"]+)",) {
+            ($tgt) = $1;
+            last;
+        }
+    }
+    close MCF;
+    next unless $tgt;
+    next if $exclude->{$tgt};
+    push @tgts, $tgt;
+    open(BL, "$dir/$build_log") or warn("open $dir/$build_log : $!\n"), next;
+    while(<BL>) {
+        if(m,^Processing: (.*),) {
+            $pkgs->{$1}{$tgt} = 1;
+        }
+        if($grab_line) {
+            $grab_line = 0;
+            foreach $fpkg (split(/\s+/, $_)) {
+                $pkgs->{$fpkg}{$tgt} = 2;
+            }
+        }
+        if(m,^These packages failed to build:$,) {
+            $grab_line = 1;
+        }
+    }
+}
+@astgts = sort @tgts;
+
+print htheader();
+print "<table border=1 cellpadding=2>\n<tr><th>Package</th>\n";
+foreach $tgt (@astgts) {
+    print "<th>$tgt</th>";
+}
+print "</tr>\n";
+foreach $pkg ( sort keys %$pkgs ){
+    print "<tr>";
+    print "<td>$pkg</td>";
+    foreach $tgt (@astgts) {
+        if(! $pkgs->{$pkg}{$tgt} ) {
+            $str = '&nbsp';
+        } elsif( $pkgs->{$pkg}{$tgt} == 1 ) {
+            $str = 'o';
+        } elsif( $pkgs->{$pkg}{$tgt} == 2 ) {
+            $str = 'x';
+        }
+        print "<td align=center>$str</td>";
+        next;
+    }
+    print "</tr>\n";
+}
+print "</table>\n";
+
+print htfooter();
+exit 0;
+
+sub htheader
+{
+    return <<TXT;
+<html>
+<body>
+<center><b>BSP package build information ${\ scalar gmtime() } GMT</b></center>
+<b><u>KEY</u>:</b> <b>o</b> = Built okay, <b>x</b> = Failed<br>
+TXT
+
+}
+
+sub htfooter
+{
+    return <<TXT;
+</body>
+</html>
+TXT
+}
+

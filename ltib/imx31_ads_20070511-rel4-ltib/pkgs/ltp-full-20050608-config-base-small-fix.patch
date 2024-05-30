@@ -1,0 +1,76 @@
+Steve Papacharalambous <stevep@freescale.com>, 02 June 2006
+
+This patch fixes a problem with later toolchain built using later kernel
+headers.  The define for PID_MAX_DEFAULT needs CONFIG_BASE_SMALL to be
+defined, and this needs a kernel config header file.  The errors that are
+generated without this patch are:
+[snip]
+gcc -Wall  -I../../include -g -Wall -I../../../../include -Wall
+getsid02.c -L../../../../lib -lltp  -o getsid02
+getsid02.c: In function 'main':
+getsid02.c:111: error: 'CONFIG_BASE_SMALL' undeclared (first use in this
+function)
+getsid02.c:111: error: (Each undeclared identifier is reported only once
+getsid02.c:111: error: for each function it appears in.)
+make[4]: *** [getsid02] Error 1
+make[4]: Leaving directory
+`/home/stevep/work/ltib/rpm/BUILD/ltp-full-20050608/testcases/kernel/syscalls/getsid'
+[/snip]
+===============================================================================
+
+diff --exclude CVS -uNr ltp-full-20050608/testcases/kernel/syscalls/getsid/getsid02.c ltp-full-20050608.modified/testcases/kernel/syscalls/getsid/getsid02.c
+--- ltp-full-20050608/testcases/kernel/syscalls/getsid/getsid02.c	Wed Jun  8 17:11:19 2005
++++ ltp-full-20050608.modified/testcases/kernel/syscalls/getsid/getsid02.c	Fri Jun  2 14:04:04 2006
+@@ -76,6 +76,15 @@
+ #endif
+ 
+ 
++/*
++ * This is a workaround for toolchains built with later kernel headers
++ * which need to have CONFIG_BASE_SMALL defined.
++ */
++#ifndef CONFIG_BASE_SMALL
++#define CONFIG_BASE_SMALL 0
++#endif
++
++
+ void cleanup(void);
+ void setup(void);
+ 
+diff --exclude CVS -uNr ltp-full-20050608/testcases/kernel/syscalls/setpriority/setpriority04.c ltp-full-20050608.modified/testcases/kernel/syscalls/setpriority/setpriority04.c
+--- ltp-full-20050608/testcases/kernel/syscalls/setpriority/setpriority04.c	Wed Jun  8 17:11:20 2005
++++ ltp-full-20050608.modified/testcases/kernel/syscalls/setpriority/setpriority04.c	Fri Jun  2 14:45:24 2006
+@@ -74,6 +74,14 @@
+ #define PID_MAX 0x8000
+ #endif
+ 
++/*
++ *  * This is a workaround for toolchains built with later kernel headers
++ *   * which need to have CONFIG_BASE_SMALL defined.
++ *    */
++#ifndef CONFIG_BASE_SMALL
++#define CONFIG_BASE_SMALL 0
++#endif
++
+ 
+ void cleanup(void);
+ void setup(void);
+diff --exclude CVS -uNr ltp-full-20050608/testcases/kernel/syscalls/wait4/wait402.c ltp-full-20050608.modified/testcases/kernel/syscalls/wait4/wait402.c
+--- ltp-full-20050608/testcases/kernel/syscalls/wait4/wait402.c	Wed Jun  8 17:11:19 2005
++++ ltp-full-20050608.modified/testcases/kernel/syscalls/wait4/wait402.c	Fri Jun  2 14:54:41 2006
+@@ -78,6 +78,15 @@
+ #define PID_MAX 0x8000
+ #endif
+ 
++/*
++ *  * This is a workaround for toolchains built with later kernel headers
++ *   * which need to have CONFIG_BASE_SMALL defined.
++ *    */
++#ifndef CONFIG_BASE_SMALL
++#define CONFIG_BASE_SMALL 0
++#endif
++
++
+ void cleanup(void);
+ void setup(void);
+ 

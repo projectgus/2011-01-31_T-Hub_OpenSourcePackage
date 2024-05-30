@@ -1,0 +1,60 @@
+Thu Aug 17 2006 Stuart Hughes <stuarth@freescale.com>
+
+This patch fixes uClibc builds.  The symptom was:
+
+make[3]: Entering directory `/home/yashpald/ltib-mpc832xemds-20060615/rpm/BUILD/linux-atm-2.4.1/src/test'
+/usr/bin/perl ./mkerrnos.pl </usr/include/asm/errno.h \
+        >errnos.inc || { rm -f errnos.inc; exit 1; }
+open : No such file or directory
+make[3]: *** [errnos.inc] Error 1
+make[3]: Leaving directory `/home/yashpald/ltib-mpc832xemds-20060615/rpm/BUILD/linux-atm-2.4.1/src/test'
+
+diff --exclude CVS -uNr linux-atm-2.4.1/src/test/isp.c linux-atm-2.4.1.modified/src/test/isp.c
+--- linux-atm-2.4.1/src/test/isp.c	2001-09-03 19:41:06.000000000 +0100
++++ linux-atm-2.4.1.modified/src/test/isp.c	2006-08-17 11:19:48.000000000 +0100
+@@ -20,6 +20,22 @@
+ 
+ #include "isp.h"
+ 
++/*
++ * seh: uclibc does not have these, I thought cleaner than directly
++ *      including the kernel headers (copied from asm-generic/errno.h)
++ */
++#ifdef __UCLIBC__
++#ifndef ENOKEY
++#define ENOKEY      126 /* Required key not available */
++#define EKEYEXPIRED 127 /* Key has expired */
++#define EKEYREVOKED 128 /* Key has been revoked */
++#define EKEYREJECTED    129 /* Key was rejected by service */
++
++/* for robust mutexes */
++#define EOWNERDEAD  130 /* Owner died */
++#define ENOTRECOVERABLE 131 /* State not recoverable */
++#endif
++#endif
+ 
+ extern int yyparse(void);
+ 
+diff --exclude CVS -uNr linux-atm-2.4.1/src/test/mkerrnos.pl linux-atm-2.4.1.modified/src/test/mkerrnos.pl
+--- linux-atm-2.4.1/src/test/mkerrnos.pl	2006-08-17 11:21:48.000000000 +0100
++++ linux-atm-2.4.1.modified/src/test/mkerrnos.pl	2006-08-17 11:20:34.000000000 +0100
+@@ -14,15 +14,18 @@
+ close GCC;
+ 
+ foreach $dir (@dirs) {
+-    if($en = `find $dir -name errno.h | xargs grep -l ECONNREFUSED`) {
++    warn "checking dir $dir\n";
++    if($en = `find $dir -name errno.h -follow | xargs grep -l ECONNREFUSED`) {
+         warn "using $en";
+         chomp $en;
+         last;
+     }
+ }
++die "Cannot find an errno.h in any paths containing ECONNREFUSED\n" unless $en;
+ 
+ open(ERRNO, $en) or die "open $en: $!\n";
+ while (<ERRNO>) {
+     next unless /^#define\s+(E\S+)\s*/;
++    next if m,(?:ERESTARTSYS|ERESTARTNOINTR|ERESTARTNOHAND|ENOIOCTLCMD|_LAST_ERRNO),;
+     printf("  { \"%s\", %s },\n",$1,$1) || die "print: $!";
+ }

@@ -1,0 +1,223 @@
+Steve Papacharalambous <stevep@freescale.com> 26 October 2006
+
+This patch permits yaffs_utils to be built without a linux kernel source tree.
+
+The mtd headers in the linux kernel tree needed by yaffs_utils have been copied
+into this package.  It is ugly, but allows the packages to be built without
+having the kernel sources expanded to build the package.  In addition the two
+mtd headers that are needed have been blessed for inclusion by user space
+packages as they contain portions of MTD ABI definition which are shared by
+kernel and user space, so it isn't quite such an evil hack.  :-)
+
+The errors that are fixed by this patch are:
+[snip]
+mkyaffs.c:35:26: mtd/mtd-user.h: No such file or directory
+mkyaffs.c:73: error: variable `yaffs_oobinfo' has initializer but incomplete type
+mkyaffs.c:74: error: unknown field `useecc' specified in initializer
+mkyaffs.c:74: warning: excess elements in struct initializer
+mkyaffs.c:74: warning: (near initialization for `yaffs_oobinfo')
+mkyaffs.c:75: error: unknown field `eccpos' specified in initializer
+mkyaffs.c:75: error: extra brace group at end of initializer
+mkyaffs.c:75: error: (near initialization for `yaffs_oobinfo')
+mkyaffs.c:75: warning: excess elements in struct initializer
+mkyaffs.c:75: warning: (near initialization for `yaffs_oobinfo')
+mkyaffs.c:78: error: variable `yaffs_noeccinfo' has initializer but incomplete type
+mkyaffs.c:79: error: unknown field `useecc' specified in initializer
+mkyaffs.c:79: warning: excess elements in struct initializer
+mkyaffs.c:79: warning: (near initialization for `yaffs_noeccinfo')
+mkyaffs.c: In function `main':
+mkyaffs.c:96: error: variable `oob' has initializer but incomplete type
+mkyaffs.c:96: warning: excess elements in struct initializer
+mkyaffs.c:96: warning: (near initialization for `oob')
+mkyaffs.c:96: warning: excess elements in struct initializer
+mkyaffs.c:96: warning: (near initialization for `oob')
+mkyaffs.c:96: warning: excess elements in struct initializer
+mkyaffs.c:96: warning: (near initialization for `oob')
+mkyaffs.c:96: error: storage size of 'oob' isn't known
+mkyaffs.c:97: error: `mtd_info_t' undeclared (first use in this function)
+mkyaffs.c:97: error: (Each undeclared identifier is reported only once
+mkyaffs.c:97: error: for each function it appears in.)
+mkyaffs.c:97: error: parse error before "meminfo"
+mkyaffs.c:98: error: `erase_info_t' undeclared (first use in this function)
+mkyaffs.c:99: error: storage size of 'oobsel' isn't known
+mkyaffs.c:151: error: `MEMGETINFO' undeclared (first use in this function)
+mkyaffs.c:151: error: `meminfo' undeclared (first use in this function)
+mkyaffs.c:98: error: `erase_info_t' undeclared (first use in this function)
+mkyaffs.c:99: error: storage size of 'oobsel' isn't known
+mkyaffs.c:151: error: `MEMGETINFO' undeclared (first use in this function)
+mkyaffs.c:151: error: `meminfo' undeclared (first use in this function)
+mkyaffs.c:159: error: `MEMSETOOBSEL' undeclared (first use in this function)
+mkyaffs.c:190: error: `MEMREADOOB' undeclared (first use in this function)
+mkyaffs.c:204: error: `erase' undeclared (first use in this function)
+mkyaffs.c:207: error: `MEMERASE' undeclared (first use in this function)
+mkyaffs.c:231: error: `MEMWRITEOOB' undeclared (first use in this function)
+mkyaffs.c:96: warning: unused variable `oob'
+mkyaffs.c:99: warning: unused variable `oobsel'
+mkyaffs.c: At top level:
+mkyaffs.c:73: error: storage size of `yaffs_oobinfo' isn't known
+mkyaffs.c:78: error: storage size of `yaffs_noeccinfo' isn't known
+make: *** [mkyaffs.o] Error 1
+make: Leaving directory `/home/stevep/work/ltib/rpm/BUILD/yaffs_utils-20060418/yaffs/utils'
+[/snip]
+
+
+diff --exclude CVS -uNr yaffs_utils-20060418/yaffs/linux-kernel/include/mtd/mtd-abi.h yaffs_utils-20060418.modified/yaffs/linux-kernel/include/mtd/mtd-abi.h
+--- yaffs_utils-20060418/yaffs/linux-kernel/include/mtd/mtd-abi.h	Thu Jan  1 01:00:00 1970
++++ yaffs_utils-20060418.modified/yaffs/linux-kernel/include/mtd/mtd-abi.h	Thu Oct 26 08:57:07 2006
+@@ -0,0 +1,121 @@
++/*
++ * $Id: mtd-abi.h,v 1.13 2005/11/07 11:14:56 gleixner Exp $
++ *
++ * Portions of MTD ABI definition which are shared by kernel and user space
++ */
++
++#ifndef __MTD_ABI_H__
++#define __MTD_ABI_H__
++
++#ifndef __KERNEL__ /* Urgh. The whole point of splitting this out into
++		    separate files was to avoid #ifdef __KERNEL__ */
++#define __user
++#endif
++
++struct erase_info_user {
++	uint32_t start;
++	uint32_t length;
++};
++
++struct mtd_oob_buf {
++	uint32_t start;
++	uint32_t length;
++	unsigned char __user *ptr;
++};
++
++#define MTD_ABSENT		0
++#define MTD_RAM			1
++#define MTD_ROM			2
++#define MTD_NORFLASH		3
++#define MTD_NANDFLASH		4
++#define MTD_PEROM		5
++#define MTD_DATAFLASH		6
++#define MTD_OTHER		14
++#define MTD_UNKNOWN		15
++
++#define MTD_CLEAR_BITS		1       // Bits can be cleared (flash)
++#define MTD_SET_BITS		2       // Bits can be set
++#define MTD_ERASEABLE		4       // Has an erase function
++#define MTD_WRITEB_WRITEABLE	8       // Direct IO is possible
++#define MTD_VOLATILE		16      // Set for RAMs
++#define MTD_XIP			32	// eXecute-In-Place possible
++#define MTD_OOB			64	// Out-of-band data (NAND flash)
++#define MTD_ECC			128	// Device capable of automatic ECC
++#define MTD_NO_VIRTBLOCKS	256	// Virtual blocks not allowed
++#define MTD_PROGRAM_REGIONS	512	// Configurable Programming Regions
++
++// Some common devices / combinations of capabilities
++#define MTD_CAP_ROM		0
++#define MTD_CAP_RAM		(MTD_CLEAR_BITS|MTD_SET_BITS|MTD_WRITEB_WRITEABLE)
++#define MTD_CAP_NORFLASH        (MTD_CLEAR_BITS|MTD_ERASEABLE)
++#define MTD_CAP_NANDFLASH       (MTD_CLEAR_BITS|MTD_ERASEABLE|MTD_OOB)
++#define MTD_WRITEABLE		(MTD_CLEAR_BITS|MTD_SET_BITS)
++
++
++// Types of automatic ECC/Checksum available
++#define MTD_ECC_NONE		0 	// No automatic ECC available
++#define MTD_ECC_RS_DiskOnChip	1	// Automatic ECC on DiskOnChip
++#define MTD_ECC_SW		2	// SW ECC for Toshiba & Samsung devices
++
++/* ECC byte placement */
++#define MTD_NANDECC_OFF		0	// Switch off ECC (Not recommended)
++#define MTD_NANDECC_PLACE	1	// Use the given placement in the structure (YAFFS1 legacy mode)
++#define MTD_NANDECC_AUTOPLACE	2	// Use the default placement scheme
++#define MTD_NANDECC_PLACEONLY	3	// Use the given placement in the structure (Do not store ecc result on read)
++#define MTD_NANDECC_AUTOPL_USR 	4	// Use the given autoplacement scheme rather than using the default
++
++/* OTP mode selection */
++#define MTD_OTP_OFF		0
++#define MTD_OTP_FACTORY		1
++#define MTD_OTP_USER		2
++
++struct mtd_info_user {
++	uint8_t type;
++	uint32_t flags;
++	uint32_t size;	 // Total size of the MTD
++	uint32_t erasesize;
++	uint32_t oobblock;  // Size of OOB blocks (e.g. 512)
++	uint32_t oobsize;   // Amount of OOB data per block (e.g. 16)
++	uint32_t ecctype;
++	uint32_t eccsize;
++};
++
++struct region_info_user {
++	uint32_t offset;		/* At which this region starts,
++					 * from the beginning of the MTD */
++	uint32_t erasesize;		/* For this region */
++	uint32_t numblocks;		/* Number of blocks in this region */
++	uint32_t regionindex;
++};
++
++struct otp_info {
++	uint32_t start;
++	uint32_t length;
++	uint32_t locked;
++};
++
++#define MEMGETINFO              _IOR('M', 1, struct mtd_info_user)
++#define MEMERASE                _IOW('M', 2, struct erase_info_user)
++#define MEMWRITEOOB             _IOWR('M', 3, struct mtd_oob_buf)
++#define MEMREADOOB              _IOWR('M', 4, struct mtd_oob_buf)
++#define MEMLOCK                 _IOW('M', 5, struct erase_info_user)
++#define MEMUNLOCK               _IOW('M', 6, struct erase_info_user)
++#define MEMGETREGIONCOUNT	_IOR('M', 7, int)
++#define MEMGETREGIONINFO	_IOWR('M', 8, struct region_info_user)
++#define MEMSETOOBSEL		_IOW('M', 9, struct nand_oobinfo)
++#define MEMGETOOBSEL		_IOR('M', 10, struct nand_oobinfo)
++#define MEMGETBADBLOCK		_IOW('M', 11, loff_t)
++#define MEMSETBADBLOCK		_IOW('M', 12, loff_t)
++#define OTPSELECT		_IOR('M', 13, int)
++#define OTPGETREGIONCOUNT	_IOW('M', 14, int)
++#define OTPGETREGIONINFO	_IOW('M', 15, struct otp_info)
++#define OTPLOCK		_IOR('M', 16, struct otp_info)
++
++struct nand_oobinfo {
++	uint32_t useecc;
++	uint32_t eccbytes;
++	uint32_t oobfree[8][2];
++	uint32_t eccpos[32];
++};
++
++#endif /* __MTD_ABI_H__ */
+diff --exclude CVS -uNr yaffs_utils-20060418/yaffs/linux-kernel/include/mtd/mtd-user.h yaffs_utils-20060418.modified/yaffs/linux-kernel/include/mtd/mtd-user.h
+--- yaffs_utils-20060418/yaffs/linux-kernel/include/mtd/mtd-user.h	Thu Jan  1 01:00:00 1970
++++ yaffs_utils-20060418.modified/yaffs/linux-kernel/include/mtd/mtd-user.h	Thu Oct 26 08:57:07 2006
+@@ -0,0 +1,20 @@
++/*
++ * $Id: mtd-user.h,v 1.2 2004/05/05 14:44:57 dwmw2 Exp $
++ *
++ * MTD ABI header for use by user space only.
++ */
++
++#ifndef __MTD_USER_H__
++#define __MTD_USER_H__
++
++#include <stdint.h>
++
++/* This file is blessed for inclusion by userspace */
++#include <mtd/mtd-abi.h>
++
++typedef struct mtd_info_user mtd_info_t;
++typedef struct erase_info_user erase_info_t;
++typedef struct region_info_user region_info_t;
++typedef struct nand_oobinfo nand_oobinfo_t;
++
++#endif /* __MTD_USER_H__ */
+diff --exclude CVS -uNr yaffs_utils-20060418/yaffs/utils/Makefile yaffs_utils-20060418.modified/yaffs/utils/Makefile
+--- yaffs_utils-20060418/yaffs/utils/Makefile	Thu Oct 26 08:57:17 2006
++++ yaffs_utils-20060418.modified/yaffs/utils/Makefile	Thu Oct 26 08:57:07 2006
+@@ -19,6 +19,7 @@
+ CFLAGS =   -I/$(KERNELDIR)/include -I.. -O2 -Wall -DCONFIG_YAFFS_UTIL
+ CFLAGS+=   -Wshadow -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wmissing-declarations
+ CFLAGS+=   -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Winline
++CFLAGS += -I../linux-kernel/include
+ 
+ ## Change if you are using a cross-compiler
+ #MAKETOOLS = 

@@ -1,0 +1,56 @@
+diff --exclude CVS -uNr udev-091/extra/udev.startup udev-091.modified/extra/udev.startup
+--- udev-091/extra/udev.startup	2006-06-03 14:41:39.000000000 -0600
++++ udev-091.modified/extra/udev.startup	2006-06-03 13:55:06.000000000 -0600
+@@ -29,21 +29,37 @@
+   echo $HANDLER > /proc/sys/kernel/hotplug
+ }
+ 
+-if ! supported_kernel; then
+-    echo "udev requires a kernel >= 2.6.12, not started."
+-    exit 0
+-fi
+-
+-udevd --daemon
+-set_hotplug_handler
+-
+-mount -n -o mode=0755 -t tmpfs tmpfs /dev
+-mkdir /dev/.udev/ /dev/.udev/db/ /dev/.udev/queue/
+-make_extra_nodes
+-
+-udevsynthesize
+-
+-mount /dev/pts
++case "$1" in
++    start)
++	if ! supported_kernel; then
++	    echo "udev requires a kernel >= 2.6.12, not started."
++	    exit 0
++	fi
++
++	echo "Starting the hotplug events dispatcher udevd"
++	udevd --daemon
++	set_hotplug_handler
++
++	mount -n -o mode=0755 -t tmpfs tmpfs /dev
++	mkdir /dev/.udev/ /dev/.udev/db/ /dev/.udev/queue/
++	make_extra_nodes
++
++	echo "Synthesizing initial hotplug events"
++	udevsynthesize
++
++	mount /dev/pts
++	;;
++    stop)
++	;;
++    restart|force-reload)
++	$0 stop
++	$0 start
++	;;
++    *)
++	echo "Usage: /etc/init.d/udev {start|stop|restart|force-reload}"
++	exit 1
++	;;
++esac
+ 
+ exit 0
+ 

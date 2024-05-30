@@ -1,0 +1,20 @@
+--- ../../../OLD/X/udevsynthesize.c	2006-01-12 20:21:00.000000000 +0100
++++ ./udevsynthesize.c	2006-01-12 19:26:30.000000000 +0100
+@@ -46,7 +46,7 @@
+ #include "udevd.h"
+ #include "udev_version.h"
+ #include "logging.h"
+-#include "udev_utils.h"
++
+ #include "list.h"
+ 
+ #ifndef DT_DIR
+@@ -719,7 +719,7 @@ int main(int argc, char *argv[], char *e
+ 	int i;
+ 
+ 	logging_init("udevcoldplug");
+-	udev_init_config();
++	udev_config_init(); sysfs_init();
+ 	dbg("version %s", UDEV_VERSION);
+ 
+ 	udev_log_str = getenv("UDEV_LOG");

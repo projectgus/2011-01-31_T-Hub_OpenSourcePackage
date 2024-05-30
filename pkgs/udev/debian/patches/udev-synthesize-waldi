@@ -1,0 +1,53 @@
+diff -ur udev-070.orig/udevsynthesize.c udev-070/udevsynthesize.c
+--- udev-070.orig/udevsynthesize.c	2005-10-12 22:00:52.000000000 +0200
++++ udev-070/udevsynthesize.c	2005-10-12 22:29:43.000000000 +0200
+@@ -597,6 +597,40 @@
+ 	return 0;
+ }
+ 
++static int ccw_handler(struct device *device)
++{
++	char path[PATH_SIZE];
++	char value[PATH_SIZE], *tmp;
++
++	snprintf(path, sizeof(path), "%s%s", sysfs_path, device->path);
++	path[sizeof(path)-1] = '\0';
++
++	if (read_file(path, "modalias", value, sizeof(value)) > 0)
++		add_env_key(device, "MODALIAS", value);
++
++	if (read_file(path, "cutype", value, sizeof(value)) > 0) {
++		value[4] = 0;
++		tmp = &value[5];
++		add_env_key(device, "CU_TYPE", value);
++		add_env_key(device, "CU_MODEL", tmp);
++	}
++
++	if (read_file(path, "devtype", value, sizeof(value)) > 0) {
++		if (value[0] == 'n') {
++			add_env_key(device, "DEV_TYPE", "0000");
++			add_env_key(device, "DEV_MODEL", "00");
++		}
++		else {
++			value[4] = 0;
++			tmp = &value[5];
++			add_env_key(device, "DEV_TYPE", value);
++			add_env_key(device, "DEV_MODEL", tmp);
++		}
++	}
++
++	return 0;
++}
++
+ static int modalias_handler(struct device *device)
+ {
+ 	char path[PATH_SIZE];
+@@ -677,6 +711,8 @@
+ 			udev_scan_bus("usb", usb_handler);
+ 		else if (strcmp(dent->d_name, "serio") == 0)
+ 			udev_scan_bus("serio", serio_handler);
++		else if (strcmp(dent->d_name, "ccw") == 0)
++			udev_scan_bus("ccw", ccw_handler);
+ 		else
+ 			udev_scan_bus(dent->d_name, modalias_handler);
+ 	}

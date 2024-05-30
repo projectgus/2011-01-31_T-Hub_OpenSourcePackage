@@ -1,0 +1,171 @@
+SDCaa01560_Camera_presence_detection.patch
+Need to be able to interrogate V4L2 or Linux udev to determine if no
+camera is present.
+Add status and detection functionality for mt9v111 camera.
+===================================================================
+--- drivers/media/video/mxc/capture/mt9v111.c	30 Mar 2007 23:23:29 -0000	1.5
++++ drivers/media/video/mxc/capture/mt9v111.c	7 Apr 2007 16:30:31 -0000	1.6
+@@ -117,13 +117,11 @@ static int mt9v111_i2c_client_xfer(unsig
+ 	return ret;
+ }
+ 
+-#ifdef MT9V111_DEBUG
+ static int mt9v111_read_reg(u8 * reg, u16 * val)
+ {
+ 	return mt9v111_i2c_client_xfer(MT9V111_I2C_ADDRESS, reg, 1,
+ 				       (u8 *) val, 2, MXC_I2C_FLAG_READ);
+ }
+-#endif
+ 
+ static int mt9v111_write_reg(u8 reg, u16 val)
+ {
+@@ -519,6 +517,33 @@ static sensor_interface *mt9v111_reset(v
+ 	return mt9v111_config(&reset_frame_rate, 0);
+ }
+ 
++/*!
++ * mt9v111 get_status function
++ *
++ * @return  int
++ */
++static int mt9v111_get_status(void)
++{
++        int retval=0;
++        u8 reg;
++        u16 data=0;
++
++	if (!interface_param)
++		return -ENODEV;	
++
++        reg = MT9V111I_ADDR_SPACE_SEL;
++        data = MT9V111I_SEL_SCA;
++        retval = mt9v111_write_reg(reg, data);
++
++        reg = MT9V111S_SENSOR_CORE_VERSION;
++        retval = mt9v111_read_reg(&reg, &data);
++        data = mt9v111_endian_swap16(data);
++        if (MT9V111_CHIP_VERSION != data)
++                retval = -ENODEV;
++
++        return retval;
++}
++
+ struct camera_sensor camera_sensor_if = {
+ 	.set_color = mt9v111_set_color,
+ 	.get_color = mt9v111_get_color,
+@@ -526,6 +551,7 @@ struct camera_sensor camera_sensor_if = 
+ 	.get_ae_mode = mt9v111_get_ae_mode,
+ 	.config = mt9v111_config,
+ 	.reset = mt9v111_reset,
++	.get_status = mt9v111_get_status,
+ };
+ 
+ #ifdef MT9V111_DEBUG
+@@ -627,9 +653,8 @@ static int mt9v111_attach(struct i2c_ada
+ 	clk = clk_get(NULL, "csi_clk");
+ 	clk_enable(clk);
+ 	set_mclk_rate(&mclk);
+-
++	
+ 	err = i2c_probe(adap, &addr_data, &mt9v111_detect_client);
+-
+ 	clk_disable(clk);
+ 	clk_put(clk);
+ 
+@@ -690,7 +715,6 @@ static __init int mt9v111_init(void)
+ 	memset(mt9v111_device.ifpReg, 0, sizeof(mt9v111_IFPReg));
+ 
+ 	err = i2c_add_driver(&mt9v111_i2c_driver);
+-
+ 	return err;
+ }
+ 
+--- drivers/media/video/mxc/capture/mt9v111.h	30 Mar 2007 23:23:29 -0000	1.2
++++ drivers/media/video/mxc/capture/mt9v111.h	7 Apr 2007 16:30:31 -0000	1.3
+@@ -30,6 +30,11 @@
+ #define MT9V111_H_
+ 
+ /*!
++ * mt9v111 CHIP VERSION 
++ */
++#define MT9V111_CHIP_VERSION	0x823A
++
++/*!
+  * mt9v111 IFP REGISTER BANK MAP
+  */
+ #define MT9V111I_ADDR_SPACE_SEL           0x1
+--- drivers/media/video/mxc/capture/mx27_v4l2_capture.c	30 Mar 2007 23:26:25 -0000	1.7
++++ drivers/media/video/mxc/capture/mx27_v4l2_capture.c	7 Apr 2007 16:30:31 -0000	1.8
+@@ -683,6 +683,25 @@ static int mxc_v4l_dqueue(cam_data * cam
+ }
+ 
+ /*!
++ * Get the current attached camera device
++ *
++ * @param inode      struct i2c_client *
++ *
++ * @param int       int * p_input_index
++ *
++ * @return           0 success, ENODEV for invalid device instance,
++ *                   -1 for other errors.
++ */
++static int mxc_get_video_input(cam_data * cam)
++{
++	int retval = 0;
++	csi_enable_mclk(CSI_MCLK_I2C, true, true);	
++	retval = cam->cam_sensor->get_status();
++	csi_enable_mclk(CSI_MCLK_I2C, false, false);
++	return retval;
++}
++
++/*!
+  * V4L interface - open function
+  *
+  * @param inode        structure inode *
+@@ -704,6 +723,10 @@ static int mxc_v4l_open(struct inode *in
+ 		return -ENODEV;
+ 	}
+ 
++	err = mxc_get_video_input(cam);
++        if (0 != err)
++                return -ENODEV;
++
+ 	if (down_interruptible(&cam->busy_lock))
+ 		return -EINTR;
+ 
+@@ -1626,12 +1649,24 @@ mxc_v4l_do_ioctl(struct inode *inode, st
+ 			cam->output = *p_output_num;
+ 			break;
+ 		}
++	
++	case VIDIOC_G_INPUT:
++		{
++			int *p_input_index = arg;
+ 
++			retval = mxc_get_video_input(cam);
++			if (0 == retval)
++				*p_input_index = 1;
++			else
++				*p_input_index = -ENODEV;
++
++			break;
++		}
++	
+ 	case VIDIOC_ENUM_FMT:
+ 	case VIDIOC_TRY_FMT:
+ 	case VIDIOC_QUERYCTRL:
+ 	case VIDIOC_ENUMINPUT:
+-	case VIDIOC_G_INPUT:
+ 	case VIDIOC_S_INPUT:
+ 	case VIDIOC_G_TUNER:
+ 	case VIDIOC_S_TUNER:
+--- drivers/media/video/mxc/capture/mxc_v4l2_capture.h	30 Mar 2007 23:23:29 -0000	1.3
++++ drivers/media/video/mxc/capture/mxc_v4l2_capture.h	7 Apr 2007 16:30:31 -0000	1.4
+@@ -76,6 +76,7 @@ struct camera_sensor {
+ 	void (*get_ae_mode) (int *ae_mode);
+ 	sensor_interface *(*config) (int *frame_rate, int high_quality);
+ 	sensor_interface *(*reset) (void);
++	int (*get_status) (void);
+ };
+ 
+ /*!

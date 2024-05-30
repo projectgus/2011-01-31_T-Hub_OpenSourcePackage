@@ -1,0 +1,62 @@
+# Italian translation for gst-plugins package of GStreamer project.
+# Copyright (C) 2004 GStreamer core team
+# This file is distributed under the same license as the gstreamer package.
+# Luca Ferretti <elle.uca@infinito.it>, 2007
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-ugly 0.10.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-06-13 12:52+0200\n"
+"PO-Revision-Date: 2007-03-08 19:30+0100\n"
+"Last-Translator: Luca Ferretti <elle.uca@infinito.it>\n"
+"Language-Team: Italian <tp@lists.linux.it>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ext/dvdread/dvdreadsrc.c:228 ext/dvdread/dvdreadsrc.c:235
+msgid "Could not open DVD"
+msgstr "Impossibile aprire il DVD"
+
+#: ext/dvdread/dvdreadsrc.c:242 ext/dvdread/dvdreadsrc.c:594
+#: ext/dvdread/dvdreadsrc.c:601
+#, c-format
+msgid "Could not open DVD title %d"
+msgstr "Impossibile aprire il titolo %d del DVD"
+
+# go --> open (più comune in italiano)
+#: ext/dvdread/dvdreadsrc.c:248
+#, c-format
+msgid "Failed to go to chapter %d of DVD title %d"
+msgstr "Fallita l'apertura del capitolo %d del titolo %d del DVD"
+
+#: ext/dvdread/dvdreadsrc.c:608
+#, c-format
+msgid ""
+"Could not open DVD title %d. Interactive titles are not supported by this "
+"element"
+msgstr ""
+"Impossibile aprire il titolo %d del DVD. I titoli interattivi non sono "
+"supportati da questo elemento"
+
+#: ext/lame/gstlame.c:560
+msgid "Failed to configure LAME encoder. Check your encoding parameters."
+msgstr ""
+"Fallita la configurazione dell'encoder LAME. Verificare i propri parametri "
+"di codifica."
+
+#: ext/lame/gstlame.c:691
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#: gst/asfdemux/gstasfdemux.c:322
+msgid "This stream contains no data."
+msgstr ""
+
+#: gst/asfdemux/gstasfdemux.c:2936
+msgid "This file is encrypted and cannot be played."
+msgstr "Questo file è cifrato e non può essere riprodotto."

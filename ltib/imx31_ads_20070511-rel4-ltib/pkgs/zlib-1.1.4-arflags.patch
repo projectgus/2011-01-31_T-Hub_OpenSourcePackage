@@ -1,0 +1,53 @@
+Stuart Hughes, stuarth@freescale.com, 20th April 2005
+
+This fixes the error:
+make -f Makefile.static
+ar libz.a adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o zutil.o inflate.o infblock.o inftrees.o infcodes.o infutil.o inffast.o
+powerpc-603e-linux-ar: illegal option -- z
+
+Needed to separate AR from ARFLAGS as we override AR in ltib to be plain ar.
+
+
+diff --exclude CVS -uNr zlib-1.1.4/Makefile.in zlib-1.1.4.modified/Makefile.in
+--- zlib-1.1.4/Makefile.in	2002-03-11 07:58:30.000000000 -0600
++++ zlib-1.1.4.modified/Makefile.in	2005-04-20 05:12:42.000000000 -0500
+@@ -28,7 +28,8 @@
+ LIBS=libz.a
+ SHAREDLIB=libz.so
+ 
+-AR=ar rc
++AR=rc
++ARFLAGS=rc
+ RANLIB=ranlib
+ TAR=tar
+ SHELL=/bin/sh
+@@ -71,7 +72,7 @@
+ 	fi
+ 
+ libz.a: $(OBJS) $(OBJA)
+-	$(AR) $@ $(OBJS) $(OBJA)
++	$(AR) $(ARFLAGS) $@ $(OBJS) $(OBJA)
+ 	-@ ($(RANLIB) $@ || true) >/dev/null 2>&1
+ 
+ match.o: match.S
+diff --exclude CVS -uNr zlib-1.1.4/configure zlib-1.1.4.modified/configure
+--- zlib-1.1.4/configure	1998-07-08 13:19:35.000000000 -0500
++++ zlib-1.1.4.modified/configure	2005-04-20 05:14:24.000000000 -0500
+@@ -21,7 +21,8 @@
+ LIBS=libz.a
+ SHAREDLIB=libz.so
+ VER=`sed -n -e '/VERSION "/s/.*"\(.*\)".*/\1/p' < zlib.h`
+-AR=${AR-"ar rc"}
++AR=${AR-"ar"}
++ARFLAGS=${ARFLAGS-"rc"}
+ RANLIB=${RANLIB-"ranlib"}
+ prefix=${prefix-/usr/local}
+ exec_prefix=${exec_prefix-'${prefix}'}
+@@ -203,6 +204,7 @@
+ /^LIBS *=/s%=.*%=$LIBS%
+ /^SHAREDLIB *=/s%=.*%=$SHAREDLIB%
+ /^AR *=/s%=.*%=$AR%
++/^ARFLAGS *=/s%=.*%=$ARFLAGS%
+ /^RANLIB *=/s%=.*%=$RANLIB%
+ /^VER *=/s%=.*%=$VER%
+ /^prefix *=/s%=.*%=$prefix%

@@ -1,0 +1,570 @@
+CR: TLSbo90219
+Patch name: TLSbo90219_Support_for_RNGC_added.patch
+Date: Thu Mar 8 12:06:30 2007 +0530
+Source: Freescale Semiconductor, Inc.
+Description: Support for RNGC is added
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/Kconfig linux-2.6.19.2/drivers/mxc/security/Kconfig
+--- linux-2.6.19.2.orig/drivers/mxc/security/Kconfig	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/Kconfig	2007-04-25 17:38:41.000000000 -0600
+@@ -8,22 +8,22 @@ config MXC_SECURITY_SCC
+ 	  This module contains the core API's for accessing the SCC module.
+ 	  If you are unsure about this, say N here.
+ 
+-config MXC_SECURITY_RNGA
+-	tristate "MXC RNGA Driver"
++config MXC_SECURITY_RNG
++	tristate "MXC RNG Driver"
+ 	depends on ARCH_MXC
+ 	depends on !ARCH_MX27
+ 	default n
+ 	select MXC_SECURITY_CORE
+ 	---help---
+-	  This module contains the core API's for accessing the RNGA module.
++	  This module contains the core API's for accessing the RNG module.
+ 	  If you are unsure about this, say N here.
+ 
+-config MXC_RNGA_TEST_DRIVER
+-	bool "MXC RNGA module debugging"
+-	depends on MXC_SECURITY_RNGA
++config MXC_RNG_TEST_DRIVER
++	bool "MXC RNG module debugging"
++	depends on MXC_SECURITY_RNG
+ 	default n
+ 	---help---
+-	  This option enables the RNGA kcore driver to provide peek-poke facility
++	  This option enables the RNG kcore driver to provide peek-poke facility
+ 	  into the RNG device registers. Enable this, only for development and
+ 	  testing purposes.
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/Makefile linux-2.6.19.2/drivers/mxc/security/Makefile
+--- linux-2.6.19.2.orig/drivers/mxc/security/Makefile	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/Makefile	2007-04-25 17:38:41.000000000 -0600
+@@ -2,6 +2,6 @@
+ obj-$(CONFIG_MXC_SECURITY_SCC) += mxc_scc.o
+ obj-$(CONFIG_MXC_SECURITY_RTIC) += mxc_rtic.o
+ obj-$(CONFIG_MXC_SECURITY_HAC) += mxc_hacc.o
+-obj-$(CONFIG_MXC_SECURITY_RNGA) += rng/
++obj-$(CONFIG_MXC_SECURITY_RNG) += rng/
+ obj-$(CONFIG_MXC_SECURITY_CORE) += mxc_sec_mod.o
+ obj-$(CONFIG_MXC_SAHARA) += sahara2/
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_internals.h linux-2.6.19.2/drivers/mxc/security/rng/include/rng_internals.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_internals.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/rng_internals.h	2007-04-25 17:38:41.000000000 -0600
+@@ -270,7 +270,10 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+ /*! Read and return the status register. */
+ #define RNG_GET_STATUS()                                                 \
+     RNG_READ_REGISTER(RNGA_STATUS)
+-
++/*! Configure RNG for Auto seeding */
++#define RNG_AUTO_SEED() 
++/* Put RNG for Seed Generation */
++#define RNG_SEED_GEN() 
+ /*!
+  * Return RNG Type value.  Should be RNG_TYPE_RNGA or RNG_TYPE_RNGC.
+  */
+@@ -289,7 +292,8 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+ /*! Returns non-zero if RNG device is reporting an error. */
+ #define RNG_HAS_ERROR()                                                   \
+     (RNG_READ_REGISTER(RNGA_STATUS) & RNGA_STATUS_ERROR_INTERRUPT)
+-
++/*! Return non-zero if Self Test Done */
++#define RNG_SELF_TEST_DONE()  0            
+ /*! Returns non-zero if RNG ring oscillators have failed. */
+ #define RNG_OSCILLATOR_FAILED()                                           \
+     (RNG_READ_REGISTER(RNGA_STATUS) & RNGA_STATUS_OSCILLATOR_DEAD)
+@@ -303,7 +307,8 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+ #define RNG_GET_WORDS_IN_FIFO()                                            \
+     ((RNG_READ_REGISTER(RNGA_STATUS) & RNGA_STATUS_OUTPUT_FIFO_LEVEL_MASK) \
+      >> RNGA_STATUS_OUTPUT_FIFO_LEVEL_SHIFT)
+-
++/* Configuring RNG for Self Test */
++#define RNG_SELF_TEST() 
+ /*! Get a random value from the RNG's output FIFO. */
+ #define RNG_READ_FIFO()                                                  \
+     RNG_READ_REGISTER(RNGA_OUTPUT_FIFO)
+@@ -313,14 +318,18 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+  **/
+ #define RNG_ADD_ENTROPY(value)                                           \
+     RNG_WRITE_REGISTER(RNGA_ENTROPY, (value))
+-
++/*! Return non-zero in case of Error during Self Test */
++#define RNG_CHECK_SELF_ERR() 0
++/*! Return non-zero in case of Error during Seed Generation */
++#define RNG_CHECK_SEED_ERR() 0 
+ /*! Get the RNG started at generating output. */
+ #define RNG_GO()                                                         \
+ {                                                                        \
+     register uint32_t control = RNG_READ_REGISTER(RNGA_CONTROL);         \
+     RNG_WRITE_REGISTER(RNGA_CONTROL, control | RNGA_CONTROL_GO);         \
+ }
+-
++/*! To clear all Error Bits in Error Status Register */
++#define RNG_CLEAR_ERR() 
+ /*! Put RNG into High Assurance mode */
+ #define RNG_SET_HIGH_ASSURANCE()                                              \
+ {                                                                             \
+@@ -338,6 +347,12 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+     register uint32_t control = RNG_READ_REGISTER(RNGA_CONTROL);              \
+     RNG_WRITE_REGISTER(RNGA_CONTROL, control | RNGA_CONTROL_CLEAR_INTERRUPT); \
+ }
++/* Return non-zero if RESEED Required */
++#define RNG_RESEED() 1
++    
++
++/*! Return non-zero if Seeding is done */ 
++#define RNG_SEED_DONE()  1 
+ 
+ /*! Return non-zero if everything seems OK with the RNG. */
+ #define RNG_WORKING()                                                    \
+@@ -356,7 +371,7 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+ /*! Wake the RNG from sleep (low-power) mode. */
+ #define RNG_WAKE()                                                       \
+ {                                                                        \
+-    uint32_t control = RNG_READ_REGISTER(RNGA_CONTROL);                 \
++    uint32_t control = RNG_READ_REGISTER(RNGA_CONTROL);                  \
+      RNG_WRITE_REGISTER(RNGA_CONTROL, control & ~RNGA_CONTROL_SLEEP);    \
+ }
+ 
+@@ -396,7 +411,7 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+     RNG_SLEEP()
+ 
+ #define RNG_WAKE_FROM_SLEEP()                                                 \
+-    RNG_WAKE()
++    RNG_WAKE()  1
+ 
+ #else				/* not low power mode */
+ 
+@@ -415,13 +430,13 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+ 
+ /*! Read and return the status register. */
+ #define RNG_GET_STATUS()                                                 \
+-    RNG_READ_REGISTER(RNGC_STATUS)
++    RNG_READ_REGISTER(RNGC_ERROR)
+ 
+ /*!
+  * Return RNG Type value.  Should be RNG_TYPE_RNGA or RNG_TYPE_RNGC.
+  */
+ #define RNG_GET_RNG_TYPE()                                                \
+-    ((RNG_READ_REGISTER(RNGC_VER_ID) & RNGC_VERID_RNG_TYPE_MASK)          \
++    ((RNG_READ_REGISTER(RNGC_VERSION_ID) & RNGC_VERID_RNG_TYPE_MASK)          \
+      >> RNGC_VERID_RNG_TYPE_SHIFT)
+ 
+ /*!
+@@ -438,11 +453,11 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+ 
+ /*! Returns non-zero if RNG ring oscillators have failed. */
+ #define RNG_OSCILLATOR_FAILED()                                           \
+-    (RNG_READ_REGISTER(RNGC_ERROR_STATUS) & RNGC_ERROR_STATUS_OSC_ERR)
++    (RNG_READ_REGISTER(RNGC_ERROR) & RNGC_ERROR_STATUS_OSC_ERR)
+ 
+ /*! Returns maximum number of 32-bit words in the RNG's output fifo. */
+ #define RNG_GET_FIFO_SIZE()                                               \
+-    ((RNG_READ_REGISTER(RNGA_STATUS) & RNGC_STATUS_FIFO_SIZE_MASK)        \
++    ((RNG_READ_REGISTER(RNGC_STATUS) & RNGC_STATUS_FIFO_SIZE_MASK)        \
+      >> RNGC_STATUS_FIFO_SIZE_SHIFT)
+ 
+ /*! Returns number of 32-bit words currently in the RNG's output fifo. */
+@@ -458,16 +473,51 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+  *  @param value  32-bit value to add to RNG's entropy.
+  **/
+ #define RNG_ADD_ENTROPY(value)
+-
++/*! Wake the RNG from sleep (low-power) mode. */
++#define RNG_WAKE()  1                       
+ /*! Get the RNG started at generating output. */
+-#define RNG_GO()
+-
++#define RNG_GO()                                                         
+ /*! Put RNG into High Assurance mode. */
+ #define RNG_SET_HIGH_ASSURANCE()
++/*! Returns non-zero in case of Error during Self Test       */
++#define RNG_CHECK_SELF_ERR()                                                 \
++	(RNG_READ_REGISTER(RNGC_ERROR) & RNGC_ERROR_STATUS_ST_ERR)   
++/*! Return non-zero in case of Error during Seed Generation */
++#define RNG_CHECK_SEED_ERR()                                                 \
++        (RNG_READ_REGISTER(RNGC_ERROR) & RNGC_ERROR_STATUS_STAT_ERR)
++
++/*! Configure RNG for Self Test */
++#define RNG_SELF_TEST()                                                       \
++{                                                                             \
++    register uint32_t command = RNG_READ_REGISTER(RNGC_COMMAND);              \
++    RNG_WRITE_REGISTER(RNGC_COMMAND, command                                  \
++                                    | RNGC_COMMAND_SELF_TEST);                \
++}
++/*! Clearing the Error bits in Error Status Register */
++#define RNG_CLEAR_ERR()                                                       \
++{                                                                             \
++    register uint32_t command = RNG_READ_REGISTER(RNGC_COMMAND);              \
++    RNG_WRITE_REGISTER(RNGC_COMMAND, command                                  \
++                                    | RNGC_COMMAND_CLEAR_ERROR);              \
++}
++
++	
++/*! Return non-zero if Self Test Done */
++#define RNG_SELF_TEST_DONE()                                                  \
++         (RNG_READ_REGISTER(RNGC_STATUS) & RNGC_STATUS_ST_DONE)
++/* Put RNG for SEED Generation */
++#define RNG_SEED_GEN()                                                        \
++{                                                                             \
++    register uint32_t command = RNG_READ_REGISTER(RNGC_COMMAND);              \
++    RNG_WRITE_REGISTER(RNGC_COMMAND, command                                  \
++                                    | RNGC_COMMAND_SEED);                     \
++}
++/* Return non-zero if RESEED Required */
++#define RNG_RESEED()                                                          \
++    (RNG_READ_REGISTER(RNGC_STATUS) & RNGC_STATUS_RESEED)
+ 
+ /*! Return non-zero if the RNG is in High Assurance mode. */
+-#define RNG_GET_HIGH_ASSURANCE()                                              \
+-    (RNG_READ_REGISTER(RNGC_STATUS) & RNGC_SECURE_MODE)
++#define RNG_GET_HIGH_ASSURANCE()   1                                           
+ 
+ /*! Clear all status, error and otherwise. */
+ #define RNG_CLEAR_ALL_STATUS()                                                \
+@@ -477,14 +527,18 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+ 
+ /*! Return non-zero if everything seems OK with the RNG. */
+ #define RNG_WORKING()                                                         \
+-    ((RNG_READ_REGISTER(RNGC_ERROR_STATUS)                                    \
+-      & (RNGA_STATUS_SLEEP | RNGA_STATUS_SECURITY_VIOLATION)) == 0)
+-
++    ((RNG_READ_REGISTER(RNGC_ERROR)                                           \
++      & (RNGC_ERROR_STATUS_REG_ERR   | RNGC_ERROR_STATUS_RAND_ERR             \
++       | RNGC_ERROR_STATUS_FIFO_ERR | RNGC_ERROR_STATUS_ST_ERR |              \
++         RNGC_ERROR_STATUS_OSC_ERR  | RNGC_ERROR_STATUS_LFSR_ERR )) == 0)    
++/*! Return Non zero if SEEDING is DONE */
++#define RNG_SEED_DONE()                                                       \
++     ((RNG_READ_REGISTER(RNGC_STATUS) & RNGC_STATUS_SEED_DONE) != 0) 
++	
+ /*! Put the RNG into sleep (low-power) mode. */
+ #define RNG_SLEEP()
+ 
+ /*! Wake the RNG from sleep (low-power) mode. */
+-#define RNG_WAKE()
+ 
+ /*! Mask interrupts so that the driver/OS will not see them. */
+ #define RNG_MASK_ALL_INTERRUPTS()                                             \
+@@ -494,12 +548,21 @@ inline static void RNG_ADD_WORK_ENTRY(rn
+                                     | RNGC_CONTROL_MASK_DONE                  \
+                                     | RNGC_CONTROL_MASK_ERROR);               \
+ }
++/*! Configuring RNGC for self Test. */
++
++#define RNG_AUTO_SEED()                                                       \
++{                                                                             \
++    register uint32_t control = RNG_READ_REGISTER(RNGC_CONTROL);              \
++    RNG_WRITE_REGISTER(RNGC_CONTROL, control                                  \
++                                    | RNGC_CONTROL_AUTO_SEED);                \
++}
++ 
+ 
+ /*! Unmask interrupts so that the driver/OS will see them. */
+ #define RNG_UNMASK_ALL_INTERRUPTS()                                           \
+ {                                                                             \
+-    register uint32_t control = RNG_READ_REGISTER(RNGA_CONTROL);              \
+-    RNG_WRITE_REGISTER(RNGA_CONTROL, control & ~RNGA_CONTROL_MASK_INTERRUPTS);\
++    register uint32_t control = RNG_READ_REGISTER(RNGC_CONTROL);              \
++    RNG_WRITE_REGISTER(RNGC_CONTROL, control & ~RNGC_CONTROL_MASK_INTERRUPTS);\
+ }
+ 
+ /*! Put RNG to sleep if appropriate. */
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_rngc.h linux-2.6.19.2/drivers/mxc/security/rng/include/rng_rngc.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/include/rng_rngc.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/include/rng_rngc.h	2007-04-25 17:38:41.000000000 -0600
+@@ -71,15 +71,15 @@
+ /*! These bits are unimplemented or reserved. */
+ #define RNGC_COMMAND_ZEROS_MASK      0xffffff8c
+ /*! Perform a software reset of the RNGC. */
+-#define RNGC_SOFTWARE_RESET          0x00000040
++#define RNGC_COMMAND_SOFTWARE_RESET          0x00000040
+ /*! Clear error from Error Status register (and interrupt). */
+-#define RNGC_CLEAR_ERROR             0x00000020
++#define RNGC_COMMAND_CLEAR_ERROR             0x00000020
+ /*! Clear interrupt & status. */
+-#define RNGC_CLEAR_INTERRUPT         0x00000010
++#define RNGC_COMMAND_CLEAR_INTERRUPT         0x00000010
+ /*! Start RNGC seed generation. */
+-#define RNGC_SEED                    0x00000002
++#define RNGC_COMMAND_SEED                    0x00000002
+ /*! Perform a self test of (and reset) the RNGC. */
+-#define RNGC_SELF_TEST               0x00000001
++#define RNGC_COMMAND_SELF_TEST               0x00000001
+ /*! @} */
+ 
+ /*! @defgroup rngccontrolreg RNGC Control Register Definitions 
+@@ -95,6 +95,9 @@
+ #define RNGC_CONTROL_VERIF_MODE       0x00000100
+ /*! Prevent RNGC from generating interrupts caused by errors. */
+ #define RNGC_CONTROL_MASK_ERROR       0x00000040
++/*! Masking all interrupts */
++#define RNGC_CONTROL_MASK_INTERRUPTS 0x00000060
++
+ /*!
+  * Prevent RNGC from generating interrupts after Seed Done or Self Test Mode
+  * completion.
+@@ -109,7 +112,7 @@
+ 
+ /*! @} */
+ 
+-/*! @{
++/*! @{  */
+ /*! FIFO Underflow should cause ... */
+ #define RNGC_CONTROL_FIFO_UFLOW_ZEROS_ERROR 0
+ /*! FIFO Underflow should cause ... */
+@@ -179,9 +182,11 @@
+ /*! NO INFORMATION ON THIS BIT! */
+ #define RNGC_ERROR_STATUS_REG_ERR           0x00000020
+ /*! Random Compare Error.  Previous number matched the current number. */
+-#define RNGC_ERROR_STATUS_RAND_ERR          0x00000010
++#define RNGC_ERROR_STATUS_RAND_ERR          0x00000020
+ /*! FIFO Underflow.  FIFO was read while empty. */
+-#define RNGC_ERROR_STATUS_FIFO_ERR          0x00000008
++#define RNGC_ERROR_STATUS_FIFO_ERR          0x00000010
++/*! Statistic Error Statistic Test failed for the last seed. */
++#define RNGC_ERROR_STATUS_STAT_ERR          0x00000008
+ /*! Self-test error.  Some self test has failed. */
+ #define RNGC_ERROR_STATUS_ST_ERR            0x00000004
+ /*!
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/Makefile linux-2.6.19.2/drivers/mxc/security/rng/Makefile
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/Makefile	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/Makefile	2007-04-25 17:38:41.000000000 -0600
+@@ -6,20 +6,21 @@
+ 
+ 
+ # Possible configurable paramters
+-CFG_RNGA += -DRNGA_MAX_REQUEST_SIZE=32
++CFG_RNG += -DRNGA_MAX_REQUEST_SIZE=32
+ 
+ #DBG_RNGA = -DRNGA_DEBUG
+ #DBG_RNGA += -DRNGA_REGISTER_DEBUG
+ #DBG_RNGA += -DRNGA_ENTROPY_DEBUG
+ 
+-EXTRA_CFLAGS = -DLINUX_KERNEL $(CFG_RNGA) $(DBG_RNGA)
++EXTRA_CFLAGS = -DLINUX_KERNEL $(CFG_RNG) $(DBG_RNG)
+ 
+ 
+-ifeq ($(CONFIG_MXC_RNGA_TEST_DRIVER),y)
++ifeq ($(CONFIG_MXC_RNG_TEST_DRIVER),y)
+ EXTRA_CFLAGS += -DRNG_REGISTER_PEEK_POKE
+ endif
+ 
+ EXTRA_CFLAGS += -Idrivers/mxc/security/rng/include -Idrivers/mxc/security/sahara2/include
+ 
+-obj-$(CONFIG_MXC_SECURITY_RNGA)	+= rng.o
++obj-$(CONFIG_MXC_SECURITY_RNG)	+= rng.o
+ rng-objs :=	rng_driver.o shw_driver.o
++
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/rng/rng_driver.c linux-2.6.19.2/drivers/mxc/security/rng/rng_driver.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/rng/rng_driver.c	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/rng/rng_driver.c	2007-04-25 17:38:41.000000000 -0600
+@@ -125,7 +125,11 @@ static shw_queue_t rng_work_queue;
+  * Flag to say whether task initialization succeeded.
+  */
+ static unsigned task_started = FALSE;
+-
++/*!
++ * Waiting queue for RNG SELF TESTING 
++ */
++static DECLARE_COMPLETION(rng_self_testing);
++static DECLARE_COMPLETION(rng_seed_done);
+ /*!
+  *  Object for blocking-mode callers of RNG driver to sleep.
+  */
+@@ -164,14 +168,15 @@ OS_WAIT_OBJECT(rng_wait_queue);
+ OS_DEV_INIT(rng_init)
+ {
+ 	os_error_code return_code = OS_ERROR_FAIL_S;
+-
+ 	rng_availability = RNG_STATUS_CHECKING;
+-
++#if defined(FSL_HAVE_RNGC)
++	INIT_COMPLETION(rng_self_testing);
++	INIT_COMPLETION(rng_seed_done);
++#endif
+ 	rng_work_queue.head = NULL;
+ 	rng_work_queue.tail = NULL;
+ 
+ 	os_printk("RNG Driver: Loading\n");
+-
+ 	return_code = rng_map_RNG_memory();
+ 	if (return_code != OS_ERROR_OK_S) {
+ 		rng_availability = RNG_STATUS_UNIMPLEMENTED;
+@@ -191,7 +196,7 @@ OS_DEV_INIT(rng_init)
+ 		rng_availability = RNG_STATUS_UNIMPLEMENTED;
+ 		goto check_err;
+ 	}
+-
++	/* Masking All Interrupts */
+ 	RNG_MASK_ALL_INTERRUPTS();
+ 	RNG_WAKE();
+ 
+@@ -206,15 +211,32 @@ OS_DEV_INIT(rng_init)
+ 
+ 	/* Oscillator not dead.  Setup interrupt code and start the RNG. */
+ 	if ((return_code = rng_setup_interrupt_handling()) == OS_ERROR_OK_S) {
++#if defined(FSL_HAVE_RNGA)
+ 		scc_return_t scc_code;
++#endif
+ 
+ 		RNG_GO();
+-		RNG_CLEAR_ALL_STATUS();
++		/* Self Testing For RNG */
++		do {
++			RNG_CLEAR_ERR();
++			RNG_SELF_TEST();
++#if defined(FSL_HAVE_RNGC)
++			wait_for_completion(&rng_self_testing);
++#endif
++		} while (RNG_CHECK_SELF_ERR());
+ 
++		RNG_CLEAR_ALL_STATUS();
++		/* checking for RNG SEED done */
++		do {
++			RNG_CLEAR_ERR();
++			RNG_SEED_GEN();
++#if defined(FSL_HAVE_RNGC)
++			wait_for_completion(&rng_seed_done);
++#endif
++		} while (RNG_CHECK_SEED_ERR());
+ #ifndef RNG_NO_FORCE_HIGH_ASSURANCE
+ 		RNG_SET_HIGH_ASSURANCE();
+ #endif
+-
+ 		if (RNG_GET_HIGH_ASSURANCE()) {
+ #ifdef RNG_DEBUG
+ 			os_printk
+@@ -259,7 +281,7 @@ OS_DEV_INIT(rng_init)
+ 		} else {
+ 			task_started = TRUE;
+ 		}
+-
++#if defined(FSL_HAVE_RNGA)
+ 		scc_code = scc_monitor_security_failure(rng_sec_failure);
+ 		if (scc_code != SCC_RET_OK) {
+ #ifdef RNG_DEBUG
+@@ -272,7 +294,7 @@ OS_DEV_INIT(rng_init)
+ 			goto check_err;
+ #endif
+ 		}
+-
++#endif
+ 		return_code = os_driver_init_registration(rng_reg_handle);
+ 		if (return_code != OS_ERROR_OK_S) {
+ 			goto check_err;
+@@ -475,13 +497,11 @@ fsl_shw_return_t fsl_shw_add_entropy(fsl
+ 				     uint8_t * data)
+ {
+ 	fsl_shw_return_t return_code = FSL_RETURN_NO_RESOURCE_S;
+-	uint32_t *local_data = NULL;
+-
+-	if (rng_availability == RNG_STATUS_OK) {
+ #ifdef FSL_HAVE_RNGC
+-		/* Additonal entropy has no affect on an RNGC. */
+-		return_code = FSL_RETURN_OK_S;
++	return_code = FSL_RETURN_OK_S;
+ #else
++	uint32_t *local_data = NULL;
++	if (rng_availability == RNG_STATUS_OK) {
+ 		/* make 32-bit aligned place to hold data */
+ 		local_data = os_alloc_memory(length + 3, 0);
+ 		if (local_data == NULL) {
+@@ -502,8 +522,9 @@ fsl_shw_return_t fsl_shw_add_entropy(fsl
+ 			return_code = FSL_RETURN_OK_S;
+ 			os_free_memory(local_data);
+ 		}		/* else local_data not NULL */
+-#endif
++
+ 	}
++#endif
+ 	/* rng_availability is OK */
+ 	return return_code;
+ }				/* fsl_shw_add_entropy */
+@@ -656,8 +677,8 @@ static int rng_check_register_accessible
+ 	     ((offset == RNGC_FIFO) ||
+ 	      (offset == RNGC_VERIFICATION_CONTROL) ||
+ 	      (offset == RNGC_OSCILLATOR_CONTROL_COUNTER) ||
+-	      (offset == RNGC_OSCILLATOR_COUNTER) ||
+-	      (offset == RNGC_OSCILLATOR_COUNTER_STATUS)))
++	      (offset == RNGC_OSC_COUNTER) ||
++	      (offset == RNGC_OSC_COUNTER_STATUS)))
+ #endif
+ 	    ) {
+ 
+@@ -693,9 +714,9 @@ static int rng_check_register_accessible
+ 			     (offset == RNGA_OSCILLATOR_COUNTER_STATUS))
+ #else				/* FSL_HAVE_RNGC */
+ 			    ((offset == RNGC_STATUS) ||
+-			     (offset == RNGC_OUTPUT_FIFO) ||
+-			     (offset == RNGC_OSCILLATOR_COUNTER) ||
+-			     (offset == RNGC_OSCILLATOR_COUNshdTER_STATUS))
++			     (offset == RNGC_FIFO) ||
++			     (offset == RNGC_OSC_COUNTER) ||
++			     (offset == RNGC_OSC_COUNTER_STATUS))
+ #endif
+ 			    ) {
+ 				return_code = TRUE;	/* can be written */
+@@ -743,7 +764,17 @@ OS_DEV_ISR(rng_irq)
+ #ifdef RNG_DEBUG
+ 	os_printk("RNG Driver: Inside the RNG Interrupt Handler\n");
+ #endif
++	if (RNG_SEED_DONE()) {
++		complete(&rng_seed_done);
++		RNG_CLEAR_ALL_STATUS();
++		handled = TRUE;
++	}
+ 
++	if (RNG_SELF_TEST_DONE()) {
++		complete(&rng_self_testing);
++		RNG_CLEAR_ALL_STATUS();
++		handled = TRUE;
++	}
+ 	/* Look to see whether RNG needs attention */
+ 	if (RNG_HAS_ERROR()) {
+ 		if (RNG_GET_HIGH_ASSURANCE()) {
+@@ -751,12 +782,11 @@ OS_DEV_ISR(rng_irq)
+ 			rng_availability = RNG_STATUS_FAILED;
+ 			RNG_MASK_ALL_INTERRUPTS();
+ 		}
+-
++		handled = TRUE;
+ 		/* Clear the interrupt */
+ 		RNG_CLEAR_ALL_STATUS();
+-		handled = TRUE;
+-	}
+ 
++	}
+ 	os_dev_isr_return(handled);
+ }				/* rng_irq */
+ 
+@@ -873,11 +903,29 @@ static fsl_shw_return_t rng_drain_fifo(u
+ 	int words_in_rng;	/* Number of words available now in RNG */
+ 	fsl_shw_return_t code = FSL_RETURN_ERROR_S;
+ 	int sequential_count = 0;	/* times through big while w/empty FIFO */
++#if defined(FSL_HAVE_RNGC)
++	int count_for_reseed = 0;
++	INIT_COMPLETION(rng_seed_done);
++#endif
+ #ifdef RNG_DEBUG
+ 	int fifo_empty_count = 0;	/* number of times FIFO was empty */
+ 	int max_sequential = 0;	/* max times 0 seen in a row */
+ #endif
+-
++#if defined(FSL_HAVE_RNGC)
++	if (RNG_RESEED()) {
++		do {
++			RNG_CLEAR_ERR();
++			RNG_SEED_GEN();
++			wait_for_completion(&rng_seed_done);
++			if (count_for_reseed == 7) {
++				os_printk
++				    ("Device could not able to enter RESEED Mode\n");
++				code = FSL_RETURN_INTERNAL_ERROR_S;
++			}
++			count_for_reseed++;
++		} while (RNG_CHECK_SEED_ERR());
++	}
++#endif
+ 	/* Copy all of them in.  Stop if pool fills. */
+ 	while ((rng_availability == RNG_STATUS_OK) && (count_words > 0)) {
+ 		/* Ask RNG how many words currently in FIFO */

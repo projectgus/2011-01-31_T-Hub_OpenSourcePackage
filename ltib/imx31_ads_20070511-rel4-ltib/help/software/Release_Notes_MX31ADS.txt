@@ -1,0 +1,540 @@
+RELEASE NOTES 
+Linux BSP for the Freescale i.MX31ADS -- Release 4
+
+This is a release of the Freescale Semiconductor i.MX31ADS Linux BSP. 
+This BSP has been tested and all features are believed to be
+functioning correctly except as noted in this document.  If you find an
+issue, please report it to www.freescale.com for validation.
+
+The following hardware is supported:
+
+- MX31ADS rev. 3.5 CPU card
+- Rev. 3.3 ADS Base Board
+- Rev. B MC13783 card. 
+
+For configuration information, please see the document
+/help/software/User_Manual_MX31ADS_LTIB_BSP.pdf on the BSP CD image.
+
+=========================================================
+SUPPORTED FEATURES IN THIS RELEASE
+=========================================================
+
+Processor Features:
+
+*  ARM1136 CPU
+*  ARM L210 Cache Controller (L2CC)
+*  i.MX31 Machine Specific Layers (MSL)
+*  ARM Vectored Interrupt Controller (AVIC)
+*  Enhanced Periodic Interrupt Timer (EPIT)
+*  Real-Time Clock (RTC)
+*  Watchdogs (WDOG)
+*  Input/Output Multiplexing (IOMUX)
+*  General Purpose Input/Output (GPIO)
+*  External Dedicated Input/Output (EDIO)
+*  Smart Direct Memory Access (SDMA)
+*  Shared Peripheral Bus Arbiter (SPBA)
+*  Universal Asynchronous Receiver/Transmitter (UART)
+*  Image Processing Unit (IPU)
+*  Keypad Port (KPP)
+*  Configurable Serial Peripheral Interface (CSPI)
+*  Inter-IC (I2C)
+*  Security Controller (SCC) (untested)
+*  Random Number Generator Accelerator (RNGA)
+*  Hash Accelerator (HACC)
+*  Run-Time Integrity Checker (RTIC) Driver (untested)
+*  Synchronous Serial Interface (SSI)
+*  Universal Serial Bus On-the-Go (USB-OTG) (no HNP)
+*  Dynamic Process Temperature Compensation (DPTC)
+*  Dynamic Voltage and Frequency Scaling (DVFS)
+*  NAND Flash Controller (NANDFC)
+*  Clock/Reset Module (CRM)
+*  Clock Control Module (CCM)
+*  Phase-Locked Loop (PLL)
+*  Advanced Technology Attachment (ATA)
+*  PCMCIA Controller (PCCARD) (hardware mods required)
+*  IrDA (SIR/FIR)
+
+Board Features:
+
+*  Sharp TFT QVGA LCD
+*  Epson SLCD
+*  iMagic IM8012 Camera (Micron MT9V111 sensor) or Mangachip MC521DA camera
+*  MC13783 Power Management IC (digitizer, audio interfaces, RTC,
+   power management, connectivity, light)
+*  Spansion NOR Flash
+*  Samsung NAND Flash
+*  CS8900A Ethernet
+*  Focus 453 TV-Out
+
+Kernel Features:
+
+ - Linux-2.6.19.2 kernel
+ - UART --On chip
+ - Framebuffer
+ - Syncronous Display
+ - Asychronous Display
+ - NEC VGA Panel
+ - Keypad
+ - TV-OUT VGA, NTSC, PAL 
+ - Ethernet
+ - SPI
+ - Touchscreen
+ - iMagic IM8012 camera
+ - Mangachip MC521DA camera
+ - Video4Linux: Pre-Processing support, SDC, ADC, Camera
+ - I2C
+ - Video Post-Processing
+ - Video Pre-Processing 
+ - ATA PIO 0-4 Mode, UDMA 0-3 Mode
+ - ALSA Audio with OSS emulation
+ - USB Host: Mass Storage
+ - USB Gadget: Mass Storage, Ethernet, HID devices
+ - USB OTG pin detect
+ - Power Management: Doze mode, backlight control, DPM, DPTC, DVFS
+ - Battery Gauge
+ - NAND Boot, MTD
+ - NOR Boot, MTD
+ - CodeTEST
+ - RTC
+ - Watchdog
+ - PCMCIA (untested)
+ - SD/SDHC/SDIO
+ - IrDA (SIR/FIR)
+
+Redboot version FSL 200712
+
+GNU ARM gcc 4.1.1, glibc 2.4, binutils-2.16, and 
+linux-libc-headers-2.6.17.8
+
+Various open source userspace packages including
+ - alsa-lib (audio library)
+ - alsa-utils (audio utilities)
+ - base-libs
+ - bash
+ - busybox
+ - coreutils
+ - device files
+ - devmem2 (utility to read/write memory)
+ - dhcp
+ - diffutils
+ - dropbear (lightweight ssh utility)
+ - e2fsprogs
+ - fbset (framebuffer utilities)
+ - findutils
+ - gdb (debugger)
+ - gstreamer (multimedia framework)
+ - glib2 (gnome library)
+ - hdparm
+ - hotplug
+ - irattach
+ - less
+ - libid3tag (mp3 id tag library)
+ - libjpeg (jpeg library)
+ - libmad (mp3 library)
+ - liboil (common library functions)
+ - libtermcap
+ - libusb (usb library)
+ - libxml2 (xml library)
+ - madplay (mp3 player)
+ - mxc-misc (sample/test code for mx processors)
+ - module-init-tools
+ - mtd-utils (flash utilities)
+ - ncurses
+ - netperf
+ - net-tools
+ - ntp-client
+ - openssl
+ - portmap
+ - procinfo
+ - procps
+ - psmisc
+ - Qtopia (GUI demo)
+ - strace (system trace utility)
+ - sysconfig (system config package)
+ - timezone (timezone package)
+ - tslib (touchscreen library)
+ - tvout-test-mx31
+ - udev (userspace device manager daemon)
+ - usbutils
+ - wireless-tools
+ - zlib (compression library)
+
+Proprietary Packages:
+
+GX200-BU: This package provides proprietary binary kernel 
+modules, libraries, and test code built from the MBX OpenGL ES 
+(GX200) DDK.
+
+hantro-binary: This package provides libraries, header files 
+and API documentation to assist with MPEG4 encoding and decoding
+
+Documentation: See START_HERE.html on this CD.
+
+
+=========================================================
+KNOWN ISSUES
+=========================================================
+
+CPU
+
+  Issue: CPU register contents get swizzled (rotated)      Bugzilla 563
+
+    A problem has been discovered with MX31-TO2 silicon where a general
+    register is loaded with an address constant from a PC-relative location.
+    Upon going indirect through this register, the address value contained
+    in the register will have been rotated right by 8 bits, causing a memory
+    fault. At present the cause of the rotation is not known.
+
+  Fix / Work around:
+
+    A work around to this problem has been discovered, although why it
+    works is still unknown.  The default linux configuration in this BSP is
+    to support MX31-TO2 silicon, so the following option is enabled:
+
+        CONFIG_MX31_TO2_REG_SWIZZLE_WORKAROUND
+
+    This option should be enabled if you are using MX31-TO2 silicon and are
+    faulting on rotated addresses.  If you are using MX31-TO1.x chips or
+    if this problem has been resolved, please disable this config option.
+
+=========================================================
+
+
+MMC
+
+  Issue: MMC hardware issue                                Bugzilla 313
+
+     Many MMC cards require stronger pull-up on the CMD signal to
+     be recognized.  A workaround for this issue to to change
+     R124 (for SDHC1) and R119 (for SDHC2) from 100K to 10K.
+
+=========================================================
+
+ATA
+
+  Issue: ATA UDMA mode limitation
+
+     We have seen data integrity issues with UDMA 4 and 5 modes.
+
+  Cause:
+
+     These are probably due to an electrically inferior cable.  
+
+  Fix / Work around:
+
+     The work around is to always use UDMA mode 3:
+
+	hdparm -d1 -X udma3 /dev/hda
+
+
+  Issue:
+
+     The i.MX31ADS board only supports 3-volt laptop drives.  5-volt
+     drives will not work.
+
+=========================================================
+
+TV-OUT
+
+  Issue:                                                    Bugzilla 61
+
+    When the CPU is driven by the on-board 26 MHz crystal, the resulting
+    CPU frequency is 532.0 MHz.  When using a TV-Out card, a 27 MHz
+    clock is provided to the CPU.  In this case the CPU PLL is set to
+    generate a 532.8 MHz CPU clock.  This difference results in a time
+    gain of 5 seconds per hour.
+
+  Fix / Work around:
+
+    None.
+
+=========================================================
+
+PIN MULTIPLEXING
+
+  Issue:                                                   Bugzilla 335
+
+    There are driver conflicts due to hardware limitations caused
+    by pin multiplexing.  So, not all of the CPU's devices may be
+    used at the same time.
+
+  Fix / Work around:
+
+    USB Host (either Host1 or Host2, configurable in the kernel) and 
+    ATA conflict, so you can only load one of these driver modules 
+    at  a time. I2C2 and I2C3 are disabled because they conflict with 
+    CSPI2, which is required to communicate with MC13783. USB Host2 
+    also conflicts with NAND flash.
+
+=========================================================
+
+USB
+
+  Not working: USB-OTG/FS (J2)
+
+  Working:     USB OTG (J1) in full-speed and high-speed modes,
+               USB-Host1/FS, USB-Host2 (J4) in full-speed and
+               high-speed modes.
+
+  USB can have problems enumerating devices if NVCC5 is not
+  set to 2.7 Volts.
+
+  See mx31_usb doc for more detailed information.
+
+=========================================================
+
+SOUND
+
+  Issue:                                                    Bugzilla 73
+
+    During test we have discovered that on some boards, when you
+    plug a connector into J8 while sound is playing, the output
+    will be muted until the board is reset.
+
+  Fix / Work around:
+
+    Don't plug connectors into or unplug connectors from J8 while
+    sound is playing.  This problem has not been seen on currently
+    shipping boards.
+
+=========================================================
+
+MC13783 RESET
+
+  There is a hardware issue with MC13783 where you may have to
+  push the MC13783 reset several times for the chip to actually
+  reset.  You can tell if the reset was effective if the row
+  of green LEDs light up.
+
+  Fix / Work around:
+
+    After resetting the MC13783 board, you may need to reset the
+    CPU board.  This problem has been resolved in currently
+    shipping boards.
+
+=========================================================
+
+POWER MANAGEMENT
+
+  DVFS vs. DPM
+
+  CPU and Bus speeds can be controlled automatically using
+  DVFS, or under software control using DPM.  You can switch
+  between these modes at run-time, but only one mode can be
+  active at a time.
+
+  Issue:                                                   Bugzilla 233
+
+    Sometimes the CPU does not resume properly after being
+    suspended.  The occurance of this problem seems to be
+    board related.
+
+  Fix / Work around:
+
+    If you have problems with resume, you may wish to try
+    a different board.
+
+=========================================================
+
+PCMCIA
+
+  Issue:                                                   Bugzilla 564
+
+    Signals originally shared between PCMCIA and DDR memory
+    have been disconnected from PCMCIA in an effort to increase
+    signal integrity of the DDR memory.
+
+  Fix / Work around:
+
+    PCMCIA cannot function unless these signals are reconnected.
+    To reconnect PCMCIA, please contact Freescale Semiconductor
+    for modification instructions.
+
+    Due to this hardware limitation, PCMCIA functionality is not
+    supported in this BSP.
+
+=========================================================
+
+NAND Boot
+
+  Issue:
+
+    Due to an unknown hardware issue the reset button must be 
+    pressed serveral times before the system will boot from NAND.
+
+  Fix / Work around:
+
+    Keep pressing the reset button until the board boots.
+
+  Issue:
+
+    We have seen some NAND flashes come with their out-of-band (OOB)
+    data areas overwritten with test patterns.  Since the bad-block
+    marker is stored in the OOB area, this causes the NAND driver
+    to think that every block on the device is bad.
+
+  Fix / Work around:
+
+    Please ensure that your NAND flash contains valid bad-block 
+    markers in the OOB areas before attempting to install a 
+    filesystem on it.
+
+  Issue:                                                    Bugzilla 61
+
+   The nand_boot bootloader initializes the CPU clocks expecting
+   that the chip is driven by a 26 MHz oscillator.  However, when
+   a TV-Out card is used, the card provides the CPU with a 27 MHz
+   clock.
+
+  Fix / Work around:
+
+    Use Redboot instead of nand_boot if you need TV-Out.
+
+=========================================================
+
+NAND MTD
+
+  Issue:                                                   Bugzilla 555
+
+    The kernel MTD NAND driver does not read the Redboot partition
+    table from NAND flash.
+
+  Fix / Work around:
+
+    Currently t here is no support in linux for reading Redboot
+    partition tables from NAND.  If you need to change the MTD
+    NAND partitions, please modify the mxc_nand_partitions
+    structure.
+
+  Issue:                                                   Bugzilla 556
+
+    We have seen "JFFS2 notice" messages print on the console when using
+    a JFFS2 on an MTD NAND partition.  These notices do not seem to have
+    a negative effect on the filesystem.
+
+=========================================================
+
+Dynamic Power Management
+
+  Issue:
+
+    The DVFS controller varies the CPU core voltage when the CPU
+    frequency is changed.  During system test we observed processor
+    instabilities running at lower CPU frequencies.  This problem
+    may be due to an interaction between the lower CPU core voltage
+    and DDR timings.
+
+  Fix / Work around:
+
+    The DVFS operating-point tables have been adjusted so that the
+    CPU core voltage remains high enough to ensure stability.  This
+    problem may be addressed in a different way in a future release,
+    which may reduce CPU power consumption even further when running
+    at lower CPU frequencies.
+
+=========================================================
+
+Physically Contiguous Memory
+
+  Issue:                                                    Bugzilla 497
+
+    Some drivers require physically contiguous buffers for DMA.
+    There is no guarantee that the required amount of physically
+    contiguous memory exists, especially after the system has been
+    running for a while, since memory tends to fragment over time.
+
+    This problem has been noticed when repeatedly displaying video
+    using the V4L2 MXC Output driver.
+
+  Fix / Work around:
+
+    The problem can be minimized (but not eliminated) through the
+    following means:
+
+    1. Setting min_free_kbytes to 8192 from 1024 will keep more memory
+    free, which keeps the page cache from using as much memory.
+
+      echo -n 8192 > /proc/sys/vm/min_free_kbytes
+
+    2. Some additional relief can be obtained by freeing page cache,
+    dentries, and inodes.
+
+      echo -n 3 > /proc/sys/vm/drop_caches
+
+    It's helpful to run "sync" before setting drop_caches, since
+    dirty objects are not freeable.
+
+=========================================================
+
+Miscellaneous Notes:
+
+  Issue:
+
+    During boot, the MTD layer will issue some warning messages
+    about RedBoot partitions in flash, such as:
+
+      mtd: partition "FIS directory" doesn't end on an erase block
+      -- force read-only
+
+  Fix / Work around:
+
+    These messages are informational, and can safely be ignored.
+
+  Question:
+
+    How do I build the platform validation tests?
+
+  Answer:
+
+    The mxc-misc package requires the kernel source in order to build. Use
+    the "./ltib -c" command to enable the mxc-misc package under "Package
+    list" and save your configuration settings.  If you have not already
+    selected the kernel's "Leave the sources after building" option, the
+    kernel will be rebuilt before building the mxc-misc package. The test
+    programs and kernel modules will be deployed to your root filesystem.
+
+    Please be aware that this code is for reference only and may not provide
+    the best examples of how to implement certain software functions.
+
+Helpful Tips:
+
+ - To configure framebuffer for NEC VGA display, add the kernel cmdline
+   option: video=mxcfb:NEC-VGA
+
+ - To configure framebuffer for TV-Out card, add kernel cmdline option:
+   video=mxcfb:TV-xxx (where xxx is NTSC, PAL, or VGA)
+
+ - Before building the Qtopia package from source, several packages must
+   be installed on your host.  The exact package names may vary, depending
+   on your linux distro.
+
+     * zlib:
+         rpm-based distros:    install zlib and zlib-devel
+         debian-based distros: install zlib and zlib-dev
+
+     * libuuid:
+         rpm-based distros:    install e2fsprogs and e2fsprogs-devel
+         debian-based distros: install libuuid and uuid-dev
+
+     * libjpeg:
+         rpm-based distros:     install libjpeg
+          debian-based distros: install libjpeg and libjpeg-dev
+
+     * libpng:
+         rpm-based distros:    install libpng and libpng-devel
+	 debian-based distros: libpng and libpng-dev
+
+   For additional information, please visit the TrollTech website at:
+     http://doc.trolltech.com/qtopia2.1/html/qtopia-dependencies.html
+
+ - Before building gstreamer packages from source, several packages must
+   be installed on your host.  The exact package names may vary, depending
+   on your linux distro.
+
+     * libglib2:                                          Bugzilla 550
+         rpm-based distros:    install glib2 and glib2-devel
+         debian-based distros: install libglib2.0 and libglib2.0-dev
+
+     * libxml2:                                           Bugzilla 551
+         rpm-based distros:    install libxml2 and libxml2-devel
+         debian-based distros: install libxml2 and libxml2-dev

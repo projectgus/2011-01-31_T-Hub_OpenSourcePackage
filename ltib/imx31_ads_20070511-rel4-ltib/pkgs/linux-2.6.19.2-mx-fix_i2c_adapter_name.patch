@@ -1,0 +1,24 @@
+SDCaa01608_I2C_use_wrong_adapter_name.patch
+In mxc_i2c driver, set adapter name as platform_device name Other
+drivers which use i2c driver will fail when to check the mxc_i2c
+adapter name, such as USB driver.
+===================================================================
+--- drivers/i2c/busses/mxc_i2c.c	30 Mar 2007 23:04:03 -0000	1.6
++++ drivers/i2c/busses/mxc_i2c.c	7 Apr 2007 16:33:54 -0000	1.7
+@@ -33,6 +33,7 @@
+ #include <linux/clk.h>
+ #include <asm/irq.h>
+ #include <asm/io.h>
++#include <asm/arch/mxc_i2c.h>
+ #include "mxc_i2c_reg.h"
+ 
+ /*!
+@@ -692,7 +693,7 @@ static int mxci2c_probe(struct platform_
+ 	/*
+ 	 * Set the adapter information
+ 	 */
+-	strcpy(mxc_i2c->adap.name, pdev->name);
++	strcpy(mxc_i2c->adap.name, MXC_ADAPTER_NAME);
+ 	mxc_i2c->adap.id = id;
+ 	mxc_i2c->adap.algo = &mxc_i2c_algorithm;
+ 	mxc_i2c->adap.timeout = 1;

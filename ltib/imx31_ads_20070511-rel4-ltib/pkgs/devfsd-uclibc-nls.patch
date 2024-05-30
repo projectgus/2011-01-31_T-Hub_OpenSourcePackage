@@ -1,0 +1,127 @@
+Steve Papacharalambous <stevep@freescale.com> 14sep06
+
+Patch to fix errors building with uClibc toolchain:
+[snip]
+devfsd.c:286:27: rpcsvc/ypclnt.h: No such file or directory
+devfsd.c:287:28: rpcsvc/yp_prot.h: No such file or directory
+devfsd.c:490: warning: "struct ypall_callback" declared inside parameter list
+devfsd.c:490: warning: its scope is only this definition or declaration, which is probably not what you want
+devfsd.c: In function `read_config':
+devfsd.c:720: error: storage size of 'ypall_cbk' isn't known
+devfsd.c:720: warning: unused variable `ypall_cbk'
+devfsd.c: In function `process_yp_line':
+devfsd.c:1033: error: `YP_TRUE' undeclared (first use in this function)
+devfsd.c:1033: error: (Each undeclared identifier is reported only once
+devfsd.c:1033: error: for each function it appears in.)
+[/snip]
+
+Patch derived/ported from the following:
+[snip]
+Brian Stafford brian.stafford at office-logic.com
+Tue Jul 30 13:28:41 MDT 2002
+
+I originated this patch about 6 or 7 months ago.  The unpatched devfsd makes
+use of the NIS functions (aka Yellow Pages).  uClibc doesn't provide NIS, most
+of the time its just bloat anywway.  The patch simply ifdefs out NIS when it
+isn't needed.
+
+I submitted an updated version of the patch synced to the current devfsd to
+Richard Gooch a few weeks ago.  The next devfsd release will autodetect NIS
+support during compilation so patching will no longer be necessary (regardless
+of the C runtime library).
+
+Brian Stafford
+
+Ref URL: http://www.busybox.net/lists/uclibc/2002-July/003985.html
+and: http://www.busybox.net/lists/uclibc/2002-July/003983.html
+[snip]
+
+diff --exclude CVS -uNr devfsd/GNUmakefile devfsd.modified/GNUmakefile
+--- devfsd/GNUmakefile	2002-02-19 06:06:43.000000000 +0000
++++ devfsd.modified/GNUmakefile	2006-09-14 17:15:19.000000000 +0100
+@@ -8,11 +8,15 @@
+ KERNEL_DIR  = /usr/src/linux
+ endif
+ 
++ifdef WITHOUT_NSL
++DEFINES     += -DWITHOUT_NSL=1
++else
+ nsl_libs := $(wildcard /lib/libnsl.so.*)
+ ifneq ($(nsl_libs),)
+ LIBNSL      = $(shell for file in /lib/libnsl.so.[0-9]* ; do echo $$file ; done | sort -t . -n -k 2 | head -1)
+ DEFINES     += -DLIBNSL="\"$(LIBNSL)\""
+ endif
++endif
+ 
+ 
+ all:	devfsd rpm.spec
+diff --exclude CVS -uNr devfsd/devfsd.c devfsd.modified/devfsd.c
+--- devfsd/devfsd.c	2002-03-25 06:59:40.000000000 +0000
++++ devfsd.modified/devfsd.c	2006-09-14 17:19:04.000000000 +0100
+@@ -283,8 +283,10 @@
+ #include <regex.h>
+ #include <errno.h>
+ #include <dlfcn.h>
++#ifndef WITHOUT_NSL
+ #include <rpcsvc/ypclnt.h>
+ #include <rpcsvc/yp_prot.h>
++#endif
+ #include <karma.h>
+ #include "devfsd.h"
+ #include "version.h"
+@@ -414,9 +416,11 @@
+ 			      unsigned long *event_mask);
+ static void process_config_line (CONST char *line, unsigned long *event_mask);
+ static void *dlsym_nofail (const char *file, void *handle, char *symbol);
++#ifndef WITHOUT_NSL
+ static int process_yp_line (int instatus, char *inkey, int inkeylen,
+ 			    char *inval, int invallen, char *indata);
+ static void load_libnsl (void);
++#endif
+ static flag do_servicing (int fd, unsigned long event_mask);
+ static void service_name (const struct devfsd_notify_struct *info);
+ static void action_permissions (const struct devfsd_notify_struct *info,
+@@ -486,9 +490,11 @@
+     {"fd/2", "stderr"},
+     {NULL, NULL},
+ };
++#ifndef WITHOUT_NSL
+ static int (*my_yp_all) (char *domain, char *map,
+ 			 struct ypall_callback *callback); /* = NULL */
+ static int (*my_yp_get_default_domain) (char **domainptr); /* = NULL */
++#endif
+ static struct event_type
+ {
+     unsigned int type;        /*  The DEVFSD_NOTIFY_* value                  */
+@@ -714,6 +720,7 @@
+     [RETURNS] Nothing.
+ */
+ {
++#ifndef WITHOUT_NSL
+     if (location[0] == '+')
+     {
+ 	/*  It's a YP map  */
+@@ -736,6 +743,7 @@
+ 	SYSLOG (LOG_ERR, "error reading map: \"%s\"\n", location + 1);
+ 	exit (1);
+     }
++#endif
+     read_config_file (location, optional, event_mask);
+ }   /*  End Function read_config   */
+ 
+@@ -1006,6 +1014,7 @@
+     return (result);
+ }   /*  End Function dlsym_nofail  */
+ 
++#ifndef WITHOUT_NSL
+ static void load_libnsl (void)
+ {
+ #ifdef LIBNSL  /*  It comes from a shared object  */
+@@ -1034,6 +1043,7 @@
+     if (invallen > 0) process_config_line (inval, (unsigned long *) indata);
+     return (0);
+ }   /*  End Function process_yp_line  */
++#endif
+ 
+ static flag do_servicing (int fd, unsigned long event_mask)
+ /*  [SUMMARY] Service devfs changes until a signal is received.

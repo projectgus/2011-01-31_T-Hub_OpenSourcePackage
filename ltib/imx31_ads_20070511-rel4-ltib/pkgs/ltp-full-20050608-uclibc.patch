@@ -1,0 +1,67 @@
+Steve Papcharalambous <stevep@freescale.com> 18sep06:
+
+Fixes to ltp-testsuite so that is builds for uClibc toolchains.  Fixes derived
+from: http://www.busybox.net/lists/uclibc-cvs/2005-August/006218.html
+===============================================================================
+diff --exclude CVS -uNr ltp-full-20050608/lib/tlibio.c ltp-full-20050608.modified/lib/tlibio.c
+--- ltp-full-20050608/lib/tlibio.c	2005-06-08 17:11:08.000000000 +0100
++++ ltp-full-20050608.modified/lib/tlibio.c	2006-09-18 15:28:55.000000000 +0100
+@@ -100,8 +100,10 @@
+ #include <string.h>  /* bzero */
+ #endif
+ #if defined(linux) || defined(__sun) || defined(__hpux) || defined(_AIX)
++#ifndef __UCLIBC__
+ #include <aio.h>
+ #endif
++#endif
+ #include <stdlib.h> /* atoi, abs */
+ 
+ #include "tlibio.h"		/* defines LIO* marcos */
+diff --exclude CVS -uNr ltp-full-20050608/testcases/kernel/syscalls/fmtmsg/Makefile ltp-full-20050608.modified/testcases/kernel/syscalls/fmtmsg/Makefile
+--- ltp-full-20050608/testcases/kernel/syscalls/fmtmsg/Makefile	2005-06-08 17:11:19.000000000 +0100
++++ ltp-full-20050608.modified/testcases/kernel/syscalls/fmtmsg/Makefile	2006-09-18 16:15:12.000000000 +0100
+@@ -24,7 +24,7 @@
+ LOADLIBES+=	-L../../../../lib -lltp
+ 
+ SRCS=$(wildcard *.c)
+-TARGETS=$(patsubst %.c,%,$(SRCS))
++TARGETS=#$(patsubst %.c,%,$(SRCS))
+ 
+ all: $(TARGETS)
+ 
+diff --exclude CVS -uNr ltp-full-20050608/testcases/kernel/syscalls/getcontext01/Makefile ltp-full-20050608.modified/testcases/kernel/syscalls/getcontext01/Makefile
+--- ltp-full-20050608/testcases/kernel/syscalls/getcontext01/Makefile	2005-06-08 17:11:20.000000000 +0100
++++ ltp-full-20050608.modified/testcases/kernel/syscalls/getcontext01/Makefile	2006-09-18 16:16:12.000000000 +0100
+@@ -24,7 +24,7 @@
+ LOADLIBES+=	-L../../../../lib -lltp
+ 
+ SRCS=$(wildcard *.c)
+-TARGETS=$(patsubst %.c,%,$(SRCS))
++TARGETS=#$(patsubst %.c,%,$(SRCS))
+ 
+ all: $(TARGETS)
+ 
+diff --exclude CVS -uNr ltp-full-20050608/testcases/kernel/syscalls/profil/Makefile ltp-full-20050608.modified/testcases/kernel/syscalls/profil/Makefile
+--- ltp-full-20050608/testcases/kernel/syscalls/profil/Makefile	2005-06-08 17:11:20.000000000 +0100
++++ ltp-full-20050608.modified/testcases/kernel/syscalls/profil/Makefile	2006-09-18 16:16:45.000000000 +0100
+@@ -23,7 +23,7 @@
+ LOADLIBES+=	-L../../../../lib -lltp 
+ 
+ SRCS=$(wildcard *.c)
+-TARGETS=$(patsubst %.c,%,$(SRCS))
++TARGETS=#$(patsubst %.c,%,$(SRCS))
+ 
+ all: $(TARGETS)
+ 
+diff --exclude CVS -uNr ltp-full-20050608/testcases/kernel/syscalls/pselect/Makefile ltp-full-20050608.modified/testcases/kernel/syscalls/pselect/Makefile
+--- ltp-full-20050608/testcases/kernel/syscalls/pselect/Makefile	2005-06-08 17:11:20.000000000 +0100
++++ ltp-full-20050608.modified/testcases/kernel/syscalls/pselect/Makefile	2006-09-18 16:17:29.000000000 +0100
+@@ -24,7 +24,7 @@
+ LOADLIBES+=	-L../../../../lib -lltp
+ 
+ SRCS=$(wildcard *.c)
+-TARGETS=$(patsubst %.c,%,$(SRCS))
++TARGETS=#$(patsubst %.c,%,$(SRCS))
+ 
+ all: $(TARGETS)
+ 

@@ -1,0 +1,22 @@
+obj-m += dectusb_command.o dectusb_audio.o ../arm/bridge/mxc-audio-bridge-pmic-to-handset.o test_dectusb_audio_bridge.o
+
+defaut:
+	make -C /lib/modules/$(shell uname -r)/build M=$(shell pwd) modules
+
+clean:
+	rm -f *.o
+	rm -f *.ko
+	rm -f Module.symvers
+	rm -f .*.o.cmd
+	rm -f .*.ko.cmd
+
+
+
+mp:defaut
+	@ sudo rmmod dectusb_command || echo "dectusb_command n'etait pas charge"
+	@ sudo rmmod dectusb_audio || echo "dectusb_audio n'etait pas charge"
+	@ sudo rmmod usbhid || echo "usbhid n'etait pas charge"
+	@ sudo insmod ./dectusb_audio.ko vl=0 usb_read_timeout=2000 usb_write_timeout=1000
+	@ sudo insmod ./dectusb_command.ko db=1 usb_read_timeout=2000 usb_write_timeout=1000
+
+#Lorsque usb_write_timeout est > a 0, certainnes donnees ne sont plus recus.... a tester 

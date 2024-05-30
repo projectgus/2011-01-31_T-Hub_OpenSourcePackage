@@ -1,0 +1,969 @@
+diff -uNpr misc.orig/include/mxc_test.h misc/include/mxc_test.h
+--- misc.orig/include/mxc_test.h	2007-01-12 15:14:45.000000000 -0700
++++ misc/include/mxc_test.h	2007-01-26 14:00:12.000000000 -0700
+@@ -46,11 +46,7 @@ enum TEST_MODULE_MAJOR_NUM {
+  * Test IOCTLS
+  */
+ enum MXCTEST_IOCTL {
+-        MXCTEST_I2C_READ    = 0x0001,
+-        MXCTEST_I2C_WRITE,
+-        MXCTEST_I2C_CSICLKENB,
+-        MXCTEST_I2C_CSICLKDIS,
+-        MXCTEST_WDOG,
++        MXCTEST_WDOG = 1,
+         MXCTEST_PM_INTSCALE,
+         MXCTEST_PM_PLLSCALE,
+ 	MXCTEST_PM_INT_OR_PLL,
+@@ -68,37 +64,6 @@ enum MXCTEST_IOCTL {
+ };
+ 
+ /*
+- * Data structure passed in to the MXCTEST_I2C_READ and MXCTEST_I2C_WRITE
+- * ioctl calls
+- */
+-typedef struct {
+-        /*
+-         * The I2C Bus number that the device is connected to
+-         */
+-        int             bus;
+-        /*
+-         * The slave address of the I2C device
+-         */
+-        unsigned int    slave_addr;
+-        /*
+-         * The address of the register we want to access
+-         */
+-        char            *reg;
+-        /*
+-         * Number of bytes in the register address
+-         */
+-        int             reg_size;
+-        /*
+-         * Data buffer to transfer with the register
+-         */
+-        char            *buf;
+-        /*
+-         * Number of data bytes to transfer
+-         */
+-        int             buf_size;
+-} mxc_i2c_test;
+-
+-/*
+  * Data structure which holds the required ARM frequency value. This is
+  * passed in to the MXCTEST_PM_INTSCALE and MXCTEST_PM_PLLSCALE
+  * ioctl calls
+diff -uNpr misc.orig/module_test/Makefile misc/module_test/Makefile
+--- misc.orig/module_test/Makefile	2007-01-12 13:29:30.000000000 -0700
++++ misc/module_test/Makefile	2007-01-26 13:54:51.000000000 -0700
+@@ -6,8 +6,6 @@ SAHARA_TEST_SOURCE=../test/mxc_sahara_te
+ # When adding modules, either add to the 'module_list' for all platfoms or add 
+ # below to the 'module_list +=...' list for each platform that needs it.
+ module_list= 	mxc_rtic_test.o \
+-		mxc_i2c_test.o \
+-		mxc_i2c_testmod.o \
+  		mxc_spi_testmod.o \
+ 		mxc_wdog_tm.o \
+ 		mxc_pmic_power_testmod.o
+diff -uNpr misc.orig/module_test/mxc_HAC_test.c misc/module_test/mxc_HAC_test.c
+--- misc.orig/module_test/mxc_HAC_test.c	2007-01-26 17:17:54.000000000 -0700
++++ misc/module_test/mxc_HAC_test.c	2007-01-26 13:58:20.000000000 -0700
+@@ -27,7 +27,6 @@
+ /*
+  * Driver specific include files
+  */
+-#include <asm/arch/mxc_i2c.h>
+ #include <asm/arch/mxc_pm.h>
+ #include <asm/arch/mxc_security_api.h>
+ #include <asm/arch/clock.h>
+diff -uNpr misc.orig/module_test/mxc_i2c_test.c misc/module_test/mxc_i2c_test.c
+--- misc.orig/module_test/mxc_i2c_test.c	2007-01-26 17:17:54.000000000 -0700
++++ misc/module_test/mxc_i2c_test.c	1969-12-31 17:00:00.000000000 -0700
+@@ -1,181 +0,0 @@
+-/*
+- * Copyright 2005-2006 Freescale Semiconductor, Inc. All rights reserved.
+- */
+-
+-/*
+- * The code contained herein is licensed under the GNU General Public
+- * License. You may obtain a copy of the GNU General Public License
+- * Version 2 or later at the following locations:
+- *
+- * http://www.opensource.org/licenses/gpl-license.html
+- * http://www.gnu.org/copyleft/gpl.html
+- */
+-
+-/*
+- * General Include Files
+- */
+-#include <linux/module.h>
+-#include <linux/kernel.h>
+-#include <linux/version.h>
+-#include <linux/fs.h>
+-#include <linux/device.h>
+-#include <linux/init.h>
+-#include <linux/delay.h>
+-#include <linux/interrupt.h>
+-#include <asm/uaccess.h>
+-#include "../include/mxc_test.h"
+-/*
+- * Driver specific include files
+- */
+-#include <asm/arch/mxc_i2c.h>
+-#include <asm/arch/clock.h>
+-#include <asm/arch/gpio.h>
+-ulong *gtempu32ptr;
+-static struct class *mxc_test_class;
+-
+-static int mxc_test_open(struct inode *inode, struct file *filp)
+-{
+-	return 0;
+-}
+-
+-static ssize_t mxc_test_read(struct file *file, char *buf, size_t count,
+-			     loff_t * ppos)
+-{
+-	return 0;
+-}
+-
+-static ssize_t mxc_test_write(struct file *filp, const char *buf, size_t count,
+-			      loff_t * ppos)
+-{
+-	return 0;
+-}
+-
+-static int mxc_i2c_read_test(mxc_i2c_test * arg)
+-{
+-	mxc_i2c_test i2c_struct;
+-	char buf[32];
+-	char reg[32];
+-	int ret;
+-
+-	copy_from_user(&i2c_struct, arg, sizeof(i2c_struct));
+-	copy_from_user(reg, i2c_struct.reg, i2c_struct.reg_size);
+-	copy_from_user(buf, i2c_struct.buf, i2c_struct.buf_size);
+-
+-	ret = mxc_i2c_read(i2c_struct.bus, i2c_struct.slave_addr, reg,
+-			   i2c_struct.reg_size, buf, i2c_struct.buf_size);
+-	copy_to_user(i2c_struct.buf, buf, i2c_struct.buf_size);
+-
+-	return ret;
+-}
+-
+-static int mxc_i2c_write_test(mxc_i2c_test * arg)
+-{
+-	mxc_i2c_test i2c_struct;
+-	char buf[32];
+-	char reg[32];
+-
+-	//printk("I2C Write IOCTL\n");
+-	copy_from_user(&i2c_struct, arg, sizeof(i2c_struct));
+-	copy_from_user(reg, i2c_struct.reg, i2c_struct.reg_size);
+-	copy_from_user(buf, i2c_struct.buf, i2c_struct.buf_size);
+-
+-	//printk("WRITE DATA=%x to REGISTER=%x\n", buf[0], reg[0]);
+-
+-	return mxc_i2c_write(i2c_struct.bus, i2c_struct.slave_addr, reg,
+-			     i2c_struct.reg_size, buf, i2c_struct.buf_size);
+-}
+-
+-static int mxc_test_ioctl(struct inode *inode, struct file *file,
+-			  unsigned int cmd, unsigned long arg)
+-{
+-	ulong *tempu32ptr, tempu32, i = 0;
+-
+-	tempu32 = (ulong) (*(ulong *) arg);
+-	tempu32ptr = (ulong *) arg;
+-
+-	switch (cmd) {
+-	case MXCTEST_I2C_READ:
+-		return mxc_i2c_read_test((mxc_i2c_test *) arg);
+-	case MXCTEST_I2C_WRITE:
+-		return mxc_i2c_write_test((mxc_i2c_test *) arg);
+-	case MXCTEST_I2C_CSICLKENB:
+-		mxc_clks_enable(CSI_BAUD);
+-		i = mxc_get_clocks_parent(CSI_BAUD) / 32000000;
+-		if ((mxc_get_clocks_parent(CSI_BAUD) / i) > 32000000) {
+-			i++;
+-		}
+-		mxc_set_clocks_div(CSI_BAUD, 2 * i);
+-		msleep(10);
+-		break;
+-	case MXCTEST_I2C_CSICLKDIS:
+-		mxc_clks_disable(CSI_BAUD);
+-		break;
+-
+-    default:
+-		printk("MXC TEST IOCTL %d not supported\n", cmd);
+-		break;
+-	}
+-	return -EINVAL;
+-}
+-
+-static int mxc_test_release(struct inode *inode, struct file *filp)
+-{
+-	return 0;
+-}
+-
+-static struct file_operations mxc_test_fops = {
+-      owner:THIS_MODULE,
+-      open:mxc_test_open,
+-      release:mxc_test_release,
+-      read:mxc_test_read,
+-      write:mxc_test_write,
+-      ioctl:mxc_test_ioctl,
+-};
+-
+-static int __init mxc_test_init(void)
+-{
+-	struct class_device *temp_class;
+-	int res;
+-
+-	res =
+-	    register_chrdev(MXC_TEST_MODULE_MAJOR, "mxc_test", &mxc_test_fops);
+-
+-	if (res < 0) {
+-		printk(KERN_WARNING "MXC Test: unable to register the dev\n");
+-		return res;
+-	}
+-
+-	mxc_test_class = class_create(THIS_MODULE, "mxc_test");
+-	if (IS_ERR(mxc_test_class)) {
+-		printk(KERN_ERR "Error creating mxc_test class.\n");
+-		unregister_chrdev(MXC_TEST_MODULE_MAJOR, "mxc_test");
+-		class_device_destroy(mxc_test_class, MKDEV(MXC_TEST_MODULE_MAJOR, 0));
+-		return PTR_ERR(mxc_test_class);
+-	}
+-
+-	temp_class = class_device_create(mxc_test_class, NULL,
+-					     MKDEV(MXC_TEST_MODULE_MAJOR, 0), NULL,
+-					     "mxc_test");
+-	if (IS_ERR(temp_class)) {
+-		printk(KERN_ERR "Error creating mxc_test class device.\n");
+-		class_device_destroy(mxc_test_class, MKDEV(MXC_TEST_MODULE_MAJOR, 0));
+-		class_destroy(mxc_test_class);
+-		unregister_chrdev(MXC_TEST_MODULE_MAJOR, "mxc_test");
+-		return -1;
+-	}
+-
+-	return 0;
+-}
+-
+-static void __exit mxc_test_exit(void)
+-{
+-	unregister_chrdev(MXC_TEST_MODULE_MAJOR, "mxc_test");
+-	class_device_destroy(mxc_test_class, MKDEV(MXC_TEST_MODULE_MAJOR, 0));
+-	class_destroy(mxc_test_class);
+-}
+-
+-module_init(mxc_test_init);
+-module_exit(mxc_test_exit);
+-
+-MODULE_DESCRIPTION("Test Module for MXC drivers");
+-MODULE_LICENSE("GPL");
+diff -uNpr misc.orig/module_test/mxc_i2c_testmod.c misc/module_test/mxc_i2c_testmod.c
+--- misc.orig/module_test/mxc_i2c_testmod.c	2007-01-26 17:17:54.000000000 -0700
++++ misc/module_test/mxc_i2c_testmod.c	1969-12-31 17:00:00.000000000 -0700
+@@ -1,201 +0,0 @@
+-/*
+- * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
+- */
+-
+-/*
+- * The code contained herein is licensed under the GNU General Public
+- * License. You may obtain a copy of the GNU General Public License
+- * Version 2 or later at the following locations:
+- *
+- * http://www.opensource.org/licenses/gpl-license.html
+- * http://www.gnu.org/copyleft/gpl.html
+- */
+-
+-#include <linux/gfp.h>
+-#include <linux/init.h>
+-#include <linux/types.h>
+-#include <asm/page.h>		/* kmalloc_sizes.h needs PAGE_SIZE */
+-#include <asm/cache.h>		/* kmalloc_sizes.h needs L1_CACHE_BYTES */
+-#include <linux/module.h>
+-
+-#include <linux/types.h>
+-#include <linux/delay.h>
+-
+-#include <asm/arch/hardware.h>
+-#include <asm/arch/mxc_i2c.h>
+-#include <asm/io.h>
+-#include <asm/arch/gpio.h>
+-#include <asm/arch/clock.h>
+-
+-extern int printk(const char *fmt, ...);
+-void gpio_sensor_active(void);
+-void gpio_sensor_inactive(void);
+-//im8012 i2c addr
+-#define SENSOR_I2C_ADDR 0x48
+-
+-#define CSI_CTL0 (1<<9)
+-#define CSI_CTL1 (1<<10)
+-#define CSI_CTL2 (1<<11)
+-
+-/*control register bit definitions*/
+-#define I2CR_ENABLE	0x80
+-#define I2CR_INTEN	0x40
+-#define I2CR_MASTER	0x20
+-#define I2CR_TRANSMIT	0x10
+-#define I2CR_NOACK	0x08
+-#define I2CR_REPSTART	0x04
+-
+-/*status register bit definitions*/
+-#define I2SR_DATAREADY	0x80
+-#define I2SR_ADDRASSLA	0x40
+-#define I2SR_BUSBUSY	0x20
+-#define I2SR_LOSTARB	0x10
+-#define I2SR_SLATRANS	0x04
+-#define I2SR_INTPEND	0x02
+-#define I2SR_ACKRCVD	0x01
+-#define MX2_I2C_TIMEOUT HZ	/*timeout for an I2C transfer */
+-
+-
+-//generate default mclk to drive sensor
+-static void csihw_open(void)
+-{
+-#if defined(CONFIG_ARCH_MX21) || defined (CONFIG_ARCH_MX27)
+-	unsigned int val;
+-	unsigned int mclkdiv = 4;	//default set to perclk4/4 => 22MHz
+-#endif	
+-	unsigned int perclk4div = 3;	//default set to fclk/3 => 88MHz
+-
+-	//reset values
+-#define CSICR1_RESET_VAL	0x40000800
+-#define CSICR2_RESET_VAL	0x0
+-#define CSICR3_RESET_VAL	0x0
+-#define SHIFT_MCLKDIV		12
+-
+-#define BIT_MCLKEN		(0x1 << 9)
+-
+-#define CSI_CSICR1	0x00	/*  32bit csi control 1 reg */
+-#define CSI_CSICR2	0x04	/*  32bit csi control 2 reg */
+-#define CSI_CSICR3	0x1C	/*  32bit csi control 3 reg */
+-
+-	mxc_clks_enable(CSI_BAUD);
+-	//set default perclk4 for mclk
+-	//if(g_csi_ver == 2)
+-	mxc_set_clocks_div(CSI_BAUD, perclk4div);
+-#ifdef CONFIG_ARCH_MX27
+-	//__raw_writelIO_ADDRESS(CSI_BASE_ADDR)CSI_CSICR1 = CSICR1_RESET_VAL;
+-	__raw_writel(CSICR2_RESET_VAL, IO_ADDRESS(CSI_BASE_ADDR) + CSI_CSICR2);
+-	__raw_writel(CSICR3_RESET_VAL, IO_ADDRESS(CSI_BASE_ADDR) + CSI_CSICR3);
+-
+-	//enable default mclk clock
+-	val = CSICR1_RESET_VAL;
+-	val |= ((mclkdiv / 2) - 1) << SHIFT_MCLKDIV;
+-	val |= BIT_MCLKEN;
+-	__raw_writel(val, IO_ADDRESS(CSI_BASE_ADDR) + CSI_CSICR1);
+-#endif
+-	return;
+-}
+-
+-//set reset pin level
+-static void im8012_hard_reset(void)
+-{
+-#ifdef CONFIG_ARCH_MX27
+-	unsigned short data;
+-#endif
+-	printk("resetting 8012!\n");
+-	//assert reset pulse
+-#ifdef CONFIG_ARCH_MX27
+-	data = __raw_readl(PBC_BCTRL2_SET_REG);
+-	data |= CSI_CTL1;
+-	__raw_writel(data, PBC_BCTRL2_SET_REG);
+-	udelay(300);
+-
+-	data = __raw_readl(PBC_BCTRL2_CLEAR_REG);
+-	data &= ~CSI_CTL1;
+-	__raw_writel(data, PBC_BCTRL2_CLEAR_REG);
+-#endif
+-	udelay(100);
+-}
+-
+-//i2c channel read/write test
+-static int im8012_i2c_test(void)
+-{
+-	int i;
+-	unsigned short temp_val;
+-	u8 reg = 1;
+-	u16 val;
+-	unsigned long flags;
+-	im8012_hard_reset();
+-	i = cpu_to_be16(4);
+-	mxc_i2c_write(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & i, 2);
+-
+-	reg = 4;
+-
+-	printk("interrupt mode 1\n");
+-	for (i = 0; i < 3; i++) {
+-		val = cpu_to_be16(i);
+-		mxc_i2c_write(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & val, 2);
+-		mxc_i2c_read(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & temp_val, 2);
+-		temp_val = be16_to_cpu(temp_val);
+-		printk(" write value is %d,read is %d\n", i, temp_val);
+-
+-	}
+-	printk("\n polling mode 1\n");
+-
+-	local_irq_save(flags);	/* Disable interrupts */
+-	for (i = 0; i < 3; i++) {
+-		val = cpu_to_be16(i);
+-		mxc_i2c_polling_write(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & val,
+-				      2);
+-
+-		mxc_i2c_polling_read(0, SENSOR_I2C_ADDR, &reg, 1,
+-				     (u8 *) & temp_val, 2);
+-		temp_val = be16_to_cpu(temp_val);
+-
+-		printk(" write value is %d,read is %d\n", i, temp_val);
+-	}
+-	local_irq_restore(flags);
+-
+-	printk("interrupt mode 2\n");
+-	for (i = 0; i < 3; i++) {
+-		val = cpu_to_be16(i);
+-		mxc_i2c_write(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & val, 2);
+-
+-		mxc_i2c_read(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & temp_val, 2);
+-		temp_val = be16_to_cpu(temp_val);
+-		printk(" write value is %d,read is %d\n", i, temp_val);
+-	}
+-
+-	printk("\n polling mode 2\n");
+-	local_irq_save(flags);	/* Disable interrupts */
+-	for (i = 0; i < 3; i++) {
+-		val = cpu_to_be16(i);
+-		mxc_i2c_polling_write(0, SENSOR_I2C_ADDR, &reg, 1, (u8 *) & val,
+-				      2);
+-		mxc_i2c_polling_read(0, SENSOR_I2C_ADDR, &reg, 1,
+-				     (u8 *) & temp_val, 2);
+-		temp_val = be16_to_cpu(temp_val);
+-		printk(" write value is %d,read is %d\n", i, temp_val);
+-	}
+-	local_irq_restore(flags);
+-
+-	im8012_hard_reset();
+-	return 0;
+-}
+-
+-int init_module(void)
+-{
+-	printk("i2c test start \n");
+-
+-	csihw_open();
+-	im8012_i2c_test();
+-	return 0;
+-}
+-
+-void cleanup_module(void)
+-{
+-	printk("i2c test end\n");
+-
+-}
+-
+-MODULE_LICENSE("GPL");
+-
+diff -uNpr misc.orig/module_test/mxc_test.c misc/module_test/mxc_test.c
+--- misc.orig/module_test/mxc_test.c	2007-01-26 17:17:54.000000000 -0700
++++ misc/module_test/mxc_test.c	2007-01-26 13:59:09.000000000 -0700
+@@ -28,7 +28,6 @@
+ /*
+  * Driver specific include files
+  */
+-#include <asm/arch/mxc_i2c.h>
+ #include <asm/arch/mxc_pm.h>
+ #include <asm/arch/mxc_security_api.h>
+ #include <asm/arch/clock.h>
+@@ -54,41 +53,6 @@ static ssize_t mxc_test_write(struct fil
+ 	return 0;
+ }
+ 
+-static int mxc_i2c_read_test(mxc_i2c_test * arg)
+-{
+-	mxc_i2c_test i2c_struct;
+-	char buf[32];
+-	char reg[32];
+-	int ret;
+-
+-	copy_from_user(&i2c_struct, arg, sizeof(i2c_struct));
+-	copy_from_user(reg, i2c_struct.reg, i2c_struct.reg_size);
+-	copy_from_user(buf, i2c_struct.buf, i2c_struct.buf_size);
+-
+-	ret = mxc_i2c_read(i2c_struct.bus, i2c_struct.slave_addr, reg,
+-			   i2c_struct.reg_size, buf, i2c_struct.buf_size);
+-	copy_to_user(i2c_struct.buf, buf, i2c_struct.buf_size);
+-
+-	return ret;
+-}
+-
+-static int mxc_i2c_write_test(mxc_i2c_test * arg)
+-{
+-	mxc_i2c_test i2c_struct;
+-	char buf[32];
+-	char reg[32];
+-
+-	//printk("I2C Write IOCTL\n");
+-	copy_from_user(&i2c_struct, arg, sizeof(i2c_struct));
+-	copy_from_user(reg, i2c_struct.reg, i2c_struct.reg_size);
+-	copy_from_user(buf, i2c_struct.buf, i2c_struct.buf_size);
+-
+-	//printk("WRITE DATA=%x to REGISTER=%x\n", buf[0], reg[0]);
+-
+-	return mxc_i2c_write(i2c_struct.bus, i2c_struct.slave_addr, reg,
+-			     i2c_struct.reg_size, buf, i2c_struct.buf_size);
+-}
+-
+ static int mxc_call_intscale(mxc_pm_test * arg)
+ {
+ 	int result;
+@@ -271,23 +235,6 @@ static int mxc_test_ioctl(struct inode *
+ 	tempu32ptr = (ulong *) arg;
+ 
+ 	switch (cmd) {
+-	case MXCTEST_I2C_READ:
+-		return mxc_i2c_read_test((mxc_i2c_test *) arg);
+-	case MXCTEST_I2C_WRITE:
+-		return mxc_i2c_write_test((mxc_i2c_test *) arg);
+-	case MXCTEST_I2C_CSICLKENB:
+-		i = mxc_get_clocks_parent(CSI_BAUD) / 32000000;
+-		if ((mxc_get_clocks_parent(CSI_BAUD) / i) > 32000000) {
+-			i++;
+-		}
+-		mxc_set_clocks_div(CSI_BAUD, 2 * i);
+-		mxc_clks_enable(CSI_BAUD);
+-		msleep(10);
+-		break;
+-	case MXCTEST_I2C_CSICLKDIS:
+-		mxc_clks_disable(CSI_BAUD);
+-		break;
+-
+ 	case MXCTEST_PM_INTSCALE:
+ 		return mxc_call_intscale((mxc_pm_test *) arg);
+ 	case MXCTEST_PM_PLLSCALE:
+diff -uNpr misc.orig/readme.txt misc/readme.txt
+--- misc.orig/readme.txt	2007-01-12 15:58:47.000000000 -0700
++++ misc/readme.txt	2007-01-26 13:57:00.000000000 -0700
+@@ -57,7 +57,7 @@ To build a single test add the test dir 
+ make PLATFORM=IMX27ADS LINUXPATH=/home/marsha/linux \
+ KBUILD_OUTPUT=/home/marsha/kbuild/imx27ads \
+ CROSS_COMPILE=/opt/freescale/usr/local/gcc-4.1.1-glibc-2.4-nptl-1/arm-linux/bin/arm-linux- \
+-mxc_i2c_test
++mxc_spi_test
+ 
+ 
+ 3. Adding new programs
+diff -uNpr misc.orig/test/mxc_i2c_test/Makefile misc/test/mxc_i2c_test/Makefile
+--- misc.orig/test/mxc_i2c_test/Makefile	2006-06-19 08:40:06.000000000 -0600
++++ misc/test/mxc_i2c_test/Makefile	1969-12-31 17:00:00.000000000 -0700
+@@ -1,24 +0,0 @@
+-# list of platforms which did not want this test case
+-EXCLUDE_LIST:= 
+-
+-ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
+-OBJS = \
+-	$(OBJDIR)/mxc_i2c_test.out \
+-	$(OBJDIR)/mxc_i2c_test_usb.out \
+-	$(OBJDIR)/mxc_i2c_test_samsung_cam.out \
+-	$(OBJDIR)/mxc_i2c_test_magna_cam.out
+-else
+-OBJS = 
+-endif
+-
+-all : $(OBJS)
+-
+-.PHONY: clean
+-clean :
+-	rm -f $(OBJS)
+-
+-#
+-# include the Rules
+-#
+-include ../make.rules
+-
+diff -uNpr misc.orig/test/mxc_i2c_test/mxc_i2c_test.c misc/test/mxc_i2c_test/mxc_i2c_test.c
+--- misc.orig/test/mxc_i2c_test/mxc_i2c_test.c	2007-01-12 15:14:47.000000000 -0700
++++ misc/test/mxc_i2c_test/mxc_i2c_test.c	1969-12-31 17:00:00.000000000 -0700
+@@ -1,83 +0,0 @@
+-/*
+- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+- */
+-
+-/*
+- * The code contained herein is licensed under the GNU General Public
+- * License. You may obtain a copy of the GNU General Public License
+- * Version 2 or later at the following locations:
+- *
+- * http://www.opensource.org/licenses/gpl-license.html
+- * http://www.gnu.org/copyleft/gpl.html
+- */
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <sys/ioctl.h>
+-#include <unistd.h>
+-#include <fcntl.h>
+-#include "mxc_test.h"
+-
+-int main(int argc, char **argv)
+-{
+-        mxc_i2c_test i2c_test;
+-        int i2c_file;
+-        char reg[1];
+-        char buf[2];
+-        int fail = 0;
+-
+-        printf("\nTest: I2C Test With mt9v111 camera!\n");
+-
+-        i2c_file = open("/dev/mxc_test", O_RDWR);
+-        if (i2c_file < 0) {
+-                printf("Open failed\n");
+-                exit(-1);
+-        }
+-
+-        /* Enable the CSI clock */
+-        ioctl(i2c_file, MXCTEST_I2C_CSICLKENB, &i2c_test);
+-
+-        i2c_test.bus = 0;         
+-        i2c_test.slave_addr = 0x48;
+-
+-        printf("Slave address=0x%x\n\n", i2c_test.slave_addr);
+-
+-        reg[0] = 0x01;
+-        buf[1] = 0x4;
+-        buf[0] = 0x0;
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        i2c_test.buf = buf;
+-        i2c_test.buf_size = 2;
+-
+-        printf("Data write: buf[0]=%x, buf[1]=%x to reg=%x\n", buf[0], buf[1], reg[0]);
+-        ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
+-
+-        buf[0] = 0;
+-        buf[1] = 0;
+-        i2c_test.buf = buf;
+-        ioctl(i2c_file, MXCTEST_I2C_READ, &i2c_test);
+-
+-        if (i2c_test.buf[0] != 0x0) {
+-                fail = 1;
+-        }
+-
+-        if ((i2c_test.buf[1] & 0x4)!= 0x4) {
+-                fail = 1;
+-        }
+-        printf("Data read: buf[0]=%x, buf[1]=%x from reg=%x\n", buf[0], buf[1], reg[0]);
+-
+-        if (fail == 1) {
+-                printf("\nI2C TEST FAILED\n\n");
+-        } else {
+-                printf("\nI2C TEST PASSED\n\n");
+-        }
+-
+-        /* Disable the CSI clock */
+-        ioctl(i2c_file, MXCTEST_I2C_CSICLKDIS, &i2c_test);
+-
+-        close(i2c_file);
+-
+-        return 0;
+-}
+diff -uNpr misc.orig/test/mxc_i2c_test/mxc_i2c_test_magna_cam.c misc/test/mxc_i2c_test/mxc_i2c_test_magna_cam.c
+--- misc.orig/test/mxc_i2c_test/mxc_i2c_test_magna_cam.c	2007-01-12 15:14:47.000000000 -0700
++++ misc/test/mxc_i2c_test/mxc_i2c_test_magna_cam.c	1969-12-31 17:00:00.000000000 -0700
+@@ -1,77 +0,0 @@
+-/*
+- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+- */
+-
+-/*
+- * The code contained herein is licensed under the GNU General Public
+- * License. You may obtain a copy of the GNU General Public License
+- * Version 2 or later at the following locations:
+- *
+- * http://www.opensource.org/licenses/gpl-license.html
+- * http://www.gnu.org/copyleft/gpl.html
+- */
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <sys/ioctl.h>
+-#include <unistd.h>
+-#include <fcntl.h>
+-#include "mxc_test.h"
+-
+-int main(int argc, char **argv)
+-{
+-        mxc_i2c_test i2c_test;
+-        int i2c_file;
+-        char reg[1];
+-        char buf[2];
+-        int fail = 0;
+-
+-	printf("Test: I2C!\n");
+-
+-        i2c_file = open("/dev/mxc_test", O_RDWR);
+-        if (i2c_file < 0) {
+-                printf("Open failed\n");
+-                exit(-1);
+-        }
+-
+-        /* Enable the CSI clock */
+-        ioctl(i2c_file, MXCTEST_I2C_CSICLKENB, &i2c_test);
+-
+-        i2c_test.bus = 0;         
+-        i2c_test.slave_addr = 0x11; // Camera slave address
+-
+-        printf("Slave address=%x\n", i2c_test.slave_addr);
+-
+-        /* Write to reg */
+-        reg[0] = 0x32;
+-        buf[0] = 0x3; 
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        i2c_test.buf = buf;
+-        i2c_test.buf_size = 1;
+-        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]);
+-        ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
+-
+-        buf[0] = 0;
+-        i2c_test.buf = buf;
+-        ioctl(i2c_file, MXCTEST_I2C_READ, &i2c_test);
+-        if ((i2c_test.buf[0] & 0xFF) != 0x3) {
+-                fail = 1;
+-        }
+-        printf("Data read=%d from reg=%x\n", buf[0], reg[0]);
+-
+-        if (fail == 1) {
+-                printf("\nI2C TEST FAILED\n\n");
+-        } else {
+-                printf("\nI2C TEST PASSED\n\n");
+-        }
+-        
+-        /* Disable the CSI clock */
+-        ioctl(i2c_file, MXCTEST_I2C_CSICLKDIS, &i2c_test);
+-
+-        close(i2c_file);
+-
+-	return 0;
+-}
+diff -uNpr misc.orig/test/mxc_i2c_test/mxc_i2c_test_samsung_cam.c misc/test/mxc_i2c_test/mxc_i2c_test_samsung_cam.c
+--- misc.orig/test/mxc_i2c_test/mxc_i2c_test_samsung_cam.c	2007-01-12 15:14:47.000000000 -0700
++++ misc/test/mxc_i2c_test/mxc_i2c_test_samsung_cam.c	1969-12-31 17:00:00.000000000 -0700
+@@ -1,86 +0,0 @@
+-/*
+- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+- */
+-
+-/*
+- * The code contained herein is licensed under the GNU General Public
+- * License. You may obtain a copy of the GNU General Public License
+- * Version 2 or later at the following locations:
+- *
+- * http://www.opensource.org/licenses/gpl-license.html
+- * http://www.gnu.org/copyleft/gpl.html
+- */
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <sys/ioctl.h>
+-#include <unistd.h>
+-#include <fcntl.h>
+-#include "mxc_test.h"
+-
+-int main(int argc, char **argv)
+-{
+-        mxc_i2c_test i2c_test;
+-        int i2c_file;
+-        char reg[1];
+-        char buf[2];
+-        int fail = 0;
+-
+-	printf("Test: I2C!\n");
+-
+-        i2c_file = open("/dev/mxc_test", O_RDWR);
+-        if (i2c_file < 0) {
+-                printf("Open failed\n");
+-                exit(-1);
+-        }
+-
+-        /* Enable the CSI clock */
+-        ioctl(i2c_file, MXCTEST_I2C_CSICLKENB, &i2c_test);
+-
+-        i2c_test.bus = 0;         
+-        i2c_test.slave_addr = 0x2d; // Camera slave address
+-
+-        printf("Slave address=%x\n", i2c_test.slave_addr);
+-        
+-        /* Change to CIS register map page 02 */
+-        reg[0] = 0xEC;
+-        buf[0] = 0x2; 
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        i2c_test.buf = buf;
+-        i2c_test.buf_size = 1;
+-        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]);
+-        ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
+-
+-        /* Write the min H-Blank */
+-        reg[0] = 0x1E;
+-        buf[0] = 142; 
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        i2c_test.buf = buf;
+-        i2c_test.buf_size = 1;
+-        printf("Write Data=%d to reg=%x\n", buf[0], reg[0]);
+-        ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
+-
+-        buf[0] = 0;
+-        i2c_test.buf = buf;
+-        ioctl(i2c_file, MXCTEST_I2C_READ, &i2c_test);
+-        if ((i2c_test.buf[0] & 0xFF) != 142) {
+-                fail = 1;
+-        }
+-        printf("Data read=%d from reg=%x\n", buf[0], reg[0]);
+-
+-        if (fail == 1) {
+-                printf("\nI2C TEST FAILED\n\n");
+-        } else {
+-                printf("\nI2C TEST PASSED\n\n");
+-        }
+-        
+-        /* Disable the CSI clock */
+-        ioctl(i2c_file, MXCTEST_I2C_CSICLKDIS, &i2c_test);
+-
+-        close(i2c_file);
+-
+-	return 0;
+-}
+diff -uNpr misc.orig/test/mxc_i2c_test/mxc_i2c_test_usb.c misc/test/mxc_i2c_test/mxc_i2c_test_usb.c
+--- misc.orig/test/mxc_i2c_test/mxc_i2c_test_usb.c	2007-01-12 15:14:47.000000000 -0700
++++ misc/test/mxc_i2c_test/mxc_i2c_test_usb.c	1969-12-31 17:00:00.000000000 -0700
+@@ -1,123 +0,0 @@
+-/*
+- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+- */
+-
+-/*
+- * The code contained herein is licensed under the GNU General Public
+- * License. You may obtain a copy of the GNU General Public License
+- * Version 2 or later at the following locations:
+- *
+- * http://www.opensource.org/licenses/gpl-license.html
+- * http://www.gnu.org/copyleft/gpl.html
+- */
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <sys/ioctl.h>
+-#include <unistd.h>
+-#include <fcntl.h>
+-#include "mxc_test.h"
+-
+-int main(int argc, char **argv)
+-{
+-        mxc_i2c_test i2c_test;
+-        int i2c_file;
+-        char reg[1];
+-        char buf[1];
+-        int fail = 0;
+-
+-	printf("Test: I2C!\n");
+-
+-        i2c_file = open("/dev/mxc_test", O_RDWR);
+-        if (i2c_file < 0) {
+-                printf("Open failed\n");
+-                exit(-1);
+-        }
+-
+-        i2c_test.bus = 0;         
+-        i2c_test.slave_addr = 0x2d; //USB Slave Address
+-        
+-        printf("Slave address=%x\n", i2c_test.slave_addr);
+-      
+-        reg[0] = 0x6;
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        buf[0] = 0x20;
+-        i2c_test.buf = (char *)&buf;
+-        i2c_test.buf_size = 1;
+-        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]); 
+-        ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
+-
+-        reg[0] = 0x4;
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        buf[0] = 0x4;
+-        i2c_test.buf = (char *)&buf;
+-        i2c_test.buf_size = 1;
+-        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]); 
+-        ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
+-        
+-        reg[0] = 0x13;
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        buf[0] = 0x4;
+-        i2c_test.buf = (char *)&buf;
+-        i2c_test.buf_size = 1;
+-        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]); 
+-        ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
+-        
+-        reg[0] = 0x12;
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        buf[0] = 0x2;
+-        i2c_test.buf = (char *)&buf;
+-        i2c_test.buf_size = 1;
+-        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]); 
+-        ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
+-
+-        reg[0] = 0x6;
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        buf[0] = 0;
+-        i2c_test.buf = buf;
+-        i2c_test.buf_size = 1;
+-        ioctl(i2c_file, MXCTEST_I2C_READ, &i2c_test);
+-        if ((i2c_test.buf[0] & 0x20) != 0x20) {
+-                fail = 1;
+-        }
+-        printf("Data read=%x from reg=%x\n", buf[0], reg[0]);
+-
+-        reg[0] = 0x4;
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        buf[0] = 0;
+-        i2c_test.buf = buf;
+-        i2c_test.buf_size = 1;
+-        ioctl(i2c_file, MXCTEST_I2C_READ, &i2c_test);
+-        if ((i2c_test.buf[0] & 0x4) != 0x4) {
+-                fail = 1;
+-        }
+-        printf("Data read=%x from reg=%x\n", buf[0], reg[0]);
+-
+-        reg[0] = 0x13;
+-        i2c_test.reg = reg;
+-        i2c_test.reg_size = 1;
+-        buf[0] = 0;
+-        i2c_test.buf = buf;
+-        i2c_test.buf_size = 1;
+-        ioctl(i2c_file, MXCTEST_I2C_READ, &i2c_test);
+-        if ((i2c_test.buf[0] & 0x2)!= 0x2) {
+-                fail = 1;
+-        }
+-        printf("Data read=%x from reg=%x\n", buf[0], reg[0]);
+-
+-        if (fail == 1) {
+-                printf("\nI2C TEST FAILED\n\n");
+-        } else {
+-                printf("\nI2C TEST PASSED\n\n");
+-        }
+-
+-        close(i2c_file);
+-	return 0;
+-}

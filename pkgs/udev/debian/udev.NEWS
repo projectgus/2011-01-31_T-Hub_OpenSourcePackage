@@ -1,0 +1,80 @@
+udev (0.090-1) unstable; urgency=low
+
+  Starting with this release the z45_persistent-net-generator.rules rules
+  file is installed by default.
+  For every new network interface detected it will use the write_net_rules
+  program to write to the z25_persistent-net.rules rules file a rule to
+  make the interface name persistent across reboots.
+
+ -- Marco d'Itri <md@linux.it>  Wed, 19 Apr 2006 20:26:25 +0200
+
+udev (0.088-1) unstable; urgency=medium
+
+  The %e parameter is deprecated. The cd-aliases.rules file should be
+  replaced with custom rules or with the cd-aliases-generator.rules file,
+  which will automatically create rules for the /dev/cdrom* aliases.
+  
+ -- Marco d'Itri <md@linux.it>  Sun, 26 Mar 2006 13:40:29 +0200
+
+udev (0.072-2) unstable; urgency=medium
+
+  All files in /etc/udev/scripts/ and /lib/hotplug/ and some files
+  in /sbin/ have been moved to /lib/udev/.
+  Do not forget to update custom rules, if you have any.
+
+ -- Marco d'Itri <md@linux.it>  Sat,  5 Nov 2005 20:43:26 +0100
+
+udev (0.070-3) unstable; urgency=low
+
+  * hotplug and coldplug support has been merged in the udev package, which
+    will load all the drivers needed as the beginning of the boot process
+    and handle hotplug events later.
+    The hotplug package has been disabled and should be manually purged.
+
+    This makes the following configuration files obsolete:
+    + /etc/hotplug/*.rc and *.agent: the old hotplug files are not used
+      anymore. udev rules may be used to selectively disable coldplugging.
+    + /etc/hotplug/usb/*.usermap: must be replaced by udev rules.
+    + /etc/hotplug/blacklist*: should be replaced by modprobe configuration
+      directives (but now /etc/hotplug/blacklist.d/ will be processed by
+      modprobe).
+
+  * Because all modules will be loaded erliear hotplug scripts must use
+    only files not in /usr or wait for /usr to be mounted.
+    Firmwares must be moved to /lib/firmware/.
+
+  * udevsynthesize does not guarantee anymore the loading order of modules,
+    so if you have multiple CD readers, network cards, sound cards, etc
+    they may change their name after a reboot until a solution to provide
+    persistent naming will be implemented.
+
+ -- Marco d'Itri <md@linux.it>  Sun,  9 Oct 2005 17:12:54 +0200
+
+udev (0.062-3) unstable; urgency=low
+
+  * Kernels older than 2.6.12 are not supported anymore.
+    If detected, the package will refuse to be installed or upgraded.
+    If the running kernel is downgraded after the package has been
+    installed udev will disable itself at boot time.
+
+ -- Marco d'Itri <md@linux.it>  Sun, 10 Jul 2005 15:02:43 +0200
+
+udev (0.060-1) unstable; urgency=low
+
+  * Kernels older than 2.6.12 are not fully supported anymore, and if
+    used will cause a little delay in the processing of some events.
+    udev users are advised to update to 2.6.12 as soon as possible.
+  * Starting with this release udev will always be used as the hotplug
+    multiplexer even with kernels older than 2.6.10. Using udev with
+    these old kernels will break firmware loading for some drivers.
+  * All rules are applied now, but only the first matching NAME attribute
+    will be considered. It may be needed to add OPTIONS="last_rule" to
+    custom rules to restore the precedent behavior.
+  * The rules keys now support more operations, as documented in the
+    man page. Rules which previously used "=" to add a value to a
+    list-like variable should be changed to use "+=".
+  * Support for /etc/dev.d/ and /etc/hotplug.d/ multiplexing has been
+    removed from udev. Compatibility support is provided by some helper
+    programs started by RUN rules in hotplugd.rules.
+
+ -- Marco d'Itri <md@linux.it>  Wed, 22 Jun 2005 21:42:22 +0200

@@ -1,0 +1,24 @@
+Fri Sep 2 2005 Stuart Hughes <stuarth@freescale.com>
+
+This fixes a build failure for uclibc/powerpc.  There is no va_copy
+in the toolchain used and the original fallback of a = b is not 
+valid.  The memcpy should work, but has not been test.
+
+diff --exclude CVS -uNr rsync-2.6.5/lib/dummy rsync-2.6.5.modified/lib/dummy
+--- rsync-2.6.5/lib/dummy	1969-12-31 18:00:00.000000000 -0600
++++ rsync-2.6.5.modified/lib/dummy	2005-09-02 10:09:35.000000000 -0500
+@@ -0,0 +1,2 @@
++This is a dummy file to ensure that the lib directory gets created
++by configure when a VPATH is used.
+diff --exclude CVS -uNr rsync-2.6.5/lib/snprintf.c rsync-2.6.5.modified/lib/snprintf.c
+--- rsync-2.6.5/lib/snprintf.c	2005-02-21 11:02:53.000000000 -0600
++++ rsync-2.6.5.modified/lib/snprintf.c	2005-09-02 10:05:44.000000000 -0500
+@@ -152,7 +152,7 @@
+ #ifdef HAVE___VA_COPY
+ #define VA_COPY(dest, src) __va_copy(dest, src)
+ #else
+-#define VA_COPY(dest, src) (dest) = (src)
++#define VA_COPY(dest, src) memcpy(dest, src, sizeof(src))
+ #endif
+ #endif
+ 

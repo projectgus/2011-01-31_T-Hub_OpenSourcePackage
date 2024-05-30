@@ -1,0 +1,70 @@
+#
+# Please examine and set the values according to your needs.
+# The comment out values have good defaults.  If you want 
+# to override them, uncomment and set your value.
+#
+# You can copy this to your home directory to apply these values
+# to other instances of this utility (becomes global for your user)
+#
+
+# The location of the built root filesystem, this also doubles up as
+# the storage area for all interface libraries/headers (dev_image means
+# development image directory).
+#%dev_image
+
+# The directory where rpms will be built
+#%rpmdir
+
+# The directory containing the rpm database
+#%rpmdb
+
+# The directory containing scripts that spoof the compiler
+#%spoof_path
+
+# The directory containing scripts/binaries called from the main script
+#%bin_path
+
+# The compiler to use for building executables to run on the build machine
+#%buildcc
+#/usr/bin/gcc -B/usr/bin/
+
+# Local directories, these are searched before the Local Package Pool
+# for files.  This can be a whitespace separated list (including new-lines) 
+%ldirs
+/var/tmp/pkgs
+
+# The Local Package Pool, the global storage area for downloaded source code
+%lpp
+/opt/freescale/pkgs
+
+# The URL of the GPP (Global Package Pool) master code repository
+%gpp_url
+http://bitshrine.org/gpp/
+
+# The URL of the PPP (Private Package Pool) private code repository
+%ppp_url
+http://auslxsc01.mtwk.freescale.net/ppp/
+
+# The HTTP proxy for internet access
+# example: http://USER:PASSWORD@somehost.dom.net:PORT
+#http://wwwgate0.freescale.net:1080
+#http://10.214.66.200:1080
+%http_proxy
+#http://10.214.66.200:1080
+
+# The FTP proxy for internet access
+%ftp_proxy
+#http://USER:PASSWORD@ftpgate0.freescale.net:1080
+
+# Indicates whether we are using proxies, valid values are: 1 : 0
+%proxy
+0
+
+# use this to bypass proxy testing (set to 1)
+%bypass_network_tests
+0
+
+# distcc
+#%DISTCC_HOSTS
+#localhost @virginia:/opt/freescale/ltib/usr/bin/distccd
+

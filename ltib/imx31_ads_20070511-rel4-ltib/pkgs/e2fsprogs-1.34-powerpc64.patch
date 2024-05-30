@@ -1,0 +1,32 @@
+Steve Papacharalambous <stevep@freescale.com> 10 October 2006
+
+Patch to fix powerpc64 build errors.
+Patch ported from:
+http://svn.exactcode.de/t2/trunk/package/filesystem/e2fsprogs/powerpc64.patch
+
+diff --exclude CVS -uNr e2fsprogs-1.34/lib/blkid/blkid_types.h.in e2fsprogs-1.34.modified/lib/blkid/blkid_types.h.in
+--- e2fsprogs-1.34/lib/blkid/blkid_types.h.in	Tue Jun 24 23:10:46 2003
++++ e2fsprogs-1.34.modified/lib/blkid/blkid_types.h.in	Tue Oct 10 11:20:35 2006
+@@ -4,7 +4,8 @@
+  * also defined the types that we need.
+  */
+ #if (!defined(_LINUX_TYPES_H) && !defined(_BLKID_TYPES_H) && \
+-	!defined(_UUID_TYPES) && !defined(_EXT2_TYPES_H))
++	!defined(_UUID_TYPES) && !defined(_EXT2_TYPES_H)) && \
++	!defined(_PPC64_TYPES_H)
+ #define _BLKID_TYPES_H
+ 
+ typedef unsigned char __u8;
+diff --exclude CVS -uNr e2fsprogs-1.34/lib/ext2fs/ext2_types.h.in e2fsprogs-1.34.modified/lib/ext2fs/ext2_types.h.in
+--- e2fsprogs-1.34/lib/ext2fs/ext2_types.h.in	Sun Jul  6 05:36:47 2003
++++ e2fsprogs-1.34.modified/lib/ext2fs/ext2_types.h.in	Tue Oct 10 11:20:39 2006
+@@ -4,7 +4,8 @@
+  * also defined the types that we need.
+  */
+ #if (!defined(_LINUX_TYPES_H) && !defined(_BLKID_TYPES_H) && \
+-	!defined(_UUID_TYPES) && !defined(_EXT2_TYPES_H))
++	!defined(_UUID_TYPES) && !defined(_EXT2_TYPES_H)) && \
++	!defined(_PPC64_TYPES_H)
+ #define _EXT2_TYPES_H
+ 
+ typedef unsigned char __u8;

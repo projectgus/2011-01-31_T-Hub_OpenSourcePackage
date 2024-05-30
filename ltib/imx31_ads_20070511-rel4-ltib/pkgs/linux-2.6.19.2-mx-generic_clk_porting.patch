@@ -1,0 +1,348 @@
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/dpm.c linux-2.6.19.2/arch/arm/mach-mx27/dpm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/dpm.c	2007-04-30 16:16:17.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/dpm.c	2007-04-30 16:13:52.000000000 -0600
+@@ -57,6 +57,10 @@ static unsigned saved_cpu_freq;
+ static unsigned long saved_loops_per_jiffy;
+ static unsigned int curr_mode = DPM_MODE_RUN;
+ 
++static struct clk *cpu_clk;
++static struct clk *ahb_clk;
++static struct clk *ipg_clk;
++
+ extern void (*pm_idle) (void);
+ 
+ static int mxc_dpm_set_opt(struct dpm_opt *cur, struct dpm_opt *new)
+@@ -223,9 +227,9 @@ static int mxc_dpm_get_opt(struct dpm_op
+ 
+ 	md_opt = &opt->md_opt;
+ 
+-	md_opt->cpu = clk_get(NULL, "cpu_clk")->rate;
+-	md_opt->ahb = clk_get(NULL, "ahb_clk")->rate;
+-	md_opt->ip = clk_get(NULL, "ipg_clk")->rate;
++	md_opt->cpu = clk_get_rate(cpu_clk);
++	md_opt->ahb = clk_get_rate(ahb_clk);
++	md_opt->ip = clk_get_rate(ipg_clk);
+ 	md_opt->mode = curr_mode;
+ 
+ 	return 0;
+@@ -379,7 +383,7 @@ static void mxc_dpm_startup(void)
+ {
+ 	if (!saved_loops_per_jiffy) {
+ 		saved_loops_per_jiffy = loops_per_jiffy;
+-		saved_cpu_freq = clk_get(NULL, "cpu_clk")->rate / 1000;
++		saved_cpu_freq = clk_get_rate(cpu_clk) / 1000;
+ 	}
+ 	orig_idle = pm_idle;
+ 	pm_idle = dpm_idle;
+@@ -394,6 +398,10 @@ static int __init mxc_dpm_init(void)
+ {
+ 	printk(KERN_INFO "Freescale i.MX27 Dynamic Power Management.\n");
+ 
++	cpu_clk = clk_get(NULL, "cpu_clk");
++	ahb_clk = clk_get(NULL, "ahb_clk");
++	ipg_clk = clk_get(NULL, "ipg_clk");
++
+ 	dpm_md.init_opt = mxc_dpm_init_opt;
+ 	dpm_md.set_opt = mxc_dpm_set_opt;
+ 	dpm_md.get_opt = mxc_dpm_get_opt;
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads_gpio.c linux-2.6.19.2/arch/arm/mach-mx27/mx27ads_gpio.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads_gpio.c	2007-04-30 16:16:17.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mx27ads_gpio.c	2007-04-30 16:13:52.000000000 -0600
+@@ -14,7 +14,6 @@
+ #include <linux/errno.h>
+ #include <linux/module.h>
+ #include <linux/device.h>
+-#include <linux/clk.h>
+ #include <asm/io.h>
+ #include <asm/hardware.h>
+ #include <asm/arch/gpio.h>
+@@ -687,8 +686,6 @@ void gpio_keypad_inactive(void)
+  */
+ void gpio_ata_active(void)
+ {
+-	struct clk *ata_clk = clk_get(NULL, "ata_clk");
+-
+ 	gpio_request_mux(MX27_PIN_ATA_DATA0, GPIO_MUX_PRIMARY);
+ 	gpio_request_mux(MX27_PIN_ATA_DATA1, GPIO_MUX_PRIMARY);
+ 	gpio_request_mux(MX27_PIN_ATA_DATA2, GPIO_MUX_PRIMARY);
+@@ -719,8 +716,6 @@ void gpio_ata_active(void)
+ 	gpio_request_mux(MX27_PIN_IOIS16, GPIO_MUX_ALT);
+ 	gpio_request_mux(MX27_PIN_PC_RW_B, GPIO_MUX_ALT);
+ 	gpio_request_mux(MX27_PIN_PC_POE, GPIO_MUX_ALT);
+-
+-	clk_enable(ata_clk);
+ }
+ 
+ /*!
+@@ -729,11 +724,6 @@ void gpio_ata_active(void)
+  */
+ void gpio_ata_inactive(void)
+ {
+-	struct clk *ata_clk = clk_get(NULL, "ata_clk");
+-
+-	clk_disable(ata_clk);
+-	clk_put(ata_clk);
+-
+ 	gpio_free_mux(MX27_PIN_ATA_DATA0);
+ 	gpio_free_mux(MX27_PIN_ATA_DATA1);
+ 	gpio_free_mux(MX27_PIN_ATA_DATA2);
+@@ -1134,20 +1124,13 @@ void gpio_owire_inactive(void)
+ 
+ void gpio_irda_active(void)
+ {
+-	struct clk *uart2_baud = clk_get(NULL, "uart_baud.1");
+-
+ 	gpio_uart_active(2, 0);
+-	clk_enable(uart2_baud);
+ 	/* Band width select */
+ 	//__raw_writew(PBC_BCTRL2_IRDA_SD, PBC_BCTRL2_SET_REG);
+ }
+ 
+ void gpio_irda_inactive(void)
+ {
+-	struct clk *uart2_baud = clk_get(NULL, "uart_baud.1");
+-
+-	clk_disable(uart2_baud);
+-	clk_put(uart2_baud);
+ 	gpio_uart_inactive(2, 0);
+ }
+ 
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/dpm.c linux-2.6.19.2/arch/arm/mach-mx3/dpm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/dpm.c	2007-04-30 16:16:17.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/dpm.c	2007-04-30 16:13:52.000000000 -0600
+@@ -56,6 +56,10 @@ static unsigned saved_cpu_freq;
+ static unsigned long saved_loops_per_jiffy;
+ static unsigned int curr_mode = DPM_MODE_RUN;
+ 
++static struct clk *cpu_clk;
++static struct clk *ahb_clk;
++static struct clk *ipg_clk;
++
+ extern void (*pm_idle) (void);
+ 
+ static int mxc_dpm_set_opt(struct dpm_opt *cur, struct dpm_opt *new)
+@@ -219,10 +223,9 @@ static int mxc_dpm_get_opt(struct dpm_op
+ 	struct dpm_md_opt *md_opt;
+ 
+ 	md_opt = &opt->md_opt;
+-
+-	md_opt->cpu = mxc_get_clocks(CPU_CLK);
+-	md_opt->ahb = mxc_get_clocks(AHB_CLK);
+-	md_opt->ip = mxc_get_clocks(IPG_CLK);
++	md_opt->cpu = clk_get_rate(cpu_clk);
++	md_opt->ahb = clk_get_rate(ahb_clk);
++	md_opt->ip = clk_get_rate(ipg_clk);
+ 	md_opt->mode = curr_mode;
+ 
+ 	return 0;
+@@ -374,12 +377,9 @@ static void mxc_dpm_idle(void)
+ 
+ static void mxc_dpm_startup(void)
+ {
+-	struct clk *clk;
+-
+ 	if (!saved_loops_per_jiffy) {
+ 		saved_loops_per_jiffy = loops_per_jiffy;
+-		clk = clk_get(NULL, "cpu_clk");
+-		saved_cpu_freq = clk_get_rate(clk) / 1000;
++		saved_cpu_freq = clk_get_rate(cpu_clk) / 1000;
+ 	}
+ 	orig_idle = pm_idle;
+ 	pm_idle = dpm_idle;
+@@ -394,6 +394,10 @@ static int __init mxc_dpm_init(void)
+ {
+ 	printk(KERN_INFO "Freescale i.MX31 Dynamic Power Management.\n");
+ 
++	cpu_clk = clk_get(NULL, "cpu_clk");
++	ahb_clk = clk_get(NULL, "ahb_clk");
++	ipg_clk = clk_get(NULL, "ipg_clk");
++
+ 	dpm_md.init_opt = mxc_dpm_init_opt;
+ 	dpm_md.set_opt = mxc_dpm_set_opt;
+ 	dpm_md.get_opt = mxc_dpm_get_opt;
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/dvfs.c linux-2.6.19.2/arch/arm/mach-mx3/dvfs.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/dvfs.c	2007-04-30 16:16:17.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/dvfs.c	2007-04-30 16:13:52.000000000 -0600
+@@ -116,6 +116,11 @@ pmcr0 = ((pmcr0 & ~MXC_CCM_PMCR0_VSCNT_M
+ 
+ dvfs_states_table *dvfs_states_tbl;
+ 
++static struct clk *pll_clk;
++static struct clk *cpu_clk;
++static struct clk *ckih_clk;
++static struct clk *ckil_clk;
++
+ /*!
+  * The dvfs_dptc_params structure holds all the internal DPTC driver parameters
+  * (current working point, current frequency, translation table and DPTC
+@@ -401,16 +406,11 @@ unsigned long dvfs_get_clock(unsigned lo
+ 	unsigned long pll, ret_val = 0;
+ 	signed long mcu_pdf;
+ 	signed long pdf, mfd, mfi, mfn, ref_clk;
+-	struct clk *pll_clk;
+-	struct clk *parent_clk;
+ 
+-	pll_clk = clk_get(NULL, "mcu_pll");
+-	parent_clk = clk_get(NULL, "ckih");
+-	if (parent_clk == clk_get_parent(pll_clk)) {
+-		ref_clk = clk_get_rate(parent_clk);
++	if (ckih_clk == clk_get_parent(pll_clk)) {
++		ref_clk = clk_get_rate(ckih_clk);
+ 	} else {		/* parent is ckil/fpm */
+-		parent_clk = clk_get(NULL, "ckil");
+-		ref_clk = clk_get_rate(parent_clk) * 1024;
++		ref_clk = clk_get_rate(ckil_clk) * 1024;
+ 	}
+ 
+ 	pdf = (signed long)
+@@ -451,6 +451,11 @@ int __init init_dvfs_controller(dvfs_dpt
+ 	int i;
+ 	int res = 0;
+ 
++	pll_clk = clk_get(NULL, "mcu_pll");
++	cpu_clk = clk_get(NULL, "cpu_pll");
++	ckih_clk = clk_get(NULL, "ckih");
++	ckil_clk = clk_get(NULL, "ckil");
++
+ 	/* Configure 2 MC13783 DVFS pins */
+ 	mxc_request_iomux(MX31_PIN_DVFS0, OUTPUTCONFIG_FUNC, INPUTCONFIG_NONE);
+ 	mxc_request_iomux(MX31_PIN_DVFS1, OUTPUTCONFIG_FUNC, INPUTCONFIG_NONE);
+@@ -757,8 +762,9 @@ void set_freq(dvfs_dptc_params_s * param
+ 	}
+ 
+ 	pr_debug(KERN_INFO "ARM frequency: %dMHz CKIH frequency: %dMHz(%d)\n",
+-		 (int)mxc_get_clocks(CPU_CLK) / 1000000,
+-		 (int)mxc_get_clocks(CKIH_CLK) / 1000000, (int)jiffies);
++		 (int)clk_get_rate(cpu_clk) / 1000000,
++		 (int)clk_get_rate(ckih_clk) / 1000000, 
++		 (int)jiffies);
+ }
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/mx31ads_gpio.c linux-2.6.19.2/arch/arm/mach-mx3/mx31ads_gpio.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/mx31ads_gpio.c	2007-04-30 16:16:17.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/mx31ads_gpio.c	2007-04-30 16:13:52.000000000 -0600
+@@ -15,7 +15,6 @@
+ #include <linux/module.h>
+ #include <linux/platform_device.h>
+ #include <linux/delay.h>
+-#include <linux/clk.h>
+ #include <asm/io.h>
+ #include <asm/hardware.h>
+ #include <asm/arch/gpio.h>
+@@ -990,8 +989,6 @@ EXPORT_SYMBOL(gpio_sensor_inactive);
+  */
+ void gpio_ata_active(void)
+ {
+-	struct clk *ata_clk;
+-
+ 	/*
+ 	 * Configure the GPR for ATA group B signals
+ 	 */
+@@ -1070,10 +1067,6 @@ void gpio_ata_active(void)
+ 	 */
+ 	mxc_iomux_set_pad(MX31_PIN_USBH2_STP, PAD_CTL_PKE_NONE);	// ATA_DMARQ
+ 	mxc_iomux_set_pad(MX31_PIN_USBH2_CLK, PAD_CTL_PKE_NONE);	// ATA_INTRQ
+-
+-	printk(KERN_DEBUG "gpio_ata_active: Enable clocks\n");
+-	ata_clk = clk_get(NULL, "ata_clk.0");
+-	clk_enable(ata_clk);
+ }
+ 
+ EXPORT_SYMBOL(gpio_ata_active);
+@@ -1084,12 +1077,6 @@ EXPORT_SYMBOL(gpio_ata_active);
+  */
+ void gpio_ata_inactive(void)
+ {
+-	struct clk *ata_clk = clk_get(NULL, "ata_clk.0");
+-
+-	printk(KERN_DEBUG "gpio_ata_inactive: Disable clocks\n");
+-	clk_disable(ata_clk);
+-	clk_put(ata_clk);
+-
+ 	/*
+ 	 * Turn off ATA group B signals
+ 	 */
+diff -uNpr linux-2.6.19.2.orig/drivers/ide/arm/mxc_ide.c linux-2.6.19.2/drivers/ide/arm/mxc_ide.c
+--- linux-2.6.19.2.orig/drivers/ide/arm/mxc_ide.c	2007-04-30 16:16:16.000000000 -0600
++++ linux-2.6.19.2/drivers/ide/arm/mxc_ide.c	2007-04-30 16:13:52.000000000 -0600
+@@ -1018,7 +1018,7 @@ static int __init mxc_ide_init(void)
+ 	gpio_ata_active();
+ 
+ 	/* Enable the ata clock */
+-	ata_clk = clk_get(NULL, "ata_clk");
++	ata_clk = clk_get(NULL, "ata_clk.0");
+ 	clk_enable(ata_clk);
+ 
+ 	/* Deassert the reset bit to enable the interface */
+diff -uNpr linux-2.6.19.2.orig/drivers/net/irda/mxc_sir.c linux-2.6.19.2/drivers/net/irda/mxc_sir.c
+--- linux-2.6.19.2.orig/drivers/net/irda/mxc_sir.c	2007-04-30 16:16:16.000000000 -0600
++++ linux-2.6.19.2/drivers/net/irda/mxc_sir.c	2007-04-30 16:13:52.000000000 -0600
+@@ -24,6 +24,7 @@
+ #include <linux/init.h>
+ #include <linux/netdevice.h>
+ #include <linux/interrupt.h>
++#include <linux/clk.h>
+ #include <linux/delay.h>
+ #include <linux/platform_device.h>
+ #include <linux/dma-mapping.h>
+@@ -163,10 +164,12 @@ struct mxc_irda {
+ 
+ static int max_rate = 115200;
+ static int uart_ir_mux = 1;
++static struct clk *irda_clk;
++static struct clk *per_clk;
++
+ 
+ extern void gpio_irda_active(void);
+ extern void gpio_irda_inactive(void);
+-extern unsigned int irda_get_clocks(void);
+ 
+ /*
+  * This function is called to set the IrDA communications speed.
+@@ -521,7 +524,7 @@ static struct net_device_stats *mxc_irda
+ static int mxc_irda_startup(struct mxc_irda *si)
+ {
+ 	unsigned int num, denom, baud, ufcr = 0;
+-	unsigned int per_clk;
++	unsigned int per_clk_val;
+ 	unsigned int cr;
+ 	int d = 1;
+ 	int ret;
+@@ -532,18 +535,20 @@ static int mxc_irda_startup(struct mxc_i
+ 
+ 	/* Configure the IOMUX for the UART */
+ 	gpio_irda_active();
+-
+-	per_clk = irda_get_clocks();
+-	mxcirda_debug("per_clk = %d", per_clk);
+-	baud = per_clk / 16;
++	irda_clk = clk_get(NULL, "uart_baud.1");
++        clk_enable(irda_clk);
++	per_clk = clk_get(NULL, "per_clk.0");
++	per_clk_val = clk_get_rate(per_clk);
++	mxcirda_debug("per_clk_val = %d", per_clk_val);
++	baud = per_clk_val / 16;
+ 	if (baud > MAX_UART_BAUDRATE) {
+ 		baud = MAX_UART_BAUDRATE;
+-		d = per_clk / ((baud * 16) + 1000);
++		d = per_clk_val / ((baud * 16) + 1000);
+ 		if (d > 6) {
+ 			d = 6;
+ 		}
+ 	}
+-	si->uartclk = per_clk / d;
++	si->uartclk = per_clk_val / d;
+ 	writel(si->uartclk / 1000, si->uart_base + MXC_UARTONEMS);
+ 
+ 	cr = readl(si->uart_base + MXC_UARTUCR4);
+@@ -613,6 +618,9 @@ static void mxc_irda_shutdown(struct mxc
+ 	cr &= ~MXC_UARTUCR1_UARTEN;
+ 	writel(cr, si->uart_base + MXC_UARTUCR1);
+ 
++	clk_disable(irda_clk);
++	clk_put(irda_clk);
++	clk_put(per_clk);
+ 	gpio_irda_inactive();
+ 	return;
+ }

@@ -1,0 +1,70 @@
+# Modification to the samba configure script so that it builds properly within ltib
+# by: Joe.D'abbraccio@freescale.com on December 5, 2006
+#
+# I consider these patches to be kludgy hacks because of my limited knowledge
+# of the configure scripting language and due to very limited information that
+# exists on the web at this time regarding cross-compiling samba.
+# This patch also adds large file (>2GB) support when used in conjunction with
+# the latest samba.spec file which uses the following configure command:
+# CPPFLAGS="-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE" \
+#   samba_cv_HAVE_EXPLICIT_LARGEFILE_SUPPORT=yes ./configure --prefix=%{_prefix} \
+#   --host=$CFGHOST --build=%{_build} --disable-cups
+#
+diff --exclude CVS -uNr samba-3.0.2a/source/configure samba-3.0.2a.modified/source/configure
+--- samba-3.0.2a/source/configure	2004-02-13 14:57:33.000000000 -0500
++++ samba-3.0.2a.modified/source/configure	2006-01-25 11:51:16.972001800 -0500
+@@ -14363,9 +14363,8 @@
+     *linux*)
+        # glibc <= 2.3.2 has a broken getgrouplist
+        if test "$cross_compiling" = yes; then
+-  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling" >&5
+-echo "$as_me: error: cannot run test program while cross compiling" >&2;}
+-   { (exit 1); exit 1; }; }
++       {
++          echo "default is $linux_getgrouplist_ok"; }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -18836,7 +18835,7 @@
+ else
+ 
+ if test "$cross_compiling" = yes; then
+-  samba_cv_HAVE_GETTIMEOFDAY_TZ=cross
++  samba_cv_HAVE_GETTIMEOFDAY_TZ=yes
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ #line $LINENO "configure"
+@@ -21937,6 +21936,17 @@
+ fi
+ fi
+ 
++# method for setting uid is not determined when cross compiling
++# kludge value for now
++if test $seteuid = no; then
++   if test "$cross_compiling" = yes; then
++      seteuid=yes;
++cat >>confdefs.h <<\_ACEOF
++#define USE_SETREUID 1
++_ACEOF
++   fi
++fi
++
+ 
+ echo "$as_me:$LINENO: checking for working mmap" >&5
+ echo $ECHO_N "checking for working mmap... $ECHO_C" >&6
+@@ -29574,10 +29584,15 @@
+   (exit $ac_status); }; }; then
+   samba_cv_HAVE_EXPLICIT_LARGEFILE_SUPPORT=yes
+ else
++if test "$cross_compiling" = yes; then
++  { echo "$as_me:$LINENO: WARNING: cross-compiling assuming user set samba_cv_HAVE_EXPLICIT_LARGEFILE_SUPPORT" >&5
++echo "$as_me: WARNING: cross-compiling assuming user set samba_cv_HAVE_EXPLICIT_LARGEFILE_SUPPORT" >&2;}
++else
+   echo "$as_me: failed program was:" >&5
+ cat conftest.$ac_ext >&5
+ samba_cv_HAVE_EXPLICIT_LARGEFILE_SUPPORT=no
+ fi
++fi
+ rm -f conftest.$ac_objext conftest.$ac_ext
+ if test x"$samba_cv_HAVE_EXPLICIT_LARGEFILE_SUPPORT" = x"yes"; then
+ 

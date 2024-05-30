@@ -1,0 +1,25 @@
+diff -uNr tinylogin-1.4/install.sh tinylogin-1.4.modified/install.sh
+--- tinylogin-1.4/install.sh	Sun Jun 23 04:09:07 2002
++++ tinylogin-1.4.modified/install.sh	Fri Nov 26 13:17:35 2004
+@@ -2,10 +2,10 @@
+ 
+ if [ `id -u` -ne 0 ]; then
+     echo " ";
+-    echo "Aborting install -- You must be root, otherwise I can't.";
+-    echo "make tinylogin be setuid root, which will cause it to fail.";
++    echo "You should be root, otherwise I can't make tinylogin ";
++    echo "setuid root, which will cause it to fail.";
+     echo " ";
+-    exit 1;
++    sleep 4;
+ fi;
+ 
+ prefix=$1
+@@ -52,6 +52,6 @@
+ 	ln $linkopts $bb_path $prefix$i || exit 1
+ done
+ rm -f $prefix/bin/tinylogin || exit 1
+-install -m 4755 --owner=root --group=root ./tinylogin $prefix/bin/tinylogin || exit 1
++install -m 4755 --owner=root --group=root ./tinylogin $prefix/bin/tinylogin
+ 
+ exit 0

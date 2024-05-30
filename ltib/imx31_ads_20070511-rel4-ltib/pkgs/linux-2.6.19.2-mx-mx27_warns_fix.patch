@@ -1,0 +1,47 @@
+Bug #454. Fix kernel compiler warnings for mx27 default config build.
+diff -uNpr linux-2.6.19.2/arch/arm/mach-mx27/time.c linux-2.6.19.2-mx/arch/arm/mach-mx27/time.c
+--- linux-2.6.19.2/arch/arm/mach-mx27/time.c	2007-02-10 10:13:33.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mach-mx27/time.c	2007-02-10 10:22:38.000000000 -0700
+@@ -85,6 +85,7 @@ static irqreturn_t mxc_timer_interrupt(i
+ 	return IRQ_HANDLED;
+ }
+ 
++#ifndef CONFIG_GENERIC_TIME
+ /*!
+  * This function is used to obtain the number of microseconds since the last
+  * timer interrupt. Note that interrupts is disabled by do_gettimeofday().
+@@ -113,6 +114,7 @@ static unsigned long __noinstrument mxc_
+ 
+ 	return usec;
+ }
++#endif /* CONFIG_GENERIC_TIME */
+ 
+ cycle_t mx27_hrt_get_cycles(void)
+ {
+diff -uNpr linux-2.6.19.2/drivers/net/fec.c linux-2.6.19.2-mx/drivers/net/fec.c
+--- linux-2.6.19.2/drivers/net/fec.c	2007-02-10 10:13:33.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/net/fec.c	2007-02-10 10:13:46.000000000 -0700
+@@ -699,7 +699,7 @@ while (!((status = bdp->cbd_sc) & BD_ENE
+ 			eth_copy_and_sum(skb, (unsigned char *)data, 
+ 					pkt_len-4, 0);
+ 		} else {
+-			struct skb_buff * pskb = fep->rx_skbuff[rx_index];
++			struct sk_buff *pskb = fep->rx_skbuff[rx_index];
+ 			
+ 			fep->rx_skbuff[rx_index] = skb;
+ 			skb->data = FEC_ADDR_ALIGNMENT(skb->data);
+diff -uNpr linux-2.6.19.2/drivers/video/mxc/fs453.c linux-2.6.19.2-mx/drivers/video/mxc/fs453.c
+--- linux-2.6.19.2/drivers/video/mxc/fs453.c	2007-02-10 10:13:33.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/video/mxc/fs453.c	2007-02-10 10:21:16.000000000 -0700
+@@ -480,11 +480,8 @@ int fs453_ioctl(unsigned int cmd, void *
+  */
+ static int __init fs453_init(void)
+ {
+-	int err;
+-
+ 	pr_info("FS453/4 driver, (c) 2005 Freescale Semiconductor, Inc.\n");
+ 
+-
+ 	return 0;
+ }
+ 

@@ -1,0 +1,34 @@
+<plugin>
+  <name>realmedia</name>
+  <description>RealMedia demuxer and depayloader</description>
+  <filename>../../gst/realmedia/.libs/libgstrmdemux.so</filename>
+  <basename>libgstrmdemux.so</basename>
+  <version>0.10.6</version>
+  <license>LGPL</license>
+  <source>gst-plugins-ugly</source>
+  <package>GStreamer Ugly Plug-ins source release</package>
+  <origin>Unknown package origin</origin>
+  <elements>
+    <element>
+      <name>rademux</name>
+      <longname>RealAudio Demuxer</longname>
+      <class>Codec/Demuxer</class>
+      <description>Demultiplex a RealAudio file</description>
+      <author>Tim-Philipp Müller &lt;tim centricular net&gt;</author>
+    </element>
+    <element>
+      <name>rdtdepay</name>
+      <longname>RDT packet parser</longname>
+      <class>Codec/Depayloader/Network</class>
+      <description>Extracts RealMedia from RDT packets</description>
+      <author>Lutz Mueller &lt;lutz at topfrose dot de&gt;, Wim Taymans &lt;wim@fluendo.com&gt;</author>
+    </element>
+    <element>
+      <name>rmdemux</name>
+      <longname>RealMedia Demuxer</longname>
+      <class>Codec/Demuxer</class>
+      <description>Demultiplex a RealMedia file into audio and video streams</description>
+      <author>David Schleef &lt;ds@schleef.org&gt;</author>
+    </element>
+  </elements>
+</plugin>

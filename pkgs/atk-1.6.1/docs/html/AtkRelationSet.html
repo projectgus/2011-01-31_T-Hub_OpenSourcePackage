@@ -1,0 +1,112 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkRelationSet</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkRelation.html" title="AtkRelation"><link rel="next" href="AtkSelection.html" title="AtkSelection"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkRelation.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkSelection.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkRelationSet"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkRelationSet</h2><p>AtkRelationSet &#8212; A set of AtkRelations, normally the set of AtkRelations which an AtkObject has.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id286220"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkRelationSet.html#AtkRelationSet-struct">AtkRelationSet</a>;
+<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a>* <a href="AtkRelationSet.html#atk-relation-set-new">atk_relation_set_new</a>        (void);
+gboolean    <a href="AtkRelationSet.html#atk-relation-set-contains">atk_relation_set_contains</a>       (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set,
+                                             <a href="AtkRelation.html#AtkRelationType">AtkRelationType</a> relationship);
+void        <a href="AtkRelationSet.html#atk-relation-set-remove">atk_relation_set_remove</a>         (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set,
+                                             <a href="AtkRelation.html" title="AtkRelation">AtkRelation</a> *relation);
+void        <a href="AtkRelationSet.html#atk-relation-set-add">atk_relation_set_add</a>            (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set,
+                                             <a href="AtkRelation.html" title="AtkRelation">AtkRelation</a> *relation);
+gint        <a href="AtkRelationSet.html#atk-relation-set-get-n-relations">atk_relation_set_get_n_relations</a>
+                                            (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set);
+<a href="AtkRelation.html" title="AtkRelation">AtkRelation</a>* <a href="AtkRelationSet.html#atk-relation-set-get-relation">atk_relation_set_get_relation</a>  (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set,
+                                             gint i);
+<a href="AtkRelation.html" title="AtkRelation">AtkRelation</a>* <a href="AtkRelationSet.html#atk-relation-set-get-relation-by-type">atk_relation_set_get_relation_by_type</a>
+                                            (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set,
+                                             <a href="AtkRelation.html#AtkRelationType">AtkRelationType</a> relationship);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GObject
+   +----AtkRelationSet
+</pre></div><div class="refsect1"><h2>Description</h2><p>
+
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkRelationSet-struct"></a>struct AtkRelationSet</h3><a class="indexterm" name="id287807"></a><pre class="programlisting">struct AtkRelationSet;</pre><p>
+The AtkRelationSet structure should not be accessed directly.
+
+</p></div><hr><div class="refsect2"><h3><a name="atk-relation-set-new"></a>atk_relation_set_new ()</h3><a class="indexterm" name="id287833"></a><pre class="programlisting"><a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a>* atk_relation_set_new        (void);</pre><p>
+Creates a new empty relation set.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a new <a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> 
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-relation-set-contains"></a>atk_relation_set_contains ()</h3><a class="indexterm" name="id287914"></a><pre class="programlisting">gboolean    atk_relation_set_contains       (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set,
+                                             <a href="AtkRelation.html#AtkRelationType">AtkRelationType</a> relationship);</pre><p>
+Determines whether the relation set contains a relation that matches the
+specified type.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>set</tt></i> :</span></td><td> an <a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a>
+</td></tr><tr><td><span class="term"><i><tt>relationship</tt></i> :</span></td><td> an <a href="AtkRelation.html#AtkRelationType">AtkRelationType</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> <tt>TRUE</tt> if <i><tt>relationship</tt></i> is the relationship type of a relation
+in <i><tt>set</tt></i>, <tt>FALSE</tt> otherwise
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-relation-set-remove"></a>atk_relation_set_remove ()</h3><a class="indexterm" name="id288092"></a><pre class="programlisting">void        atk_relation_set_remove         (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set,
+                                             <a href="AtkRelation.html" title="AtkRelation">AtkRelation</a> *relation);</pre><p>
+Removes a relation from the relation set.
+This function unref's the <a href="AtkRelation.html" title="AtkRelation">AtkRelation</a> so it will be deleted unless there
+is another reference to it.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>set</tt></i> :</span></td><td> an <a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a>
+</td></tr><tr><td><span class="term"><i><tt>relation</tt></i> :</span></td><td> an <a href="AtkRelation.html" title="AtkRelation">AtkRelation</a>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-relation-set-add"></a>atk_relation_set_add ()</h3><a class="indexterm" name="id288192"></a><pre class="programlisting">void        atk_relation_set_add            (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set,
+                                             <a href="AtkRelation.html" title="AtkRelation">AtkRelation</a> *relation);</pre><p>
+Add a new relation to the current relation set if it is not already
+present.
+This function ref's the AtkRelation so the caller of this function
+should unref it to ensure that it will be destroyed when the AtkRelationSet
+is destroyed.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>set</tt></i> :</span></td><td> an <a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a>
+</td></tr><tr><td><span class="term"><i><tt>relation</tt></i> :</span></td><td> an <a href="AtkRelation.html" title="AtkRelation">AtkRelation</a>
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-relation-set-get-n-relations"></a>atk_relation_set_get_n_relations ()</h3><a class="indexterm" name="id288316"></a><pre class="programlisting">gint        atk_relation_set_get_n_relations
+                                            (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set);</pre><p>
+Determines the number of relations in a relation set.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>set</tt></i> :</span></td><td> an <a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> an integer representing the number of relations in the set.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-relation-set-get-relation"></a>atk_relation_set_get_relation ()</h3><a class="indexterm" name="id288395"></a><pre class="programlisting"><a href="AtkRelation.html" title="AtkRelation">AtkRelation</a>* atk_relation_set_get_relation  (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set,
+                                             gint i);</pre><p>
+Determines the relation at the specified position in the relation set.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>set</tt></i> :</span></td><td> an <a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a>
+</td></tr><tr><td><span class="term"><i><tt>i</tt></i> :</span></td><td> a gint representing a position in the set, starting from 0.
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a <a href="AtkRelation.html" title="AtkRelation">AtkRelation</a>, which is the relation at position i in the set.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-relation-set-get-relation-by-type"></a>atk_relation_set_get_relation_by_type ()</h3><a class="indexterm" name="id288506"></a><pre class="programlisting"><a href="AtkRelation.html" title="AtkRelation">AtkRelation</a>* atk_relation_set_get_relation_by_type
+                                            (<a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a> *set,
+                                             <a href="AtkRelation.html#AtkRelationType">AtkRelationType</a> relationship);</pre><p>
+Finds a relation that matches the specified type.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>set</tt></i> :</span></td><td> an <a href="AtkRelationSet.html" title="AtkRelationSet">AtkRelationSet</a>
+</td></tr><tr><td><span class="term"><i><tt>relationship</tt></i> :</span></td><td> an <a href="AtkRelation.html#AtkRelationType">AtkRelationType</a>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> an <a href="AtkRelation.html" title="AtkRelation">AtkRelation</a>, which is a relation matching the specified type.
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkRelation.html"><b>&lt;&lt; AtkRelation</b></a></td><td align="right"><a accesskey="n" href="AtkSelection.html"><b>AtkSelection &gt;&gt;</b></a></td></tr></table></body></html>

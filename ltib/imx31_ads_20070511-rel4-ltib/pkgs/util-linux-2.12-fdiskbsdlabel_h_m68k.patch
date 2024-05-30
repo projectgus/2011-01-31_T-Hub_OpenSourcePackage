@@ -1,0 +1,23 @@
+Stuart Hughes, stuarth@freescale.com, 22nd June 2005
+
+This is a tentative and untested patch to fix the following error on 
+m86k architectures:
+
+gcc -c -O2 -fomit-frame-pointer -I../lib -Wall -Wmissing-prototypes -Wstrict-prototypes -I/usr/include/ncurses -DNCH=0   -D_FILE_OFFSET_BITS=64 -DSBINDIR=\"/sbin\" -DUSRSBINDIR=\"/usr/sbin\" -DLOGDIR=\"/var/log\" -DVARPATH=\"/var\" -DLOCALEDIR=\"/home/seh/ltib_bsps/rigoletto/rootfs/usr/share/locale\" -O2 fdiskbsdlabel.c -o fdiskbsdlabel.o
+In file included from fdiskbsdlabel.c:63:
+fdiskbsdlabel.h:56:2: #error unknown architecture
+
+
+diff --exclude CVS -uNr util-linux-2.12/fdisk/fdiskbsdlabel.h util-linux-2.12.modified/fdisk/fdiskbsdlabel.h
+--- util-linux-2.12/fdisk/fdiskbsdlabel.h	2002-10-31 07:45:34.000000000 -0600
++++ util-linux-2.12.modified/fdisk/fdiskbsdlabel.h	2005-06-22 10:29:14.000000000 -0500
+@@ -49,7 +49,7 @@
+ #elif defined (__alpha__) || defined (__powerpc__) || defined (__ia64__) || defined (__hppa__)
+ #define BSD_LABELSECTOR   0
+ #define BSD_LABELOFFSET   64
+-#elif defined (__s390__) || defined (__s390x__)
++#elif defined (__s390__) || defined (__s390x__) || defined (__m68k__)
+ #define BSD_LABELSECTOR   1
+ #define BSD_LABELOFFSET   0
+ #else
+diff --exclude CVS -uNr util-linux-2.12/mount/swap.configure util-linux-2.12.modified/mount/swap.configure

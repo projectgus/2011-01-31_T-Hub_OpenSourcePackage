@@ -1,0 +1,18 @@
+Wed Oct 18 2006 Stuart Hughes <stuarth@freescale.com>
+
+This fixes the arm compile error:
+BUILD/php-5.0.4/TSRM -I/home/seh/ltib_bsps/imx21ads/rpm/BUILD/php-5.0.4/Zend -g -Os   -c main/internal_functions_cli.c -o main/internal_functions_cli.lo
+/home/seh/ltib_bsps/imx21ads/rpm/BUILD/php-5.0.4/Zend/zend_strtod.c:240: error: parse error before "one"
+
+Adapted from http://cvs.php.net/viewvc.cgi/ZendEngine2/zend_strtod.c?r1=1.22&r2=1.23&view=patch
+
+--- php/Zend/zend_strtod.c	2006/03/15 13:12:32	1.22
++++ php/Zend/zend_strtod.c	2006/04/15 12:54:26	1.23
+@@ -132,6 +132,7 @@
+  * but the word order is big endian.
+  */
+ #define IEEE_BIG_ENDIAN
++#undef IEEE_LITTLE_ENDIAN
+ #endif
+ 
+ #ifdef __vax__

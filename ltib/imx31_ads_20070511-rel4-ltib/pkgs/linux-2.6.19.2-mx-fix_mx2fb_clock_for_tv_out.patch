@@ -1,0 +1,19 @@
+CR: ENGR00028613
+Patch name: ENGR00028613_fix_mx2fb_clock_for_tv_out.patch
+Date: Wed Mar 14 10:05:38 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: This fixes clock setting when TV out is used and PLL clock is
+266.4M instead of 266.0M.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.c linux-2.6.19.2/drivers/video/mxc/mx2fb.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mx2fb.c	2007-04-25 17:39:36.000000000 -0600
+@@ -1050,7 +1050,7 @@ static void _update_lcdc(struct fb_info 
+ 	__raw_writel(info->var.xres_virtual >> 1, LCDC_REG(LCDC_LVPWR));
+ 
+ 	/* To setup LCDC pixel clock */
+-	perclk3 = clk_round_rate(lcdc_clk, 133000000);
++	perclk3 = clk_round_rate(lcdc_clk, 134000000);
+ 	if (clk_set_rate(lcdc_clk, perclk3)) {
+ 		printk(KERN_INFO "mx2fb: Unable to set clock to %lu\n",
+ 		       perclk3);

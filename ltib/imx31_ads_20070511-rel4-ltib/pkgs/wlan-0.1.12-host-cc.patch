@@ -1,0 +1,23 @@
+--- linux-wlan-ng-0.1.12/Configure.orig	2006-10-10 16:17:40.000000000 -0700
++++ linux-wlan-ng-0.1.12/Configure	2006-10-10 17:14:17.000000000 -0700
+@@ -464,12 +464,20 @@ ask_str "Prefix for build host compiler?
+ $ECHO ""
+ 
+ dump_str 'HOST_AS=$(HOST_COMPILE)as'
++dump_str 'ifndef HOST_LD'
+ dump_str 'HOST_LD=$(HOST_COMPILE)ld'
++dump_str 'endif'
++dump_str 'ifndef HOST_CC'
+ dump_str 'HOST_CC=$(HOST_COMPILE)gcc'
++dump_str 'endif'
++dump_str 'ifndef HOST_CPP'
+ dump_str 'HOST_CPP=$(HOST_CC) -E'
++dump_str 'endif'
+ dump_str 'HOST_AR=$(HOST_COMPILE)ar'
+ dump_str 'HOST_NM=$(HOST_COMPILE)nm'
++dump_str 'ifndef HOST_STRIP'
+ dump_str 'HOST_STRIP=$(HOST_COMPILE)strip'
++dump_str 'endif'
+ dump_str 'HOST_OBJCOPY=$(HOST_COMPILE)objcopy'
+ dump_str 'HOST_OBJDUMP=$(HOST_COMPILE)objdump'
+ dump_str 'HOST_RANLIB=$(HOST_COMPILE)ranlib'

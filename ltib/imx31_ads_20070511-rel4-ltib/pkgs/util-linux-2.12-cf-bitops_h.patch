@@ -1,0 +1,24 @@
+Stuart Hughes, stuarth@freescale.com, 1st July 2005
+
+This is a patch for the coldfire architecture, which doesn't have bftst and 
+friends.
+
+This fixes the error:
+
+gcc -c -O2 -fomit-frame-pointer -I../lib -Wall -Wmissing-prototypes -Wstrict-prototypes -I/usr/include/ncurses -DNCH=0   -D_FILE_OFFSET_BITS=64 -DSBINDIR=\"/sbin\" -DUSRSBINDIR=\"/usr/sbin\" -DLOGDIR=\"/var/log\" -DVARPATH=\"/var\" -DLOCALEDIR=\"/home/seh/ltib_bsps/ltib-dev/rootfs/usr/share/locale\" -O2 fsck.minix.c -o fsck.minix.o
+/tmp/ccH3B085.s: Assembler messages:
+/tmp/ccH3B085.s:720: Error: invalid instruction for this architecture; needs 68020 or higher -- statement `bftst %a1@{%d0:#1}' ignored
+
+
+diff --exclude CVS -uNr util-linux-2.12/disk-utils/bitops.h util-linux-2.12.modified/disk-utils/bitops.h
+--- util-linux-2.12/disk-utils/bitops.h	1999-07-09 03:56:34.000000000 +0100
++++ util-linux-2.12.modified/disk-utils/bitops.h	2005-07-01 11:11:44.000000000 +0100
+@@ -14,7 +14,7 @@
+ bitop(setbit,"s")
+ bitop(clrbit,"r")
+ 
+-#elif defined(__mc68000__)
++#elif defined(__mc68000__) && ! defined(__mcoldfire__)
+ 
+ #define bitop(name,op) \
+ static inline int name (char *addr, unsigned int nr) \

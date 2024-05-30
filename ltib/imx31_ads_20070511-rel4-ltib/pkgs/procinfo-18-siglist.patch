@@ -1,0 +1,23 @@
+Steve Papacharalambous <stevep@freescale.com> 14sep06
+
+Fix following errors building with uClibc toolchain:
+
+routines.c:149: error: `sys_siglist' undeclared (first use in this
+function)
+routines.c:149: error: (Each undeclared identifier is reported only once
+routines.c:149: error: for each function it appears in.)
+
+Fix generated in house.
+
+diff --exclude CVS -uNr procinfo-18/routines.c procinfo-18.modified/routines.c
+--- procinfo-18/routines.c	2001-02-24 23:30:45.000000000 +0000
++++ procinfo-18.modified/routines.c	2006-09-14 14:07:37.000000000 +0100
+@@ -146,7 +146,7 @@
+ 	exit (0);
+     } else {
+ 	printf ("%s%s%s", ve, se, tgoto (cm, 0, li));
+-	printf ("[%s]\n", sys_siglist[i]);
++	printf ("[%s]\n", strsignal(i));
+ 	exit (128 + i);
+     }
+ }

@@ -1,0 +1,37 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Initialization and Versions</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="The gdk-pixbuf Library"><link rel="up" href="rn01.html" title="API Reference"><link rel="previous" href="rn01.html" title="API Reference"><link rel="next" href="gdk-pixbuf-gdk-pixbuf.html" title="The GdkPixbuf Structure"><link rel="reference" href="rn01.html" title="API Reference"><link rel="refentry" href="gdk-pixbuf-Versioning.html" title="Initialization and Versions"><link rel="refentry" href="gdk-pixbuf-gdk-pixbuf.html" title="The GdkPixbuf Structure"><link rel="refentry" href="gdk-pixbuf-refcounting.html" title="Reference Counting and Memory Mangement"><link rel="refentry" href="gdk-pixbuf-file-loading.html" title="File Loading"><link rel="refentry" href="gdk-pixbuf-file-saving.html" title="File saving"><link rel="refentry" href="gdk-pixbuf-creating.html" title="Image Data in Memory"><link rel="refentry" href="gdk-pixbuf-inline.html" title="Inline data"><link rel="refentry" href="gdk-pixbuf-scaling.html" title="Scaling"><link rel="refentry" href="gdk-pixbuf-gdk-pixbuf-rendering.html" title="Rendering"><link rel="refentry" href="gdk-pixbuf-gdk-pixbuf-from-drawables.html" title="Drawables to Pixbufs"><link rel="refentry" href="gdk-pixbuf-util.html" title="Utilities"><link rel="refentry" href="gdk-pixbuf-animation.html" title="Animations"><link rel="refentry" href="GdkPixbufLoader.html" title="GdkPixbufLoader"><link rel="refentry" href="gdk-pixbuf-Module-Interface.html" title="Module Interface"><link rel="refentry" href="gdk-pixbuf-gdk-pixbuf-xlib-init.html" title="gdk-pixbuf Xlib initialization"><link rel="refentry" href="gdk-pixbuf-gdk-pixbuf-xlib-rendering.html" title="Xlib Rendering"><link rel="refentry" href="gdk-pixbuf-gdk-pixbuf-xlib-from-drawables.html" title="X Drawables to Pixbufs"><link rel="refentry" href="gdk-pixbuf-gdk-pixbuf-xlib-rgb.html" title="XlibRGB"><link rel="reference" href="rn02.html" title="Tools Reference"><link rel="refentry" href="gdk-pixbuf-csource.html" title="gdk-pixbuf-csource"><link rel="refentry" href="gdk-pixbuf-query-loaders.html" title="gdk-pixbuf-query-loaders"><link rel="index" href="ix01.html" title="Index"><link rel="appendix" href="apa.html" title="Appendix A. Porting applications from Imlib to gdk-pixbuf"><link rel="appendix" href="license.html" title="Appendix B. License"><link rel="section" href="gdk-pixbuf-Versioning.html#id2940980" title="Description"><link rel="section" href="gdk-pixbuf-Versioning.html#id2940997" title="Details"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><link rel="stylesheet" href="style.css" type="text/css"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="rn01.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="rn01.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">The gdk-pixbuf Library</th><td><a accesskey="n" href="gdk-pixbuf-gdk-pixbuf.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="gdk-pixbuf-Versioning"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">Initialization and Versions</span></h2><p>Initialization and Versions &#8212; 
+Library version numbers.</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+
+#include &lt;gdk-pixbuf/gdk-pixbuf.h&gt;
+
+
+
+extern      const char *<a href="gdk-pixbuf-Versioning.html#gdk-pixbuf-version">gdk_pixbuf_version</a>;
+#define     <a href="gdk-pixbuf-Versioning.html#GDK-PIXBUF-VERSION-CAPS">GDK_PIXBUF_VERSION</a>
+#define     <a href="gdk-pixbuf-Versioning.html#GDK-PIXBUF-MAJOR-CAPS">GDK_PIXBUF_MAJOR</a>
+#define     <a href="gdk-pixbuf-Versioning.html#GDK-PIXBUF-MINOR-CAPS">GDK_PIXBUF_MINOR</a>
+#define     <a href="gdk-pixbuf-Versioning.html#GDK-PIXBUF-MICRO-CAPS">GDK_PIXBUF_MICRO</a>
+</pre></div><div class="refsect1" lang="en"><a name="id2940980"></a><h2>Description</h2><p>
+These macros and variables let you check the version of <span class="application">gdk-pixbuf</span>
+you're linking against.
+</p></div><div class="refsect1" lang="en"><a name="id2940997"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2941002"></a><h3><a name="gdk-pixbuf-version"></a>gdk_pixbuf_version</h3><a class="indexterm" name="id2941013"></a><pre class="programlisting">extern const char *gdk_pixbuf_version;
+</pre><p>
+Contains the full version of the <span class="application">gdk-pixbuf</span> library as a string.
+This is the version currently in use by a running program.
+</p></div><hr><div class="refsect2" lang="en"><a name="id2941037"></a><h3><a name="GDK-PIXBUF-VERSION-CAPS"></a>GDK_PIXBUF_VERSION</h3><a class="indexterm" name="id2941048"></a><pre class="programlisting">#define GDK_PIXBUF_VERSION "2.4.8"
+</pre><p>
+Contains the full version of the <span class="application">gdk-pixbuf</span> header as a string.
+This is the version being compiled against; contrast with
+<a href="gdk-pixbuf-Versioning.html#gdk-pixbuf-version"><span class="type">gdk_pixbuf_version</span></a>.
+</p></div><hr><div class="refsect2" lang="en"><a name="id2953036"></a><h3><a name="GDK-PIXBUF-MAJOR-CAPS"></a>GDK_PIXBUF_MAJOR</h3><a class="indexterm" name="id2953047"></a><pre class="programlisting">#define GDK_PIXBUF_MAJOR (2)
+</pre><p>
+Major version of <span class="application">gdk-pixbuf</span> library, that is the first "0" in
+"0.8.0" for example.
+</p></div><hr><div class="refsect2" lang="en"><a name="id2953070"></a><h3><a name="GDK-PIXBUF-MINOR-CAPS"></a>GDK_PIXBUF_MINOR</h3><a class="indexterm" name="id2953081"></a><pre class="programlisting">#define GDK_PIXBUF_MINOR (4)
+</pre><p>
+Minor version of <span class="application">gdk-pixbuf</span> library, that is the "8" in
+"0.8.0" for example.
+</p></div><hr><div class="refsect2" lang="en"><a name="id2953104"></a><h3><a name="GDK-PIXBUF-MICRO-CAPS"></a>GDK_PIXBUF_MICRO</h3><a class="indexterm" name="id2953115"></a><pre class="programlisting">#define GDK_PIXBUF_MICRO (8)
+</pre><p>
+Micro version of <span class="application">gdk-pixbuf</span> library, that is the last "0" in
+"0.8.0" for example.
+</p></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="rn01.html"><b>&lt;&lt; API Reference</b></a></td><td align="right"><a accesskey="n" href="gdk-pixbuf-gdk-pixbuf.html"><b>The GdkPixbuf Structure &gt;&gt;</b></a></td></tr></table></body></html>

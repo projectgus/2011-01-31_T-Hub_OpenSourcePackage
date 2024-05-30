@@ -1,0 +1,57 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkNoOpObjectFactory</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkNoOpObject.html" title="AtkNoOpObject"><link rel="next" href="AtkObject.html" title="AtkObject"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkNoOpObject.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkObject.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkNoOpObjectFactory"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkNoOpObjectFactory</h2><p>AtkNoOpObjectFactory &#8212; The AtkObjectFactory which creates an AtkNoOpObject.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id264302"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkNoOpObjectFactory.html#AtkNoOpObjectFactory-struct">AtkNoOpObjectFactory</a>;
+<a href="AtkObjectFactory.html" title="AtkObjectFactory">AtkObjectFactory</a>* <a href="AtkNoOpObjectFactory.html#atk-no-op-object-factory-new">atk_no_op_object_factory_new</a>
+                                            (void);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GObject
+   +----<a href="AtkObjectFactory.html" title="AtkObjectFactory">AtkObjectFactory</a>
+         +----AtkNoOpObjectFactory
+</pre></div><div class="refsect1"><h2>Description</h2><p>
+The AtkObjectFactory which creates an AtkNoOpObject. An instance of this is
+created by an AtkRegistry if no factory type has not been specified to
+create an accessible object of a particular type.
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkNoOpObjectFactory-struct"></a>struct AtkNoOpObjectFactory</h3><a class="indexterm" name="id264385"></a><pre class="programlisting">struct AtkNoOpObjectFactory;</pre><p>
+The AtkNoOpObjectFactory structure should not be accessed directly.
+
+</p></div><hr><div class="refsect2"><h3><a name="atk-no-op-object-factory-new"></a>atk_no_op_object_factory_new ()</h3><a class="indexterm" name="id264411"></a><pre class="programlisting"><a href="AtkObjectFactory.html" title="AtkObjectFactory">AtkObjectFactory</a>* atk_no_op_object_factory_new
+                                            (void);</pre><p>
+Creates an instance of an <a href="AtkObjectFactory.html" title="AtkObjectFactory">AtkObjectFactory</a> which generates primitive
+(non-functioning) AtkObjects.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> an instance of an <a href="AtkObjectFactory.html" title="AtkObjectFactory">AtkObjectFactory</a>
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkNoOpObject.html"><b>&lt;&lt; AtkNoOpObject</b></a></td><td align="right"><a accesskey="n" href="AtkObject.html"><b>AtkObject &gt;&gt;</b></a></td></tr></table></body></html>

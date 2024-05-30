@@ -1,0 +1,105 @@
+Steve Papacharalambous <stevep@freescale.com> 20 October 2006
+
+Ported linux-atm-2.4.1-cross.patch to 2.4.1-17
+
+diff --exclude CVS -uNr linux-atm-2.4.1/src/include/Makefile.in linux-atm-2.4.1.modified/src/include/Makefile.in
+--- linux-atm-2.4.1/src/include/Makefile.in	Fri Oct 20 11:01:38 2006
++++ linux-atm-2.4.1.modified/src/include/Makefile.in	Fri Oct 20 10:47:51 2006
+@@ -86,7 +86,7 @@
+ YACC = @YACC@
+ 
+ include_HEADERS = atm.h atmd.h atmsap.h
+-noinst_HEADERS = stdint.h
++#noinst_HEADERS = stdint.h
+ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+ CONFIG_HEADER = ../../config.h
+ CONFIG_CLEAN_FILES = 
+diff --exclude CVS -uNr linux-atm-2.4.1/src/lib/Makefile.am linux-atm-2.4.1.modified/src/lib/Makefile.am
+--- linux-atm-2.4.1/src/lib/Makefile.am	Tue Oct  9 22:46:42 2001
++++ linux-atm-2.4.1.modified/src/lib/Makefile.am	Fri Oct 20 10:49:19 2006
+@@ -13,7 +13,6 @@
+ libatm_la_LIBADD = -lresolv
+ libatm_la_DEPENDENCIES = $(top_builddir)/src/include/atm.h \
+ 				$(top_builddir)/src/include/atmsap.h \
+-				$(top_builddir)/src/include/stdint.h \
+ 				$(top_builddir)/src/include/atmd.h
+ 
+ 
+diff --exclude CVS -uNr linux-atm-2.4.1/src/lib/Makefile.in linux-atm-2.4.1.modified/src/lib/Makefile.in
+--- linux-atm-2.4.1/src/lib/Makefile.in	Fri Oct 20 11:01:38 2006
++++ linux-atm-2.4.1.modified/src/lib/Makefile.in	Fri Oct 20 10:50:04 2006
+@@ -95,7 +95,7 @@
+ libatm_la_SOURCES = text2atm.c atm2text.c atmequal.c sdu2cell.c text2qos.c 			qos2text.c qosequal.c sap2text.c text2sap.c sapequal.c 			misc.c atmres.h ans.c 			common.c diag.c kptr.c text2ip.c timer.c unix.c
+ 
+ libatm_la_LIBADD = -lresolv
+-libatm_la_DEPENDENCIES = $(top_builddir)/src/include/atm.h 				$(top_builddir)/src/include/atmsap.h 				$(top_builddir)/src/include/stdint.h 				$(top_builddir)/src/include/atmd.h
++libatm_la_DEPENDENCIES = $(top_builddir)/src/include/atm.h 				$(top_builddir)/src/include/atmsap.h 		$(top_builddir)/src/include/atmd.h
+ 
+ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+ CONFIG_HEADER = ../../config.h
+diff --exclude CVS -uNr linux-atm-2.4.1/src/qgen/Makefile.in linux-atm-2.4.1.modified/src/qgen/Makefile.in
+--- linux-atm-2.4.1/src/qgen/Makefile.in	Fri Oct 20 11:01:38 2006
++++ linux-atm-2.4.1.modified/src/qgen/Makefile.in	Fri Oct 20 10:57:38 2006
+@@ -65,6 +65,7 @@
+ target_triplet = @target@
+ AS = @AS@
+ CC = @CC@
++HOSTCC = @HOSTCC@
+ DLLTOOL = @DLLTOOL@
+ ECHO = @ECHO@
+ EXEEXT = @EXEEXT@
+@@ -128,9 +129,9 @@
+ q_test_OBJECTS =  qtest.$(OBJEXT)
+ q_test_LDADD = $(LDADD)
+ q_test_LDFLAGS = 
+-qgen_OBJECTS =  common.$(OBJEXT) file.$(OBJEXT) first.$(OBJEXT) \
+-ql_y.$(OBJEXT) ql_l.$(OBJEXT) qgen.$(OBJEXT) second.$(OBJEXT) \
+-third.$(OBJEXT)
++qgen_OBJECTS =  common.host.$(OBJEXT) file.host.$(OBJEXT) first.host.$(OBJEXT) \
++ql_y.host.$(OBJEXT) ql_l.host.$(OBJEXT) qgen.host.$(OBJEXT) second.host.$(OBJEXT) \
++third.host.$(OBJEXT)
+ qgen_DEPENDENCIES = 
+ qgen_LDFLAGS = 
+ q_dump_OBJECTS =  common.$(OBJEXT)
+@@ -228,7 +229,7 @@
+ 
+ qgen$(EXEEXT): $(qgen_OBJECTS) $(qgen_DEPENDENCIES)
+ 	@rm -f qgen$(EXEEXT)
+-	$(LINK) $(qgen_LDFLAGS) $(qgen_OBJECTS) $(qgen_LDADD) $(LIBS)
++	$(HOSTCC) -o $@ $(qgen_LDFLAGS) $(qgen_OBJECTS) $(qgen_LDADD) $(LIBS)
+ 
+ q.dump: $(q_dump_OBJECTS) $(q_dump_DEPENDENCIES)
+ 	@rm -f q.dump
+@@ -437,3 +438,32 @@
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:
++
++qgen_OBJECTS =  common.host.$(OBJEXT) file.host.$(OBJEXT) first.host.$(OBJEXT) \
++ql_y.host.$(OBJEXT) ql_l.host.$(OBJEXT) qgen.host.$(OBJEXT) second.host.$(OBJEXT) \
++third.host.$(OBJEXT)
++
++common.host.o: common.c ../../config.h common.h
++	$(HOSTCC) $(DEFS) $(CFLAGS) -c common.c -o $@
++
++file.host.o: file.c ../../config.h common.h file.h
++	$(HOSTCC) $(DEFS) $(CFLAGS) -c file.c -o $@
++
++first.host.o: first.c ../../config.h common.h qgen.h file.h
++	$(HOSTCC) $(DEFS) $(CFLAGS) -c first.c -o $@
++
++ql_y.host.o: ql_y.c ../../config.h common.h qgen.h file.h
++	$(HOSTCC) $(DEFS) $(CFLAGS) -c ql_y.c -o $@
++
++ql_l.host.o: ql_l.c ../../config.h common.h qgen.h ql_y.h
++	$(HOSTCC) $(DEFS) $(CFLAGS) -c ql_l.c -o $@
++
++qgen.host.o: qgen.c ../../config.h common.h file.h qgen.h
++	$(HOSTCC) $(DEFS) $(CFLAGS) -c qgen.c -o $@
++
++second.host.o: second.c ../../config.h common.h qgen.h file.h
++	$(HOSTCC) $(DEFS) $(CFLAGS) -c second.c -o $@
++
++third.host.o: third.c ../../config.h common.h qgen.h file.h
++	$(HOSTCC) $(DEFS) $(CFLAGS) -c third.c -o $@
++

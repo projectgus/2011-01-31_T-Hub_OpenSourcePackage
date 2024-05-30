@@ -1,0 +1,2034 @@
+CR: ENGR00025276
+Patch name: ENGR00025276_fix_doxygen_for_unified_docunentation.patch
+Date: Thu Mar 22 15:16:05 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: Fix doxygen for one set of documents for the supported mxc
+and imx platforms.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/clock.c linux-2.6.19.2/arch/arm/mach-mx27/clock.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/clock.c	2007-04-25 17:39:45.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/clock.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,15 +11,6 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ 
+-/*!
+- * @file clock.c
+- * @brief API for setting up and retrieving clocks.
+- *
+- * This file contains API for setting up and retrieving clocks.
+- *
+- * @ingroup CLOCKS
+- */
+-
+ #include <linux/module.h>
+ #include <linux/spinlock.h>
+ #include <linux/clk.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/devices.c linux-2.6.19.2/arch/arm/mach-mx27/devices.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/devices.c	2007-04-25 17:38:13.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/devices.c	2007-04-25 17:39:57.000000000 -0600
+@@ -22,10 +22,10 @@
+ #include <asm/arch/mmc.h>
+ 
+  /*!
+-  * @file devices.c
++  * @file mach-mx27/devices.c
+   * @brief device configurations including nor/nand/watchdog for mx27.
+   *
+-  * @ingroup MSL
++  * @ingroup MSL_MX27
+   */
+ 
+ static void mxc_nop_release(struct device *dev)
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/dma.c linux-2.6.19.2/arch/arm/mach-mx27/dma.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/dma.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/dma.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,9 +12,9 @@
+  */
+ 
+ /*!
+- *@file dma.c
++ *@file mach-mx27/dma.c
+  *@brief This file contains the dma parameter which is depend on the platform  .
+- * @ingroup DMA
++ * @ingroup DMA_MX27
+  */
+ 
+ #include <linux/module.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/dpm.c linux-2.6.19.2/arch/arm/mach-mx27/dpm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/dpm.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/dpm.c	2007-04-25 17:39:57.000000000 -0600
+@@ -23,11 +23,11 @@
+  */
+ 
+ /*!
+- * @file dpm.c
++ * @file mach-mx27/dpm.c
+  *
+  * @brief This file provides DPM support hooks for the Freescale i.MX27
+  *
+- * @ingroup DPM
++ * @ingroup DPM_MX27
+  */
+ 
+ #include <linux/dpm.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/gpio_mux.c linux-2.6.19.2/arch/arm/mach-mx27/gpio_mux.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/gpio_mux.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/gpio_mux.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,9 +12,15 @@
+  */
+ 
+ /*!
+- *@file gpio_mux.c
+- *@brief This file contains the IOMUX implementation details. 
+- * @ingroup GPIO
++ * @defgroup GPIO_MX27 Board GPIO and Muxing Setup
++ * @ingroup MSL_MX27
++ */
++/*!
++ * @file mach-mx27/gpio_mux.c
++ *
++ * @brief I/O Muxing control functions
++ *
++ * @ingroup GPIO_MX27
+  */
+ 
+ #include <linux/kernel.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/gpio_mux.h linux-2.6.19.2/arch/arm/mach-mx27/gpio_mux.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/gpio_mux.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/gpio_mux.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,9 +12,9 @@
+  */
+ 
+ /*!
+- *@file gpio_mux.h
++ *@file mach-mx27/gpio_mux.h
+  *@brief This file contains the private definition  .
+- * @ingroup GPIO
++ * @ingroup GPIO_MX27
+  */
+ 
+ #ifndef __ARCH_ARM_MACH_MX27_GPIO_MUX_H__
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mm.c linux-2.6.19.2/arch/arm/mach-mx27/mm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mm.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mm.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,21 +11,23 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ 
+-/*!
+- * @file mm.c
+- *
+- * @brief This file creates static mapping between physical to virtual memory.
+- *
+- * @ingroup Memory
+- */
+-
+ #include <linux/mm.h>
+ #include <linux/init.h>
+-
+ #include <asm/hardware.h>
+ #include <asm/pgtable.h>
+ #include <asm/mach/map.h>
+ 
++/*!
++ * @file mach-mx27/mm.c
++ *
++ * @brief This file creates static mapping between physical to virtual memory.
++ *
++ * @ingroup Memory_MX27
++ */
++
++/*!
++ * This structure defines the MX27 memory map.
++ */
+ static struct map_desc mxc_io_desc[] __initdata = {
+ 	{
+ 	 .virtual = AIPI_BASE_ADDR_VIRT,
+@@ -49,6 +51,11 @@ static struct map_desc mxc_io_desc[] __i
+ 	 .type = MT_DEVICE}
+ };
+ 
++/*!
++ * This function initializes the memory map. It is called during the
++ * system startup to create static physical to virtual memory map for
++ * the IO modules.
++ */
+ void __init mxc_map_io(void)
+ {
+ 	iotable_init(mxc_io_desc, ARRAY_SIZE(mxc_io_desc));
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads.c linux-2.6.19.2/arch/arm/mach-mx27/mx27ads.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mx27ads.c	2007-04-25 17:39:57.000000000 -0600
+@@ -50,10 +50,10 @@
+ #include "gpio_mux.h"
+ 
+ /*!
+- * @file mx27ads.c
++ * @file mach-mx27/mx27ads.c
+  * @brief This file contains the board specific initialization routines.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX27
+  */
+ 
+ extern void mxc_map_io(void);
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads_gpio.c linux-2.6.19.2/arch/arm/mach-mx27/mx27ads_gpio.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads_gpio.c	2007-04-25 17:38:36.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mx27ads_gpio.c	2007-04-25 17:39:57.000000000 -0600
+@@ -25,11 +25,11 @@
+ static int g_uart_activated[MXC_UART_NR] = { 0, 0, 0, 0, 0, 0 };
+ 
+ /*!
+- * @file mx27ads_gpio.c
++ * @file mach-mx27/mx27ads_gpio.c
+  *
+  * @brief This file contains all the GPIO setup functions for the board.
+  *
+- * @ingroup GPIO
++ * @ingroup GPIO_MX27
+  */
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mxc_pm.c linux-2.6.19.2/arch/arm/mach-mx27/mxc_pm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mxc_pm.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mxc_pm.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,13 +12,17 @@
+  */
+ 
+ /*!
+- * @file mxc_pm.c
++ * @defgroup DPM_MX27 Power Management
++ * @ingroup MSL_MX27
++ */
++/*!
++ * @file mach-mx27/mxc_pm.c
+  *
+  * @brief This file contains the implementation of the Low-level power
+  * management driver. It modifies the registers of the PLL and clock module
+  * of the i.MX27.
+  *
+- * @ingroup LPMD
++ * @ingroup DPM_MX27
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/serial.c linux-2.6.19.2/arch/arm/mach-mx27/serial.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/serial.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/serial.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,11 +11,11 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ /*!
+- * @file serial.c
++ * @file mach-mx27/serial.c
+  *
+  * @brief This file contains the UART initiliazation.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX27
+  */
+ #include <linux/module.h>
+ #include <linux/platform_device.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/serial.h linux-2.6.19.2/arch/arm/mach-mx27/serial.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/serial.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/serial.h	2007-04-25 17:39:57.000000000 -0600
+@@ -14,6 +14,11 @@
+ #ifndef __ARCH_ARM_MACH_MX27_SERIAL_H__
+ #define __ARCH_ARM_MACH_MX27_SERIAL_H__
+ 
++/*!
++ * @file mach-mx27/serial.h
++ *
++ * @ingroup MSL_MX27
++ */
+ #include <asm/arch/mxc_uart.h>
+ 
+ /* UART 1 configuration */
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/system.c linux-2.6.19.2/arch/arm/mach-mx27/system.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/system.c	2007-04-25 17:38:32.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/system.c	2007-04-25 17:39:57.000000000 -0600
+@@ -25,19 +25,14 @@
+ #include <asm/system.h>
+ 
+ /*!
+- * @defgroup MSL Machine Specific Layer (MSL)
++ * @defgroup MSL_MX27 i.MX27 Machine Specific Layer (MSL)
+  */
+ 
+ /*!
+- * @defgroup System System-wide Misc Files for MSL
+- * @ingroup MSL
+- */
+-
+-/*!
+- * @file system.c
++ * @file mach-mx27/system.c
+  * @brief This file contains idle and reset functions.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX27
+  */
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/time.c linux-2.6.19.2/arch/arm/mach-mx27/time.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/time.c	2007-04-25 17:39:42.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/time.c	2007-04-25 17:39:57.000000000 -0600
+@@ -17,12 +17,16 @@
+  */
+ 
+ /*!
+- * @file time.c
++ * @defgroup Timers_MX27 RTC, OS tick, Watchdog Timers
++ * @ingroup MSL_MX27
++ */
++/*!
++ * @file mach-mx27/time.c
+  * @brief This file contains OS tick implementations.
+  *
+  * This file contains OS tick implementations.
+  *
+- * @ingroup Timers
++ * @ingroup Timers_MX27
+  */
+ 
+ #include <linux/module.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/usb.c linux-2.6.19.2/arch/arm/mach-mx27/usb.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/usb.c	2007-04-25 17:39:49.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/usb.c	2007-04-25 17:39:57.000000000 -0600
+@@ -15,14 +15,15 @@
+  */
+ 
+ /*!
+- *@defgroup USB ARC OTG USB Driver
++ * @defgroup USB_MX27 ARC OTG USB Driver for i.MX27
++ * @ingroup USB
+  */
+ 
+ /*!
+- * @file usb.c
++ * @file mach-mx27/usb.c
+  *
+  * @brief platform related part of usb driver.
+- * @ingroup USB
++ * @ingroup USB_MX27
+  */
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/clock.c linux-2.6.19.2/arch/arm/mach-mx3/clock.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/clock.c	2007-04-25 17:39:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/clock.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,12 +11,6 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ 
+-/*!
+- * @file mach-mx3/clock.c
+- * @brief Low level clock structs and functions for MX31 clocks.
+- * @ingroup CLOCKS
+- */
+-
+ #include <linux/module.h>
+ #include <linux/spinlock.h>
+ #include <linux/delay.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/cpu.c linux-2.6.19.2/arch/arm/mach-mx3/cpu.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/cpu.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/cpu.c	2007-04-25 17:39:57.000000000 -0600
+@@ -9,11 +9,11 @@
+  */
+ 
+ /*!
+- * @file cpu.c
++ * @file mach-mx3/cpu.c
+  *
+  * @brief This file contains the CPU initialization code.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX31
+  */
+ 
+ #include <linux/types.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/dpm.c linux-2.6.19.2/arch/arm/mach-mx3/dpm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/dpm.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/dpm.c	2007-04-25 17:39:57.000000000 -0600
+@@ -23,11 +23,11 @@
+  */
+ 
+ /*!
+- * @file dpm.c
++ * @file mach-mx3/dpm.c
+  *
+  * @brief This file provides DPM support hooks for the Freescale i.MX31
+  *
+- * @ingroup DPM
++ * @ingroup DPM_MX31
+  */
+ 
+ #include <linux/dpm.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/dvfs.c linux-2.6.19.2/arch/arm/mach-mx3/dvfs.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/dvfs.c	2007-04-25 17:37:52.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/dvfs.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file dvfs.c
++ * @file mach-mx3/dvfs.c
+  *
+  * @brief Driver for the Freescale Semiconductor MXC DVFS module.
+  *
+@@ -27,7 +27,7 @@
+  * Driver ioctls are used to change driver parameters and enable/disable the
+  * DVFS operation.
+  *
+- * @ingroup PM
++ * @ingroup PM_MX31
+  */
+ 
+ /* Define to enable debug messages */
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/iomux.c linux-2.6.19.2/arch/arm/mach-mx3/iomux.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/iomux.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/iomux.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,6 +11,18 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ 
++/*!
++ * @defgroup GPIO_MX31 Board GPIO and Muxing Setup
++ * @ingroup MSL_MX31
++ */
++/*!
++ * @file mach-mx3/iomux.c
++ *
++ * @brief I/O Muxing control functions
++ *
++ * @ingroup GPIO_MX31
++ */
++
+ #include <linux/module.h>
+ #include <linux/spinlock.h>
+ #include <asm/hardware.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/iomux.h linux-2.6.19.2/arch/arm/mach-mx3/iomux.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/iomux.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/iomux.h	2007-04-25 17:39:57.000000000 -0600
+@@ -16,6 +16,14 @@
+ #include <linux/types.h>
+ 
+ /*!
++ * @file mach-mx3/iomux.h
++ *
++ * @brief I/O Muxing control definitions and functions
++ *
++ * @ingroup GPIO_MX31
++ */
++
++/*!
+  * various IOMUX output functions
+  */
+ typedef enum iomux_output_config {
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/mm.c linux-2.6.19.2/arch/arm/mach-mx3/mm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/mm.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/mm.c	2007-04-25 17:39:57.000000000 -0600
+@@ -27,11 +27,11 @@
+ #include <asm/mach/map.h>
+ 
+ /*!
+- * @file mm.c
++ * @file mach-mx3/mm.c
+  *
+  * @brief This file creates static mapping between physical to virtual memory.
+  *
+- * @ingroup Memory
++ * @ingroup Memory_MX31
+  */
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/mx31ads.c linux-2.6.19.2/arch/arm/mach-mx3/mx31ads.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/mx31ads.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/mx31ads.c	2007-04-25 17:39:57.000000000 -0600
+@@ -51,11 +51,11 @@
+ #include "crm_regs.h"
+ #include "iomux.h"
+ /*!
+- * @file mx31ads.c
++ * @file mach-mx3/mx31ads.c
+  *
+  * @brief This file contains the board specific initialization routines.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX31
+  */
+ 
+ extern void mxc_map_io(void);
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/mx31ads_gpio.c linux-2.6.19.2/arch/arm/mach-mx3/mx31ads_gpio.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/mx31ads_gpio.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/mx31ads_gpio.c	2007-04-25 17:39:57.000000000 -0600
+@@ -22,11 +22,11 @@
+ #include "iomux.h"
+ 
+ /*!
+- * @file mx31ads_gpio.c
++ * @file mach-mx3/mx31ads_gpio.c
+  *
+  * @brief This file contains all the GPIO setup functions for the board.
+  *
+- * @ingroup GPIO
++ * @ingroup GPIO_MX31
+  */
+ 
+ void gpio_activate_audio_ports(void);
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/mxc_pm.c linux-2.6.19.2/arch/arm/mach-mx3/mxc_pm.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/mxc_pm.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/mxc_pm.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,12 +12,16 @@
+  */
+ 
+ /*!
+- * @file mxc_pm.c
++ * @defgroup DPM_MX31 Power Management
++ * @ingroup MSL_MX31
++ */
++/*!
++ * @file mach-mx3/mxc_pm.c
+  *
+  * @brief This file provides all the kernel level and user level API
+  * definitions for the CRM_MCU and DPLL in mx3.
+  *
+- * @ingroup LPMD
++ * @ingroup DPM_MX31
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code.h linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code.h	2007-04-25 17:39:57.000000000 -0600
+@@ -11,15 +11,6 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ 
+-/*!
+- * @file sdma_script_code.h
+- * @brief This file contains functions of SDMA scripts code initialization
+- *
+- * The file was generated automatically. Based on sdma scripts library.
+- *
+- * @ingroup SDMA
+- */
+-
+ #ifndef __SDMA_SCRIPT_CODE_H__
+ #define __SDMA_SCRIPT_CODE_H__
+ 
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code_pass2.h linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code_pass2.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/sdma_script_code_pass2.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/sdma_script_code_pass2.h	2007-04-25 17:39:57.000000000 -0600
+@@ -11,15 +11,6 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ 
+-/*!
+- * @file sdma_script_code.h
+- * @brief This file contains functions of SDMA scripts code initialization
+- *
+- * The file was generated automatically. Based on sdma scripts library.
+- *
+- * @ingroup SDMA
+- */
+-
+ #ifndef __SDMA_SCRIPT_CODE_PASS2_H__
+ #define __SDMA_SCRIPT_CODE_PASS2_H__
+ 
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/serial.c linux-2.6.19.2/arch/arm/mach-mx3/serial.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/serial.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/serial.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,11 +11,11 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ /*!
+- * @file serial.c
++ * @file mach-mx3/serial.c
+  *
+  * @brief This file contains the UART initiliazation.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX31
+  */
+ #include <linux/module.h>
+ #include <linux/platform_device.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/serial.h linux-2.6.19.2/arch/arm/mach-mx3/serial.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/serial.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/serial.h	2007-04-25 17:39:57.000000000 -0600
+@@ -14,6 +14,11 @@
+ #ifndef __ARCH_ARM_MACH_MX3_SERIAL_H__
+ #define __ARCH_ARM_MACH_MX3_SERIAL_H__
+ 
++/*!
++ * @file mach-mx3/serial.h
++ *
++ * @ingroup MSL_MX31
++ */
+ #include <asm/arch/mxc_uart.h>
+ 
+ /* UART 1 configuration */
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/system.c linux-2.6.19.2/arch/arm/mach-mx3/system.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/system.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/system.c	2007-04-25 17:39:57.000000000 -0600
+@@ -26,19 +26,14 @@
+ #include "crm_regs.h"
+ 
+ /*!
+- * @defgroup MSL Machine Specific Layer (MSL)
++ * @defgroup MSL_MX31 i.MX31 Machine Specific Layer (MSL)
+  */
+ 
+ /*!
+- * @defgroup System System-wide Misc Files for MSL
+- * @ingroup MSL
+- */
+-
+-/*!
+- * @file system.c
++ * @file mach-mx3/system.c
+  * @brief This file contains idle and reset functions.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX31
+  */
+ 
+ extern int mxc_jtag_enabled;
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/time.c linux-2.6.19.2/arch/arm/mach-mx3/time.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/time.c	2007-04-25 17:39:42.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/time.c	2007-04-25 17:39:57.000000000 -0600
+@@ -17,12 +17,16 @@
+  */
+ 
+ /*!
+- * @file time.c
++ * @defgroup Timers_MX31 RTC, OS tick, Watchdog Timers
++ * @ingroup MSL_MX31
++ */
++/*!
++ * @file mach-mx3/time.c
+  * @brief This file contains OS tick and wdog timer implementations.
+  *
+  * This file contains OS tick and wdog timer implementations.
+  *
+- * @ingroup Timers
++ * @ingroup Timers_MX31
+  */
+ 
+ #include <linux/module.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/time_priv.h linux-2.6.19.2/arch/arm/mach-mx3/time_priv.h
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/time_priv.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/time_priv.h	2007-04-25 17:39:57.000000000 -0600
+@@ -13,12 +13,12 @@
+ #ifndef __MACH_MX31_TIME_PRIV_H__
+ #define __MACH_MX31_TIME_PRIV_H__
+ /*!
+- * @file time_priv.h
++ * @file mach-mx3/time_priv.h
+  * @brief This file contains OS tick and wdog timer register definitions.
+  *
+  * This file contains OS tick and wdog timer register definitions.
+  *
+- * @ingroup Timers
++ * @ingroup Timers_MX31
+  */
+ 
+ #include <asm/hardware.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx3/usb.c linux-2.6.19.2/arch/arm/mach-mx3/usb.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx3/usb.c	2007-04-25 17:39:49.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx3/usb.c	2007-04-25 17:39:57.000000000 -0600
+@@ -15,14 +15,15 @@
+  */
+ 
+ /*!
+- *@defgroup USB ARC OTG USB Driver
++ * @defgroup USB_MX31 ARC OTG USB Driver for i.MX31
++ * @ingroup USB
+  */
+ 
+ /*!
+- * @file usb.c
++ * @file mach-mx3/usb.c
+  *
+  * @brief platform related part of usb driver.
+- * @ingroup USB
++ * @ingroup USB_MX31
+  */
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/cpu_common.c linux-2.6.19.2/arch/arm/plat-mxc/cpu_common.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/cpu_common.c	2007-04-25 17:39:21.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/cpu_common.c	2007-04-25 17:39:57.000000000 -0600
+@@ -20,11 +20,11 @@
+ extern const u32 system_rev_tbl[SYSTEM_REV_NUM][2];
+ 
+ /*!
+- * @file cpu_common.c
++ * @file plat-mxc/cpu_common.c
+  *
+  * @brief This file contains the common CPU initialization code.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX31
+  */
+ 
+ static int system_rev_updated = 0;
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/dma_mx2.c linux-2.6.19.2/arch/arm/plat-mxc/dma_mx2.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/dma_mx2.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/dma_mx2.c	2007-04-25 17:39:57.000000000 -0600
+@@ -17,10 +17,10 @@
+  */
+ 
+ /*!
+- * @file dma_mx2.c
++ * @file plat-mxc/dma_mx2.c
+  * @brief This file contains functions for DMA  API
+  *
+- * @ingroup DMA
++ * @ingroup DMA_MX27
+  */
+ 
+ #include <linux/module.h>
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/gpio.c linux-2.6.19.2/arch/arm/plat-mxc/gpio.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/gpio.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/gpio.c	2007-04-25 17:39:57.000000000 -0600
+@@ -28,9 +28,9 @@
+ #include <asm/arch/gpio.h>
+ 
+ /*!
+- * @file gpio.c
++ * @file plat-mxc/gpio.c
+  *
+- * @brief This file contains the GPIO and IOMUX implementation details.
++ * @brief This file contains the GPIO implementation details.
+  *
+  * @ingroup GPIO
+  */
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/irq.c linux-2.6.19.2/arch/arm/plat-mxc/irq.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/irq.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/irq.c	2007-04-25 17:39:57.000000000 -0600
+@@ -21,6 +21,11 @@
+ #include <asm/irq.h>
+ #include <asm/mach/irq.h>
+ 
++/*!
++ * @file plat-mxc/irq.c
++ *
++ * @ingroup Interrupt
++ */
+ /*
+  *****************************************
+  * EDIO Registers                        *
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/dma_sdma.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/dma_sdma.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/dma_sdma.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/dma_sdma.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file dma_sdma.c
++ * @file plat-mxc/sdma/dma_sdma.c
+  * @brief Front-end to the DMA handling.  This handles the allocation/freeing
+  * of DMA channels, and provides a unified interface to the machines
+  * DMA facilities. This file contains functions for Smart DMA.
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/sdma.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/sdma.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/sdma.c	2007-04-25 17:39:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/sdma.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file sdma.c
++ * @file plat-mxc/sdma/sdma.c
+  * @brief This file contains functions for Smart DMA  API
+  *
+  * SDMA (Smart DMA) is used for transferring data between MCU and peripherals
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/sdma_malloc.c linux-2.6.19.2/arch/arm/plat-mxc/sdma/sdma_malloc.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/sdma/sdma_malloc.c	2007-04-25 17:39:14.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/sdma/sdma_malloc.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file sdma_malloc.c
++ * @file plat-mxc/sdma/sdma_malloc.c
+  * @brief This file contains functions for SDMA non-cacheable buffers allocation
+  *
+  * SDMA (Smart DMA) is used for transferring data between MCU and peripherals
+diff -uNpr linux-2.6.19.2.orig/arch/arm/plat-mxc/spba.c linux-2.6.19.2/arch/arm/plat-mxc/spba.c
+--- linux-2.6.19.2.orig/arch/arm/plat-mxc/spba.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/arch/arm/plat-mxc/spba.c	2007-04-25 17:39:57.000000000 -0600
+@@ -18,7 +18,7 @@
+ #include <asm/arch/spba.h>
+ 
+ /*!
+- * @file spba.c
++ * @file plat-mxc/spba.c
+  *
+  * @brief This file contains the SPBA API implementation details.
+  *
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.c linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/mxc_v4l2_capture.c	2007-04-25 17:39:01.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file mxc_v4l2_capture.c
++ * @file drivers/media/video/mxc/capture/mxc_v4l2_capture.c
+  *
+  * @brief Mxc Video For Linux 2 driver
+  *
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/output/mxc_v4l2_output.c linux-2.6.19.2/drivers/media/video/mxc/output/mxc_v4l2_output.c
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/output/mxc_v4l2_output.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/output/mxc_v4l2_output.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file mxc_v4l2_output.c
++ * @file drivers/media/video/mxc/output/mxc_v4l2_output.c
+  *
+  * @brief MXC V4L2 Video Output Driver
+  *
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dptc.c linux-2.6.19.2/drivers/mxc/pm/dptc.c
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dptc.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dptc.c	2007-04-25 17:39:57.000000000 -0600
+@@ -29,7 +29,7 @@
+  * Driver ioctls are used to change driver parameters and enable/disable the
+  * DPTC operation.
+  *
+- * @ingroup PM
++ * @ingroup PM_MX31
+  */
+ 
+ #include <linux/module.h>
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dptc_mx27.c linux-2.6.19.2/drivers/mxc/pm/dptc_mx27.c
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dptc_mx27.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dptc_mx27.c	2007-04-25 17:39:57.000000000 -0600
+@@ -28,7 +28,7 @@
+  * in-order to update the translation table. Driver ioctls are used to change
+  * driver parameters and enable/disable the DPTC operation.
+  *
+- * @ingroup PM
++ * @ingroup PM_MX27
+  */
+ 
+ #include <linux/module.h>
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc.c linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc.c
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc.c	2007-04-25 17:37:52.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc.c	2007-04-25 17:39:57.000000000 -0600
+@@ -27,7 +27,7 @@
+  * into the driver (the voltage changes are done by calling some routines
+  * of the mc13783 driver).
+  *
+- * @ingroup PM
++ * @ingroup PM_MX31
+  */
+ 
+ #include <linux/module.h>
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc.h	2007-04-25 17:39:57.000000000 -0600
+@@ -16,7 +16,7 @@
+  *
+  * @brief MXC dvfs & dptc header file.
+  *
+- * @ingroup PM
++ * @ingroup PM_MX27 PM_MX31
+  */
+ #ifndef __DVFS_DPTC_H__
+ #define __DVFS_DPTC_H__
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx27.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx27.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx27.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx27.h	2007-04-25 17:39:57.000000000 -0600
+@@ -16,7 +16,7 @@
+  *
+  * @brief i.MX27 dptc table file. 
+  * 
+- * @ingroup PM
++ * @ingroup PM_MX27
+  */
+ #ifndef __DVFS_DPTC_TABLE_MX27_H__
+ #define __DVFS_DPTC_TABLE_MX27_H__
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31_27ckih.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31_27ckih.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31_27ckih.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31_27ckih.h	2007-04-25 17:39:57.000000000 -0600
+@@ -25,7 +25,7 @@
+  *
+  * @brief MX31 dvfs & dptc table file for CKIH clock 27MHz.
+  *
+- * @ingroup PM
++ * @ingroup PM_MX31
+  */
+ #ifndef __DVFS_DPTC_TABLE_MX31_27CKIH_H__
+ #define __DVFS_DPTC_TABLE_MX31_27CKIH_H__
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31.h	2007-04-25 17:39:57.000000000 -0600
+@@ -25,7 +25,7 @@
+  *
+  * @brief MX31 dvfs & dptc table file for CKIH clock 26MHz.
+  *
+- * @ingroup PM
++ * @ingroup PM_MX31
+  */
+ #ifndef __DVFS_DPTC_TABLE_MX31_H__
+ #define __DVFS_DPTC_TABLE_MX31_H__
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31_rev2.h linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31_rev2.h
+--- linux-2.6.19.2.orig/drivers/mxc/pm/dvfs_dptc_table_mx31_rev2.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pm/dvfs_dptc_table_mx31_rev2.h	2007-04-25 17:39:57.000000000 -0600
+@@ -25,7 +25,7 @@
+  *
+  * @brief MX31 dvfs & dptc table file for MX31 2.0
+  *
+- * @ingroup PM
++ * @ingroup PM_MX31
+  */
+ #ifndef __DVFS_DPTC_TABLE_MX3_REV2_H__
+ #define __DVFS_DPTC_TABLE_MX3_REV2_H__
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_adc.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_adc.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_adc.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_adc.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_adc.c
++ * @file mc13783/pmic_adc.c
+  * @brief This is the main file of PMIC(mc13783) ADC driver.
+  *
+  * @ingroup PMIC_ADC
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_adc_defs.h linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_adc_defs.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_adc_defs.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_adc_defs.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_adc_defs.h
++ * @file mc13783/pmic_adc_defs.h
+  * @brief This header contains all defines for PMIC(mc13783) ADC driver.
+  *
+  * @ingroup PMIC_ADC
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_audio.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_audio.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_audio.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_audio.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_audio.c
++ * @file mc13783/pmic_audio.c
+  * @brief Implementation of the PMIC(mc13783) Audio driver APIs.
+  *
+  * The PMIC Audio driver and this API were developed to support the
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_battery.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_battery.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_battery.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_battery.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_battery.c
++ * @file mc13783/pmic_battery.c
+  * @brief This is the main file of PMIC(mc13783) Battery driver.
+  *
+  * @ingroup PMIC_BATTERY
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_battery_defs.h linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_battery_defs.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_battery_defs.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_battery_defs.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_battery_defs.h
++ * @file mc13783/pmic_battery_defs.h
+  * @brief This is the internal header for PMIC(mc13783) Battery driver.
+  *
+  * @ingroup PMIC_BATTERY
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_convity.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_convity.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_convity.c	2007-04-25 17:39:47.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_convity.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_convity.c
++ * @file mc13783/pmic_convity.c
+  * @brief Implementation of the PMIC Connectivity driver APIs.
+  *
+  * The PMIC connectivity device driver and this API were developed to support
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_light.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_light.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_light.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_light.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_light.c
++ * @file mc13783/pmic_light.c
+  * @brief This is the main file of PMIC(mc13783) Light and Backlight driver.
+  *
+  * @ingroup PMIC_LIGHT
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_light_defs.h linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_light_defs.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_light_defs.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_light_defs.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_light_defs.h
++ * @file mc13783/pmic_light_defs.h
+  * @brief This is the internal header PMIC(mc13783) Light and Backlight driver.
+  *
+  * @ingroup PMIC_LIGHT
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_power.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_power.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_power.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_power.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_power.c
++ * @file mc13783/pmic_power.c
+  * @brief This is the main file of PMIC(mc13783) Power driver.
+  *
+  * @ingroup PMIC_POWER
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_power_defs.h linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_power_defs.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_power_defs.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_power_defs.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_power_defs.h
++ * @file mc13783/pmic_power_defs.h
+  * @brief This is the internal header define of PMIC(mc13783) Power driver.
+  *
+  * @ingroup PMIC_POWER
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_rtc.c linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_rtc.c
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_rtc.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_rtc.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file pmic_rtc.c
++ * @file mc13783/pmic_rtc.c
+  * @brief This is the main file of PMIC(mc13783) RTC driver.
+  *
+  * @ingroup PMIC_RTC
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_rtc_defs.h linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_rtc_defs.h
+--- linux-2.6.19.2.orig/drivers/mxc/pmic/mc13783/pmic_rtc_defs.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_rtc_defs.h	2007-04-25 17:39:57.000000000 -0600
+@@ -14,7 +14,7 @@
+ #define __MC13783_RTC_DEFS_H__
+ 
+ /*!
+- * @file pmic_rtc_defs.h
++ * @file mc13783/pmic_rtc_defs.h
+  * @brief This is the internal header of PMIC(mc13783) RTC driver.
+  *
+  * @ingroup PMIC_RTC
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_auth.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_auth.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_auth.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_auth.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,7 +11,7 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ /*!
+- * @file fsl_shw_auth.c
++ * @file drivers/mxc/security/sahara2/fsl_shw_auth.c
+  *
+  * @brief This file contains the routines which do the combined encrypt+authentication
+  * functions.  For now, only AES-CCM is supported.
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_hash.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_hash.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_hash.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_hash.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,7 +11,7 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ /*!
+- * @file fsl_shw_hash.c
++ * @file drivers/mxc/security/sahara2/fsl_shw_hash.c
+  *
+  * @brief This file implements Cryptographic Hashing functions of the FSL SHW API
+  * for Sahara.  This does not include HMAC.
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_hmac.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_hmac.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_hmac.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_hmac.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,7 +11,7 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ /*!
+- * @file fsl_shw_hmac.c
++ * @file drivers/mxc/security/sahara2/fsl_shw_hmac.c
+  *
+  * @brief This file implements Hashed Message Authentication Code functions of the FSL
+  * SHW API for Sahara.
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_rand.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_rand.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_rand.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_rand.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,7 +11,7 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ /*!
+- * @file fsl_shw_rand.c
++ * @file drivers/mxc/security/sahara2/fsl_shw_rand.c
+  *
+  * @brief This file implements Random Number Generation functions of the FSL SHW API for
+  * for Sahara.
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_sym.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_sym.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_sym.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_sym.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,7 +11,7 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ /*!
+- * @file fsl_shw_sym.c
++ * @file drivers/mxc/security/sahara2/fsl_shw_sym.c
+  *
+  * @brief This file implements Symmetric Cipher functions of the FSL SHW API for
+  * Sahara.  This does not include CCM.
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_user.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_user.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_user.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_user.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,7 +11,7 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ /*!
+- * @file fsl_shw_user.c
++ * @file drivers/mxc/security/sahara2/fsl_shw_user.c
+  *
+  * @brief This file implements user and platform capabilities functions of the FSL SHW API
+  * API for Sahara
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_wrap.c linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_wrap.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/fsl_shw_wrap.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/fsl_shw_wrap.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,7 +11,7 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ /*!
+- * @file fsl_shw_wrap.c
++ * @file drivers/mxc/security/sahara2/fsl_shw_wrap.c
+  *
+  * @brief This file implements Key-Wrap (Black Key) functions of the FSL SHW API for
+  * Sahara.
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/fsl_shw.h linux-2.6.19.2/drivers/mxc/security/sahara2/include/fsl_shw.h
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/include/fsl_shw.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/include/fsl_shw.h	2007-04-25 17:39:57.000000000 -0600
+@@ -1903,7 +1903,7 @@ extern fsl_shw_return_t fsl_shw_release_
+  */
+ 
+ /*!
+- * @example wrapped_key.c
++ * @example wrap.c
+  */
+ 
+ #endif				/* API_DOC */
+diff -uNpr linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sf_util.c linux-2.6.19.2/drivers/mxc/security/sahara2/sf_util.c
+--- linux-2.6.19.2.orig/drivers/mxc/security/sahara2/sf_util.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/mxc/security/sahara2/sf_util.c	2007-04-25 17:39:57.000000000 -0600
+@@ -11,7 +11,7 @@
+  * http://www.gnu.org/copyleft/gpl.html
+  */
+ /*!
+-* @file sf_util.c
++* @file drivers/mxc/security/sahara2/sf_util.c
+ *
+ * @brief Security Functions component API - Utility functions
+ *
+diff -uNpr linux-2.6.19.2.orig/drivers/serial/mxc_uart.c linux-2.6.19.2/drivers/serial/mxc_uart.c
+--- linux-2.6.19.2.orig/drivers/serial/mxc_uart.c	2007-04-25 17:39:06.000000000 -0600
++++ linux-2.6.19.2/drivers/serial/mxc_uart.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file mxc_uart.c
++ * @file drivers/serial/mxc_uart.c
+  *
+  * @brief Driver for the Freescale Semiconductor MXC serial ports based on
+  * drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
+diff -uNpr linux-2.6.19.2.orig/drivers/spi/mxc_spi.c linux-2.6.19.2/drivers/spi/mxc_spi.c
+--- linux-2.6.19.2.orig/drivers/spi/mxc_spi.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/spi/mxc_spi.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,6 +12,10 @@
+  */
+ 
+ /*!
++ * @defgroup SPI Configurable Serial Peripheral Interface (CSPI) Driver
++ */
++
++/*!
+  * @file mxc_spi.c
+  * @brief This file contains the implementation of the SPI master controller services
+  *
+diff -uNpr linux-2.6.19.2.orig/drivers/spi/mxc_spi.h linux-2.6.19.2/drivers/spi/mxc_spi.h
+--- linux-2.6.19.2.orig/drivers/spi/mxc_spi.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/spi/mxc_spi.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,12 +12,8 @@
+  */
+ 
+ /*!
+- * @defgroup SPI Configurable Serial Peripheral Interface (CSPI) Driver
+- */
+-
+-/*!
+  * @file mxc_spi.h
+- * @brief This header file contains SPI driver low level definition to access module registers.
++ * @brief This header file contains SPI driver low level register definitions.
+  *
+  * @ingroup SPI
+  */
+diff -uNpr linux-2.6.19.2.orig/drivers/spi/mxc_spi_mx27.h linux-2.6.19.2/drivers/spi/mxc_spi_mx27.h
+--- linux-2.6.19.2.orig/drivers/spi/mxc_spi_mx27.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/spi/mxc_spi_mx27.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,16 +12,12 @@
+  */
+ 
+ /*!
+- * @defgroup SPI Configurable Serial Peripheral Interface (CSPI) Driver
++ * @file mxc_spi_mx27.h
++ * @brief This header file contains SPI driver low level register definitions for MX27.
++ *
++ * @ingroup SPI
+  */
+ 
+- /*!
+-  * @file mxc_spi_mx27.h
+-  * @brief This header file contains SPI driver low level definition to access module registers.
+-  *
+-  * @ingroup SPI
+-  */
+-
+ #ifndef __MXC_SPI_MX27_H__
+ #define __MXC_SPI_MX27_H__
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/usb/host/ehci-arc.c linux-2.6.19.2/drivers/usb/host/ehci-arc.c
+--- linux-2.6.19.2.orig/drivers/usb/host/ehci-arc.c	2007-04-25 17:39:55.000000000 -0600
++++ linux-2.6.19.2/drivers/usb/host/ehci-arc.c	2007-04-25 17:39:57.000000000 -0600
+@@ -14,6 +14,9 @@
+  */
+ 
+ /*!
++ * @defgroup USB ARC OTG USB Driver
++ */
++/*!
+  * @file ehci-arc.c
+  * @brief platform related part of usb host driver.
+  * @ingroup USB
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/fs453.c linux-2.6.19.2/drivers/video/mxc/fs453.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/fs453.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/fs453.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,10 +12,13 @@
+  */
+ 
+ /*!
++ * @defgroup FS453 Focus FS453 TV Encoder Driver
++ */
++/*!
+  * @file fs453.c
+  * @brief Driver for FS453/4 TV encoder
+  *
+- * @ingroup Framebuffer
++ * @ingroup FS453
+  */
+ 
+ #include <linux/kernel.h>
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/fs453.h linux-2.6.19.2/drivers/video/mxc/fs453.h
+--- linux-2.6.19.2.orig/drivers/video/mxc/fs453.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/fs453.h	2007-04-25 17:39:57.000000000 -0600
+@@ -15,7 +15,7 @@
+   * @file fs453.h
+   * @brief Driver for FS453/4 TV encoder
+   *
+-  * @ingroup Framebuffer
++  * @ingroup FS453
+   */
+ 
+ #ifndef __FS453_H__
+diff -uNpr linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.c linux-2.6.19.2/drivers/video/mxc/mx2fb.c
+--- linux-2.6.19.2.orig/drivers/video/mxc/mx2fb.c	2007-04-25 17:39:36.000000000 -0600
++++ linux-2.6.19.2/drivers/video/mxc/mx2fb.c	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @defgroup Framebuffer Framebuffer Driver for MX27 ADS.
++ * @defgroup Framebuffer_MX27 Framebuffer Driver for MX27.
+  */
+ 
+ /*!
+@@ -20,7 +20,7 @@
+  *
+  * @brief Frame buffer driver for MX27 ADS.
+  *
+- * @ingroup Framebuffer
++ * @ingroup Framebuffer_MX27
+  */
+ 
+ #include <linux/module.h>
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board-mx27ads.h linux-2.6.19.2/include/asm-arm/arch-mxc/board-mx27ads.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board-mx27ads.h	2007-04-25 17:38:59.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/board-mx27ads.h	2007-04-25 17:39:57.000000000 -0600
+@@ -15,18 +15,18 @@
+ #define __ASM_ARCH_MXC_BOARD_MX27ADS_H__
+ 
+ /*!
+- * @defgroup BRDCFG Board Configuration Options
+- * @ingroup MSL
++ * @defgroup BRDCFG_MX27 Board Configuration Options
++ * @ingroup MSL_MX27
+  */
+ 
+ /*!
+- * @file board-mx27ads.h
++ * @file arch-mxc/board-mx27ads.h
+  *
+  * @brief This file contains all the board level configuration options.
+  *
+  * It currently hold the options defined for MX27 ADS Platform.
+  *
+- * @ingroup BRDCFG
++ * @ingroup BRDCFG_MX27
+  */
+ 
+ /*
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board-mx31ads.h linux-2.6.19.2/include/asm-arm/arch-mxc/board-mx31ads.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/board-mx31ads.h	2007-04-25 17:38:59.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/board-mx31ads.h	2007-04-25 17:39:57.000000000 -0600
+@@ -14,6 +14,21 @@
+ #ifndef __ASM_ARCH_MXC_BOARD_MX31ADS_H__
+ #define __ASM_ARCH_MXC_BOARD_MX31ADS_H__
+ 
++/*!
++ * @defgroup BRDCFG_MX31 Board Configuration Options
++ * @ingroup MSL_MX31
++ */
++
++/*!
++ * @file arch-mxc/board-mx31ads.h
++ *
++ * @brief This file contains all the board level configuration options.
++ *
++ * It currently hold the options defined for MX31 ADS Platform.
++ *
++ * @ingroup BRDCFG_MX31
++ */
++
+ /*
+  * Include Files
+  */
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/clock.h linux-2.6.19.2/include/asm-arm/arch-mxc/clock.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/clock.h	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/clock.h	2007-04-25 17:39:57.000000000 -0600
+@@ -15,12 +15,10 @@
+ #define __ASM_ARCH_MXC_CLOCK_H__
+ 
+ /*!
+- * @defgroup CLOCKS Clocking Setup and Retrieving
+- * @ingroup MSL
++ * @defgroup CLOCKS Clock Control API
+  */
+-
+ /*!
+- * @file clock.h
++ * @file arch-mxc/clock.h
+  *
+  * @brief API for setting up and retrieving clocks.
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dma.h linux-2.6.19.2/include/asm-arm/arch-mxc/dma.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dma.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/dma.h	2007-04-25 17:39:57.000000000 -0600
+@@ -15,7 +15,7 @@
+ #define __ASM_ARCH_MXC_DMA_H__
+ 
+ /*!
+- * @file dma.h
++ * @file arch-mxc/dma.h
+  * @brief This file contains Unified DMA API for all MXC platforms.
+  * The API is platform independent.
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dpm.h linux-2.6.19.2/include/asm-arm/arch-mxc/dpm.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dpm.h	2007-04-25 17:28:14.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/dpm.h	2007-04-25 17:39:57.000000000 -0600
+@@ -28,16 +28,11 @@
+ #include <asm/timex.h>
+ 
+ /*!
+- * @defgroup DPM Dynamic Power Management
+- * @ingroup MSL
+- */
+-
+-/*!
+- * @file dpm.h
++ * @file arch-mxc/dpm.h
+  *
+  * @brief This file provides DPM support hooks for the Freescale MXC
+  *
+- * @ingroup DPM
++ * @ingroup DPM_MX27 DPM_MX31
+  */
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dptc.h linux-2.6.19.2/include/asm-arm/arch-mxc/dptc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dptc.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/dptc.h	2007-04-25 17:39:57.000000000 -0600
+@@ -13,11 +13,11 @@
+  */
+ 
+ /*!
+- * @file dptc.h
++ * @file arch-mxc/dptc.h
+  *
+  * @brief MXC dptc header file.
+  *
+- * @ingroup PM
++ * @ingroup PM_MX31
+  */
+ #ifndef __ASM_ARCH_MXC_DPTC_H__
+ #define __ASM_ARCH_MXC_DPTC_H__
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dvfs_dptc_struct.h linux-2.6.19.2/include/asm-arm/arch-mxc/dvfs_dptc_struct.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dvfs_dptc_struct.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/dvfs_dptc_struct.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,11 +12,11 @@
+  */
+ 
+ /*!
+- * @file dvfs_dptc_struct.h
++ * @file arch-mxc/dvfs_dptc_struct.h
+  *
+  * @brief MXC dvfs & dptc structure definitions file.
+  *
+- * @ingroup PM
++ * @ingroup PM_MX27 PM_MX31
+  */
+ #ifndef __ASM_ARCH_MXC_DVFS_DPTC_STRUCT_H__
+ #define __ASM_ARCH_MXC_DVFS_DPTC_STRUCT_H__
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dvfs.h linux-2.6.19.2/include/asm-arm/arch-mxc/dvfs.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/dvfs.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/dvfs.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,11 +12,11 @@
+  */
+ 
+ /*!
+- * @file dvfs.h
++ * @file arch-mxc/dvfs.h
+  *
+  * @brief MXC dvfs header file.
+  *
+- * @ingroup PM
++ * @ingroup PM_MX31
+  */
+ #ifndef __ASM_ARCH_MXC_DVFS_H__
+ #define __ASM_ARCH_MXC_DVFS_H__
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/gpio.h linux-2.6.19.2/include/asm-arm/arch-mxc/gpio.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/gpio.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/gpio.h	2007-04-25 17:39:57.000000000 -0600
+@@ -15,12 +15,11 @@
+ 
+ /*!
+  * @defgroup GPIO General Purpose Input Output (GPIO)
+- * @ingroup MSL
+  */
+ 
+ /*!
+- * @file gpio.h
+- * @brief This file contains the GPIO and IOMUX configuration details.
++ * @file arch-mxc/gpio.h
++ * @brief This file contains the GPIO API functions.
+  *
+  * @ingroup GPIO
+  */
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/hardware.h linux-2.6.19.2/include/asm-arm/arch-mxc/hardware.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/hardware.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/hardware.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,10 +12,10 @@
+  */
+ 
+ /*!
+- * @file hardware.h
++ * @file arch-mxc/hardware.h
+  * @brief This file contains the hardware definitions of the board.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX27 MSL_MX31
+  */
+ #ifndef __ASM_ARCH_MXC_HARDWARE_H__
+ #define __ASM_ARCH_MXC_HARDWARE_H__
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/io.h linux-2.6.19.2/include/asm-arm/arch-mxc/io.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/io.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/io.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,12 +12,12 @@
+  */
+ 
+ /*!
+- * @file io.h
++ * @file arch-mxc/io.h
+  * @brief This file contains some memory mapping macros.
+  * @note There is no real ISA or PCI buses. But have to define these macros
+  * for some drivers to compile.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX27 MSL_MX31
+  */
+ 
+ #ifndef __ASM_ARCH_MXC_IO_H__
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/ipu.h linux-2.6.19.2/include/asm-arm/arch-mxc/ipu.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/ipu.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/ipu.h	2007-04-25 17:39:57.000000000 -0600
+@@ -15,7 +15,7 @@
+  * @defgroup IPU MXC Image Processing Unit (IPU) Driver
+  */
+ /*!
+- * @file ipu.h
++ * @file arch-mxc/ipu.h
+  *
+  * @brief This file contains the IPU driver API declarations.
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/irqs.h linux-2.6.19.2/include/asm-arm/arch-mxc/irqs.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/irqs.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/irqs.h	2007-04-25 17:39:57.000000000 -0600
+@@ -17,10 +17,10 @@
+ 
+ /*!
+  * @defgroup Interrupt Interrupt Controller (AVIC)
+- * @ingroup MSL
+  */
++
+ /*!
+- * @file irqs.h
++ * @file arch-mxc/irqs.h
+  * @brief This file defines the number of normal interrupts and fast interrupts
+  *
+  * @ingroup Interrupt
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/memory.h linux-2.6.19.2/include/asm-arm/arch-mxc/memory.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/memory.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/memory.h	2007-04-25 17:39:57.000000000 -0600
+@@ -16,15 +16,19 @@
+ #include <asm/arch/hardware.h>
+ 
+ /*!
+- * @defgroup Memory Memory Map
+- * @ingroup MSL
++ * @defgroup Memory_MX27 Memory Map
++ * @ingroup MSL_MX27
++ */
++/*!
++ * @defgroup Memory_MX31 Memory Map
++ * @ingroup MSL_MX31
+  */
+ 
+ /*!
+- * @file memory.h
++ * @file arch-mxc/memory.h
+  * @brief This file contains macros needed by the Linux kernel and drivers.
+  *
+- * @ingroup Memory
++ * @ingroup Memory_MX27 Memory_MX31
+  */
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx27.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx27.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx27.h	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx27.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,19 +12,10 @@
+  */
+ 
+ /*!
+- * @defgroup MSL Machine Specific Layer (MSL)
+- */
+-
+-/*!
+- * @defgroup System System-wide Misc Files for MSL
+- * @ingroup MSL
+- */
+-
+-/*!
+- * @file mx27.h
++ * @file arch-mxc/mx27.h
+  * @brief This file contains register definitions.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX27
+  */
+ 
+ #ifndef __ASM_ARCH_MXC_MX27_H__
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx27_pins.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx27_pins.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx27_pins.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx27_pins.h	2007-04-25 17:39:57.000000000 -0600
+@@ -14,6 +14,14 @@
+ #ifndef __ASM_ARCH_MXC_MX27_PINS_H__
+ #define __ASM_ARCH_MXC_MX27_PINS_H__
+ 
++/*!
++ * @file arch-mxc/mx27_pins.h
++ *
++ * @brief MX27 I/O Pin List
++ *
++ * @ingroup GPIO_MX27
++ */
++
+ #ifndef __ASSEMBLY__
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx2_dma.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx2_dma.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx2_dma.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx2_dma.h	2007-04-25 17:39:57.000000000 -0600
+@@ -15,14 +15,14 @@
+ #define __ASM_ARCH_MXC_MX2_H__
+ 
+ /*!
+-*@defgroup DMA DMA driver
+-*/
++ * @defgroup DMA_MX27 DMA driver for i.MX27
++ */
+ 
+ /*!
+- *@file mx2_dma.h
++ *@file arch-mxc/mx2_dma.h
+  *@brief DMA driver header file
+  *
+- * @ingroup DMA
++ * @ingroup DMA_MX27
+  *
+  */
+ 
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx31.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx31.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx31.h	2007-04-25 17:38:18.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx31.h	2007-04-25 17:39:57.000000000 -0600
+@@ -20,6 +20,12 @@
+ #include <asm/arch/mx31_pins.h>
+ 
+ /*!
++ * @file arch-mxc/mx31.h
++ * @brief This file contains register definitions.
++ *
++ * @ingroup MSL_MX31
++ */
++/*!
+  * defines the OS clock tick rate
+  */
+ #define CLOCK_TICK_RATE         16625000
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx31_pins.h linux-2.6.19.2/include/asm-arm/arch-mxc/mx31_pins.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mx31_pins.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mx31_pins.h	2007-04-25 17:39:57.000000000 -0600
+@@ -13,6 +13,14 @@
+ #ifndef __ASM_ARCH_MXC_MX31_PINS_H__
+ #define __ASM_ARCH_MXC_MX31_PINS_H__
+ 
++/*!
++ * @file arch-mxc/mx31_pins.h
++ *
++ * @brief MX31 I/O Pin List
++ *
++ * @ingroup GPIO_MX31
++ */
++
+ #ifndef __ASSEMBLY__
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxcfb.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxcfb.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxcfb.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxcfb.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*
+- * @file    mxcfb.h
++ * @file arch-mxc/   mxcfb.h
+  *
+  * @brief Global header file for the MXC Frame buffer
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc.h	2007-04-25 17:38:34.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc.h	2007-04-25 17:39:57.000000000 -0600
+@@ -19,6 +19,10 @@
+ 
+ #ifndef __ASSEMBLY__
+ #include <linux/types.h>
++
++/*!
++ * @ingroup MSL_MX27 MSL_MX31
++ */
+ /*!
+  * gpio port structure
+  */
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_i2c.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_i2c.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_i2c.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_i2c.h	2007-04-25 17:39:57.000000000 -0600
+@@ -18,7 +18,7 @@
+  */
+ 
+ /*!
+- * @file mxc_i2c.h
++ * @file arch-mxc/mxc_i2c.h
+  *
+  * @brief This file contains the I2C chip level configuration details.
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_pf.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_pf.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_pf.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_pf.h	2007-04-25 17:39:57.000000000 -0600
+@@ -15,7 +15,7 @@
+  * @defgroup MXC_PF MPEG4/H.264 Post Filter Driver
+  */
+ /*!
+- * @file mxc_pf.h
++ * @file arch-mxc/mxc_pf.h
+  *
+  * @brief MXC IPU MPEG4/H.264 Post-filtering driver
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_pm.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_pm.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_pm.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_pm.h	2007-04-25 17:39:57.000000000 -0600
+@@ -17,7 +17,7 @@
+  */
+ 
+ /*!
+- * @file mxc_pm.h
++ * @file arch-mxc/mxc_pm.h
+  *
+  * @brief This file contains the  chip level configuration details and
+  * public API declarations for CRM_AP module
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_scc_driver.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_scc_driver.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_scc_driver.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_scc_driver.h	2007-04-25 17:39:57.000000000 -0600
+@@ -39,7 +39,7 @@ extern "C" {
+  */
+ 
+ /*!
+- * @file mxc_scc_driver.h
++ * @file arch-mxc/mxc_scc_driver.h
+  *
+  * @brief Header file to use the SCC driver.
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_scc.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_scc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_scc.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_scc.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file mxc_scc.h
++ * @file arch-mxc/mxc_scc.h
+  *
+  * @brief This is intended to be the file which contains all of code or changes
+  * needed to port the driver.
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_security_api.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_security_api.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_security_api.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_security_api.h	2007-04-25 17:39:57.000000000 -0600
+@@ -26,7 +26,7 @@
+  */
+ 
+ /*!
+- * @file mxc_security_api.h
++ * @file arch-mxc/mxc_security_api.h
+  *
+  * @brief MXC Security user header file.
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_uart.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_uart.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_uart.h	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_uart.h	2007-04-25 17:39:57.000000000 -0600
+@@ -16,7 +16,7 @@
+  */
+ 
+ /*!
+- * @file mxc_uart.h
++ * @file arch-mxc/mxc_uart.h
+  *
+  * @brief This file contains the UART configuration structure definition.
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_v4l2.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_v4l2.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_v4l2.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_v4l2.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,7 +12,7 @@
+  */
+ 
+ /*!
+- * @file mxc_v4l2.h
++ * @file arch-mxc/mxc_v4l2.h
+  *
+  * @brief mxc V4L2 private structures
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_vpu.h linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_vpu.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/mxc_vpu.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/mxc_vpu.h	2007-04-25 17:39:57.000000000 -0600
+@@ -16,7 +16,7 @@
+  */
+ 
+ /*!
+- * @file mxc_vpu.h
++ * @file arch-mxc/mxc_vpu.h
+  *
+  * @brief VPU system initialization and file operation definition
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/param.h linux-2.6.19.2/include/asm-arm/arch-mxc/param.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/param.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/param.h	2007-04-25 17:39:57.000000000 -0600
+@@ -18,9 +18,9 @@
+  */
+ 
+ /*!
+- * @file param.h
++ * @file arch-mxc/param.h
+  *
+  * @brief This file exists only because other kernel files include it.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX27 MSL_MX31
+  */
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pm_api.h linux-2.6.19.2/include/asm-arm/arch-mxc/pm_api.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pm_api.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pm_api.h	2007-04-25 17:39:57.000000000 -0600
+@@ -12,15 +12,18 @@
+  */
+ 
+ /*!
+- * @defgroup PM Dynamic Process Temperature Compensation (DPTC) & Dynamic Voltage Frequency Scaling (DVFS) Drivers
++ * @defgroup PM_MX27 Dynamic Process Temperature Compensation (DPTC) for i.MX27
++ */
++/*!
++ * @defgroup PM_MX31 Dynamic Process Temperature Compensation (DPTC) & Dynamic Voltage Frequency Scaling (DVFS) Drivers for i.MX31
+  */
+ 
+ /*!
+- * @file pm_api.h
++ * @file arch-mxc/pm_api.h
+  *
+  * @brief MXC PM API header file.
+  *
+- * @ingroup PM
++ * @ingroup PM_MX27 PM_MX31
+  */
+ #ifndef __ASM_ARCH_MXC_PM_API_H__
+ #define __ASM_ARCH_MXC_PM_API_H__
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_adc.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_adc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_adc.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_adc.h	2007-04-25 17:39:57.000000000 -0600
+@@ -20,7 +20,7 @@
+  */
+ 
+ /*!
+- * @file pmic_adc.h
++ * @file arch-mxc/pmic_adc.h
+  * @brief This is the header of PMIC ADC driver.
+  *
+  * @ingroup PMIC_ADC
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_audio.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_audio.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_audio.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_audio.h	2007-04-25 17:39:57.000000000 -0600
+@@ -19,7 +19,7 @@
+  */
+ 
+ /*!
+- * @file pmic_audio.h
++ * @file arch-mxc/pmic_audio.h
+  * @brief External definitions for the PMIC Audio Client driver.
+  *
+  * The PMIC Audio driver and this API were developed to support the
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_battery.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_battery.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_battery.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_battery.h	2007-04-25 17:39:57.000000000 -0600
+@@ -19,7 +19,7 @@
+  */
+ 
+ /*!
+- * @file pmic_battery.h
++ * @file arch-mxc/pmic_battery.h
+  * @brief This is the header of PMIC Battery driver.
+  *
+  * @ingroup PMIC_BATTERY
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_convity.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_convity.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_convity.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_convity.h	2007-04-25 17:39:57.000000000 -0600
+@@ -19,7 +19,7 @@
+  */
+ 
+ /*!
+- * @file pmic_convity.h
++ * @file arch-mxc/pmic_convity.h
+  * @brief External definitions for the PMIC Connectivity Client driver.
+  *
+  * The PMIC Connectivity driver and this API were developed to support the
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_external.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_external.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_external.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_external.h	2007-04-25 17:39:57.000000000 -0600
+@@ -27,7 +27,7 @@
+  */
+ 
+ /*!
+- * @file pmic_external.h
++ * @file arch-mxc/pmic_external.h
+  * @brief This file contains interface of PMIC protocol driver.
+  *
+  * @ingroup PMIC_CORE
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_light.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_light.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_light.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_light.h	2007-04-25 17:39:57.000000000 -0600
+@@ -19,7 +19,7 @@
+  */
+ 
+ /*!
+- * @file pmic_light.h
++ * @file arch-mxc/pmic_light.h
+  * @brief This is the header of PMIC Light driver.
+  *
+  * @ingroup PMIC_LIGHT
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_power.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_power.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_power.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_power.h	2007-04-25 17:39:57.000000000 -0600
+@@ -19,7 +19,7 @@
+  */
+ 
+ /*!
+- * @file pmic_power.h
++ * @file arch-mxc/pmic_power.h
+  * @brief This is the header of PMIC power driver.
+  *
+  * @ingroup PMIC_POWER
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_rtc.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_rtc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_rtc.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_rtc.h	2007-04-25 17:39:57.000000000 -0600
+@@ -20,7 +20,7 @@
+  */
+ 
+ /*!
+- * @file pmic_rtc.h
++ * @file arch-mxc/pmic_rtc.h
+  * @brief This is the header of PMIC RTC driver.
+  *
+  * @ingroup PMIC_RTC
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_status.h linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_status.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/pmic_status.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/pmic_status.h	2007-04-25 17:39:57.000000000 -0600
+@@ -14,7 +14,7 @@
+ #define __ASM_ARCH_MXC_PMIC_STATUS_H__
+ #include <asm-generic/errno-base.h>
+ /*!
+- * @file pmic_status.h
++ * @file arch-mxc/pmic_status.h
+  * @brief PMIC APIs return code definition.
+  *
+  * @ingroup PMIC_CORE
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/sdma.h linux-2.6.19.2/include/asm-arm/arch-mxc/sdma.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/sdma.h	2007-04-25 17:39:14.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/sdma.h	2007-04-25 17:39:57.000000000 -0600
+@@ -20,7 +20,7 @@
+  */
+ 
+ /*!
+- * @file sdma.h
++ * @file arch-mxc/sdma.h
+  *
+  * @brief This file contains the SDMA API declarations.
+  *
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/spba.h linux-2.6.19.2/include/asm-arm/arch-mxc/spba.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/spba.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/spba.h	2007-04-25 17:39:57.000000000 -0600
+@@ -14,11 +14,11 @@
+ 
+ /*!
+  * @defgroup SPBA Shared Peripheral Bus Arbiter (SPBA)
+- * @ingroup MSL
++ * @ingroup MSL_MX31
+  */
+ 
+ /*!
+- * @file spba.h
++ * @file arch-mxc/spba.h
+  * @brief This file contains the Shared Peripheral Bus Arbiter (spba) API.
+  *
+  * @ingroup SPBA
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/system.h linux-2.6.19.2/include/asm-arm/arch-mxc/system.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/system.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/system.h	2007-04-25 17:39:57.000000000 -0600
+@@ -22,19 +22,10 @@
+ #define __ASM_ARCH_MXC_SYSTEM_H__
+ 
+ /*!
+- * @defgroup MSL Machine Specific Layer (MSL)
+- */
+-
+-/*!
+- * @defgroup System System-wide Misc Files for MSL
+- * @ingroup MSL
+- */
+-
+-/*!
+- * @file system.h
++ * @file arch-mxc/system.h
+  * @brief This file contains idle and reset functions.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX27 MSL_MX31
+  */
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/include/asm-arm/arch-mxc/vmalloc.h linux-2.6.19.2/include/asm-arm/arch-mxc/vmalloc.h
+--- linux-2.6.19.2.orig/include/asm-arm/arch-mxc/vmalloc.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/include/asm-arm/arch-mxc/vmalloc.h	2007-04-25 17:39:57.000000000 -0600
+@@ -21,11 +21,11 @@
+ #define __ASM_ARCH_MXC_VMALLOC_H__
+ 
+ /*!
+- * @file vmalloc.h
++ * @file arch-mxc/vmalloc.h
+  *
+  * @brief This file contains the macros for vmalloc.
+  *
+- * @ingroup System
++ * @ingroup MSL_MX27 MSL_MX31
+  */
+ 
+ /*!
+diff -uNpr linux-2.6.19.2.orig/sound/arm/mxc-alsa-common.h linux-2.6.19.2/sound/arm/mxc-alsa-common.h
+--- linux-2.6.19.2.orig/sound/arm/mxc-alsa-common.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/sound/arm/mxc-alsa-common.h	2007-04-25 17:39:57.000000000 -0600
+@@ -14,7 +14,7 @@
+  /*!
+   * @file mxc-alsa-common.h
+   * @brief
+-  * @ingroup
++  * @ingroup SOUND_DRV
+   */
+ 
+ #ifndef __MXC_ALSA_COMMON_H__
+diff -uNpr linux-2.6.19.2.orig/sound/arm/mxc-alsa-mixer.c linux-2.6.19.2/sound/arm/mxc-alsa-mixer.c
+--- linux-2.6.19.2.orig/sound/arm/mxc-alsa-mixer.c	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/sound/arm/mxc-alsa-mixer.c	2007-04-25 17:39:57.000000000 -0600
+@@ -22,7 +22,7 @@
+   *             Playback supports 8000, 11025, 16000, 22050, 24000, 32000,
+   *             44100 and 48000 khz for mono and stereo.
+   *
+-  * @ingroup    SOUND_DRV
++  * @ingroup SOUND_DRV
+   */
+ 
+ #include <sound/driver.h>
+diff -uNpr linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.c linux-2.6.19.2/sound/arm/mxc-alsa-pmic.c
+--- linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.c	2007-04-25 17:38:39.000000000 -0600
++++ linux-2.6.19.2/sound/arm/mxc-alsa-pmic.c	2007-04-25 17:39:57.000000000 -0600
+@@ -31,7 +31,7 @@
+   *             These mixer controls shall be accessible thru alsa as well as
+   *             OSS emulation modes
+   *
+-  * @ingroup    SOUND_DRV
++  * @ingroup SOUND_DRV
+   */
+ 
+ #include <sound/driver.h>
+diff -uNpr linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.h linux-2.6.19.2/sound/arm/mxc-alsa-pmic.h
+--- linux-2.6.19.2.orig/sound/arm/mxc-alsa-pmic.h	2007-04-25 17:38:51.000000000 -0600
++++ linux-2.6.19.2/sound/arm/mxc-alsa-pmic.h	2007-04-25 17:39:57.000000000 -0600
+@@ -19,7 +19,7 @@
+  /*!
+   * @file mxc-alsa-pmic.h
+   * @brief
+-  * @ingroup
++  * @ingroup SOUND_DRV
+   */
+ 
+ #ifndef __MXC_ALSA_PMIC_H__

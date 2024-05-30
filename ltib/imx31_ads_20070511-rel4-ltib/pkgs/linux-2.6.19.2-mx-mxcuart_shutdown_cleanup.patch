@@ -1,0 +1,29 @@
+CR: TLSbo90393
+Patch name: TLSbo90393_mxcuart_shutdown_remove_uneffective_code.patch
+Date: Tue Feb 27 10:43:23 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: mxcuart_shutdown has a section of code that has no effect
+and is based on obsolete ideas. The "if (umxc->port.cons != NULL)"
+clause has no effect since there is no clock shutting off code after
+it. There will never be any clock shutting off code in this function
+since that is properly taken care of in mxcuart_pm.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/drivers/serial/mxc_uart.c linux-2.6.19.2/drivers/serial/mxc_uart.c
+--- linux-2.6.19.2.orig/drivers/serial/mxc_uart.c	2007-04-25 17:37:51.000000000 -0600
++++ linux-2.6.19.2/drivers/serial/mxc_uart.c	2007-04-25 17:38:03.000000000 -0600
+@@ -1218,15 +1218,6 @@ static void mxcuart_shutdown(struct uart
+ 	if (umxc->dma_enabled == 1) {
+ 		mxcuart_freedma(dma_list + umxc->port.line, umxc);
+ 	}
+-	/*
+-	 * Do not disable clocks if UART is used as a console
+-	 */
+-	if (umxc->port.cons != NULL) {
+-		if ((umxc->port.cons->flags & CON_ENABLED) &&
+-		    (umxc->port.line == console_index)) {
+-			return;
+-		}
+-	}
+ }
+ 
+ /*!

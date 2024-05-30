@@ -1,0 +1,29 @@
+Stuart Hughes stuarth@freescale.com 16mar05
+
+Fixes:
+make[1]: Entering directory `/home/seh/ltib/rpm/BUILD/tcp_wrappers_7.6'
+gcc -O2 -DFACILITY=LOG_DAEMON    -DHOSTS_ACCESS  -DNETGROUP    -DDAEMON_UMASK=022 -DREAL_DAEMON_DIR=\"/usr/sbin\" -DPROCESS_OPTIONS -DKILL_IP_OPTIONS -DSEVERITY=LOG_INFO        -DRFC931_TIMEOUT=10  -DHOSTS_DENY=\"/etc/hosts.deny\" -DHOSTS_ALLOW=\"/etc/hosts.allow\"   -DSYS_ERRLIST_DEFINED -DHAVE_WEAKSYMS -D_REENTRANT    -o tcpd tcpd.o -Lshared -lwrap
+shared/libwrap.so: undefined reference to `innetgr'
+shared/libwrap.so: undefined reference to `yp_get_default_domain'
+
+Need to build with:
+
+make REAL_DAEMON_DIR=/usr/sbin STYLE=-DPROCESS_OPTIONS linux-uclibc
+
+
+diff --exclude CVS -uNr tcp_wrappers_7.6/Makefile tcp_wrappers_7.6.modified/Makefile
+--- tcp_wrappers_7.6/Makefile	Wed Mar 16 13:31:42 2005
++++ tcp_wrappers_7.6.modified/Makefile	Wed Mar 16 13:29:01 2005
+@@ -156,6 +156,12 @@
+ 	NETGROUP=-DNETGROUP TLI= VSYSLOG= BUGS= all \
+ 	EXTRA_CFLAGS="-DSYS_ERRLIST_DEFINED -DHAVE_WEAKSYMS -D_REENTRANT"
+ 
++linux-uclibc:
++	@make REAL_DAEMON_DIR=$(REAL_DAEMON_DIR) STYLE=$(STYLE) \
++	LIBS=$(MYLIB) RANLIB=ranlib ARFLAGS=rv AUX_OBJ=weak_symbols.o \
++	NETGROUP=-DUSE_GETDOMAIN TLI= VSYSLOG= BUGS= all \
++	EXTRA_CFLAGS="-DSYS_ERRLIST_DEFINED -DHAVE_WEAKSYMS -D_REENTRANT"
++
+ gnu:
+ 	@make REAL_DAEMON_DIR=$(REAL_DAEMON_DIR) STYLE=$(STYLE) \
+ 	LIBS=$(MYLIB) RANLIB=ranlib ARFLAGS=rv AUX_OBJ=weak_symbols.o \

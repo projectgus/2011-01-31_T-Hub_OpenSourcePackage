@@ -1,0 +1,48 @@
+if ARCH_MXC
+
+menu "Freescale MXC Implementations"
+
+choice
+	prompt "MXC/iMX System Type"
+	default 0
+
+config ARCH_MX3
+	bool "MX31-based"
+	help
+	  This enables support for systems based on Freescale i.MX31
+
+config MX31_TO2_REG_SWIZZLE_WORKAROUND
+	bool "MX31-TO2 Register Swizzle Workaround"
+	depends on ARCH_MX3
+	help
+	  This option attempts to work around a problem discovered with
+	  MX31-TO2 silicon where a general register is loaded with an
+	  address constant from a PC-relative location.  Upon going
+	  indirect through this register, the address value contained
+	  in the register will have been rotated right by 8 bits, causing
+	  a memory fault.  The cause of the rotation is not known, nor is
+	  the reason why this work around seems to make the problem go
+	  away.  If you are using MX31-TO2 silicon and are faulting on
+	  rotated addresses, enable this option.
+
+config ARCH_MX27
+	bool "MX27-based"
+	select MXC_EMMA
+	select GENERIC_TIME
+	help
+	  This enables support for systems based on Freescale i.MX27
+
+endchoice
+
+source "arch/arm/mach-mx27/Kconfig"
+
+source "arch/arm/mach-mx3/Kconfig"
+
+endmenu
+
+config MXC_EMMA
+	bool
+	depends on ARCH_MXC
+
+endif
+

@@ -1,0 +1,107 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AtkImage</title><meta name="generator" content="DocBook XSL Stylesheets V1.48"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style><link rel="home" href="index.html" title="ATK Library Reference Manual"><link rel="up" href="atk.html" title="ATK Library"><link rel="previous" href="AtkHypertext.html" title="AtkHypertext"><link rel="next" href="AtkNoOpObject.html" title="AtkNoOpObject"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AtkHypertext.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="atk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">ATK Library Reference Manual</th><td><a accesskey="n" href="AtkNoOpObject.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry"><a name="AtkImage"></a><div class="titlepage"></div><div class="refnamediv"><h2>AtkImage</h2><p>AtkImage &#8212; The ATK Interface implemented by components which expose image or pixmap
+content on-screen.</p></div><div class="refsynopsisdiv"><h2><h1 class="title"><a name="id260468"></a>Synopsis</h1></h2><pre class="synopsis">
+
+
+
+struct      <a href="AtkImage.html#AtkImage-struct">AtkImage</a>;
+void        <a href="AtkImage.html#atk-image-get-image-position">atk_image_get_image_position</a>    (<a href="AtkImage.html" title="AtkImage">AtkImage</a> *image,
+                                             gint *x,
+                                             gint *y,
+                                             <a href="AtkUtil.html#AtkCoordType">AtkCoordType</a> coord_type);
+G_CONST_RETURN gchar* <a href="AtkImage.html#atk-image-get-image-description">atk_image_get_image_description</a>
+                                            (<a href="AtkImage.html" title="AtkImage">AtkImage</a> *image);
+gboolean    <a href="AtkImage.html#atk-image-set-image-description">atk_image_set_image_description</a> (<a href="AtkImage.html" title="AtkImage">AtkImage</a> *image,
+                                             const gchar *description);
+void        <a href="AtkImage.html#atk-image-get-image-size">atk_image_get_image_size</a>        (<a href="AtkImage.html" title="AtkImage">AtkImage</a> *image,
+                                             gint *width,
+                                             gint *height);
+
+</pre></div><div class="refsect1"><h2>Object Hierarchy</h2><pre class="synopsis">
+
+  GInterface
+   +----AtkImage
+</pre></div><div class="refsect1"><h2>Known Implementations</h2><p>
+AtkImage is implemented by
+ <a href="AtkNoOpObject.html" title="AtkNoOpObject">AtkNoOpObject</a>.</p></div><div class="refsect1"><h2>Description</h2><p>
+<a href="AtkImage.html" title="AtkImage">AtkImage</a> should be implemented by <a href="AtkObject.html" title="AtkObject">AtkObject</a> subtypes on behalf of
+components which display image/pixmap information onscreen, and which
+provide information (other than just widget borders, etc.) via that
+image content.  For instance, icons, buttons with icons, toolbar
+elements, and image viewing panes typically should implement <a href="AtkImage.html" title="AtkImage">AtkImage</a>.
+</p><p>
+<a href="AtkImage.html" title="AtkImage">AtkImage</a> primarily provides two types of information: coordinate
+information (useful for screen review mode of screenreaders, and for use
+by onscreen magnifiers), and descriptive information.  The descriptive
+information is provided for alternative, text-only presentation of the
+most significant information present in the image.
+</p></div><div class="refsect1"><h2>Details</h2><div class="refsect2"><h3><a name="AtkImage-struct"></a>struct AtkImage</h3><a class="indexterm" name="id262814"></a><pre class="programlisting">struct AtkImage;</pre><p>
+The AtkImage structure does not contain any fields.
+
+</p></div><hr><div class="refsect2"><h3><a name="atk-image-get-image-position"></a>atk_image_get_image_position ()</h3><a class="indexterm" name="id262839"></a><pre class="programlisting">void        atk_image_get_image_position    (<a href="AtkImage.html" title="AtkImage">AtkImage</a> *image,
+                                             gint *x,
+                                             gint *y,
+                                             <a href="AtkUtil.html#AtkCoordType">AtkCoordType</a> coord_type);</pre><p>
+Gets the position of the image in the form of a point specifying the
+images top-left corner.  The values of <i><tt>x</tt></i> and <i><tt>y</tt></i> are returned as -1
+if the values cannot be obtained.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>image</tt></i> :</span></td><td> a GObject instance that implements AtkImageIface
+</td></tr><tr><td><span class="term"><i><tt>x</tt></i> :</span></td><td> address of gint to put x coordinate position
+</td></tr><tr><td><span class="term"><i><tt>y</tt></i> :</span></td><td> address of gint to put y coordinate position
+</td></tr><tr><td><span class="term"><i><tt>coord_type</tt></i> :</span></td><td> specifies whether the coordinates are relative to the screen
+or to the components top level window
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-image-get-image-description"></a>atk_image_get_image_description ()</h3><a class="indexterm" name="id263018"></a><pre class="programlisting">G_CONST_RETURN gchar* atk_image_get_image_description
+                                            (<a href="AtkImage.html" title="AtkImage">AtkImage</a> *image);</pre><p>
+Get a textual description of this image.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>image</tt></i> :</span></td><td> a GObject instance that implements AtkImageIface
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> a string representing the image description
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-image-set-image-description"></a>atk_image_set_image_description ()</h3><a class="indexterm" name="id263138"></a><pre class="programlisting">gboolean    atk_image_set_image_description (<a href="AtkImage.html" title="AtkImage">AtkImage</a> *image,
+                                             const gchar *description);</pre><p>
+Sets the textual description for this image.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>image</tt></i> :</span></td><td> a GObject instance that implements AtkImageIface
+</td></tr><tr><td><span class="term"><i><tt>description</tt></i> :</span></td><td> a string description to set for <i><tt>image</tt></i>
+</td></tr><tr><td><span class="term"><span class="emphasis"><i>Returns</i></span> :</span></td><td> boolean TRUE, or FALSE if operation could
+not be completed.
+</td></tr></tbody></table></div></div><hr><div class="refsect2"><h3><a name="atk-image-get-image-size"></a>atk_image_get_image_size ()</h3><a class="indexterm" name="id263258"></a><pre class="programlisting">void        atk_image_get_image_size        (<a href="AtkImage.html" title="AtkImage">AtkImage</a> *image,
+                                             gint *width,
+                                             gint *height);</pre><p>
+Get the width and height in pixels for the specified image.
+The values of <i><tt>width</tt></i> and <i><tt>height</tt></i> are returned as -1 if the
+values cannot be obtained.</p><p>
+
+</p><div class="variablelist"><table border="0"><col align="left"><tbody><tr><td><span class="term"><i><tt>image</tt></i> :</span></td><td> a GObject instance that implements AtkImageIface
+</td></tr><tr><td><span class="term"><i><tt>width</tt></i> :</span></td><td> filled with the image width
+</td></tr><tr><td><span class="term"><i><tt>height</tt></i> :</span></td><td> filled with the image height
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AtkHypertext.html"><b>&lt;&lt; AtkHypertext</b></a></td><td align="right"><a accesskey="n" href="AtkNoOpObject.html"><b>AtkNoOpObject &gt;&gt;</b></a></td></tr></table></body></html>

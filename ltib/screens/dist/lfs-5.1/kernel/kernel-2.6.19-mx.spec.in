@@ -1,0 +1,50 @@
+# Template = kernel-common.tmpl
+
+%define pfx /opt/freescale/rootfs/%{_target_cpu}
+%define bld_dir_name linux-2.6.19.2
+%define kernel arch/arm/boot/zImage
+%define pkg_name linux
+%define buildsubdir linux-2.6.19.2
+
+Summary         : Linux kernel (core of the Linux operating system)
+Name            : kernel-2.6.19-screens-sagem-pub
+Version         : 5.41.p13
+Release         : 1
+License         : GPL
+Vendor          : Sagem Communications
+Packager        : Sagem
+Group           : System Environment/Kernel
+Source          : %{name}-%{version}.tar.gz
+
+BuildRoot       : %{_tmppath}/%{name}
+Prefix          : %{pfx}
+
+%changelog
+
+
+%Description
+%{summary}
+
+%Prep
+rm -rf %{buildsubdir}
+%setup -n %{buildsubdir}
+
+
+# SAGEM: no more needed as kernel sources are ours and already patched.
+#if [ "${TOOLCHAIN_PREFIX}" = "arm-none-linux-gnueabi-" ]
+#then
+#
+#    echo "EABI toolchain so fixing CFLAGS for arm kernel modules."
+#    cd ${RPM_BUILD_DIR}/%{bld_dir_name}
+#    perl -p -i -e 's,(^tune\-\$\(CONFIG_CPU_V6\).*),$1 \-Wa\,\-meabi\=gnu,'  arch/arm/Makefile
+#fi
+cd ${RPM_BUILD_DIR}/%{bld_dir_name}
+
+if test "${TOOLCHAIN_PREFIX}" = "arm-linux-" ;then
+    echo "Generic toolchain: setting proper architecture."    
+    perl -p -i -e 's#^(arch-\$\(CONFIG_CPU_32v6\).*-march=)armv6,#$1armv6j,#'  arch/arm/Makefile
+fi
+sed -i -e 's,LINUX_COMPILE_BY,"%{name}",' init/version.c
+sed -i -e 's,"@",,' init/version.c
+sed -i -e 's,LINUX_COMPILE_HOST,"-%{version}-%{release}",' init/version.c
+

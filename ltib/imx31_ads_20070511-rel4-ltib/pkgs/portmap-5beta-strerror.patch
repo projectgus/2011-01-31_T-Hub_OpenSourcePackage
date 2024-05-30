@@ -1,0 +1,62 @@
+Steve Papacharalambous <stevep@freescale.com> 14sep06
+
+Fix build error:
+
+strerror.o: In function `strerror':
+strerror.c:(.text+0x6): undefined reference to `sys_nerr'
+strerror.c:(.text+0xa): undefined reference to `sys_nerr'
+strerror.c:(.text+0x16): undefined reference to `sys_errlist'
+strerror.c:(.text+0x1e): undefined reference to `sys_errlist'
+collect2: ld returned 1 exit status
+make: *** [portmap] Error 1
+
+Fix generated in house.
+
+diff --exclude CVS -uNr portmap_5beta/Makefile portmap_5beta.modified/Makefile
+--- portmap_5beta/Makefile	2006-09-14 11:22:11.000000000 +0100
++++ portmap_5beta.modified/Makefile	2006-09-14 11:21:43.000000000 +0100
+@@ -119,7 +119,12 @@
+ COPT	= $(CONST) $(HOSTS_ACCESS) $(CHECK_PORT) \
+ 	$(SYS) -DFACILITY=$(FACILITY) $(ULONG) $(ZOMBIES) $(SA_LEN) \
+ 	$(LOOPBACK) $(SETPGRP)
+-CFLAGS	= -Wall $(COPT) -O2 $(NSARCHS)
++ifeq ($(UCLIBC),y)
++EXTRA_CFLAGS = -DHAVE_STRERROR
++else
++EXTRA_CFLAGS =
++endif
++CFLAGS	= -Wall $(COPT) -O2 $(NSARCHS) $(EXTRA_CFLAGS)
+ OBJECTS	= portmap.o pmap_check.o from_local.o $(AUX)
+ 
+ all:	portmap pmap_dump pmap_set
+diff --exclude CVS -uNr portmap_5beta/strerror.c portmap_5beta.modified/strerror.c
+--- portmap_5beta/strerror.c	1992-06-11 21:53:13.000000000 +0100
++++ portmap_5beta.modified/strerror.c	2006-09-14 11:08:45.000000000 +0100
+@@ -41,8 +41,10 @@
+ strerror(num)
+ 	int num;
+ {
++#if !defined(SYS_ERRLIST_DEFINED) && !defined(HAVE_STRERROR)
+ 	extern int sys_nerr;
+ 	extern char *sys_errlist[];
++#endif
+ #define	UPREFIX	"Unknown error: "
+ 	static char ebuf[40] = UPREFIX;		/* 64-bit number + slop */
+ 	register unsigned int errnum;
+@@ -50,6 +52,9 @@
+ 	char tmp[40];
+ 
+ 	errnum = num;				/* convert to unsigned */
++#ifdef HAVE_STRERROR
++            strcpy(ebuf, strerror(errnum));
++#else
+ 	if (errnum < sys_nerr)
+ 		return(sys_errlist[errnum]);
+ 
+@@ -63,5 +68,6 @@
+ 		if (t <= tmp)
+ 			break;
+ 	}
++#endif
+ 	return(ebuf);
+ }

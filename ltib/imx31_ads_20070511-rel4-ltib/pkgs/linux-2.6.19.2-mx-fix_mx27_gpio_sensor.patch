@@ -1,0 +1,35 @@
+CR: ENGR00027945
+Patch name: ENGR00027945_fixed_gpio_sensor_mx27.patch
+Date: Tue Mar 6 13:28:21 2007 -0600
+Source: Freescale Semiconductor, Inc.
+Description: fixed gpio_sensor_reset for imx27ads platform and
+registered mc521da camera to imx27 platform kconfig.
+===================================================================
+diff -uNpr linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads_gpio.c linux-2.6.19.2/arch/arm/mach-mx27/mx27ads_gpio.c
+--- linux-2.6.19.2.orig/arch/arm/mach-mx27/mx27ads_gpio.c	2007-04-25 17:38:22.000000000 -0600
++++ linux-2.6.19.2/arch/arm/mach-mx27/mx27ads_gpio.c	2007-04-25 17:38:36.000000000 -0600
+@@ -542,10 +542,10 @@ void gpio_sensor_reset(bool flag)
+ 
+ 	if (flag) {
+ 		temp = 0x200;
+-		__raw_writew(temp, PBC_BASE_ADDRESS + PBC_BCTRL1_CLEAR);
++		__raw_writew(temp, PBC_BCTRL2_CLEAR_REG);
+ 	} else {
+ 		temp = 0x200;
+-		__raw_writew(temp, PBC_BASE_ADDRESS + PBC_BCTRL1_SET);
++		__raw_writew(temp, PBC_BCTRL2_SET_REG);
+ 	}
+ }
+ 
+diff -uNpr linux-2.6.19.2.orig/drivers/media/video/mxc/capture/Kconfig linux-2.6.19.2/drivers/media/video/mxc/capture/Kconfig
+--- linux-2.6.19.2.orig/drivers/media/video/mxc/capture/Kconfig	2007-04-25 17:37:00.000000000 -0600
++++ linux-2.6.19.2/drivers/media/video/mxc/capture/Kconfig	2007-04-25 17:38:36.000000000 -0600
+@@ -8,7 +8,7 @@ config VIDEO_MXC_IPU_CAMERA
+ 
+ config VIDEO_MXC_EMMA_CAMERA
+ 	tristate "MX27 eMMA support"
+-	depends on VIDEO_MXC_CAMERA && MXC_EMMA && FB_MXC_SYNC_PANEL && MXC_CAMERA_MICRON111
++	depends on VIDEO_MXC_CAMERA && MXC_EMMA && FB_MXC_SYNC_PANEL && (MXC_CAMERA_MICRON111 || MXC_CAMERA_MC521DA) 
+ 	select VIDEO_MXC_OPL
+ 	default y
+ 

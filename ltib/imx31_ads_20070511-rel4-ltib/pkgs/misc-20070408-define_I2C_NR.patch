@@ -1,0 +1,13 @@
+diff -uNpr misc.orig/module_test/mxc_i2c_client.c misc/module_test/mxc_i2c_client.c
+--- misc.orig/module_test/mxc_i2c_client.c	2007-04-08 22:03:02.000000000 -0600
++++ misc/module_test/mxc_i2c_client.c	2007-04-08 22:04:19.000000000 -0600
+@@ -27,6 +27,9 @@
+ #include <linux/i2c.h>
+ #include <asm/arch/mxc_i2c.h>
+ 
++/* this constant used to be defined by the kernel */
++#define I2C_NR
++
+ /*!
+  * Array that holds pointers to MXC I2C Bus adapter structures.
+  */

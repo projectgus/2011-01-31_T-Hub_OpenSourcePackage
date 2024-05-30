@@ -1,0 +1,118 @@
+* Mon May 15 2006 Stuarth Hughes <stuarth@freescale.com> u
+on behalf of Joseph Palazzo:
+
+This patch provides user access for three additional TSEC parameters. These are:
+
+fifo-tx-thr
+fifo-tx-starve
+fifo-tx-starve-shutoff
+
+
+diff --exclude CVS -uNr ethtool-3/ethtool-copy.h ethtool-3.modified/ethtool-copy.h
+--- ethtool-3/ethtool-copy.h	2005-01-27 14:05:26.000000000 -0600
++++ ethtool-3.modified/ethtool-copy.h	2006-03-30 13:43:39.000000000 -0600
+@@ -171,7 +171,22 @@
+ 	/* How often to do adaptive coalescing packet rate sampling,
+ 	 * measured in seconds.  Must not be zero.
+ 	 */
+-	u32	rate_sample_interval;
++	u32	rate_sample_interval;
++	/* The main purpose of the threshold register is to trigger the unloading of FIFO data to the PHY. It
++	 * represents the numerical SRAM entry (0-511 for 2-Kbyte FIFO) to trigger the threshold function.
++	 * If the number of valid entries in the FIFO is equal to or greater than the threshold register,
++	 * transmission can begin.
++	 */
++	u32 fifo_tx_thr;
++	/* The purpose of the starve register is to inform the system of extremely
++	 * imminent underrun conditions.
++	 */
++	u32 fifo_tx_starve;
++	/* The starve shutoff register contains the watermark level to be used for
++	 * exiting the starve state.
++	 */
++	u32 fifo_tx_starve_shutoff;
++
+ };
+ 
+ /* for configuring RX/TX ring parameters */
+diff --exclude CVS -uNr ethtool-3/ethtool.c ethtool-3.modified/ethtool.c
+--- ethtool-3/ethtool.c	2005-01-27 16:34:29.000000000 -0600
++++ ethtool-3.modified/ethtool.c	2006-03-30 13:44:51.000000000 -0600
+@@ -96,8 +96,11 @@
+  *		[rx-frames-high N] \
+  *		[tx-usecs-high N] \
+  *		[tx-frames-high N] \
+- *		[sample-interval N]
+- *	ethtool -g DEVNAME
++ *		[sample-interval N]	\
++ *		[fifo-tx-thr N] \
++ *		[fifo-tx-starve N] \
++ *		[fifo-tx-starve-shutoff N]
++  *	ethtool -g DEVNAME
+  *	ethtool -G DEVNAME \
+  *		[ rx N ] \
+  *		[ rx-mini N ] \
+@@ -167,7 +170,10 @@
+ 		"		[rx-usecs-high N] \\\n"
+ 		"		[rx-frames-high N] \\\n"
+ 		"		[tx-usecs-high N] \\\n"
+-		"		[tx-frames-high N] \\\n"
++		"		[tx-frames-high N] \\\n"
++		"		[fifo-tx-thr N] \\\n"
++		"		[fifo-tx-starve N] \\\n"
++		"		[fifo-tx-starve-shutoff N] \\\n"
+ 		"		[sample-interval N]\n"
+ 		"	ethtool -g DEVNAME\n"
+ 		"	ethtool -G DEVNAME \\\n"
+@@ -274,6 +280,9 @@
+ static int coal_rx_frames_high_wanted = -1;
+ static int coal_tx_usec_high_wanted = -1;
+ static int coal_tx_frames_high_wanted = -1;
++static int coal_fifo_tx_thr = -1;
++static int coal_fifo_tx_starve = -1;
++static int coal_fifo_tx_starve_shutoff = -1;
+ 
+ static int speed_wanted = -1;
+ static int duplex_wanted = -1;
+@@ -376,7 +385,10 @@
+ 	{ "rx-usecs-high", CMDL_INT, &coal_rx_usec_high_wanted, &ecoal.rx_coalesce_usecs_high },
+ 	{ "rx-frames-high", CMDL_INT, &coal_rx_frames_high_wanted, &ecoal.rx_max_coalesced_frames_high },
+ 	{ "tx-usecs-high", CMDL_INT, &coal_tx_usec_high_wanted, &ecoal.tx_coalesce_usecs_high },
+-	{ "tx-frames-high", CMDL_INT, &coal_tx_frames_high_wanted, &ecoal.tx_max_coalesced_frames_high },
++	{ "tx-frames-high", CMDL_INT, &coal_tx_frames_high_wanted, &ecoal.tx_max_coalesced_frames_high },
++	{ "fifo-tx-thr", CMDL_INT, &coal_fifo_tx_thr, &ecoal.fifo_tx_thr },
++	{ "fifo-tx-starve", CMDL_INT, &coal_fifo_tx_starve, &ecoal.fifo_tx_starve },
++	{ "fifo-tx-starve-shutoff", CMDL_INT, &coal_fifo_tx_starve_shutoff, &ecoal.fifo_tx_starve_shutoff },
+ };
+ 
+ static void parse_generic_cmdline(int argc, char **argp,
+@@ -1154,7 +1166,11 @@
+ 		"rx-usecs-high: %u\n"
+ 		"rx-frame-high: %u\n"
+ 		"tx-usecs-high: %u\n"
+-		"tx-frame-high: %u\n"
++		"tx-frame-high: %u\n"
++		"\n"
++		"fifo-tx-thr: %u\n" 
++		"fifo-tx-starve: %u\n"
++		"fifo-tx-starve-shutoff: %u\n"
+ 		"\n",
+ 		ecoal.stats_block_coalesce_usecs,
+ 		ecoal.rate_sample_interval,
+@@ -1179,9 +1195,13 @@
+ 		ecoal.rx_coalesce_usecs_high,
+ 		ecoal.rx_max_coalesced_frames_high,
+ 		ecoal.tx_coalesce_usecs_high,
+-		ecoal.tx_max_coalesced_frames_high);
+-
+-	return 0;
++		ecoal.tx_max_coalesced_frames_high,
++
++		ecoal.fifo_tx_thr,
++		ecoal.fifo_tx_starve,
++		ecoal.fifo_tx_starve_shutoff		
++		);
++		return 0;
+ }
+ 
+ static int dump_offload (int rx, int tx, int sg, int tso)

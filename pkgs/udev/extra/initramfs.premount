@@ -1,0 +1,33 @@
+#!/bin/sh -e
+
+PREREQS=""
+
+prereqs() { echo "$PREREQS"; }
+
+case "$1" in
+    prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+
+# The time we wait for udev to work things out
+udevd_timeout=30
+
+echo "" > /proc/sys/kernel/hotplug
+
+mkdir /dev/.udev/ /dev/.udev/db/ /dev/.udev/queue/
+
+udevd --daemon
+
+udevsynthesize
+while [ -d /dev/.udev/queue/ ]; do
+    sleep 1
+    udevd_timeout=$(($udevd_timeout - 1))
+    if [ $udevd_timeout -eq 0 ]; then
+	break
+    fi
+done
+
+# Leave udev running to process events that come in out-of-band (like USB
+# connections)

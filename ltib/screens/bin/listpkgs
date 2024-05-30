@@ -1,0 +1,157 @@
+eval 'LANG=C exec perl -w -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+$running_under_some_shell = 0;
+
+######################################################################
+#
+# Copyright © Freescale Semiconductor, Inc. 2004-2005. All rights reserved.
+#
+# Stuart Hughes, stuarth@freescale.com,  6th May 2005
+#   
+# This file is part of LTIB.
+#
+# LTIB is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# LTIB is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with LTIB; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#
+# List out package information from an ltib config file
+#
+# Example usage:
+# ./bin/listpkgs -a config/platform/mpc8548cds/.config
+#
+######################################################################
+use Getopt::Std;
+use FindBin;
+$top = "$FindBin::Bin/..";
+$pkg_map = "common/pkg_map";
+$opt_f = "text";
+$opt_h = 0;
+$opt_a = 0;
+
+$usage = <<TXT;
+Usage  listpkgs [-a] [ -f <format> ] <config_file>
+  Where:
+    -a          : list alphabetic (def = build order)
+    -f <format> : format => text|twiki
+TXT
+
+getopts('af:h') or die($usage);
+die($usage) if $opt_h;
+$cf = shift || "";
+die("$cf does not exist\n", $usage) unless -f $cf;
+($cfdir) = $cf =~ m,(.*)/[^/]+,;
+die("Invalid format\n", $usage) unless $opt_f =~ m,(?:text|twiki),;
+$~ = $opt_f;
+$^ = $opt_f . "_top";
+
+
+open(CF, $cf) or die("open $cf : $!\n");
+while(<CF>) {
+    chomp;
+    ($k, $v) = m,(CONFIG_[\S]+)[\s=](.*),;
+    next unless $k;
+    $k =~ s,CONFIG_,,;
+    $v =~ s,is not set,n,;
+    $v =~ s,^",,;
+    $v =~ s,"$,,;
+    $pcf->{$k} = $v;
+}
+$pre = '[\S]+';
+$map = "$top/$pcf->{DISTRO}/$pkg_map";
+open(MAP, $map) or die("open($map): $!\n");
+@lines = <MAP>;
+close MAP;
+@lines = sort @lines if $opt_a;
+
+# check for a package map override
+if(-f "$cfdir/pkg_map") {
+    open(MAP,  "$cfdir/pkg_map") or die("open($cfdir/pkg_map\n");
+    while(<MAP>) {
+        ($cfopt) = m,^([\w]+)\s*=,;
+        next unless $cfopt;
+        foreach $line (@lines) {
+            if($line =~ m,^$cfopt,) {
+                $line = $_;
+                last;
+            }
+        }
+    }
+    close MAP;
+}
+
+# This does not handle the case where the kernel/uboot is turned off
+foreach (@lines) {
+    chomp;
+    m,^([\w]+)\s*=\s*($pre),o or next;
+    next unless $pcf->{$1};
+    if(! $pcf->{$1} || $pcf->{$1} eq 'y' || $pcf->{$1} eq 'n') {
+        $sn = $2;
+        $en = $pcf->{$1};
+    } else {
+        $sn = $pcf->{$1};
+        $en = 'y';
+    }
+    $spec = get_spec("$sn.spec") or next;
+    open(F, $spec) or next;
+    ($nam, $ver, $rel, $lic, $sum) = ("", "", "", "", "");
+    while(<F>) {
+        chomp;
+        m,^summary\s*:\s*(.+),i and do { $sum = $1 };
+        m,^name\s*:\s*(.+),i    and do { $nam = $1 };
+        m,^version\s*:\s*(.+),i and do { $ver = $1 };
+        m,^release\s*:\s*(.+),i and do { $rel = $1 };
+        m,^license\s*:\s*(.+),i and do { $lic = $1 };
+        last if $nam && defined($ver) && defined($rel) && $lic;
+    }
+    $lic ||= "unknown";
+    $sum ||= "";
+    write;
+}
+exit(0);
+
+
+sub get_spec
+{
+    my ($sn) = @_;
+    foreach my $dir ( glob("$top/$pcf->{DISTRO}/*") ) {
+        return "$dir/$sn" if -e "$dir/$sn";
+    }
+    warn("can't find spec for specname $sn in $top/$pcf->{DISTRO}/*\n");
+    return;
+}
+
+format text_top =
+@<<<<<<<<<<<<<<<<<<<<<<< @|||||| @<<<<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+'-----------------------','-------','-------','--------------------------------'
+@<<<<<<<<<<<<<<<<<<<<<<< @|||||| @<<<<<< @<<<<<<<<<<<<
+'Package',            'Enabled','License','Summary'
+@<<<<<<<<<<<<<<<<<<<<<<< @|||||| @<<<<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+'-----------------------','-------','-------','--------------------------------'
+.
+
+format text =
+@<<<<<<<<<<<<<<<<<<<<<<< @|||||| @<<<<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+"$nam-$ver-$rel",          $en,   $lic,   $sum
+.
+
+format twiki_top = 
+@<@<<<<<<<<<<<<<<<<<<<<<<<<<<@<@||||||||@<@<<<<<<<<@<@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<@<
+'|','*Package*','|','*Enabled*','|','*License*','|','*Summary*','|'
+.
+
+format twiki = 
+@<@<<<<<<<<<<<<<<<<<<<<<<<<<<@<@||||||||@<@<<<<<<<<@<@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<@<
+'|',"$nam-$ver-$rel",'|',$en,'|',$lic,'|',$sum,'|'
+.
+

@@ -1,0 +1,118 @@
+diff -uNpr linux-2.6.19.2/arch/arm/mach-mx3/usb.c linux-2.6.19.2-mx/arch/arm/mach-mx3/usb.c
+--- linux-2.6.19.2/arch/arm/mach-mx3/usb.c	2007-01-26 18:31:03.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/mach-mx3/usb.c	2007-01-26 17:56:11.000000000 -0700
+@@ -755,7 +755,7 @@ static struct platform_device *host_pdev
+ 	pdev = platform_device_register_simple("fsl-ehci",
+ 					       instance_id, res, n_res);
+ 	if (IS_ERR(pdev)) {
+-		pr_debug("can't register %s Host, %d\n",
++		pr_debug("can't register %s Host, %ld\n",
+ 			 config->name, PTR_ERR(pdev));
+ 		return NULL;
+ 	}
+diff -uNpr linux-2.6.19.2/arch/arm/oprofile/op_model_arm11.c linux-2.6.19.2-mx/arch/arm/oprofile/op_model_arm11.c
+--- linux-2.6.19.2/arch/arm/oprofile/op_model_arm11.c	2007-01-26 18:31:03.000000000 -0700
++++ linux-2.6.19.2-mx/arch/arm/oprofile/op_model_arm11.c	2007-01-26 18:21:18.000000000 -0700
+@@ -28,6 +28,7 @@
+ #include <linux/sched.h>
+ #include <linux/oprofile.h>
+ #include <linux/interrupt.h>
++#include <linux/irq.h>
+ #include <asm/hardware.h>
+ #include <asm/irq.h>
+ #include <asm/system.h>
+@@ -259,7 +260,7 @@ static int arm11_setup_ctrs(void)
+ 			counter_config[i].event = 0;
+ 			pmu->int_enable &= ~pmu->int_mask[i];
+ 			pr_debug
+-			    ("arm11_setup_ctrs: The counter event is %d for counter%d\n",
++			    ("arm11_setup_ctrs: The counter event is %ld for counter%d\n",
+ 			     counter_config[i].event, i);
+ 			continue;
+ 		}
+@@ -288,7 +289,7 @@ static int arm11_setup_ctrs(void)
+ /*!
+  * function is the interrupt service handler for the ARM11 performance counters
+  */
+-static irqreturn_t arm11_pmu_interrupt(int irq, void *arg, struct pt_regs *regs)
++static irqreturn_t arm11_pmu_interrupt(int irq, void *arg)
+ {
+ 	int i;
+ 	u32 pmnc, emcs;
+@@ -340,7 +341,7 @@ static irqreturn_t arm11_pmu_interrupt(i
+ 			write_l2counter(i - EMC0,
+ 					-(u32) counter_config[i].count);
+ 
+-		oprofile_add_sample(regs, i);
++		oprofile_add_sample(get_irq_regs(), i);
+ 	}
+ 
+ 	/* Clear overflow flags */
+diff -uNpr linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.c linux-2.6.19.2-mx/drivers/media/video/mxc/capture/mxc_v4l2_capture.c
+--- linux-2.6.19.2/drivers/media/video/mxc/capture/mxc_v4l2_capture.c	2007-01-26 18:31:03.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/media/video/mxc/capture/mxc_v4l2_capture.c	2007-01-26 17:57:19.000000000 -0700
+@@ -1472,7 +1472,7 @@ static int mxc_mmap(struct file *file, s
+ 	int res = 0;
+ 	cam_data *cam = dev->priv;
+ 
+-	pr_debug("pgoff=0x%x, start=0x%x, end=0x%x\n",
++	pr_debug("pgoff=0x%lx, start=0x%lx, end=0x%lx\n",
+ 		 vma->vm_pgoff, vma->vm_start, vma->vm_end);
+ 
+ 	/* make this _really_ smp-safe */
+diff -uNpr linux-2.6.19.2/drivers/mxc/ipu/pf/mxc_pf.c linux-2.6.19.2-mx/drivers/mxc/ipu/pf/mxc_pf.c
+--- linux-2.6.19.2/drivers/mxc/ipu/pf/mxc_pf.c	2007-01-26 18:31:03.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/ipu/pf/mxc_pf.c	2007-01-26 17:57:50.000000000 -0700
+@@ -780,7 +780,7 @@ static int mxc_pf_mmap(struct file *file
+ 	unsigned long size = vma->vm_end - vma->vm_start;
+ 	int res = 0;
+ 
+-	pr_debug("pgoff=0x%x, start=0x%x, end=0x%x\n",
++	pr_debug("pgoff=0x%lx, start=0x%lx, end=0x%lx\n",
+ 		 vma->vm_pgoff, vma->vm_start, vma->vm_end);
+ 
+ 	/* make this _really_ smp-safe */
+diff -uNpr linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_adc.c linux-2.6.19.2-mx/drivers/mxc/pmic/mc13783/pmic_adc.c
+--- linux-2.6.19.2/drivers/mxc/pmic/mc13783/pmic_adc.c	2007-01-26 18:31:04.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/mxc/pmic/mc13783/pmic_adc.c	2007-01-26 17:53:52.000000000 -0700
+@@ -33,6 +33,7 @@
+ #include <asm/arch/pmic_power.h>
+ 
+ #include "../core/pmic_config.h"
++#include "../core/pmic.h"
+ #include "pmic_adc_defs.h"
+ 
+ #define NB_ADC_REG      5
+diff -uNpr linux-2.6.19.2/drivers/pcmcia/mx31ads-pcmcia.c linux-2.6.19.2-mx/drivers/pcmcia/mx31ads-pcmcia.c
+--- linux-2.6.19.2/drivers/pcmcia/mx31ads-pcmcia.c	2007-01-26 18:31:03.000000000 -0700
++++ linux-2.6.19.2-mx/drivers/pcmcia/mx31ads-pcmcia.c	2007-01-26 18:06:46.000000000 -0700
+@@ -374,8 +374,9 @@ mx31ads_common_pcmcia_set_io_map(struct 
+ 	struct mx31ads_pcmcia_socket *skt = to_mx31ads_pcmcia_socket(sock);
+ 	unsigned short speed = map->speed;
+ 
+-	pr_debug("map %u  speed %u start 0x%08x stop 0x%08x\n",
+-		 map->map, map->speed, map->start, map->stop);
++	pr_debug("map %u  speed %u start 0x%08lx stop 0x%08lx\n",
++		 map->map, map->speed, (unsigned long int)map->start,
++                 (unsigned long int)map->stop);
+ 	pr_debug("flags: %s%s%s%s%s%s%s%s\n",
+ 		 (map->flags == 0) ? "<NONE>" : "",
+ 		 (map->flags & MAP_ACTIVE) ? "ACTIVE " : "",
+@@ -439,7 +440,7 @@ mx31ads_common_pcmcia_set_mem_map(struct
+ 
+ 	pr_debug
+ 	    (KERN_INFO
+-	     "map %u speed %u card_start %08x flags%08x static_start %08x\n",
++	     "map %u speed %u card_start %08x flags%08x static_start %08lx\n",
+ 	     map->map, map->speed, map->card_start, map->flags,
+ 	     map->static_start);
+ 	pr_debug(KERN_INFO "flags: %s%s%s%s%s%s%s%s\n",
+@@ -575,7 +576,7 @@ mx31ads_pcmcia_socket_state(struct mx31a
+ 	unsigned long pins;
+ 
+ 	pins = _reg_PCMCIA_PIPR;
+-	pr_debug(KERN_INFO "_reg_PCMCIA_PIPR = 0x%08x\n", pins);
++	pr_debug(KERN_INFO "_reg_PCMCIA_PIPR = 0x%08lx\n", pins);
+ 
+ 	state->ready = (pins & PCMCIA_PIPR_RDY) ? 1 : 0;
+ 	state->bvd2 = (pins & PCMCIA_PIPR_BVD2) ? 1 : 0;

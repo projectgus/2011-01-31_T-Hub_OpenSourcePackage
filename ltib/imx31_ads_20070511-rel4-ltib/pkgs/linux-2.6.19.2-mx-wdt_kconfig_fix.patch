@@ -1,0 +1,45 @@
+Bugzilla #397. Removed two extra definitions of MXC_WATCHDOG from Kconfig.
+One definition is sufficient.
+
+cvs diff -puN -r1.2 -r1.3 drivers/char/watchdog/Kconfig
+Index: Kconfig
+===================================================================
+RCS file: /cvs/local/ltib/imx27ads/linux-2.6.19/drivers/char/watchdog/Kconfig,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -p -u -r1.2 -r1.3
+--- linux-2.6.19.2/drivers/char/watchdog/Kconfig	15 Jan 2007 05:44:48 -0000	1.2
++++ linux-2.6.19.2-mx/drivers/char/watchdog/Kconfig	31 Jan 2007 22:39:47 -0000	1.3
+@@ -196,32 +196,6 @@ config MXC_WATCHDOG
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called mxc_wdt.
+ 
+-config MXC_WATCHDOG
+-	tristate "MXC watchdog"
+-	depends on WATCHDOG && WATCHDOG_NOWAYOUT
+-	depends on ARCH_MXC
+-	help
+-	  Watchdog timer embedded into MXC chips. This will
+-	  reboot your system when timeout is reached.
+-
+-	  NOTE: once enabled, this timer cannot be disabled.
+-
+-	  To compile this driver as a module, choose M here: the
+-	  module will be called mxc_wdt.
+-
+-config MXC_WATCHDOG
+-	tristate "MXC watchdog"
+-	depends on WATCHDOG && WATCHDOG_NOWAYOUT
+-	depends on ARCH_MXC
+-	help
+-	  Watchdog timer embedded into MXC chips. This will
+-	  reboot your system when timeout is reached.
+-
+-	  NOTE: once enabled, this timer cannot be disabled.
+-
+-	  To compile this driver as a module, choose M here: the
+-	  module will be called mxc_wdt.
+-
+ # X86 (i386 + ia64 + x86_64) Architecture
+ 
+ config ACQUIRE_WDT

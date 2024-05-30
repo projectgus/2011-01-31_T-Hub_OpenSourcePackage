@@ -1,0 +1,14 @@
+--- dropbear-0.45/scp.c	2005-03-07 04:27:02.000000000 +0000
++++ dropbear-0.45.modified/scp.c	2005-06-16 11:20:40.000000000 +0100
+@@ -249,9 +249,11 @@
+ 
+ 	args.list = NULL;
+ 	addargs(&args, "ssh");		/* overwritten with ssh_program */
++#ifndef DROPBEAR_CLIENT
+ 	addargs(&args, "-x");
+ 	addargs(&args, "-oForwardAgent no");
+ 	addargs(&args, "-oClearAllForwardings yes");
++#endif
+ 
+ 	fflag = tflag = 0;
+ 	while ((ch = getopt(argc, argv, "dfl:prtvBCc:i:P:q1246S:o:F:")) != -1)

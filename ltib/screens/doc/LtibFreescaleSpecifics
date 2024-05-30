@@ -1,0 +1,29 @@
+%TOPICTITLE%
+---
+
+%TOC%
+
+---+ LTIB : Internal Freescale Specific Information
+
+
+---++ Getting the sources (CVS)
+
+---+++ Read-only anonymous cvs
+
+<verbatim>
+$ cvs -d":pserver:anonymous:anonymous@cvs.freescale.net:/cm/vault/ltib" login
+Logging in to :pserver:anonymous@cvs.freescale.net:2401/cm/vault/ltib
+$ cvs -d":pserver:anonymous@cvs.freescale.net:/cm/vault/ltib" co ltib
+</verbatim>
+
+---+++ Read/write access
+
+If you require read/write access please email me at: stuarth@freescale.com
+I will need to add you to the list of writes in the sourceforge project.
+
+
+---++ Internal mailing list
+
+http://sourceforge.freescale.net/mailman/listinfo/ltib-users
+
+---

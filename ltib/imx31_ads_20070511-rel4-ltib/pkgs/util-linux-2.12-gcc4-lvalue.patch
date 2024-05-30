@@ -1,0 +1,1102 @@
+teve Papacharalambous, stevep@freescale.com, 08 May 2006
+
+This patch should fix the following error when using gcc-4.x toolchains
+gcc -c -pipe -O2 -fsigned-char -fomit-frame-pointer -I../lib -Wall -Wmissing-prototypes -Wstrict-prototypes -I/usr/include/ncurses -DNCH=0   -D_FILE_OFFSET_BITS=64 -DSBINDIR=\"/sbin\" -DUSRSBINDIR=\"/usr/sbin\" -DLOGDIR=\"/var/log\" -DVARPATH=\"/var\" -DLOCALEDIR=\"/home/stevep/work/ltib/rootfs/usr/share/locale\" -O2 mkfs.minix.c -o mkfs.minix.o
+mkfs.minix.c: In function 'setup_tables':
+mkfs.minix.c:476: error: invalid lvalue in assignment
+mkfs.minix.c:477: error: invalid lvalue in assignment
+mkfs.minix.c:478: error: invalid lvalue in assignment
+mkfs.minix.c:496: error: invalid lvalue in assignment
+mkfs.minix.c:497: error: invalid lvalue in assignment
+mkfs.minix.c:498: error: invalid lvalue in assignment
+mkfs.minix.c:505: error: invalid lvalue in assignment
+make[1]: *** [mkfs.minix.o] Error 1
+
+See: http://developer.apple.com/releasenotes/DeveloperTools/GCC40PortingReleaseNotes/Articles/PortingToGCC.html
+
+diff --exclude CVS -uNr util-linux-2.12/MCONFIG util-linux-2.12.modified/MCONFIG
+--- util-linux-2.12/MCONFIG	2002-11-25 10:29:48.000000000 +0000
++++ util-linux-2.12.modified/MCONFIG	2006-05-05 16:34:31.000000000 +0100
+@@ -10,8 +10,8 @@
+ # Select for ARCH one of intel, alpha, sparc, arm, m68k, mips
+ # Select for CPU i386 if the binaries must be able to run on an intel 386
+ # (by default i486 code is generated, see below)
+-CPU=$(shell uname -m)
+-ARCH=$(shell echo $(CPU) | sed 's/i.86/intel/;s/arm.*/arm/')
++CPU=arm
++ARCH=arm
+ 
+ # If HAVE_PAM is set to "yes", then login, chfn, chsh, and newgrp
+ # will use PAM for authentication. Additionally, passwd will not be
+@@ -151,7 +151,7 @@
+ USRBIN_DIR=	/usr/bin
+ USRGAMES_DIR=	/usr/games
+ USRSHAREMISC_DIR=/usr/share/misc
+-LOCALE_DIR=	/usr/share/locale
++LOCALE_DIR= /home/stevep/work/ltib/rootfs/usr/share/locale
+ BIN_DIR=        /bin
+ VAR_PATH=	/var
+ LOG_DIR=	/var/log
+@@ -198,7 +198,7 @@
+ INSTALLBIN=	$(INSTALL) -m $(BINMODE)
+ INSTALLMAN=	$(INSTALL) -m $(MANMODE)
+ INSTALLDAT=	$(INSTALL) -m $(DATMODE)
+-INSTALLSUID=    $(INSTALL) -m $(SUIDMODE) -o root
++INSTALLSUID=$(INSTALL) -m $(SUIDMODE)
+ 
+ ifeq "$(DISABLE_NLS)" "yes"
+ NLSFLAGS = -DDISABLE_NLS
+diff --exclude CVS -uNr util-linux-2.12/disk-utils/mkfs.minix.c util-linux-2.12.modified/disk-utils/mkfs.minix.c
+--- util-linux-2.12/disk-utils/mkfs.minix.c	2002-10-25 23:25:15.000000000 +0100
++++ util-linux-2.12.modified/disk-utils/mkfs.minix.c	2006-05-05 16:34:31.000000000 +0100
+@@ -128,17 +128,17 @@
+ static char super_block_buffer[BLOCK_SIZE];
+ static char boot_block_buffer[512];
+ #define Super (*(struct minix_super_block *)super_block_buffer)
+-#define INODES ((unsigned long)Super.s_ninodes)
++#define INODES (Super.s_ninodes)
+ #ifdef HAVE_MINIX2
+-#define ZONES ((unsigned long)(version2 ? Super.s_zones : Super.s_nzones))
++#define ZONES ((version2 ? Super.s_zones : Super.s_nzones))
+ #else
+-#define ZONES ((unsigned long)(Super.s_nzones))
++#define ZONES ((Super.s_nzones))
+ #endif
+-#define IMAPS ((unsigned long)Super.s_imap_blocks)
+-#define ZMAPS ((unsigned long)Super.s_zmap_blocks)
+-#define FIRSTZONE ((unsigned long)Super.s_firstdatazone)
+-#define ZONESIZE ((unsigned long)Super.s_log_zone_size)
+-#define MAXSIZE ((unsigned long)Super.s_max_size)
++#define IMAPS (Super.s_imap_blocks)
++#define ZMAPS (Super.s_zmap_blocks)
++#define FIRSTZONE (Super.s_firstdatazone)
++#define ZONESIZE (Super.s_log_zone_size)
++#define MAXSIZE (Super.s_max_size)
+ #define MAGIC (Super.s_magic)
+ #define NORM_FIRSTZONE (2+IMAPS+ZMAPS+INODE_BLOCKS)
+ 
+@@ -475,7 +475,11 @@
+ 	MAGIC = magic;
+ 	ZONESIZE = 0;
+ 	MAXSIZE = version2 ? 0x7fffffff : (7+512+512*512)*1024;
+-	ZONES = BLOCKS;
++        if (version2)
++                Super.s_zones = BLOCKS;
++        else
++                Super.s_nzones = BLOCKS;
++
+ 
+ /* some magic nrs: 1 inode / 3 blocks */
+ 	if ( req_nr_inodes == 0 ) 
+@@ -517,11 +521,11 @@
+ 	if (!inode_buffer)
+ 		die(_("unable to allocate buffer for inodes"));
+ 	memset(inode_buffer,0,INODE_BUFFER_SIZE);
+-	printf(_("%ld inodes\n"),INODES);
+-	printf(_("%ld blocks\n"),ZONES);
+-	printf(_("Firstdatazone=%ld (%ld)\n"),FIRSTZONE,NORM_FIRSTZONE);
++	printf(_("%ld inodes\n"),(unsigned long)INODES);
++	printf(_("%ld blocks\n"),(unsigned long)ZONES);
++	printf(_("Firstdatazone=%ld (%ld)\n"),(unsigned long)FIRSTZONE,(unsigned long)NORM_FIRSTZONE);
+ 	printf(_("Zonesize=%d\n"),BLOCK_SIZE<<ZONESIZE);
+-	printf(_("Maxsize=%ld\n\n"),MAXSIZE);
++	printf(_("Maxsize=%ld\n\n"),(unsigned long)MAXSIZE);
+ }
+ 
+ /*
+diff --exclude CVS -uNr util-linux-2.12/mount/swap.configure util-linux-2.12.modified/mount/swap.configure
+--- util-linux-2.12/mount/swap.configure	1999-07-09 03:56:39.000000000 +0100
++++ util-linux-2.12.modified/mount/swap.configure	2006-05-05 16:34:31.000000000 +0100
+@@ -28,7 +28,7 @@
+ 	echo $PAGEH >> swapargs.h
+ 	echo $SWAPH >> swapargs.h
+ else
+-	echo > swapargs.h
++	echo "#define SWAPON_HAS_TWO_ARGS" > swapargs.h
+ 	echo "
+ Your libc thinks that swapon has 1 arg only.
+ " 1>&2
+diff --exclude CVS -uNr util-linux-2.12/po/cat-id-tbl.c util-linux-2.12.modified/po/cat-id-tbl.c
+--- util-linux-2.12/po/cat-id-tbl.c	2003-07-15 22:21:20.000000000 +0100
++++ util-linux-2.12.modified/po/cat-id-tbl.c	2006-05-05 16:34:31.000000000 +0100
+@@ -1947,109 +1947,102 @@
+   {"error changing mode of %s: %s\n", 1472},
+   {"can't rename %s to %s: %s\n", 1473},
+   {"loop: can't open device %s: %s\n", 1474},
+-  {"loop: can't get info on device %s: %s\n", 1475},
+-  {"%s: [%04x]:%ld (%s) offset %d, %s encryption\n", 1476},
+-  {"mount: could not find any device /dev/loop#", 1477},
+-  {"\
+-mount: Could not find any loop device.\n\
+-       Maybe /dev/loop# has a wrong major number?", 1478},
+-  {"\
+-mount: Could not find any loop device, and, according to %s,\n\
+-       this kernel does not know about the loop device.\n\
+-       (If so, then recompile or `insmod loop.o'.)", 1479},
++  {", offset %lld", 1475},
++  {", sizelimit %lld", 1476},
++  {", encryption %s (type %d)", 1477},
++  {", offset %d", 1478},
++  {", encryption type %d\n", 1479},
++  {"loop: can't get info on device %s: %s\n", 1480},
++  {"mount: could not find any device /dev/loop#", 1481},
+   {"\
+ mount: Could not find any loop device. Maybe this kernel does not know\n\
+-       about the loop device (then recompile or `insmod loop.o'), or\n\
+-       maybe /dev/loop# has the wrong major number?", 1480},
+-  {"mount: could not find any free loop device", 1481},
+-  {"Unsupported encryption type %s\n", 1482},
+-  {"Couldn't lock into memory, exiting.\n", 1483},
+-  {"Init (up to 16 hex digits): ", 1484},
+-  {"Non-hex digit '%c'.\n", 1485},
+-  {"Don't know how to get key for encryption system %d\n", 1486},
+-  {"set_loop(%s,%s,%d): success\n", 1487},
+-  {"loop: can't delete device %s: %s\n", 1488},
+-  {"del_loop(%s): success\n", 1489},
+-  {"This mount was compiled without loop support. Please recompile.\n", 1490},
++       about the loop device? (If so, recompile or `modprobe loop'.)", 1482},
++  {"mount: could not find any free loop device", 1483},
++  {"Couldn't lock into memory, exiting.\n", 1484},
++  {"set_loop(%s,%s,%d): success\n", 1485},
++  {"loop: can't delete device %s: %s\n", 1486},
++  {"del_loop(%s): success\n", 1487},
++  {"This mount was compiled without loop support. Please recompile.\n", 1488},
+   {"\
+ usage:\n\
+   %s loop_device                                      # give info\n\
+   %s -d loop_device                                   # delete\n\
+-  %s [ -e encryption ] [ -o offset ] loop_device file # setup\n", 1491},
+-  {"not enough memory", 1492},
+-  {"No loop support was available at compile time. Please recompile.\n", 1493},
+-  {"[mntent]: warning: no final newline at the end of %s\n", 1494},
+-  {"[mntent]: line %d in %s is bad%s\n", 1495},
+-  {"; rest of file ignored", 1496},
+-  {"mount: according to mtab, %s is already mounted on %s", 1497},
+-  {"mount: according to mtab, %s is mounted on %s", 1498},
+-  {"mount: can't open %s for writing: %s", 1499},
+-  {"mount: error writing %s: %s", 1500},
+-  {"mount: error changing mode of %s: %s", 1501},
+-  {"%s looks like swapspace - not mounted", 1502},
+-  {"mount failed", 1503},
+-  {"mount: only root can mount %s on %s", 1504},
+-  {"mount: loop device specified twice", 1505},
+-  {"mount: type specified twice", 1506},
+-  {"mount: skipping the setup of a loop device\n", 1507},
+-  {"mount: going to use the loop device %s\n", 1508},
+-  {"mount: failed setting up loop device\n", 1509},
+-  {"mount: setup loop device successfully\n", 1510},
+-  {"mount: can't open %s: %s", 1511},
+-  {"mount: cannot open %s for setting speed", 1512},
+-  {"mount: cannot set speed: %s", 1513},
+-  {"mount: cannot fork: %s", 1514},
+-  {"mount: this version was compiled without support for the type `nfs'", 1515},
+-  {"mount: failed with nfs mount version 4, trying 3..\n", 1516},
+-  {"\
+-mount: I could not determine the filesystem type, and none was specified", 1517},
+-  {"mount: you must specify the filesystem type", 1518},
+-  {"mount: mount failed", 1519},
+-  {"mount: mount point %s is not a directory", 1520},
+-  {"mount: permission denied", 1521},
+-  {"mount: must be superuser to use mount", 1522},
+-  {"mount: %s is busy", 1523},
+-  {"mount: proc already mounted", 1524},
+-  {"mount: %s already mounted or %s busy", 1525},
+-  {"mount: mount point %s does not exist", 1526},
+-  {"mount: mount point %s is a symbolic link to nowhere", 1527},
+-  {"mount: special device %s does not exist", 1528},
++  %s [ -e encryption ] [ -o offset ] loop_device file # setup\n", 1489},
++  {"not enough memory", 1490},
++  {"No loop support was available at compile time. Please recompile.\n", 1491},
++  {"[mntent]: warning: no final newline at the end of %s\n", 1492},
++  {"[mntent]: line %d in %s is bad%s\n", 1493},
++  {"; rest of file ignored", 1494},
++  {"mount: according to mtab, %s is already mounted on %s", 1495},
++  {"mount: according to mtab, %s is mounted on %s", 1496},
++  {"mount: can't open %s for writing: %s", 1497},
++  {"mount: error writing %s: %s", 1498},
++  {"mount: error changing mode of %s: %s", 1499},
++  {"%s looks like swapspace - not mounted", 1500},
++  {"mount failed", 1501},
++  {"mount: only root can mount %s on %s", 1502},
++  {"mount: loop device specified twice", 1503},
++  {"mount: type specified twice", 1504},
++  {"mount: skipping the setup of a loop device\n", 1505},
++  {"mount: going to use the loop device %s\n", 1506},
++  {"mount: failed setting up loop device\n", 1507},
++  {"mount: setup loop device successfully\n", 1508},
++  {"mount: can't open %s: %s", 1509},
++  {"mount: argument to -p or --pass-fd must be a number", 1510},
++  {"mount: cannot open %s for setting speed", 1511},
++  {"mount: cannot set speed: %s", 1512},
++  {"mount: cannot fork: %s", 1513},
++  {"mount: this version was compiled without support for the type `nfs'", 1514},
++  {"mount: failed with nfs mount version 4, trying 3..\n", 1515},
++  {"\
++mount: I could not determine the filesystem type, and none was specified", 1516},
++  {"mount: you must specify the filesystem type", 1517},
++  {"mount: mount failed", 1518},
++  {"mount: mount point %s is not a directory", 1519},
++  {"mount: permission denied", 1520},
++  {"mount: must be superuser to use mount", 1521},
++  {"mount: %s is busy", 1522},
++  {"mount: proc already mounted", 1523},
++  {"mount: %s already mounted or %s busy", 1524},
++  {"mount: mount point %s does not exist", 1525},
++  {"mount: mount point %s is a symbolic link to nowhere", 1526},
++  {"mount: special device %s does not exist", 1527},
+   {"\
+ mount: special device %s does not exist\n\
+-       (a path prefix is not a directory)\n", 1529},
+-  {"mount: %s not mounted already, or bad option", 1530},
++       (a path prefix is not a directory)\n", 1528},
++  {"mount: %s not mounted already, or bad option", 1529},
+   {"\
+ mount: wrong fs type, bad option, bad superblock on %s,\n\
+-       or too many mounted file systems", 1531},
+-  {"mount table full", 1532},
+-  {"mount: %s: can't read superblock", 1533},
+-  {"mount: %s: unknown device", 1534},
+-  {"mount: fs type %s not supported by kernel", 1535},
+-  {"mount: probably you meant %s", 1536},
+-  {"mount: maybe you meant iso9660 ?", 1537},
+-  {"mount: %s has wrong device number or fs type %s not supported", 1538},
+-  {"mount: %s is not a block device, and stat fails?", 1539},
++       or too many mounted file systems", 1530},
++  {"mount table full", 1531},
++  {"mount: %s: can't read superblock", 1532},
++  {"mount: %s: unknown device", 1533},
++  {"mount: fs type %s not supported by kernel", 1534},
++  {"mount: probably you meant %s", 1535},
++  {"mount: maybe you meant iso9660 ?", 1536},
++  {"mount: %s has wrong device number or fs type %s not supported", 1537},
++  {"mount: %s is not a block device, and stat fails?", 1538},
+   {"\
+ mount: the kernel does not recognize %s as a block device\n\
+-       (maybe `insmod driver'?)", 1540},
+-  {"mount: %s is not a block device (maybe try `-o loop'?)", 1541},
+-  {"mount: %s is not a block device", 1542},
+-  {"mount: %s is not a valid block device", 1543},
+-  {"block device ", 1544},
+-  {"mount: cannot mount %s%s read-only", 1545},
+-  {"mount: %s%s is write-protected but explicit `-w' flag given", 1546},
+-  {"mount: %s%s is write-protected, mounting read-only", 1547},
+-  {"mount: the label %s occurs on both %s and %s\n", 1548},
+-  {"mount: %s duplicate - not mounted", 1549},
+-  {"mount: going to mount %s by %s\n", 1550},
+-  {"UUID", 1551},
+-  {"label", 1552},
+-  {"mount: no such partition found", 1553},
+-  {"mount: no type was given - I'll assume nfs because of the colon\n", 1554},
+-  {"mount: no type was given - I'll assume smbfs because of the // prefix\n", 1555},
+-  {"mount: backgrounding \"%s\"\n", 1556},
+-  {"mount: giving up \"%s\"\n", 1557},
+-  {"mount: %s already mounted on %s\n", 1558},
++       (maybe `insmod driver'?)", 1539},
++  {"mount: %s is not a block device (maybe try `-o loop'?)", 1540},
++  {"mount: %s is not a block device", 1541},
++  {"mount: %s is not a valid block device", 1542},
++  {"block device ", 1543},
++  {"mount: cannot mount %s%s read-only", 1544},
++  {"mount: %s%s is write-protected but explicit `-w' flag given", 1545},
++  {"mount: %s%s is write-protected, mounting read-only", 1546},
++  {"mount: the label %s occurs on both %s and %s\n", 1547},
++  {"mount: %s duplicate - not mounted", 1548},
++  {"mount: going to mount %s by %s\n", 1549},
++  {"UUID", 1550},
++  {"label", 1551},
++  {"mount: no such partition found", 1552},
++  {"mount: no type was given - I'll assume nfs because of the colon\n", 1553},
++  {"mount: no type was given - I'll assume smbfs because of the // prefix\n", 1554},
++  {"mount: backgrounding \"%s\"\n", 1555},
++  {"mount: giving up \"%s\"\n", 1556},
++  {"mount: %s already mounted on %s\n", 1557},
+   {"\
+ Usage: mount -V                 : print version\n\
+        mount -h                 : print this help\n\
+@@ -2071,291 +2064,290 @@
+ A device can be given by name, say /dev/hda1 or /dev/cdrom,\n\
+ or by label, using  -L label  or by uuid, using  -U uuid .\n\
+ Other options: [-nfFrsvw] [-o options] [-p passwdfd].\n\
+-For many more details, say  man 8 mount .\n", 1559},
+-  {"mount: argument to -p or --pass-fd must be a number", 1560},
+-  {"mount: only root can do that", 1561},
+-  {"mount: no %s found - creating it..\n", 1562},
+-  {"mount: the label %s occurs on both %s and %s - not mounted\n", 1563},
+-  {"mount: mounting %s\n", 1564},
+-  {"nothing was mounted", 1565},
+-  {"mount: cannot find %s in %s", 1566},
+-  {"mount: can't find %s in %s or %s", 1567},
+-  {"\
+-mount: could not open %s, so UUID and LABEL conversion cannot be done.\n", 1568},
+-  {"mount: bad UUID", 1569},
+-  {"mount: error while guessing filesystem type\n", 1570},
+-  {"mount: you didn't specify a filesystem type for %s\n", 1571},
+-  {"       I will try all types mentioned in %s or %s\n", 1572},
+-  {"       and it looks like this is swapspace\n", 1573},
+-  {"       I will try type %s\n", 1574},
+-  {"Trying %s\n", 1575},
+-  {"mount: excessively long host:dir argument\n", 1576},
+-  {"mount: warning: multiple hostnames not supported\n", 1577},
+-  {"mount: directory to mount not in host:dir format\n", 1578},
+-  {"mount: can't get address for %s\n", 1579},
+-  {"mount: got bad hp->h_length\n", 1580},
+-  {"mount: excessively long option argument\n", 1581},
+-  {"Warning: Unrecognized proto= option.\n", 1582},
+-  {"Warning: Option namlen is not supported.\n", 1583},
+-  {"unknown nfs mount parameter: %s=%d\n", 1584},
+-  {"Warning: option nolock is not supported.\n", 1585},
+-  {"unknown nfs mount option: %s%s\n", 1586},
+-  {"mount: got bad hp->h_length?\n", 1587},
+-  {"NFS over TCP is not supported.\n", 1588},
+-  {"nfs socket", 1589},
+-  {"nfs bindresvport", 1590},
+-  {"nfs server reported service unavailable", 1591},
+-  {"used portmapper to find NFS port\n", 1592},
+-  {"using port %d for nfs deamon\n", 1593},
+-  {"nfs connect", 1594},
+-  {"unknown nfs status return value: %d", 1595},
+-  {"bug in xstrndup call", 1596},
++For many more details, say  man 8 mount .\n", 1558},
++  {"mount: only root can do that", 1559},
++  {"mount: no %s found - creating it..\n", 1560},
++  {"mount: the label %s occurs on both %s and %s - not mounted\n", 1561},
++  {"mount: mounting %s\n", 1562},
++  {"nothing was mounted", 1563},
++  {"mount: cannot find %s in %s", 1564},
++  {"mount: can't find %s in %s or %s", 1565},
++  {"\
++mount: could not open %s, so UUID and LABEL conversion cannot be done.\n", 1566},
++  {"mount: bad UUID", 1567},
++  {"mount: error while guessing filesystem type\n", 1568},
++  {"mount: you didn't specify a filesystem type for %s\n", 1569},
++  {"       I will try all types mentioned in %s or %s\n", 1570},
++  {"       and it looks like this is swapspace\n", 1571},
++  {"       I will try type %s\n", 1572},
++  {"Trying %s\n", 1573},
++  {"mount: excessively long host:dir argument\n", 1574},
++  {"mount: warning: multiple hostnames not supported\n", 1575},
++  {"mount: directory to mount not in host:dir format\n", 1576},
++  {"mount: can't get address for %s\n", 1577},
++  {"mount: got bad hp->h_length\n", 1578},
++  {"mount: excessively long option argument\n", 1579},
++  {"Warning: Unrecognized proto= option.\n", 1580},
++  {"Warning: Option namlen is not supported.\n", 1581},
++  {"unknown nfs mount parameter: %s=%d\n", 1582},
++  {"Warning: option nolock is not supported.\n", 1583},
++  {"unknown nfs mount option: %s%s\n", 1584},
++  {"mount: got bad hp->h_length?\n", 1585},
++  {"NFS over TCP is not supported.\n", 1586},
++  {"nfs socket", 1587},
++  {"nfs bindresvport", 1588},
++  {"nfs server reported service unavailable", 1589},
++  {"used portmapper to find NFS port\n", 1590},
++  {"using port %d for nfs deamon\n", 1591},
++  {"nfs connect", 1592},
++  {"unknown nfs status return value: %d", 1593},
++  {"bug in xstrndup call", 1594},
+   {"\
+ usage: %s [-hV]\n\
+        %s -a [-e] [-v]\n\
+        %s [-v] [-p priority] special ...\n\
+-       %s [-s]\n", 1597},
++       %s [-s]\n", 1595},
+   {"\
+ usage: %s [-hV]\n\
+        %s -a [-v]\n\
+-       %s [-v] special ...\n", 1598},
+-  {"%s on %s\n", 1599},
+-  {"swapon: cannot stat %s: %s\n", 1600},
+-  {"swapon: warning: %s has insecure permissions %04o, %04o suggested\n", 1601},
+-  {"swapon: Skipping file %s - it appears to have holes.\n", 1602},
+-  {"Not superuser.\n", 1603},
+-  {"%s: cannot open %s: %s\n", 1604},
+-  {"umount: compiled without support for -f\n", 1605},
+-  {"host: %s, directory: %s\n", 1606},
+-  {"umount: can't get address for %s\n", 1607},
+-  {"umount: got bad hostp->h_length\n", 1608},
+-  {"umount: %s: invalid block device", 1609},
+-  {"umount: %s: not mounted", 1610},
+-  {"umount: %s: can't write superblock", 1611},
+-  {"umount: %s: device is busy", 1612},
+-  {"umount: %s: not found", 1613},
+-  {"umount: %s: must be superuser to umount", 1614},
+-  {"umount: %s: block devices not permitted on fs", 1615},
+-  {"umount: %s: %s", 1616},
+-  {"no umount2, trying umount...\n", 1617},
+-  {"could not umount %s - trying %s instead\n", 1618},
+-  {"umount: %s busy - remounted read-only\n", 1619},
+-  {"umount: could not remount %s read-only\n", 1620},
+-  {"%s umounted\n", 1621},
+-  {"umount: cannot find list of filesystems to unmount", 1622},
++       %s [-v] special ...\n", 1596},
++  {"%s on %s\n", 1597},
++  {"swapon: cannot stat %s: %s\n", 1598},
++  {"swapon: warning: %s has insecure permissions %04o, %04o suggested\n", 1599},
++  {"swapon: Skipping file %s - it appears to have holes.\n", 1600},
++  {"Not superuser.\n", 1601},
++  {"%s: cannot open %s: %s\n", 1602},
++  {"umount: compiled without support for -f\n", 1603},
++  {"host: %s, directory: %s\n", 1604},
++  {"umount: can't get address for %s\n", 1605},
++  {"umount: got bad hostp->h_length\n", 1606},
++  {"umount: %s: invalid block device", 1607},
++  {"umount: %s: not mounted", 1608},
++  {"umount: %s: can't write superblock", 1609},
++  {"umount: %s: device is busy", 1610},
++  {"umount: %s: not found", 1611},
++  {"umount: %s: must be superuser to umount", 1612},
++  {"umount: %s: block devices not permitted on fs", 1613},
++  {"umount: %s: %s", 1614},
++  {"no umount2, trying umount...\n", 1615},
++  {"could not umount %s - trying %s instead\n", 1616},
++  {"umount: %s busy - remounted read-only\n", 1617},
++  {"umount: could not remount %s read-only\n", 1618},
++  {"%s umounted\n", 1619},
++  {"umount: cannot find list of filesystems to unmount", 1620},
+   {"\
+ Usage: umount [-hV]\n\
+        umount -a [-f] [-r] [-n] [-v] [-t vfstypes] [-O opts]\n\
+-       umount [-f] [-r] [-n] [-v] special | node...\n", 1623},
+-  {"Trying to umount %s\n", 1624},
+-  {"Could not find %s in mtab\n", 1625},
+-  {"umount: %s is not mounted (according to mtab)", 1626},
+-  {"umount: it seems %s is mounted multiple times", 1627},
+-  {"umount: %s is not in the fstab (and you are not root)", 1628},
+-  {"umount: %s mount disagrees with the fstab", 1629},
+-  {"umount: only root can unmount %s from %s", 1630},
+-  {"umount: only root can do that", 1631},
+-  {"You must be root to set the Ctrl-Alt-Del behaviour.\n", 1632},
+-  {"Usage: ctrlaltdel hard|soft\n", 1633},
++       umount [-f] [-r] [-n] [-v] special | node...\n", 1621},
++  {"Trying to umount %s\n", 1622},
++  {"Could not find %s in mtab\n", 1623},
++  {"umount: %s is not mounted (according to mtab)", 1624},
++  {"umount: it seems %s is mounted multiple times", 1625},
++  {"umount: %s is not in the fstab (and you are not root)", 1626},
++  {"umount: %s mount disagrees with the fstab", 1627},
++  {"umount: only root can unmount %s from %s", 1628},
++  {"umount: only root can do that", 1629},
++  {"You must be root to set the Ctrl-Alt-Del behaviour.\n", 1630},
++  {"Usage: ctrlaltdel hard|soft\n", 1631},
+   {"\
+ File %s, For threshold value %lu, Maximum characters in fifo were %d,\n\
+-and the maximum transfer rate in characters/second was %f\n", 1634},
++and the maximum transfer rate in characters/second was %f\n", 1632},
+   {"\
+ File %s, For threshold value %lu and timrout value %lu, Maximum characters \
+ in fifo were %d,\n\
+-and the maximum transfer rate in characters/second was %f\n", 1635},
+-  {"Invalid interval value: %s\n", 1636},
+-  {"Invalid set value: %s\n", 1637},
+-  {"Invalid default value: %s\n", 1638},
+-  {"Invalid set time value: %s\n", 1639},
+-  {"Invalid default time value: %s\n", 1640},
++and the maximum transfer rate in characters/second was %f\n", 1633},
++  {"Invalid interval value: %s\n", 1634},
++  {"Invalid set value: %s\n", 1635},
++  {"Invalid default value: %s\n", 1636},
++  {"Invalid set time value: %s\n", 1637},
++  {"Invalid default time value: %s\n", 1638},
+   {"\
+ Usage: %s [-q [-i interval]] ([-s value]|[-S value]) ([-t value]|[-T value]) \
+-[-g|-G] file [file...]\n", 1641},
+-  {"Can't open %s: %s\n", 1642},
+-  {"Can't set %s to threshold %d: %s\n", 1643},
+-  {"Can't set %s to time threshold %d: %s\n", 1644},
+-  {"Can't get threshold for %s: %s\n", 1645},
+-  {"Can't get timeout for %s: %s\n", 1646},
+-  {"%s: %ld current threshold and %ld current timeout\n", 1647},
+-  {"%s: %ld default threshold and %ld default timeout\n", 1648},
+-  {"Can't set signal handler", 1649},
+-  {"gettimeofday failed", 1650},
+-  {"Can't issue CYGETMON on %s: %s\n", 1651},
+-  {"\
+-%s: %lu ints, %lu/%lu chars; fifo: %lu thresh, %lu tmout, %lu max, %lu now\n", 1652},
+-  {"   %f int/sec; %f rec, %f send (char/sec)\n", 1653},
+-  {"\
+-%s: %lu ints, %lu chars; fifo: %lu thresh, %lu tmout, %lu max, %lu now\n", 1654},
+-  {"   %f int/sec; %f rec (char/sec)\n", 1655},
+-  {"Usage: %s [-c] [-n level] [-s bufsize]\n", 1656},
+-  {"invalid id: %s\n", 1657},
+-  {"cannot remove id %s (%s)\n", 1658},
+-  {"deprecated usage: %s {shm | msg | sem} id ...\n", 1659},
+-  {"unknown resource type: %s\n", 1660},
+-  {"resource(s) deleted\n", 1661},
++[-g|-G] file [file...]\n", 1639},
++  {"Can't open %s: %s\n", 1640},
++  {"Can't set %s to threshold %d: %s\n", 1641},
++  {"Can't set %s to time threshold %d: %s\n", 1642},
++  {"Can't get threshold for %s: %s\n", 1643},
++  {"Can't get timeout for %s: %s\n", 1644},
++  {"%s: %ld current threshold and %ld current timeout\n", 1645},
++  {"%s: %ld default threshold and %ld default timeout\n", 1646},
++  {"Can't set signal handler", 1647},
++  {"gettimeofday failed", 1648},
++  {"Can't issue CYGETMON on %s: %s\n", 1649},
++  {"\
++%s: %lu ints, %lu/%lu chars; fifo: %lu thresh, %lu tmout, %lu max, %lu now\n", 1650},
++  {"   %f int/sec; %f rec, %f send (char/sec)\n", 1651},
++  {"\
++%s: %lu ints, %lu chars; fifo: %lu thresh, %lu tmout, %lu max, %lu now\n", 1652},
++  {"   %f int/sec; %f rec (char/sec)\n", 1653},
++  {"Usage: %s [-c] [-n level] [-s bufsize]\n", 1654},
++  {"invalid id: %s\n", 1655},
++  {"cannot remove id %s (%s)\n", 1656},
++  {"deprecated usage: %s {shm | msg | sem} id ...\n", 1657},
++  {"unknown resource type: %s\n", 1658},
++  {"resource(s) deleted\n", 1659},
+   {"\
+ usage: %s [ [-q msqid] [-m shmid] [-s semid]\n\
+-          [-Q msgkey] [-M shmkey] [-S semkey] ... ]\n", 1662},
+-  {"%s: illegal option -- %c\n", 1663},
+-  {"%s: illegal key (%s)\n", 1664},
+-  {"permission denied for key", 1665},
+-  {"already removed key", 1666},
+-  {"invalid key", 1667},
+-  {"unknown error in key", 1668},
+-  {"permission denied for id", 1669},
+-  {"invalid id", 1670},
+-  {"already removed id", 1671},
+-  {"unknown error in id", 1672},
+-  {"%s: %s (%s)\n", 1673},
+-  {"%s: unknown argument: %s\n", 1674},
+-  {"usage : %s -asmq -tclup \n", 1675},
+-  {"\t%s [-s -m -q] -i id\n", 1676},
+-  {"\t%s -h for help.\n", 1677},
++          [-Q msgkey] [-M shmkey] [-S semkey] ... ]\n", 1660},
++  {"%s: illegal option -- %c\n", 1661},
++  {"%s: illegal key (%s)\n", 1662},
++  {"permission denied for key", 1663},
++  {"already removed key", 1664},
++  {"invalid key", 1665},
++  {"unknown error in key", 1666},
++  {"permission denied for id", 1667},
++  {"invalid id", 1668},
++  {"already removed id", 1669},
++  {"unknown error in id", 1670},
++  {"%s: %s (%s)\n", 1671},
++  {"%s: unknown argument: %s\n", 1672},
++  {"usage : %s -asmq -tclup \n", 1673},
++  {"\t%s [-s -m -q] -i id\n", 1674},
++  {"\t%s -h for help.\n", 1675},
+   {"\
+-%s provides information on ipc facilities for which you have read access.\n", 1678},
++%s provides information on ipc facilities for which you have read access.\n", 1676},
+   {"\
+ Resource Specification:\n\
+ \t-m : shared_mem\n\
+-\t-q : messages\n", 1679},
++\t-q : messages\n", 1677},
+   {"\
+ \t-s : semaphores\n\
+-\t-a : all (default)\n", 1680},
++\t-a : all (default)\n", 1678},
+   {"\
+ Output Format:\n\
+ \t-t : time\n\
+ \t-p : pid\n\
+-\t-c : creator\n", 1681},
++\t-c : creator\n", 1679},
+   {"\
+ \t-l : limits\n\
+-\t-u : summary\n", 1682},
+-  {"-i id [-s -q -m] : details on resource identified by id\n", 1683},
+-  {"kernel not configured for shared memory\n", 1684},
+-  {"------ Shared Memory Limits --------\n", 1685},
+-  {"max number of segments = %ld\n", 1686},
+-  {"max seg size (kbytes) = %ld\n", 1687},
+-  {"max total shared memory (kbytes) = %ld\n", 1688},
+-  {"min seg size (bytes) = %ld\n", 1689},
+-  {"------ Shared Memory Status --------\n", 1690},
+-  {"segments allocated %d\n", 1691},
+-  {"pages allocated %ld\n", 1692},
+-  {"pages resident  %ld\n", 1693},
+-  {"pages swapped   %ld\n", 1694},
+-  {"Swap performance: %ld attempts\t %ld successes\n", 1695},
+-  {"------ Shared Memory Segment Creators/Owners --------\n", 1696},
+-  {"%-10s %-10s %-10s %-10s %-10s %-10s\n", 1697},
+-  {"shmid", 1698},
+-  {"perms", 1699},
+-  {"cuid", 1700},
+-  {"cgid", 1701},
+-  {"uid", 1702},
+-  {"gid", 1703},
+-  {"------ Shared Memory Attach/Detach/Change Times --------\n", 1704},
+-  {"%-10s %-10s %-20s %-20s %-20s\n", 1705},
+-  {"owner", 1706},
+-  {"attached", 1707},
+-  {"detached", 1708},
+-  {"changed", 1709},
+-  {"------ Shared Memory Creator/Last-op --------\n", 1710},
+-  {"%-10s %-10s %-10s %-10s\n", 1711},
+-  {"cpid", 1712},
+-  {"lpid", 1713},
+-  {"------ Shared Memory Segments --------\n", 1714},
+-  {"%-10s %-10s %-10s %-10s %-10s %-10s %-12s\n", 1715},
+-  {"key", 1716},
+-  {"bytes", 1717},
+-  {"nattch", 1718},
+-  {"status", 1719},
+-  {"Not set", 1720},
+-  {"dest", 1721},
+-  {"locked", 1722},
+-  {"kernel not configured for semaphores\n", 1723},
+-  {"------ Semaphore Limits --------\n", 1724},
+-  {"max number of arrays = %d\n", 1725},
+-  {"max semaphores per array = %d\n", 1726},
+-  {"max semaphores system wide = %d\n", 1727},
+-  {"max ops per semop call = %d\n", 1728},
+-  {"semaphore max value = %d\n", 1729},
+-  {"------ Semaphore Status --------\n", 1730},
+-  {"used arrays = %d\n", 1731},
+-  {"allocated semaphores = %d\n", 1732},
+-  {"------ Semaphore Arrays Creators/Owners --------\n", 1733},
+-  {"semid", 1734},
+-  {"------ Shared Memory Operation/Change Times --------\n", 1735},
+-  {"%-8s %-10s %-26.24s %-26.24s\n", 1736},
+-  {"last-op", 1737},
+-  {"last-changed", 1738},
+-  {"------ Semaphore Arrays --------\n", 1739},
+-  {"%-10s %-10s %-10s %-10s %-10s\n", 1740},
+-  {"nsems", 1741},
+-  {"kernel not configured for message queues\n", 1742},
+-  {"------ Messages: Limits --------\n", 1743},
+-  {"max queues system wide = %d\n", 1744},
+-  {"max size of message (bytes) = %d\n", 1745},
+-  {"default max size of queue (bytes) = %d\n", 1746},
+-  {"------ Messages: Status --------\n", 1747},
+-  {"allocated queues = %d\n", 1748},
+-  {"used headers = %d\n", 1749},
+-  {"used space = %d bytes\n", 1750},
+-  {"------ Message Queues: Creators/Owners --------\n", 1751},
+-  {"msqid", 1752},
+-  {"------ Message Queues Send/Recv/Change Times --------\n", 1753},
+-  {"%-8s %-10s %-20s %-20s %-20s\n", 1754},
+-  {"send", 1755},
+-  {"recv", 1756},
+-  {"change", 1757},
+-  {"------ Message Queues PIDs --------\n", 1758},
+-  {"lspid", 1759},
+-  {"lrpid", 1760},
+-  {"------ Message Queues --------\n", 1761},
+-  {"%-10s %-10s %-10s %-10s %-12s %-12s\n", 1762},
+-  {"used-bytes", 1763},
+-  {"messages", 1764},
++\t-u : summary\n", 1680},
++  {"-i id [-s -q -m] : details on resource identified by id\n", 1681},
++  {"kernel not configured for shared memory\n", 1682},
++  {"------ Shared Memory Limits --------\n", 1683},
++  {"max number of segments = %ld\n", 1684},
++  {"max seg size (kbytes) = %ld\n", 1685},
++  {"max total shared memory (kbytes) = %ld\n", 1686},
++  {"min seg size (bytes) = %ld\n", 1687},
++  {"------ Shared Memory Status --------\n", 1688},
++  {"segments allocated %d\n", 1689},
++  {"pages allocated %ld\n", 1690},
++  {"pages resident  %ld\n", 1691},
++  {"pages swapped   %ld\n", 1692},
++  {"Swap performance: %ld attempts\t %ld successes\n", 1693},
++  {"------ Shared Memory Segment Creators/Owners --------\n", 1694},
++  {"%-10s %-10s %-10s %-10s %-10s %-10s\n", 1695},
++  {"shmid", 1696},
++  {"perms", 1697},
++  {"cuid", 1698},
++  {"cgid", 1699},
++  {"uid", 1700},
++  {"gid", 1701},
++  {"------ Shared Memory Attach/Detach/Change Times --------\n", 1702},
++  {"%-10s %-10s %-20s %-20s %-20s\n", 1703},
++  {"owner", 1704},
++  {"attached", 1705},
++  {"detached", 1706},
++  {"changed", 1707},
++  {"------ Shared Memory Creator/Last-op --------\n", 1708},
++  {"%-10s %-10s %-10s %-10s\n", 1709},
++  {"cpid", 1710},
++  {"lpid", 1711},
++  {"------ Shared Memory Segments --------\n", 1712},
++  {"%-10s %-10s %-10s %-10s %-10s %-10s %-12s\n", 1713},
++  {"key", 1714},
++  {"bytes", 1715},
++  {"nattch", 1716},
++  {"status", 1717},
++  {"Not set", 1718},
++  {"dest", 1719},
++  {"locked", 1720},
++  {"kernel not configured for semaphores\n", 1721},
++  {"------ Semaphore Limits --------\n", 1722},
++  {"max number of arrays = %d\n", 1723},
++  {"max semaphores per array = %d\n", 1724},
++  {"max semaphores system wide = %d\n", 1725},
++  {"max ops per semop call = %d\n", 1726},
++  {"semaphore max value = %d\n", 1727},
++  {"------ Semaphore Status --------\n", 1728},
++  {"used arrays = %d\n", 1729},
++  {"allocated semaphores = %d\n", 1730},
++  {"------ Semaphore Arrays Creators/Owners --------\n", 1731},
++  {"semid", 1732},
++  {"------ Shared Memory Operation/Change Times --------\n", 1733},
++  {"%-8s %-10s %-26.24s %-26.24s\n", 1734},
++  {"last-op", 1735},
++  {"last-changed", 1736},
++  {"------ Semaphore Arrays --------\n", 1737},
++  {"%-10s %-10s %-10s %-10s %-10s\n", 1738},
++  {"nsems", 1739},
++  {"kernel not configured for message queues\n", 1740},
++  {"------ Messages: Limits --------\n", 1741},
++  {"max queues system wide = %d\n", 1742},
++  {"max size of message (bytes) = %d\n", 1743},
++  {"default max size of queue (bytes) = %d\n", 1744},
++  {"------ Messages: Status --------\n", 1745},
++  {"allocated queues = %d\n", 1746},
++  {"used headers = %d\n", 1747},
++  {"used space = %d bytes\n", 1748},
++  {"------ Message Queues: Creators/Owners --------\n", 1749},
++  {"msqid", 1750},
++  {"------ Message Queues Send/Recv/Change Times --------\n", 1751},
++  {"%-8s %-10s %-20s %-20s %-20s\n", 1752},
++  {"send", 1753},
++  {"recv", 1754},
++  {"change", 1755},
++  {"------ Message Queues PIDs --------\n", 1756},
++  {"lspid", 1757},
++  {"lrpid", 1758},
++  {"------ Message Queues --------\n", 1759},
++  {"%-10s %-10s %-10s %-10s %-12s %-12s\n", 1760},
++  {"used-bytes", 1761},
++  {"messages", 1762},
+   {"\
+ \n\
+-Shared memory Segment shmid=%d\n", 1765},
+-  {"uid=%d\tgid=%d\tcuid=%d\tcgid=%d\n", 1766},
+-  {"mode=%#o\taccess_perms=%#o\n", 1767},
+-  {"bytes=%ld\tlpid=%d\tcpid=%d\tnattch=%ld\n", 1768},
+-  {"att_time=%-26.24s\n", 1769},
+-  {"det_time=%-26.24s\n", 1770},
+-  {"change_time=%-26.24s\n", 1771},
++Shared memory Segment shmid=%d\n", 1763},
++  {"uid=%d\tgid=%d\tcuid=%d\tcgid=%d\n", 1764},
++  {"mode=%#o\taccess_perms=%#o\n", 1765},
++  {"bytes=%ld\tlpid=%d\tcpid=%d\tnattch=%ld\n", 1766},
++  {"att_time=%-26.24s\n", 1767},
++  {"det_time=%-26.24s\n", 1768},
++  {"change_time=%-26.24s\n", 1769},
+   {"\
+ \n\
+-Message Queue msqid=%d\n", 1772},
+-  {"uid=%d\tgid=%d\tcuid=%d\tcgid=%d\tmode=%#o\n", 1773},
+-  {"cbytes=%ld\tqbytes=%ld\tqnum=%ld\tlspid=%d\tlrpid=%d\n", 1774},
+-  {"send_time=%-26.24s\n", 1775},
+-  {"rcv_time=%-26.24s\n", 1776},
++Message Queue msqid=%d\n", 1770},
++  {"uid=%d\tgid=%d\tcuid=%d\tcgid=%d\tmode=%#o\n", 1771},
++  {"cbytes=%ld\tqbytes=%ld\tqnum=%ld\tlspid=%d\tlrpid=%d\n", 1772},
++  {"send_time=%-26.24s\n", 1773},
++  {"rcv_time=%-26.24s\n", 1774},
+   {"\
+ \n\
+-Semaphore Array semid=%d\n", 1777},
+-  {"uid=%d\t gid=%d\t cuid=%d\t cgid=%d\n", 1778},
+-  {"mode=%#o, access_perms=%#o\n", 1779},
+-  {"nsems = %ld\n", 1780},
+-  {"otime = %-26.24s\n", 1781},
+-  {"ctime = %-26.24s\n", 1782},
+-  {"semnum", 1783},
+-  {"value", 1784},
+-  {"ncount", 1785},
+-  {"zcount", 1786},
+-  {"pid", 1787},
+-  {"usage: rdev [ -rv ] [ -o OFFSET ] [ IMAGE [ VALUE [ OFFSET ] ] ]", 1788},
+-  {"\
+-  rdev /dev/fd0  (or rdev /linux, etc.) displays the current ROOT device", 1789},
+-  {"  rdev /dev/fd0 /dev/hda2         sets ROOT to /dev/hda2", 1790},
+-  {"  rdev -R /dev/fd0 1              set the ROOTFLAGS (readonly status)", 1791},
+-  {"  rdev -r /dev/fd0 627            set the RAMDISK size", 1792},
+-  {"  rdev -v /dev/fd0 1              set the bootup VIDEOMODE", 1793},
+-  {"  rdev -o N ...                   use the byte offset N", 1794},
+-  {"  rootflags ...                   same as rdev -R", 1795},
+-  {"  ramsize ...                     same as rdev -r", 1796},
+-  {"  vidmode ...                     same as rdev -v", 1797},
+-  {"\
+-Note: video modes are: -3=Ask, -2=Extended, -1=NormalVga, 1=key1, 2=key2,...", 1798},
+-  {"      use -R 1 to mount root readonly, -R 0 for read/write.", 1799},
+-  {"missing comma", 1800},
+-  {"out of memory", 1801},
++Semaphore Array semid=%d\n", 1775},
++  {"uid=%d\t gid=%d\t cuid=%d\t cgid=%d\n", 1776},
++  {"mode=%#o, access_perms=%#o\n", 1777},
++  {"nsems = %ld\n", 1778},
++  {"otime = %-26.24s\n", 1779},
++  {"ctime = %-26.24s\n", 1780},
++  {"semnum", 1781},
++  {"value", 1782},
++  {"ncount", 1783},
++  {"zcount", 1784},
++  {"pid", 1785},
++  {"usage: rdev [ -rv ] [ -o OFFSET ] [ IMAGE [ VALUE [ OFFSET ] ] ]", 1786},
++  {"\
++  rdev /dev/fd0  (or rdev /linux, etc.) displays the current ROOT device", 1787},
++  {"  rdev /dev/fd0 /dev/hda2         sets ROOT to /dev/hda2", 1788},
++  {"  rdev -R /dev/fd0 1              set the ROOTFLAGS (readonly status)", 1789},
++  {"  rdev -r /dev/fd0 627            set the RAMDISK size", 1790},
++  {"  rdev -v /dev/fd0 1              set the bootup VIDEOMODE", 1791},
++  {"  rdev -o N ...                   use the byte offset N", 1792},
++  {"  rootflags ...                   same as rdev -R", 1793},
++  {"  ramsize ...                     same as rdev -r", 1794},
++  {"  vidmode ...                     same as rdev -v", 1795},
++  {"\
++Note: video modes are: -3=Ask, -2=Extended, -1=NormalVga, 1=key1, 2=key2,...", 1796},
++  {"      use -R 1 to mount root readonly, -R 0 for read/write.", 1797},
++  {"missing comma", 1798},
++  {"out of memory", 1799},
+   {"\
+ %s: Usage: \"%s [options]\n\
+ \t -m <mapfile>  (defaults: \"%s\" and\n\
+@@ -2368,76 +2360,76 @@
+ \t -b            print individual histogram-bin counts\n\
+ \t -r            reset all the counters (root only)\n\
+ \t -n            disable byte order auto-detection\n\
+-\t -V            print version and exit\n", 1802},
+-  {"%s version %s\n", 1803},
+-  {"Sampling_step: %i\n", 1804},
+-  {"%s: %s(%i): wrong map line\n", 1805},
+-  {"%s: can't find \"_stext\" in %s\n", 1806},
+-  {"%s: profile address out of range. Wrong map file?\n", 1807},
+-  {"total", 1808},
+-  {"\
+-usage: renice priority [ [ -p ] pids ] [ [ -g ] pgrps ] [ [ -u ] users ]\n", 1809},
+-  {"renice: %s: unknown user\n", 1810},
+-  {"renice: %s: bad value\n", 1811},
+-  {"getpriority", 1812},
+-  {"setpriority", 1813},
+-  {"%d: old priority %d, new priority %d\n", 1814},
+-  {"usage: %s program [arg ...]\n", 1815},
++\t -V            print version and exit\n", 1800},
++  {"%s version %s\n", 1801},
++  {"Sampling_step: %i\n", 1802},
++  {"%s: %s(%i): wrong map line\n", 1803},
++  {"%s: can't find \"_stext\" in %s\n", 1804},
++  {"%s: profile address out of range. Wrong map file?\n", 1805},
++  {"total", 1806},
++  {"\
++usage: renice priority [ [ -p ] pids ] [ [ -g ] pgrps ] [ [ -u ] users ]\n", 1807},
++  {"renice: %s: unknown user\n", 1808},
++  {"renice: %s: bad value\n", 1809},
++  {"getpriority", 1810},
++  {"setpriority", 1811},
++  {"%d: old priority %d, new priority %d\n", 1812},
++  {"usage: %s program [arg ...]\n", 1813},
+   {"\
+ Usage: %s <device> [ -i <IRQ> | -t <TIME> | -c <CHARS> | -w <WAIT> | \n\
+           -a [on|off] | -o [on|off] | -C [on|off] | -q [on|off] | -s | \n\
+-          -T [on|off] ]\n", 1816},
+-  {"malloc error", 1817},
+-  {"%s: bad value\n", 1818},
+-  {"%s: %s not an lp device.\n", 1819},
+-  {"%s status is %d", 1820},
+-  {", busy", 1821},
+-  {", ready", 1822},
+-  {", out of paper", 1823},
+-  {", on-line", 1824},
+-  {", error", 1825},
+-  {"LPGETIRQ error", 1826},
+-  {"%s using IRQ %d\n", 1827},
+-  {"%s using polling\n", 1828},
+-  {"col: bad -l argument %s.\n", 1829},
+-  {"usage: col [-bfpx] [-l nline]\n", 1830},
+-  {"col: write error.\n", 1831},
+-  {"col: warning: can't back up %s.\n", 1832},
+-  {"past first line", 1833},
+-  {"-- line already flushed", 1834},
+-  {"usage: %s [ - ] [ -2 ] [ file ... ]\n", 1835},
+-  {"line too long", 1836},
+-  {"usage: column [-tx] [-c columns] [file ...]\n", 1837},
+-  {"hexdump: bad length value.\n", 1838},
+-  {"hexdump: bad skip value.\n", 1839},
++          -T [on|off] ]\n", 1814},
++  {"malloc error", 1815},
++  {"%s: bad value\n", 1816},
++  {"%s: %s not an lp device.\n", 1817},
++  {"%s status is %d", 1818},
++  {", busy", 1819},
++  {", ready", 1820},
++  {", out of paper", 1821},
++  {", on-line", 1822},
++  {", error", 1823},
++  {"LPGETIRQ error", 1824},
++  {"%s using IRQ %d\n", 1825},
++  {"%s using polling\n", 1826},
++  {"col: bad -l argument %s.\n", 1827},
++  {"usage: col [-bfpx] [-l nline]\n", 1828},
++  {"col: write error.\n", 1829},
++  {"col: warning: can't back up %s.\n", 1830},
++  {"past first line", 1831},
++  {"-- line already flushed", 1832},
++  {"usage: %s [ - ] [ -2 ] [ file ... ]\n", 1833},
++  {"line too long", 1834},
++  {"usage: column [-tx] [-c columns] [file ...]\n", 1835},
++  {"hexdump: bad length value.\n", 1836},
++  {"hexdump: bad skip value.\n", 1837},
+   {"\
+-hexdump: [-bcCdovx] [-e fmt] [-f fmt_file] [-n length] [-s skip] [file ...]\n", 1840},
+-  {"usage: %s [-dflpcsu] [+linenum | +/pattern] name1 name2 ...\n", 1841},
++hexdump: [-bcCdovx] [-e fmt] [-f fmt_file] [-n length] [-s skip] [file ...]\n", 1838},
++  {"usage: %s [-dflpcsu] [+linenum | +/pattern] name1 name2 ...\n", 1839},
+   {"\
+ \n\
+ *** %s: directory ***\n\
+-\n", 1842},
++\n", 1840},
+   {"\
+ \n\
+ ******** %s: Not a text file ********\n\
+-\n", 1843},
+-  {"[Use q or Q to quit]", 1844},
+-  {"--More--", 1845},
+-  {"(Next file: %s)", 1846},
+-  {"[Press space to continue, 'q' to quit.]", 1847},
+-  {"...back %d pages", 1848},
+-  {"...back 1 page", 1849},
+-  {"...skipping one line", 1850},
+-  {"...skipping %d lines", 1851},
++\n", 1841},
++  {"[Use q or Q to quit]", 1842},
++  {"--More--", 1843},
++  {"(Next file: %s)", 1844},
++  {"[Press space to continue, 'q' to quit.]", 1845},
++  {"...back %d pages", 1846},
++  {"...back 1 page", 1847},
++  {"...skipping one line", 1848},
++  {"...skipping %d lines", 1849},
+   {"\
+ \n\
+ ***Back***\n\
+-\n", 1852},
++\n", 1850},
+   {"\
+ \n\
+ Most commands optionally preceded by integer argument k.  Defaults in \
+ brackets.\n\
+-Star (*) indicates argument becomes new default.\n", 1853},
++Star (*) indicates argument becomes new default.\n", 1851},
+   {"\
+ <space>                 Display next k lines of text [current screen size]\n\
+ z                       Display next k lines of text [current screen size]*\n\
+@@ -2457,63 +2449,63 @@
+ :n                      Go to kth next file [1]\n\
+ :p                      Go to kth previous file [1]\n\
+ :f                      Display current file name and line number\n\
+-.                       Repeat previous command\n", 1854},
+-  {"[Press 'h' for instructions.]", 1855},
+-  {"\"%s\" line %d", 1856},
+-  {"[Not a file] line %d", 1857},
+-  {"  Overflow\n", 1858},
+-  {"...skipping\n", 1859},
+-  {"Regular expression botch", 1860},
++.                       Repeat previous command\n", 1852},
++  {"[Press 'h' for instructions.]", 1853},
++  {"\"%s\" line %d", 1854},
++  {"[Not a file] line %d", 1855},
++  {"  Overflow\n", 1856},
++  {"...skipping\n", 1857},
++  {"Regular expression botch", 1858},
+   {"\
+ \n\
+-Pattern not found\n", 1861},
+-  {"Pattern not found", 1862},
+-  {"can't fork\n", 1863},
++Pattern not found\n", 1859},
++  {"Pattern not found", 1860},
++  {"can't fork\n", 1861},
+   {"\
+ \n\
+-...Skipping ", 1864},
+-  {"...Skipping to file ", 1865},
+-  {"...Skipping back to file ", 1866},
+-  {"Line too long", 1867},
+-  {"No previous command to substitute for", 1868},
+-  {"od: od(1) has been deprecated for hexdump(1).\n", 1869},
+-  {"od: hexdump(1) compatibility doesn't support the -%c option%s\n", 1870},
+-  {"; see strings(1).", 1871},
+-  {"hexdump: can't read %s.\n", 1872},
+-  {"hexdump: line too long.\n", 1873},
+-  {"hexdump: byte count with multiple conversion characters.\n", 1874},
+-  {"hexdump: bad byte count for conversion character %s.\n", 1875},
+-  {"hexdump: %%s requires a precision or a byte count.\n", 1876},
+-  {"hexdump: bad format {%s}\n", 1877},
+-  {"hexdump: bad conversion character %%%s.\n", 1878},
+-  {"\
+-%s: Usage: %s [-number] [-p string] [-cefnrs] [+line] [+/pattern/] [files]\n", 1879},
+-  {"%s: option requires an argument -- %s\n", 1880},
+-  {"%s: illegal option -- %s\n", 1881},
+-  {"...skipping forward\n", 1882},
+-  {"...skipping backward\n", 1883},
+-  {"No next file", 1884},
+-  {"No previous file", 1885},
+-  {"%s: Read error from %s file\n", 1886},
+-  {"%s: Unexpected EOF in %s file\n", 1887},
+-  {"%s: Unknown error in %s file\n", 1888},
+-  {"%s: Cannot create tempfile\n", 1889},
+-  {"RE error: ", 1890},
+-  {"(EOF)", 1891},
+-  {"No remembered search string", 1892},
+-  {"Cannot open ", 1893},
+-  {"saved", 1894},
+-  {": !command not allowed in rflag mode.\n", 1895},
+-  {"fork() failed, try again later\n", 1896},
+-  {"(Next file: ", 1897},
+-  {"Unable to allocate bufferspace\n", 1898},
+-  {"usage: rev [file ...]\n", 1899},
+-  {"usage: %s [ -i ] [ -tTerm ] file...\n", 1900},
+-  {"trouble reading terminfo", 1901},
+-  {"Unknown escape sequence in input: %o, %o\n", 1902},
+-  {"Unable to allocate buffer.\n", 1903},
+-  {"Input line too long.\n", 1904},
+-  {"Out of memory when growing buffer.\n", 1905},
++...Skipping ", 1862},
++  {"...Skipping to file ", 1863},
++  {"...Skipping back to file ", 1864},
++  {"Line too long", 1865},
++  {"No previous command to substitute for", 1866},
++  {"od: od(1) has been deprecated for hexdump(1).\n", 1867},
++  {"od: hexdump(1) compatibility doesn't support the -%c option%s\n", 1868},
++  {"; see strings(1).", 1869},
++  {"hexdump: can't read %s.\n", 1870},
++  {"hexdump: line too long.\n", 1871},
++  {"hexdump: byte count with multiple conversion characters.\n", 1872},
++  {"hexdump: bad byte count for conversion character %s.\n", 1873},
++  {"hexdump: %%s requires a precision or a byte count.\n", 1874},
++  {"hexdump: bad format {%s}\n", 1875},
++  {"hexdump: bad conversion character %%%s.\n", 1876},
++  {"\
++%s: Usage: %s [-number] [-p string] [-cefnrs] [+line] [+/pattern/] [files]\n", 1877},
++  {"%s: option requires an argument -- %s\n", 1878},
++  {"%s: illegal option -- %s\n", 1879},
++  {"...skipping forward\n", 1880},
++  {"...skipping backward\n", 1881},
++  {"No next file", 1882},
++  {"No previous file", 1883},
++  {"%s: Read error from %s file\n", 1884},
++  {"%s: Unexpected EOF in %s file\n", 1885},
++  {"%s: Unknown error in %s file\n", 1886},
++  {"%s: Cannot create tempfile\n", 1887},
++  {"RE error: ", 1888},
++  {"(EOF)", 1889},
++  {"No remembered search string", 1890},
++  {"Cannot open ", 1891},
++  {"saved", 1892},
++  {": !command not allowed in rflag mode.\n", 1893},
++  {"fork() failed, try again later\n", 1894},
++  {"(Next file: ", 1895},
++  {"Unable to allocate bufferspace\n", 1896},
++  {"usage: rev [file ...]\n", 1897},
++  {"usage: %s [ -i ] [ -tTerm ] file...\n", 1898},
++  {"trouble reading terminfo", 1899},
++  {"Unknown escape sequence in input: %o, %o\n", 1900},
++  {"Unable to allocate buffer.\n", 1901},
++  {"Input line too long.\n", 1902},
++  {"Out of memory when growing buffer.\n", 1903},
+ };
+ 
+-int _msg_tbl_length = 1905;
++int _msg_tbl_length = 1903;

@@ -1,0 +1,23 @@
+if CAP_GLIBC || CAP_UCLIBC
+
+comment "Choose the target C library type"
+choice
+    prompt "C library type"
+    default GLIBC
+    help
+        This menu will let you choose the C library to use,
+        this choice affects the list of available toolchains
+
+    config GLIBC
+        depends CAP_GLIBC
+        bool "glibc"
+        help
+            Full C POSIX C library (larger)
+    config UCLIBC
+        depends CAP_UCLIBC
+        bool "uclibc"
+        help
+            Smaller C library, not as full featured as glibc
+endchoice
+
+endif

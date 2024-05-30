@@ -1,0 +1,20 @@
+Mon Jun 12 2006 Stuart Hughes <stuarth@freescale.com>
+
+This fixes: 
+
+/usr/bin/gcc -B/usr/bin// -D_GNU_SOURCE -O2 -Wstrict-prototypes -Wall -I../include -DRESOLVE_HOSTNAMES -o paretonormal paretonormal.c -lm
+./paretonormal >paretonormal.dist
+/bin/sh: line 1: 30810 Segmentation fault      ./paretonormal >paretonormal.distmake[1]: *** [paretonormal.dist] Error 139
+
+The patch is from gentoo: http://bugs.gentoo.org/show_bug.cgi?id=99487
+
+--- netem/paretonormal.c	2005-07-19 07:58:26.000000000 -0400
++++ netem/paretonormal.c	2005-07-19 07:59:01.000000000 -0400
+@@ -55,6 +55,7 @@
+ 
+ 	for (x = -10.0; x < 10.05; x += .00005) {
+ 		i = rint(TABLESIZE*normal(x, 0.0, 1.0));
++		if (i >= TABLESIZE) break;
+ 		table[i] = x;
+ 	}
+ 	printf(

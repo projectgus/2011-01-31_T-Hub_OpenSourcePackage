@@ -1,0 +1,10 @@
+PKG_ALSA_LIB = alsa-lib-1.0.11rc2
+PKG_ALSA_UTILS = alsa-utils-1.0.11rc2
+PKG_GDB = gdb-6.6
+PKG_MXC_MISC = mxc-misc-mx
+PKG_PCMCIA_CS = pcmcia-cs_mx31
+PKG_QTOPIA = qtopia-tslib
+PKG_SKELL = skell-mx
+PKG_STRACE = strace-4.5.14-arm_eabi
+PKG_SYSCONFIG = sysconfig-mx
+PKG_UDEV = udev-mx

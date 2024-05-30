@@ -1,0 +1,158 @@
+                      Dynamic Power Management
+
+The low level platform specific portion of Dynamic Power Management (DPM)
+has been implemented for MX31.
+
+To test DPM you will need three files, dpm_init, speed, and, suspend.
+Put these files in a directory on the MX31 and do the following:
+
+1) Initialize DPM by running
+        ./dpm_init start
+
+2) Test changing processor frequency by using a combination of the 
+   following commands:
+        ./speed 532
+        ./speed 266
+        ./speed 133
+
+3) Test suspend mode using this command.
+         ./suspend
+   Wakeup the processor by pressing one of the keys on the key pad.
+
+The dpm_init file can be used as a boot-time initialization script if you want
+DPM initialized at start up.
+
+If you want the system to dynamically change the CPU speed according
+to the processor load you can control the DVFS feature using the
+DVFS_IOCTENABLE and DVFS_IOCTDISABLE ioctls on the /dev/dvfs_dptc
+device.  The CPU speed cannot be manually controlled when DVFS has been
+enabled.
+
+You can also configure the power mode which the processor enters when it
+is idle. The default mode is Wait.  If you enable CONFIG_MX3_DOZE_DURING_IDLE
+in your kernel, the processor will enter Doze mode when idle.
+
+Doze mode during idle will save additional power over Wait mode, but it
+takes a little longer to wake up after an interrupt occurs.
+
+============================== dpm_init ==============================
+#!/bin/sh
+
+# Initialize DPM (Dynamic Power Management)
+
+#
+# To test DPM you will need this file, 'speed' and, 'suspend'. Put the files in a
+# directory on the MX31 and do the following:
+#
+# 1) Initialize DPM by running
+#         ./dpm_init start
+#
+# 2) Test changing processor frequency by using a combination of the 
+#    following commands:
+#         ./speed 532
+#         ./speed 266
+#         ./speed 133
+#
+# 3) Test suspend mode using this command.
+#          ./suspend
+#    Wakeup the processor by pressing one of the keys on the key pad.
+#
+
+case "$1" in
+
+	start)
+		echo -n "Initializing DPM   "
+		echo terminate > /proc/driver/dpm/cmd
+		echo init      > /proc/driver/dpm/cmd
+
+		echo create_opt opt_532 532000000 133000000 66500000 1 > /proc/driver/dpm/cmd
+		echo create_opt opt_266 266000000 133000000 66500000 1 > /proc/driver/dpm/cmd
+		echo create_opt opt_133 133000000 133000000 66500000 1 > /proc/driver/dpm/cmd
+		echo create_opt opt_suspend 0 0 0 0 > /proc/driver/dpm/cmd
+
+		echo create_class class_532 opt_532 > /proc/driver/dpm/cmd
+		echo create_class class_266 opt_266 > /proc/driver/dpm/cmd
+		echo create_class class_133 opt_133 > /proc/driver/dpm/cmd
+		echo create_class class_suspend opt_suspend > /proc/driver/dpm/cmd
+
+		echo create_policy 532  \
+		    class_532 class_532 class_532  \
+		    class_532 class_532 class_532 class_532 \
+		    class_532 \
+		    class_532 class_532 class_532 class_532 > /proc/driver/dpm/cmd 
+
+		echo create_policy 266  \
+		    class_266 class_266 class_266  \
+		    class_266 class_266 class_266 class_266  \
+		    class_266  \
+		    class_266 class_266 class_266 class_266 > /proc/driver/dpm/cmd 
+
+		echo create_policy 133  \
+		    class_133 class_133 class_133  \
+		    class_133 class_133 class_133 class_133  \
+		    class_133  \
+		    class_133 class_133 class_133 class_133 > /proc/driver/dpm/cmd 
+
+		echo create_policy suspend  \
+		    class_suspend class_suspend class_suspend  \
+		    class_suspend class_suspend class_suspend class_suspend  \
+		    class_suspend  \
+		    class_suspend class_suspend class_suspend class_suspend > /proc/driver/dpm/cmd 
+
+		echo set_policy 532 > /proc/driver/dpm/cmd
+
+		if [ "$?" = "0" ]; then
+			echo "Done"
+		else
+			echo "FAILED"
+		fi
+		;;
+
+	stop)
+		echo terminate > /proc/driver/dpm/cmd
+		echo -n "Terminating DPM   "
+		if [ "$?" = "0" ]; then
+			echo "Done"
+		else                    
+			echo "FAILED"
+		fi
+		;;
+
+	restart)
+		$0 stop
+		sleep 1
+		$0 start
+		;;
+	
+	state)
+		cat /proc/driver/dpm/state
+		;;
+
+	*)
+		echo "Usage: $0 (start|stop|restart|state)"
+		exit 1
+		;;
+
+esac
+
+============================== speed ==============================
+#!/bin/sh
+
+# Changes the processor frequency using DPM.
+# valid parameters are 532, 266, and 133.
+#
+# "dpm_init start" must be run before using this command.
+
+echo set_policy $1 > /proc/driver/dpm/cmd
+exit 0
+
+============================== suspend ==============================
+#!/bin/sh
+
+# Suspend the processor using DPM.
+#
+# "dpm_init start" must be run before using this command.
+
+echo set_policy suspend > /proc/driver/dpm/cmd
+echo set_policy 532 > /proc/driver/dpm/cmd
+exit 0

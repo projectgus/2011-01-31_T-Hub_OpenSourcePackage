@@ -1,0 +1,371 @@
+Fri 7th July 2006 Stuart Hughes <stuarth@freescale.com>
+
+These are changes I made while working on the DHCP package on the 875 target.
+
+I added etc/devfsd.conf so that busybox's devfsd work out of the box.  This
+file was taken from busybox-1.1.3 and slightly modified
+
+/etc/rc.d/init.d/dhcpd is an trivial dhcp server startup file that I wrote.
+
+/etc/rc.d/init.d/network is modified to user a parameterised value for
+the dhcp client start up line
+
+/etc/rc.d/rc.d includes the new dhcp server service
+
+/etc/udhcpd.conf is slightly modified copy from busybox-1.1.3 that allows
+busybox's dhcp server to work out of the box.
+
+
+diff --exclude CVS -uNr skell-1.13/etc/devfsd.conf skell-1.13.modified/etc/devfsd.conf
+--- skell-1.13/etc/devfsd.conf	1970-01-01 01:00:00.000000000 +0100
++++ skell-1.13.modified/etc/devfsd.conf	2006-07-05 14:35:27.000000000 +0100
+@@ -0,0 +1,133 @@
++# Sample /etc/devfsd.conf configuration file.
++# Richard Gooch  <rgooch@atnf.csiro.au>		17-FEB-2002
++#
++# adapted for busybox devfsd implementation by Tito <farmatito@tiscali.it>
++#
++# Enable full compatibility mode for old device names. You may comment these
++# out if you don't use the old device names. Make sure you know what you're
++# doing!
++REGISTER	.*		MKOLDCOMPAT
++UNREGISTER	.*		RMOLDCOMPAT
++
++# You may comment out the above and uncomment the following if you've
++# configured your system to use the original "new" devfs names or the really
++# new names
++#REGISTER	^vc/		MKOLDCOMPAT
++#UNREGISTER	^vc/		RMOLDCOMPAT
++#REGISTER	^pty/		MKOLDCOMPAT
++#UNREGISTER	^pty/		RMOLDCOMPAT
++#REGISTER	^misc/		MKOLDCOMPAT
++#UNREGISTER	^misc/		RMOLDCOMPAT
++
++# You may comment these out if you don't use the original "new" names
++REGISTER	.*		MKNEWCOMPAT
++UNREGISTER	.*		RMNEWCOMPAT
++
++# Enable module autoloading. You may comment this out if you don't use
++# autoloading
++# Supported by busybox when CONFIG_DEVFSD_MODLOAD is set.
++# This actually doesn't work with busybox  modutils but needs
++# the real modutils' modprobe
++#LOOKUP		.*		MODLOAD
++
++# Uncomment the following if you want to set the group to "tty" for the
++# pseudo-tty devices. This is necessary so that mesg(1) can later be used to
++# enable/disable talk requests and wall(1) messages.
++REGISTER	^pty/s.*	PERMISSIONS	-1.tty	0600
++#REGISTER	^pts/.*		PERMISSIONS	-1.tty	0600
++
++# Restoring /dev/log on startup would trigger the minilogd/initlog deadlock
++# (minilogd falsely assuming syslogd has been started).
++REGISTER	^log$		IGNORE
++CREATE		^log$		IGNORE
++CHANGE		^log$		IGNORE
++DELETE		^log$		IGNORE
++
++#
++# Uncomment this if you want permissions to be saved and restored
++# Do not do this for pseudo-terminal devices
++REGISTER	^pt[sy]		IGNORE
++CREATE		^pt[sy]		IGNORE
++CHANGE		^pt[sy]		IGNORE
++DELETE		^pt[sy]		IGNORE
++REGISTER	.*		COPY	/lib/dev-state/$devname $devpath
++CREATE		.*		COPY	$devpath /lib/dev-state/$devname
++CHANGE		.*		COPY	$devpath /lib/dev-state/$devname
++#DELETE		.*		CFUNCTION GLOBAL unlink /lib/dev-state/$devname
++# Busybox
++DELETE		.*		EXECUTE /bin/rm -f		/lib/dev-state/$devname
++
++RESTORE		/lib/dev-state
++
++#
++# Uncomment this if you want the old /dev/cdrom symlink
++#REGISTER	^cdroms/cdrom0$	CFUNCTION GLOBAL mksymlink $devname cdrom
++#UNREGISTER	^cdroms/cdrom0$	CFUNCTION GLOBAL unlink cdrom
++# busybox
++REGISTER	^cdroms/cdrom0$	EXECUTE /bin/ln -sf $devname cdrom
++UNREGISTER	^cdroms/cdrom0$	EXECUTE /bin/rm -f cdrom
++
++#REGISTER	^v4l/video0$	CFUNCTION GLOBAL mksymlink v4l/video0 video
++#UNREGISTER	^v4l/video0$	CFUNCTION GLOBAL unlink video
++#REGISTER	^radio0$	CFUNCTION GLOBAL mksymlink radio0 radio
++#UNREGISTER	^radio0$	CFUNCTION GLOBAL unlink radio
++# Busybox
++REGISTER	^v4l/video0$	EXECUTE /bin/ln -sf v4l/video0 video
++UNREGISTER	^v4l/video0$	EXECUTE /bin/rm -f video
++REGISTER	^radio0$		EXECUTE /bin/ln -sf  radio0 radio
++UNREGISTER	^radio0$		EXECUTE /bin/rm -f radio
++
++# ALSA stuff
++#LOOKUP 		snd 		MODLOAD ACTION snd
++
++# Uncomment this to let PAM manage devfs
++# Not supported by busybox
++#REGISTER	.*		CFUNCTION /lib/security/pam_console_apply_devfsd.so pam_console_apply_single $devpath
++
++# Uncomment this to manage USB mouse
++# Not supported by busybox
++#REGISTER	^input/mouse0$	CFUNCTION GLOBAL mksymlink $devname usbmouse
++#UNREGISTER	^input/mouse0$	CFUNCTION GLOBAL unlink usbmouse
++# Busybox
++#REGISTER	^input/mouse0$	EXECUTE /bin/ln -sf $devname usbmouse
++#UNREGISTER	^input/mouse0$	EXECUTE /bin/rm -f usbmouse
++# Not supported by busybox
++#REGISTER	^input/mice$	CFUNCTION GLOBAL mksymlink $devname usbmouse
++#UNREGISTER	^input/mice$	CFUNCTION GLOBAL unlink usbmouse
++# Busybox
++REGISTER	^input/mice$	EXECUTE /bin/ln -sf $devname usbmouse
++UNREGISTER	^input/mice$	EXECUTE /bin/rm -f usbmouse
++
++# If you have removable media and want to force media revalidation when looking
++# up new or old compatibility names, uncomment the following lines
++# SCSI NEWCOMPAT  /dev/sd/* names
++LOOKUP		^(sd/c[0-9]+b[0-9]+t[0-9]+u[0-9]+)p[0-9]+$	EXECUTE /bin/dd if=$mntpnt/\1 of=/dev/null count=1
++# SCSI OLDCOMPAT  /dev/sd?? names
++LOOKUP		^(sd[a-z]+)[0-9]+$	EXECUTE /bin/dd if=$mntpnt/\1 of=/dev/null count=1
++# IDE NEWCOMPAT   /dev/ide/hd/* names
++LOOKUP		^(ide/hd/c[0-9]+b[0-9]+t[0-9]+u[0-9]+)p[0-9]+$	EXECUTE /bin/dd if=$mntpnt/\1 of=/dev/null count=1
++# IDE OLDCOMPAT   /dev/hd?? names
++LOOKUP		^(hd[a-z])[0-9]+$	EXECUTE /bin/dd if=$mntpnt/\1 of=/dev/null count=1
++# IDE-SCSI NEWCOMPAT  /dev/sd/* names
++#LOOKUP		^(sd/c[0-9]+b[0-9]+t[0-9]+u[0-9]+)p[0-9]+$	EXECUTE /bin/dd if=$mntpnt/\1 of=/dev/null count=1
++#SCSI OLDCOMPAT  /dev/scd? names
++LOOKUP		^(scd+)[0-9]+$	EXECUTE /bin/dd if=$mntpnt/\1 of=/dev/null count=1
++
++
++REGISTER ^dvb/card[0-9]+/[^/]+$ PERMISSIONS root.video 0660
++# Not supported by busybox
++#REGISTER	^dvb/card([0-9]+)/([^/0-9]*)[0-9]+$	CFUNCTION GLOBAL mksymlink /dev/$devname ost/\2\1
++#UNREGISTER	^dvb/card([0-9]+)/([^/0-9]*)[0-9]+$	CFUNCTION GLOBAL unlink ost/\2\1
++# Busybox
++REGISTER	^dvb/card([0-9]+)/([^/0-9]*)[0-9]+$	EXECUTE /bin/ln -sf /dev/$devname ost/\2\1
++UNREGISTER	^dvb/card([0-9]+)/([^/0-9]*)[0-9]+$	EXECUTE /bin/rm -f ost/\2\1
++
++# Include package-generated files from /etc/devfs/conf.d
++# Supported by busybox
++# INCLUDE   /etc/devfs/conf.d/
++# INCLUDE   /etc/devfs/busybox/
++# Busybox: just for testing
++#INCLUDE			/etc/devfs/nothing/
++#INCLUDE			/etc/devfs/nothing/nothing
++#OPTIONAL_INCLUDE	/etc/devfs/nothing/
++#OPTIONAL_INCLUDE	/etc/devfs/nothing/nothing
+diff --exclude CVS -uNr skell-1.13/etc/rc.d/init.d/dhcpd skell-1.13.modified/etc/rc.d/init.d/dhcpd
+--- skell-1.13/etc/rc.d/init.d/dhcpd	1970-01-01 01:00:00.000000000 +0100
++++ skell-1.13.modified/etc/rc.d/init.d/dhcpd	2006-06-20 16:30:11.000000000 +0100
+@@ -0,0 +1,19 @@
++#!/bin/sh
++
++# pass in $2 for the interface, if not set, defaults to eth0
++
++if [ ! -x /usr/sbin/dhcpd ]
++then
++    exit 0
++fi
++
++if [ "$1" = "stop" -o "$1" = "restart" ]
++then                                                                            
++    echo "Stopping the dhcp server: "
++    killall dhcpd
++fi
++if [ "$1" = "start" -o "$1" = "restart" ]
++then
++    echo "Starting the dhcp server: "
++    /usr/sbin/dhcpd $2
++fi
+diff --exclude CVS -uNr skell-1.13/etc/rc.d/init.d/network skell-1.13.modified/etc/rc.d/init.d/network
+--- skell-1.13/etc/rc.d/init.d/network	2006-04-26 16:00:10.000000000 +0100
++++ skell-1.13.modified/etc/rc.d/init.d/network	2006-06-20 16:23:07.000000000 +0100
+@@ -37,7 +37,7 @@
+             then
+                 echo "You need to manually set your nameserver in /etc/resolv.conf"
+             else
+-                udhcpc -b -i $INTERFACE0
++                $SYSCFG_DHCPC_CMD $INTERFACE0
+             fi
+         else  
+             # non-dhcp network startup
+@@ -62,7 +62,7 @@
+         echo "Setting up networking on $INTERFACE1: "
+         if [ "$IPADDR1" = "dhcp" ]
+         then
+-            udhcpc -b -i $INTERFACE1
++            $SYSCFG_DHCPC_CMD $INTERFACE1
+         else  
+             # non-dhcp network startup
+             ifconfig $INTERFACE1 $IPADDR1 netmask $NETMASK1
+@@ -86,7 +86,7 @@
+         echo "Setting up networking on $INTERFACE2: "
+         if [ "$IPADDR2" = "dhcp" ]
+         then
+-            udhcpc -b -i $INTERFACE2
++            $SYSCFG_DHCPC_CMD $INTERFACE2
+         else  
+             # non-dhcp network startup
+             ifconfig $INTERFACE2 $IPADDR2 netmask $NETMASK2
+@@ -105,7 +105,7 @@
+         echo "Setting up networking on $INTERFACE3: "
+         if [ "$IPADDR3" = "dhcp" ]
+         then
+-            udhcpc -b -i $INTERFACE3
++            $SYSCFG_DHCPC_CMD $INTERFACE3
+         else  
+             # non-dhcp network startup
+             ifconfig $INTERFACE3 $IPADDR3 netmask $NETMASK3
+@@ -124,7 +124,7 @@
+         echo "Setting up networking on $INTERFACE4: "
+         if [ "$IPADDR4" = "dhcp" ]
+         then
+-            udhcpc -b -i $INTERFACE4
++            $SYSCFG_DHCPC_CMD $INTERFACE4
+         else  
+             # non-dhcp network startup
+             ifconfig $INTERFACE4 $IPADDR4 netmask $NETMASK4
+diff --exclude CVS -uNr skell-1.13/etc/rc.d/rc.conf skell-1.13.modified/etc/rc.d/rc.conf
+--- skell-1.13/etc/rc.d/rc.conf	2005-11-29 11:19:41.000000000 +0000
++++ skell-1.13.modified/etc/rc.d/rc.conf	2006-06-20 16:25:47.000000000 +0100
+@@ -11,9 +11,10 @@
+ export TMPFS="ramfs"
+ export READONLY_FS="n"
+ export SYSLOG_SOCKET_FILE=""
++export SYSCFG_DHCPC_CMD="udhcpc -b -i"
+ 
+-all_services="hostname filesystems syslog depmod modules network settime inetd portmap dropbear boa"
+-all_services_r="boa dropbear portmap inetd settime network modules depmod syslog filesystems hostname"
+-cfg_services="hostname filesystems syslog depmod modules network settime inetd portmap dropbear boa"
+-cfg_services_r="boa dropbear portmap inetd settime network modules depmod syslog filesystems hostname"
++all_services="hostname filesystems syslog depmod modules network settime inetd portmap dropbear boa dhcpd"
++all_services_r="dhcpd boa dropbear portmap inetd settime network modules depmod syslog filesystems hostname"
++cfg_services="hostname filesystems syslog depmod modules network settime inetd portmap dropbear boa dhcpd"
++cfg_services_r="dhcpd boa dropbear portmap inetd settime network modules depmod syslog filesystems hostname"
+ 
+diff --exclude CVS -uNr skell-1.13/etc/udhcpd.conf skell-1.13.modified/etc/udhcpd.conf
+--- skell-1.13/etc/udhcpd.conf	1970-01-01 01:00:00.000000000 +0100
++++ skell-1.13.modified/etc/udhcpd.conf	2006-07-05 15:20:34.000000000 +0100
+@@ -0,0 +1,123 @@
++# Sample udhcpd configuration file (/etc/udhcpd.conf)
++
++# The start and end of the IP lease block
++
++start 		192.168.0.100	#default: 192.168.0.20
++end		192.168.0.120	#default: 192.168.0.254
++
++
++# The interface that udhcpd will use
++
++interface	eth0		#default: eth0
++
++
++# The maximim number of leases (includes addressesd reserved
++# by OFFER's, DECLINE's, and ARP conficts
++
++max_leases	21		#default: 254
++
++
++# If remaining is true (default), udhcpd will store the time
++# remaining for each lease in the udhcpd leases file. This is
++# for embedded systems that cannot keep time between reboots.
++# If you set remaining to no, the absolute time that the lease
++# expires at will be stored in the dhcpd.leases file.
++
++#remaining	yes		#default: yes
++
++
++# The time period at which udhcpd will write out a dhcpd.leases
++# file. If this is 0, udhcpd will never automatically write a
++# lease file. (specified in seconds)
++
++#auto_time	7200		#default: 7200 (2 hours)
++
++
++# The amount of time that an IP will be reserved (leased) for if a
++# DHCP decline message is received (seconds).
++
++#decline_time	3600		#default: 3600 (1 hour)
++
++
++# The amount of time that an IP will be reserved (leased) for if an
++# ARP conflct occurs. (seconds
++
++#conflict_time	3600		#default: 3600 (1 hour)
++
++
++# How long an offered address is reserved (leased) in seconds
++
++#offer_time	60		#default: 60 (1 minute)
++
++# If a lease to be given is below this value, the full lease time is
++# instead used (seconds).
++
++#min_lease	60		#defult: 60
++
++
++# The location of the leases file
++
++#lease_file	/var/lib/misc/udhcpd.leases	#defualt: /var/lib/misc/udhcpd.leases
++
++# The location of the pid file
++#pidfile	/var/run/udhcpd.pid	#default: /var/run/udhcpd.pid
++
++# Everytime udhcpd writes a leases file, the below script will be called.
++# Useful for writing the lease file to flash every few hours.
++
++#notify_file				#default: (no script)
++
++#notify_file	dumpleases 	# <--- usefull for debugging
++
++# The following are bootp specific options, setable by udhcpd.
++
++#siaddr		192.168.0.22		#default: 0.0.0.0
++
++#sname		zorak			#default: (none)
++
++#boot_file	/var/nfs_root		#default: (none)
++
++# The remainer of options are DHCP options and can be specifed with the
++# keyword 'opt' or 'option'. If an option can take multiple items, such
++# as the dns option, they can be listed on the same line, or multiple
++# lines. The only option with a default is 'lease'.
++
++#Examles
++opt	dns	192.168.10.2 192.168.10.10
++option	subnet	255.255.255.0
++opt	router	192.168.10.2
++opt	wins	192.168.10.10
++option	dns	129.219.13.81	# appened to above DNS servers for a total of 3
++option	domain	local
++option	lease	864000		# 10 days of seconds
++
++
++# Currently supported options, for more info, see options.c
++#opt subnet
++#opt timezone
++#opt router
++#opt timesvr
++#opt namesvr
++#opt dns
++#opt logsvr
++#opt cookiesvr
++#opt lprsvr
++#opt bootsize
++#opt domain
++#opt swapsvr
++#opt rootpath
++#opt ipttl
++#opt mtu
++#opt broadcast
++#opt wins
++#opt lease
++#opt ntpsrv
++#opt tftp
++#opt bootfile
++
++
++# Static leases map
++#static_lease 00:60:08:11:CE:4E 192.168.0.54
++#static_lease 00:60:08:11:CE:3E 192.168.0.44
++
++

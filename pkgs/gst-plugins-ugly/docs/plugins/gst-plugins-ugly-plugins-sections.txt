@@ -1,0 +1,24 @@
+<SECTION>
+<FILE>element-mad</FILE>
+GstMad
+<TITLE>mad</TITLE>
+<SUBSECTION Standard>
+GstMadClass
+</SECTION>
+
+<SECTION>
+<FILE>element-lame</FILE>
+GstLame
+<TITLE>lame</TITLE>
+<SUBSECTION Standard>
+GstLameClass
+</SECTION>
+
+<SECTION>
+<FILE>element-siddec</FILE>
+GstSidDec
+<TITLE>siddec</TITLE>
+<SUBSECTION Standard>
+GstSidDecClass
+</SECTION>
+

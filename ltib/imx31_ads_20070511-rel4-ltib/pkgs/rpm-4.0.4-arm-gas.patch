@@ -1,0 +1,30 @@
+Wed Oct 18 2006 Stuart Hughes <stuarth@freescale.com>
+
+This fixes the following error for arm:
+gcc -g -O2 -D_GNU_SOURCE -D_REENTRANT -Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wno-char-subscripts -o .libs/rpmsignature rpmsignature.o ../build/.libs/librpmbuild.so ../lib/.libs/librpm.so ../rpmdb/.libs/librpmdb.so ../rpmio/.libs/librpmio.so -lz -lbz2 -lrt -lpthread ../popt/.libs/libpopt.so ../intl/libintl.a
+../rpmio/.libs/librpmio.so: undefined reference to `mp32addmul'
+../rpmio/.libs/librpmio.so: undefined reference to `mp32setmul'
+
+Looking at the source file I'm not sure that it's that well test though.
+If runtime tests show these don't work, it beecrypt should be build with
+--without-gas or something else to disable it on arm.
+
+diff --exclude CVS -uNr rpm-4.0.4/beecrypt/gas/mp32opt.arm.S rpm-4.0.4.modified/beecrypt/gas/mp32opt.arm.S
+--- rpm-4.0.4/beecrypt/gas/mp32opt.arm.S	2001-10-08 08:31:58.000000000 -0500
++++ rpm-4.0.4.modified/beecrypt/gas/mp32opt.arm.S	2006-10-18 08:52:27.000000000 -0500
+@@ -103,6 +103,7 @@
+ 
+ 
+ C_FUNCTION_BEGIN(mp32setmul)
++LABEL(mp32setmul)
+ 	stmfd sp!, {r4, r5, lr}
+ 	/* adjust the addresses */
+ 	add r1, r1, r0, asl #2
+@@ -124,6 +125,7 @@
+ 
+ 	
+ C_FUNCTION_BEGIN(mp32addmul)
++LABEL(mp32addmul)
+ 	stmfd sp!, {r4, r5, r6, lr}
+ 	/* adjust the addresses */
+ 	add r1, r1, r0, asl #2

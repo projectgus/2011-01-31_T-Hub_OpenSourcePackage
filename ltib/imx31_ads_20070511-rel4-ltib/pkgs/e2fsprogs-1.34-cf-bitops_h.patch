@@ -1,0 +1,26 @@
+Stuart Hughes, stuarth@freescale.com, 4th July 2005
+
+This is a patch for the coldfire architecture, which doesn't have bftst and
+friends.
+
+This fixes the error:
+
+gcc  -DLOCALEDIR=\"/usr/share/locale\" ....
+ -g -O2   -I../../lib -I../../lib   -c cmp_bitmaps.c -o cmp_bitmaps.o
+/tmp/ccVg6G7x.s: Assembler messages:
+/tmp/ccVg6G7x.s:85: Error: invalid instruction for this architecture; needs 68020 or higher -- statement `bftst %a1@{%d1:#1}' ignored
+/tmp/ccVg6G7x.s:101: Error: invalid instruction for this architecture; needs 680
+
+
+diff --exclude CVS -uNr e2fsprogs-1.34/lib/ext2fs/bitops.h e2fsprogs-1.34.modified/lib/ext2fs/bitops.h
+--- e2fsprogs-1.34/lib/ext2fs/bitops.h	2002-06-28 07:10:29.000000000 -0500
++++ e2fsprogs-1.34.modified/lib/ext2fs/bitops.h	2005-07-04 05:27:47.000000000 -0500
+@@ -264,7 +264,7 @@
+ 
+ #endif	/* i386 */
+ 
+-#ifdef __mc68000__
++#if defined(__mc68000__) && ! defined(__mcoldfire__)
+ 
+ #define _EXT2_HAVE_ASM_BITOPS_
+ 
